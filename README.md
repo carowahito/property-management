@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Property Management System
+
+A complete, production-ready property management solution extracted from Catalyst Suite.
+
+## Features
+
+### Property Management
+- Properties portfolio management
+- Unit tracking and availability
+- Property analytics and reporting
+
+### Tenant Management
+- Tenant/Renter profiles
+- Application processing
+- Tenant portal access
+
+### Landlord Management
+- Landlord profiles
+- Payout management
+- Commission tracking
+
+### Lease Management
+- Lease agreements
+- Lease renewals
+- Termination processing
+
+### Financial Management
+- Rent payment collection
+- Security deposits tracking
+- Landlord payouts
+- Late fee management
+- Financial reporting
+
+### Maintenance
+- Maintenance request tracking
+- Work order management
+- Vendor management
+
+### Compliance
+- Compliance tracking
+- Property inspections
+- Document templates
+
+### Analytics
+- Occupancy tracking
+- Revenue analytics
+- Sustainability metrics
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+property-management-system/
+├── app/
+│   ├── properties/         # Property management
+│   ├── renters/           # Tenant management
+│   ├── landlords/         # Landlord management
+│   ├── leases/            # Lease agreements
+│   ├── rent-payments/     # Payment collection
+│   ├── deposits/          # Security deposits
+│   ├── payouts/           # Landlord payouts
+│   ├── maintenance/       # Maintenance requests
+│   ├── vendors/           # Vendor management
+│   ├── inspections/       # Property inspections
+│   ├── compliance/        # Compliance tracking
+│   ├── viewings/          # Property viewings
+│   ├── renewals/          # Lease renewals
+│   ├── occupancy/         # Occupancy tracking
+│   ├── financial-reports/ # Financial reporting
+│   ├── late-fees/         # Late fee management
+│   ├── templates/         # Document templates
+│   ├── sustainability/    # Sustainability metrics
+│   ├── analytics/         # Analytics dashboard
+│   └── work-orders/       # Work order management
+├── components/            # Reusable UI components
+├── lib/                   # Utility functions
+└── public/               # Static assets
+```
 
-## Learn More
+## Integration as Submodule
 
-To learn more about Next.js, take a look at the following resources:
+This app can be integrated back into the main Catalyst Suite as a git submodule:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# In the main Catalyst Suite repository
+git submodule add https://github.com/[your-org]/property-management-system modules/property-management
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Proprietary - All rights reserved

@@ -1,65 +1,112 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { Button } from '@/components/ui/button';
+
+export default function DashboardPage() {
+  const stats = {
+    totalProperties: 5,
+    totalUnits: 106,
+    occupancyRate: 93.4,
+    monthlyRevenue: 5770000,
+    activeLeases: 99,
+    maintenanceRequests: 12,
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className='p-8 space-y-6'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h1 className='text-3xl font-bold text-gray-900'>Dashboard</h1>
+          <p className='text-gray-600 mt-1'>Property management overview</p>
+        </div>
+        <Button className='bg-blue-600 hover:bg-blue-700'>+ Add Property</Button>
+      </div>
+
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+        <div className='bg-white shadow rounded-lg p-6'>
+          <p className='text-sm text-gray-600'>Total Properties</p>
+          <p className='text-3xl font-bold text-gray-900'>{stats.totalProperties}</p>
+          <p className='text-sm text-green-600 mt-2'>↑ Active & Managed</p>
+        </div>
+
+        <div className='bg-white shadow rounded-lg p-6'>
+          <p className='text-sm text-gray-600'>Total Units</p>
+          <p className='text-3xl font-bold text-gray-900'>{stats.totalUnits}</p>
+          <p className='text-sm text-blue-600 mt-2'>{stats.activeLeases} occupied</p>
+        </div>
+
+        <div className='bg-white shadow rounded-lg p-6'>
+          <p className='text-sm text-gray-600'>Occupancy Rate</p>
+          <p className='text-3xl font-bold text-green-600'>{stats.occupancyRate}%</p>
+          <p className='text-sm text-gray-600 mt-2'>Industry avg: 85%</p>
+        </div>
+
+        <div className='bg-white shadow rounded-lg p-6'>
+          <p className='text-sm text-gray-600'>Monthly Revenue</p>
+          <p className='text-3xl font-bold text-gray-900'>
+            KSh {stats.monthlyRevenue.toLocaleString()}
           </p>
+          <p className='text-sm text-green-600 mt-2'>↑ 12% from last month</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className='bg-white shadow rounded-lg p-6'>
+          <p className='text-sm text-gray-600'>Active Leases</p>
+          <p className='text-3xl font-bold text-gray-900'>{stats.activeLeases}</p>
+          <p className='text-sm text-gray-600 mt-2'>7 renewals pending</p>
         </div>
-      </main>
+
+        <div className='bg-white shadow rounded-lg p-6'>
+          <p className='text-sm text-gray-600'>Maintenance Requests</p>
+          <p className='text-3xl font-bold text-orange-600'>{stats.maintenanceRequests}</p>
+          <p className='text-sm text-gray-600 mt-2'>3 urgent</p>
+        </div>
+      </div>
+
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        <div className='bg-white shadow rounded-lg p-6'>
+          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Quick Actions</h2>
+          <div className='space-y-3'>
+            <a href='/properties' className='block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition'>
+              <div className='font-medium text-blue-900'>Manage Properties</div>
+              <div className='text-sm text-blue-700'>View and update property portfolio</div>
+            </a>
+            <a href='/renters' className='block p-3 bg-green-50 rounded-lg hover:bg-green-100 transition'>
+              <div className='font-medium text-green-900'>Tenant Management</div>
+              <div className='text-sm text-green-700'>Add or manage tenant information</div>
+            </a>
+            <a href='/rent-payments' className='block p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition'>
+              <div className='font-medium text-purple-900'>Collect Payments</div>
+              <div className='text-sm text-purple-700'>Track rent and payment collection</div>
+            </a>
+            <a href='/maintenance' className='block p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition'>
+              <div className='font-medium text-orange-900'>Maintenance Requests</div>
+              <div className='text-sm text-orange-700'>Review and assign work orders</div>
+            </a>
+          </div>
+        </div>
+
+        <div className='bg-white shadow rounded-lg p-6'>
+          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Recent Activity</h2>
+          <div className='space-y-4'>
+            <div className='border-l-4 border-blue-500 pl-3'>
+              <div className='text-sm font-medium text-gray-900'>New lease signed</div>
+              <div className='text-xs text-gray-600'>Vista Plaza, Unit 8B - 2 hours ago</div>
+            </div>
+            <div className='border-l-4 border-green-500 pl-3'>
+              <div className='text-sm font-medium text-gray-900'>Payment received</div>
+              <div className='text-xs text-gray-600'>Sunset Apartments, Unit 5A - 3 hours ago</div>
+            </div>
+            <div className='border-l-4 border-orange-500 pl-3'>
+              <div className='text-sm font-medium text-gray-900'>Maintenance request</div>
+              <div className='text-xs text-gray-600'>Highland House, Unit 12 - 5 hours ago</div>
+            </div>
+            <div className='border-l-4 border-purple-500 pl-3'>
+              <div className='text-sm font-medium text-gray-900'>Viewing scheduled</div>
+              <div className='text-xs text-gray-600'>Garden Estate, Unit 3C - 1 day ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
