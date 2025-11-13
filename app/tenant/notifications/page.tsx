@@ -1,7 +1,5 @@
 'use client';
 
-import { TenantNotifications } from '@/components/tenant-portal/tenant-notifications';
-
 export default function TenantNotificationsPage() {
   // Mock notifications - will be replaced with actual API calls
   const mockNotifications = [

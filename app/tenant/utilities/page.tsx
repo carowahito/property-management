@@ -1,7 +1,5 @@
 'use client'
 
-import { TenantUtilities } from '@/components/tenant-portal/tenant-utilities'
-
 export default function TenantUtilitiesPage() {
   // Mock tenant data - will be replaced with actual API calls
   const tenantData = {

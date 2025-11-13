@@ -1,7 +1,5 @@
 'use client'
 
-import { TenantLease } from '@/components/tenant-portal/tenant-lease'
-
 export default function TenantLeasePage() {
   // Mock tenant data - will be replaced with actual API calls
   const tenantData = {

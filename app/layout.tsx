@@ -1,16 +1,19 @@
-import type { Metadata } from 'next'
-import './globals.css'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Property Management System',
-  description: 'Complete property and tenant management solution',
-}
+import { usePathname } from 'next/navigation'
+import './globals.css'
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+  
+  // Determine user type based on current route
+  const isTenantPortal = pathname.startsWith('/tenant')
+  const isLandlordPortal = pathname.startsWith('/landlord')
+
   return (
     <html lang="en">
       <body className="antialiased">
@@ -21,25 +24,51 @@ export default function RootLayout({
                 <div className="flex items-center">
                   <h1 className="text-2xl font-bold text-blue-600">🏢 PropManage</h1>
                 </div>
-                <nav className="flex space-x-4">
-                  <a href="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Dashboard
-                  </a>
-                  <a href="/properties" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Properties
-                  </a>
-                  <a href="/renters" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Tenants
-                  </a>
-                  <a href="/landlords" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Landlords
-                  </a>
-                  <a href="/leases" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Leases
-                  </a>
-                  <a href="/rent-payments" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Payments
-                  </a>
+                <nav className="flex space-x-2 text-sm">
+                  {/* Show navigation based on current portal */}
+                  {isTenantPortal ? (
+                    <>
+                      <a href="/tenant" className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md font-medium">
+                        My Portal
+                      </a>
+                      <button className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md font-medium">
+                        Logout
+                      </button>
+                    </>
+                  ) : isLandlordPortal ? (
+                    <>
+                      <a href="/landlord" className="text-white bg-green-600 hover:bg-green-700 px-3 py-2 rounded-md font-medium">
+                        My Portal
+                      </a>
+                      <button className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md font-medium">
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <a href="/" className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md font-medium">
+                        Dashboard
+                      </a>
+                      <a href="/properties" className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md font-medium">
+                        Properties
+                      </a>
+                      <a href="/renters" className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md font-medium">
+                        Tenants
+                      </a>
+                      <a href="/leases" className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md font-medium">
+                        Leases
+                      </a>
+                      <a href="/rent-payments" className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md font-medium">
+                        Payments
+                      </a>
+                      <a href="/tenant" className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md font-medium ml-2">
+                        Tenant Login
+                      </a>
+                      <a href="/landlord" className="text-white bg-green-600 hover:bg-green-700 px-3 py-2 rounded-md font-medium">
+                        Landlord Login
+                      </a>
+                    </>
+                  )}
                 </nav>
               </div>
             </div>

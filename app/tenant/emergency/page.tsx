@@ -1,7 +1,5 @@
 'use client'
 
-import { EmergencyContacts } from '@/components/tenant-portal/emergency-contacts'
-
 export default function EmergencyContactsPage() {
   // Mock tenant data - will be replaced with actual API calls
   const tenantData = {
