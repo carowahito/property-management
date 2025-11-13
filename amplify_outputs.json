@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "auth": {
+    "aws_project_region": "us-east-1",
+    "aws_cognito_region": "us-east-1",
+    "aws_user_pools_id": "us-east-1_test",
+    "aws_user_pools_web_client_id": "test",
+    "oauth": {},
+    "aws_cognito_identity_pool_id": "us-east-1:test",
+    "aws_cognito_identity_pool_authentication_provider": {
+      "cognito_identity_pool_authentication_method": "user_pools",
+      "cognito_identity_pool_authentication_role_arn": ""
+    }
+  },
+  "custom": {}
+}

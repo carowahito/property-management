@@ -12,6 +12,14 @@ export default function EmergencyContactsPage() {
     leaseId: 'lease_789',
   }
 
+  const emergencyContacts = [
+    { name: 'Police', number: '911', icon: '🚔' },
+    { name: 'Fire Department', number: '911', icon: '🚒' },
+    { name: 'Medical Emergency', number: '911', icon: '🚑' },
+    { name: 'Property Management', number: '+254700000001', icon: '🏢' },
+    { name: 'Landlord', number: '+254700000002', icon: '👤' },
+  ]
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -20,7 +28,18 @@ export default function EmergencyContactsPage() {
           Quick access to emergency services and contacts
         </p>
       </div>
-      <EmergencyContacts tenantData={tenantData} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {emergencyContacts.map((contact, index) => (
+          <div key={index} className="bg-white shadow rounded-lg p-6">
+            <div className="text-4xl mb-2">{contact.icon}</div>
+            <h3 className="text-lg font-semibold text-gray-900">{contact.name}</h3>
+            <p className="text-2xl font-bold text-red-600 mt-2">{contact.number}</p>
+            <button className="mt-4 w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">
+              Call
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

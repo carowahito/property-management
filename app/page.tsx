@@ -1,106 +1,118 @@
-'use client';
+'use client'
 
-export default function DashboardPage() {
-  const stats = {
-    totalProperties: 5,
-    totalUnits: 106,
-    occupancyRate: 93.4,
-    monthlyRevenue: 5770000,
-    activeLeases: 99,
-    maintenanceRequests: 12,
-  };
+import Link from 'next/link'
 
+export default function HomePage() {
   return (
-    <div className='p-8 space-y-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Dashboard</h1>
-          <p className='text-gray-600 mt-1'>Property management overview</p>
-        </div>
-        <button className='inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700'>+ Add Property</button>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Properties</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalProperties}</p>
-          <p className='text-sm text-green-600 mt-2'>↑ Active & Managed</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Hero Section */}
+        <div className="text-center py-20">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">🏢 PropManage</h1>
+          <p className="text-xl text-gray-600 mb-8">Complete Property Management Solution</p>
         </div>
 
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Units</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalUnits}</p>
-          <p className='text-sm text-blue-600 mt-2'>{stats.activeLeases} occupied</p>
-        </div>
-
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Occupancy Rate</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.occupancyRate}%</p>
-          <p className='text-sm text-gray-600 mt-2'>Industry avg: 85%</p>
-        </div>
-
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Monthly Revenue</p>
-          <p className='text-3xl font-bold text-gray-900'>
-            KSh {stats.monthlyRevenue.toLocaleString()}
-          </p>
-          <p className='text-sm text-green-600 mt-2'>↑ 12% from last month</p>
-        </div>
-
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active Leases</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.activeLeases}</p>
-          <p className='text-sm text-gray-600 mt-2'>7 renewals pending</p>
-        </div>
-
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Maintenance Requests</p>
-          <p className='text-3xl font-bold text-orange-600'>{stats.maintenanceRequests}</p>
-          <p className='text-sm text-gray-600 mt-2'>3 urgent</p>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Quick Actions</h2>
-          <div className='space-y-3'>
-            <a href='/properties' className='block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition'>
-              <div className='font-medium text-blue-900'>Manage Properties</div>
-              <div className='text-sm text-blue-700'>View and update property portfolio</div>
-            </a>
-            <a href='/renters' className='block p-3 bg-green-50 rounded-lg hover:bg-green-100 transition'>
-              <div className='font-medium text-green-900'>Tenant Management</div>
-              <div className='text-sm text-green-700'>Add or manage tenant information</div>
-            </a>
-            <a href='/rent-payments' className='block p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition'>
-              <div className='font-medium text-purple-900'>Collect Payments</div>
-              <div className='text-sm text-purple-700'>Track rent and payment collection</div>
-            </a>
-            <a href='/maintenance' className='block p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition'>
-              <div className='font-medium text-orange-900'>Maintenance Requests</div>
-              <div className='text-sm text-orange-700'>Review and assign work orders</div>
-            </a>
+        {/* Portal Selection Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
+          {/* Admin Portal */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+              <div className="text-4xl mb-2">👨‍💼</div>
+              <h2 className="text-2xl font-bold">Admin Portal</h2>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-6">Manage properties, tenants, finances, and maintenance.</p>
+              <ul className="space-y-2 mb-8 text-sm text-gray-700">
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Property Management
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Tenant & Lease Management
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Payment Tracking
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Maintenance Requests
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Analytics & Reports
+                </li>
+              </ul>
+              <Link
+                href="/admin"
+                className="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Go to Admin
+              </Link>
+            </div>
           </div>
-        </div>
 
-        <div className='bg-white shadow rounded-lg p-6'>
-          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Recent Activity</h2>
-          <div className='space-y-4'>
-            <div className='border-l-4 border-blue-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>New lease signed</div>
-              <div className='text-xs text-gray-600'>Vista Plaza, Unit 8B - 2 hours ago</div>
+          {/* Tenant Portal */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
+            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
+              <div className="text-4xl mb-2">👤</div>
+              <h2 className="text-2xl font-bold">Tenant Portal</h2>
             </div>
-            <div className='border-l-4 border-green-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>Payment received</div>
-              <div className='text-xs text-gray-600'>Sunset Apartments, Unit 5A - 3 hours ago</div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-6">Manage your lease, payments, and maintenance requests.</p>
+              <ul className="space-y-2 mb-8 text-sm text-gray-700">
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> View Lease Info
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Pay Rent Online
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Request Maintenance
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Community Access
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Support & Messages
+                </li>
+              </ul>
+              <Link
+                href="/tenant/login"
+                className="w-full block text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Tenant Login
+              </Link>
             </div>
-            <div className='border-l-4 border-orange-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>Maintenance request</div>
-              <div className='text-xs text-gray-600'>Highland House, Unit 12 - 5 hours ago</div>
+          </div>
+
+          {/* Landlord Portal */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
+            <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-6 text-white">
+              <div className="text-4xl mb-2">🏠</div>
+              <h2 className="text-2xl font-bold">Landlord Portal</h2>
             </div>
-            <div className='border-l-4 border-purple-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>Viewing scheduled</div>
-              <div className='text-xs text-gray-600'>Garden Estate, Unit 3C - 1 day ago</div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-6">Manage your properties and track rental income.</p>
+              <ul className="space-y-2 mb-8 text-sm text-gray-700">
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Property Listings
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Tenant Management
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Income Tracking
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Maintenance Oversight
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">✓</span> Financial Reports
+                </li>
+              </ul>
+              <Link
+                href="/landlord/login"
+                className="w-full block text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Landlord Login
+              </Link>
             </div>
           </div>
         </div>
