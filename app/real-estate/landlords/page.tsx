@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 
 interface Landlord {
   id: string;
@@ -78,7 +77,7 @@ export default function LandlordsPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Landlords</h1>
           <p className='text-gray-600 mt-1'>Manage property owners and relationships</p>
         </div>
-        <Button className='bg-blue-600 hover:bg-blue-700'>+ Add Landlord</Button>
+        <button className='bg-blue-600 hover:bg-blue-700'>+ Add Landlord</button>
       </div>
 
       {/* Stats Cards */}
@@ -192,12 +191,12 @@ export default function LandlordsPage() {
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2'>
-                  <Button variant='outline' size='sm'>
+                  <button  >
                     View
-                  </Button>
-                  <Button variant='outline' size='sm'>
+                  </button>
+                  <button  >
                     Edit
-                  </Button>
+                  </button>
                 </td>
               </tr>
             ))}

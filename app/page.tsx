@@ -1,7 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-
 export default function DashboardPage() {
   const stats = {
     totalProperties: 5,
@@ -19,7 +17,7 @@ export default function DashboardPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Dashboard</h1>
           <p className='text-gray-600 mt-1'>Property management overview</p>
         </div>
-        <Button className='bg-blue-600 hover:bg-blue-700'>+ Add Property</Button>
+        <button className='inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700'>+ Add Property</button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
