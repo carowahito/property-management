@@ -25,6 +25,7 @@ export default function AdminLayout({
       title: 'Main',
       items: [
         { href: '/admin', label: 'Dashboard', icon: '📊' },
+        { href: '/admin/communications', label: 'Communications', icon: '💬' },
       ]
     },
     {
