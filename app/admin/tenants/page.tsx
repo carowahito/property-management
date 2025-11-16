@@ -2,6 +2,7 @@
 
 import { mockTenants } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 export default function TenantsPage() {
   const stats = [
@@ -50,8 +51,10 @@ export default function TenantsPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {mockTenants.map((tenant) => (
-                <tr key={tenant.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{tenant.name}</td>
+                <tr key={tenant.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => window.location.href = `/admin/tenants/${tenant.id}`}>
+                  <td className="px-6 py-4 text-sm font-medium text-blue-600 hover:text-blue-800">
+                    <Link href={`/admin/tenants/${tenant.id}`}>{tenant.name}</Link>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{tenant.email}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{tenant.property}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{tenant.unit}</td>

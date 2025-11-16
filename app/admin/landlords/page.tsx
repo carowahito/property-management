@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { mockLandlords, getPropertiesByLandlordId } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 
@@ -89,7 +90,7 @@ export default function AdminLandlordsPage() {
               {filteredLandlords.map((landlord) => {
                 const properties = getPropertiesByLandlordId(landlord.id);
                 return (
-                  <tr key={landlord.id} className='hover:bg-gray-50'>
+                  <tr key={landlord.id} className='hover:bg-gray-50 cursor-pointer' onClick={() => window.location.href = `/admin/landlords/${landlord.id}`}>
                     <td className='px-6 py-4'>
                       <div className='flex items-center'>
                         <div className='h-10 w-10 rounded-full bg-green-100 flex items-center justify-center'>
@@ -98,7 +99,9 @@ export default function AdminLandlordsPage() {
                           </span>
                         </div>
                         <div className='ml-4'>
-                          <p className='text-sm font-medium text-gray-900'>{landlord.name}</p>
+                          <Link href={`/admin/landlords/${landlord.id}`} className='text-sm font-medium text-blue-600 hover:text-blue-800'>
+                            {landlord.name}
+                          </Link>
                           <p className='text-sm text-gray-500'>ID: {landlord.id}</p>
                         </div>
                       </div>

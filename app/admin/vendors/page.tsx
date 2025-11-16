@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 interface Vendor {
@@ -182,7 +183,7 @@ export default function AdminVendorsPage() {
             </thead>
             <tbody className='bg-white divide-y divide-gray-200'>
               {filteredVendors.map((vendor) => (
-                <tr key={vendor.id} className='hover:bg-gray-50'>
+                <tr key={vendor.id} className='hover:bg-gray-50 cursor-pointer' onClick={() => window.location.href = `/admin/vendors/${vendor.id}`}>
                   <td className='px-6 py-4'>
                     <div className='flex items-center'>
                       <div className='h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center'>
@@ -191,7 +192,9 @@ export default function AdminVendorsPage() {
                         </span>
                       </div>
                       <div className='ml-4'>
-                        <p className='text-sm font-medium text-gray-900'>{vendor.name}</p>
+                        <Link href={`/admin/vendors/${vendor.id}`} className='text-sm font-medium text-blue-600 hover:text-blue-800'>
+                          {vendor.name}
+                        </Link>
                         <p className='text-sm text-gray-500'>ID: {vendor.id}</p>
                       </div>
                     </div>
