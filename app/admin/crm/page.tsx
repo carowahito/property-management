@@ -474,9 +474,10 @@ export default function CRMContactsPage() {
           {activeTab === 'leads' && (
             <div className="grid gap-3">
               {getFilteredData().map((lead: any) => (
-                <div
+                <Link
                   key={lead.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                  href={`/admin/leads/${lead.id}`}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md transition cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start gap-3">
@@ -509,7 +510,7 @@ export default function CRMContactsPage() {
                     {lead.lastContact && <span>Last contact: {formatDate(lead.lastContact)}</span>}
                     {lead.assignedTo && <span>Assigned to: {lead.assignedTo}</span>}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -518,9 +519,10 @@ export default function CRMContactsPage() {
           {activeTab === 'enquiries' && (
             <div className="grid gap-3">
               {getFilteredData().map((enquiry: any) => (
-                <div
+                <Link
                   key={enquiry.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                  href={`/admin/enquiries/${enquiry.id}`}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md transition cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -545,7 +547,7 @@ export default function CRMContactsPage() {
                     {enquiry.assignedTo && <span>Assigned to: {enquiry.assignedTo}</span>}
                     {enquiry.resolvedDate && <span>Resolved: {formatDate(enquiry.resolvedDate)}</span>}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
