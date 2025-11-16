@@ -294,6 +294,54 @@ export const mockAdmins = [
   },
 ]
 
+export const mockVendorUsers = [
+  {
+    id: '1',
+    vendorId: '1',
+    name: 'Quick Repairs Ltd',
+    email: 'info@quickrepairs.com',
+    phone: '+254 722 100 200',
+    role: 'Vendor Admin',
+    status: 'Active',
+  },
+  {
+    id: '2',
+    vendorId: '2',
+    name: 'Professional Cleaners',
+    email: 'clean@profclean.com',
+    phone: '+254 722 300 400',
+    role: 'Vendor Admin',
+    status: 'Active',
+  },
+  {
+    id: '3',
+    vendorId: '3',
+    name: 'Premier Security Services',
+    email: 'security@premier.com',
+    phone: '+254 722 500 600',
+    role: 'Vendor Admin',
+    status: 'Active',
+  },
+  {
+    id: '4',
+    vendorId: '4',
+    name: 'Landscape Designs',
+    email: 'landscape@designs.com',
+    phone: '+254 722 700 800',
+    role: 'Vendor Admin',
+    status: 'Active',
+  },
+  {
+    id: '5',
+    vendorId: '5',
+    name: 'Fix-It Fast Services',
+    email: 'contact@fixitfast.com',
+    phone: '+254 722 900 100',
+    role: 'Vendor Admin',
+    status: 'Active',
+  },
+]
+
 export const mockVendors = [
   {
     id: '1',
