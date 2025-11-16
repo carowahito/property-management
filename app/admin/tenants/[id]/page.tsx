@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 import { mockTenants, mockLeases, mockPayments, mockMaintenanceRequests } from '@/lib/mock-data'
+import TaskManager from '@/components/crm/TaskManager'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -12,7 +13,7 @@ interface Props {
 
 export default function TenantCRMPage({ params }: Props) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'overview' | 'payments' | 'maintenance' | 'documents' | 'communications' | 'notes' | 'activity'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'payments' | 'maintenance' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
 
@@ -170,7 +171,7 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="border-b border-gray-200">
-          <div className="flex space-x-1 p-1">
+          <div className="flex space-x-1 p-1 overflow-x-auto">
             {[
               { id: 'overview', label: 'Overview', icon: '📊' },
               { id: 'payments', label: 'Payments', icon: '💰' },
@@ -178,6 +179,7 @@ export default function TenantCRMPage({ params }: Props) {
               { id: 'documents', label: 'Documents', icon: '📄' },
               { id: 'communications', label: 'Communications', icon: '💬' },
               { id: 'notes', label: 'Notes', icon: '📝' },
+              { id: 'tasks', label: 'Tasks', icon: '✓' },
               { id: 'activity', label: 'Activity Log', icon: '📋' },
             ].map(tab => (
               <button
@@ -418,6 +420,15 @@ export default function TenantCRMPage({ params }: Props) {
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Tasks Tab */}
+          {activeTab === 'tasks' && (
+            <TaskManager
+              stakeholderId={tenantId}
+              stakeholderName={tenant.name}
+              stakeholderType="Tenant"
+            />
           )}
 
           {/* Activity Log Tab */}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 import { mockLandlords, mockProperties, mockTenants, mockPayments } from '@/lib/mock-data'
+import TaskManager from '@/components/crm/TaskManager'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -12,7 +13,7 @@ interface Props {
 
 export default function LandlordCRMPage({ params }: Props) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'financials' | 'tenants' | 'documents' | 'communications' | 'notes' | 'activity'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'financials' | 'tenants' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
 
   const landlordId = '1'
@@ -164,6 +165,7 @@ export default function LandlordCRMPage({ params }: Props) {
               { id: 'documents', label: 'Documents', icon: '📄' },
               { id: 'communications', label: 'Communications', icon: '💬' },
               { id: 'notes', label: 'Notes', icon: '📝' },
+              { id: 'tasks', label: 'Tasks', icon: '✓' },
               { id: 'activity', label: 'Activity Log', icon: '📋' },
             ].map(tab => (
               <button
@@ -408,6 +410,15 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Tasks Tab */}
+          {activeTab === 'tasks' && (
+            <TaskManager
+              stakeholderId={landlordId}
+              stakeholderName={landlord.name}
+              stakeholderType="Landlord"
+            />
           )}
 
           {/* Activity Log Tab */}
