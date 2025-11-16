@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { mockPayments, getLandlordById, getTenantById, getPropertyById } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
+import { formatDate } from '@/lib/utils'
 
 export default function AdminPaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -203,7 +204,7 @@ export default function AdminPaymentsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(payment.date).toLocaleDateString()}
+                      {formatDate(payment.date)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
@@ -276,7 +277,7 @@ export default function AdminPaymentsPage() {
                     <div>
                       <p className="text-sm text-gray-600">Payment Date</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {new Date(selectedPayment.date).toLocaleDateString()}
+                        {formatDate(selectedPayment.date)}
                       </p>
                     </div>
                   </div>

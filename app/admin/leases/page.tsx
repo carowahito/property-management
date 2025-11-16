@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { mockLeases, getTenantById, getLandlordById, getPropertyById } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
+import { formatDate } from '@/lib/utils'
 
 export default function AdminLeasesPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -210,10 +211,10 @@ export default function AdminLeasesPage() {
                         KES {lease.monthlyRent.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(lease.startDate).toLocaleDateString()}
+                        {formatDate(lease.startDate)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(lease.endDate).toLocaleDateString()}
+                        {formatDate(lease.endDate)}
                         {isExpiringSoon && (
                           <p className="text-xs text-orange-600 font-medium mt-1">
                             {daysUntilExpiry} days left
@@ -356,13 +357,13 @@ export default function AdminLeasesPage() {
                     <div>
                       <p className="text-sm text-gray-600">Start Date</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {new Date(selectedLease.startDate).toLocaleDateString()}
+                        {formatDate(selectedLease.startDate)}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">End Date</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {new Date(selectedLease.endDate).toLocaleDateString()}
+                        {formatDate(selectedLease.endDate)}
                       </p>
                     </div>
                     <div>

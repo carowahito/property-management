@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/lib/utils';
 
 interface Invitation {
   id: string
@@ -310,10 +311,10 @@ export default function InvitationsPage() {
                     {invitation.property || '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(invitation.sentDate).toLocaleDateString()}
+                    {formatDate(invitation.sentDate)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(invitation.expiryDate).toLocaleDateString()}
+                    {formatDate(invitation.expiryDate)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
