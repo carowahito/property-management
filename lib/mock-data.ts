@@ -614,3 +614,123 @@ export const mockInvoices = [
     ],
   },
 ]
+
+// ============================================================================
+// HELPER FUNCTIONS - Query relationships between entities
+// ============================================================================
+
+// Get entity by ID
+export const getLandlordById = (id: string) => mockLandlords.find(l => l.id === id)
+export const getPropertyById = (id: string) => mockProperties.find(p => p.id === id)
+export const getTenantById = (id: string) => mockTenants.find(t => t.id === id)
+export const getVendorById = (id: string) => mockVendors.find(v => v.id === id)
+
+// Get related entities
+export const getPropertiesByLandlordId = (landlordId: string) => 
+  mockProperties.filter(p => p.landlordId === landlordId)
+
+export const getTenantsByLandlordId = (landlordId: string) =>
+  mockTenants.filter(t => t.landlordId === landlordId)
+
+export const getTenantsByPropertyId = (propertyId: string) =>
+  mockTenants.filter(t => t.propertyId === propertyId)
+
+export const getPaymentsByTenantId = (tenantId: string) =>
+  mockPayments.filter(p => p.tenantId === tenantId)
+
+export const getPaymentsByLandlordId = (landlordId: string) =>
+  mockPayments.filter(p => p.landlordId === landlordId)
+
+export const getPaymentsByPropertyId = (propertyId: string) =>
+  mockPayments.filter(p => p.propertyId === propertyId)
+
+export const getMaintenanceByTenantId = (tenantId: string) =>
+  mockMaintenanceRequests.filter(m => m.tenantId === tenantId)
+
+export const getMaintenanceByLandlordId = (landlordId: string) =>
+  mockMaintenanceRequests.filter(m => m.landlordId === landlordId)
+
+export const getMaintenanceByPropertyId = (propertyId: string) =>
+  mockMaintenanceRequests.filter(m => m.propertyId === propertyId)
+
+export const getLeaseByTenantId = (tenantId: string) =>
+  mockLeases.find(l => l.tenantId === tenantId)
+
+export const getLeasesByLandlordId = (landlordId: string) =>
+  mockLeases.filter(l => l.landlordId === landlordId)
+
+export const getLeasesByPropertyId = (propertyId: string) =>
+  mockLeases.filter(l => l.propertyId === propertyId)
+
+// Calculate statistics
+export const getPropertyStats = (propertyId: string) => {
+  const property = getPropertyById(propertyId)
+  const tenants = getTenantsByPropertyId(propertyId)
+  const payments = getPaymentsByPropertyId(propertyId)
+  
+  if (!property) return null
+  
+  const currentMonthPayments = payments.filter(p => p.month === 'November 2024' && p.status === 'Paid')
+  const totalCollected = currentMonthPayments.reduce((sum, p) => sum + p.amount, 0)
+  
+  return {
+    totalUnits: property.units,
+    occupiedUnits: property.occupied,
+    vacantUnits: property.units - property.occupied,
+    occupancyRate: (property.occupied / property.units) * 100,
+    totalRent: property.totalRent,
+    collectedThisMonth: totalCollected,
+    tenantCount: tenants.length,
+  }
+}
+
+export const getLandlordStats = (landlordId: string) => {
+  const properties = getPropertiesByLandlordId(landlordId)
+  const tenants = getTenantsByLandlordId(landlordId)
+  const payments = getPaymentsByLandlordId(landlordId)
+  
+  const totalUnits = properties.reduce((sum, p) => sum + p.units, 0)
+  const occupiedUnits = properties.reduce((sum, p) => sum + p.occupied, 0)
+  const totalRent = properties.reduce((sum, p) => sum + p.totalRent, 0)
+  
+  const paidPayments = payments.filter(p => 
+    p.status === 'Paid' && p.month === 'November 2024'
+  )
+  const pendingPayments = payments.filter(p => 
+    p.status === 'Pending' && p.month === 'November 2024'
+  )
+  
+  return {
+    totalProperties: properties.length,
+    totalUnits,
+    occupiedUnits,
+    vacantUnits: totalUnits - occupiedUnits,
+    occupancyRate: (occupiedUnits / totalUnits) * 100,
+    totalTenants: tenants.length,
+    monthlyRevenue: totalRent,
+    collectedThisMonth: paidPayments.reduce((sum, p) => sum + p.amount, 0),
+    pendingThisMonth: pendingPayments.reduce((sum, p) => sum + p.amount, 0),
+  }
+}
+
+export const getTenantStats = (tenantId: string) => {
+  const tenant = getTenantById(tenantId)
+  const payments = getPaymentsByTenantId(tenantId)
+  const maintenance = getMaintenanceByTenantId(tenantId)
+  const lease = getLeaseByTenantId(tenantId)
+  
+  if (!tenant) return null
+  
+  const paidPayments = payments.filter(p => p.status === 'Paid')
+  const pendingPayments = payments.filter(p => p.status === 'Pending' || p.status === 'Overdue')
+  
+  return {
+    monthlyRent: tenant.rent,
+    totalPaid: paidPayments.reduce((sum, p) => sum + p.amount, 0),
+    totalPending: pendingPayments.reduce((sum, p) => sum + p.amount, 0),
+    maintenanceRequests: maintenance.length,
+    openMaintenanceRequests: maintenance.filter(m => m.status !== 'Completed').length,
+    leaseEndDate: tenant.leaseEnd,
+    daysUntilLeaseEnd: Math.ceil((new Date(tenant.leaseEnd).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
+  }
+}

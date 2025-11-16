@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Document {
   id: string;
@@ -115,7 +116,7 @@ export default function DocumentsPage() {
             Manage all property-related documents and certificates
           </p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Upload Document</button>
+        <Button variant="primary" size="lg">+ Upload Document</Button>
       </div>
 
       {/* Stats Cards */}

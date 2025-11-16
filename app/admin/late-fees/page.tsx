@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface LateFee {
   id: string;
@@ -87,7 +88,7 @@ export default function LateFeesPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Late Fees Management</h1>
           <p className='text-gray-600 mt-1'>Track and manage late payment fees</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>Configure Policies</button>
+        <Button variant="primary" size="lg">Configure Policies</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>

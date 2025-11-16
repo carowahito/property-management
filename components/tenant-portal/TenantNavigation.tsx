@@ -103,6 +103,7 @@ export default function TenantNavigation() {
               {openMenus.services && (
                 <div className="absolute left-0 mt-0 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                   <Link href="/tenant/maintenance" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Maintenance</Link>
+                  <Link href="/tenant/quotes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Repair Quotes</Link>
                   <Link href="/tenant/amenities" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Amenities</Link>
                   <Link href="/tenant/packages" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Packages</Link>
                   <Link href="/tenant/parking" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Parking</Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface MaintenanceRequest {
   id: string;
@@ -106,12 +107,17 @@ export default function MaintenancePage() {
 
   return (
     <div className='p-6 space-y-6'>
-      <div className='flex items-center justify-between'>
+            <div className="flex items-center justify-between">
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Maintenance Requests</h1>
-          <p className='text-gray-600 mt-1'>Track and manage property maintenance requests</p>
+          <h1 className="text-3xl font-bold text-gray-900">Maintenance Requests</h1>
+          <p className="text-gray-600 mt-1">Manage and track maintenance requests</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ New Request</button>
+        <Button variant="primary" size="lg">
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          New Request
+        </Button>
       </div>
 
       {/* Stats Cards */}

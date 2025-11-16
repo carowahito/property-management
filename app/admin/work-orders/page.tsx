@@ -1,5 +1,7 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+
 export default function WorkOrdersPage() {
   const workOrders = [
     {
@@ -38,7 +40,7 @@ export default function WorkOrdersPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Work Orders</h1>
           <p className='text-gray-600 mt-1'>Create and manage maintenance work orders</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Create Work Order</button>
+        <Button variant="primary" size="lg">+ Create Work Order</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>

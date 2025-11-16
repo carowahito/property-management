@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Viewing {
   id: string;
@@ -100,7 +101,7 @@ export default function ViewingsPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Property Viewings</h1>
           <p className='text-gray-600 mt-1'>Schedule and manage property viewing appointments</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Schedule Viewing</button>
+        <Button variant="primary" size="lg">+ Schedule Viewing</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
@@ -215,13 +216,13 @@ export default function ViewingsPage() {
                   </span>
                 </td>
                 <td className='px-6 py-4 text-sm space-x-2'>
-                  <button  >
+                  <Button variant="primary" size="sm">
                     View
-                  </button>
+                  </Button>
                   {viewing.status === 'scheduled' && (
-                    <button  >
+                    <Button variant="success" size="sm">
                       Complete
-                    </button>
+                    </Button>
                   )}
                 </td>
               </tr>

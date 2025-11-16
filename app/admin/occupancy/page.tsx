@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface PropertyOccupancy {
   id: string;
@@ -92,7 +93,7 @@ export default function OccupancyPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Occupancy Analytics</h1>
           <p className='text-gray-600 mt-1'>Track occupancy rates and vacancy trends</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>Download Report</button>
+        <Button variant="primary" size="lg">Download Report</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
@@ -193,9 +194,9 @@ export default function OccupancyPage() {
                   KES {property.monthlyRevenue.toLocaleString()}
                 </td>
                 <td className='px-6 py-4 text-sm'>
-                  <button  >
+                  <Button variant="primary" size="sm">
                     Details
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}

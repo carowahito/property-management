@@ -18,8 +18,10 @@ export default function LandlordLayout({
                 <Link href="/landlord/dashboard" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-green-600">Dashboard</Link>
                 <Link href="/landlord/properties" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Properties</Link>
                 <Link href="/landlord/tenants" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Tenants</Link>
-                <Link href="/landlord/financials" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Financials</Link>
                 <Link href="/landlord/maintenance" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Maintenance</Link>
+                <Link href="/landlord/quotes" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Quotes</Link>
+                <Link href="/landlord/repairs" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Work Evidence</Link>
+                <Link href="/landlord/financials" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Financials</Link>
                 <Link href="/landlord/leases" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Leases</Link>
                 <Link href="/landlord/documents" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Documents</Link>
                 <Link href="/landlord/analytics" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Analytics</Link>

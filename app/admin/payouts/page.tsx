@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Payout {
   id: string;
@@ -97,7 +98,7 @@ export default function PayoutsPage() {
             Manage payout schedules and track commission deductions
           </p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Process Payout</button>
+        <Button variant="primary" size="lg">+ Process Payout</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>

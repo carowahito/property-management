@@ -1,6 +1,7 @@
 'use client'
 
 import { mockTenants } from '@/lib/mock-data'
+import { Button } from '@/components/ui/button'
 
 export default function TenantsPage() {
   const stats = [
@@ -12,9 +13,12 @@ export default function TenantsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Tenants</h1>
-        <p className="text-gray-600 mt-2">Manage tenant information and leases</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Tenants</h1>
+          <p className="text-gray-600 mt-2">Manage tenant information and leases</p>
+        </div>
+        <Button variant="primary" size="lg">+ Add Tenant</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

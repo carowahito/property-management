@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Renewal {
   id: string;
@@ -86,7 +87,7 @@ export default function RenewalsPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Lease Renewals</h1>
           <p className='text-gray-600 mt-1'>Track and manage upcoming lease renewals</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Send Renewal Notice</button>
+        <Button variant="primary" size="lg">+ Send Renewal Notice</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>

@@ -1,6 +1,7 @@
 'use client'
 
 import { mockProperties } from '@/lib/mock-data'
+import { Button } from '@/components/ui/button'
 
 export default function PropertiesPage() {
   const totalUnits = mockProperties.reduce((sum, p) => sum + p.units, 0)
@@ -16,9 +17,12 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Properties</h1>
-        <p className="text-gray-600 mt-2">Manage and monitor all your properties</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Properties</h1>
+          <p className="text-gray-600 mt-2">Manage and monitor all your properties</p>
+        </div>
+        <Button variant="primary" size="lg">+ Add Property</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

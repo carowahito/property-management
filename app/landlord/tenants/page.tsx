@@ -1,6 +1,8 @@
 'use client'
 
-export default function LandlordTenants() {
+import { Button } from '@/components/ui/button'
+
+export default function LandlordTenantsPage() {
   const tenants = [
     { id: 1, name: 'John Smith', unit: '4B', property: 'Sunset Apartments', rent: 1500, status: 'current', moveIn: '2023-01-15' },
     { id: 2, name: 'Sarah Johnson', unit: '7A', property: 'Green Valley', rent: 1800, status: 'current', moveIn: '2023-03-01' },
@@ -9,9 +11,9 @@ export default function LandlordTenants() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Tenants</h1>
-        <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">+ Add Tenant</button>
+            <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Tenants</h1>
+        <Button variant="success" size="lg">+ Add Tenant</Button>
       </div>
 
       <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -40,9 +42,9 @@ export default function LandlordTenants() {
                     {tenant.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <button className="text-blue-600 hover:text-blue-800">View</button>
-                </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <Button variant="primary" size="sm">View</Button>
+              </td>
               </tr>
             ))}
           </tbody>

@@ -2,23 +2,36 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { mockTenants } from '@/lib/mock-data'
 
 export default function TenantLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
-    // TODO: Implement actual authentication
+    // Simulate authentication with mock data
     setTimeout(() => {
-      setIsLoading(false)
-      // Redirect to dashboard on success
-      window.location.href = '/tenant/dashboard'
+      const tenant = mockTenants.find(t => t.email === email)
+      
+      if (tenant && password === 'password') {
+        // Store tenant info in localStorage
+        localStorage.setItem('tenantId', tenant.id)
+        localStorage.setItem('tenantName', tenant.name)
+        localStorage.setItem('propertyId', tenant.propertyId)
+        setIsLoading(false)
+        router.push('/tenant/dashboard')
+      } else {
+        setError('Invalid email or password')
+        setIsLoading(false)
+      }
     }, 1000)
   }
 

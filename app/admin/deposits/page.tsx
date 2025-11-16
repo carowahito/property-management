@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import { Button } from '@/components/ui/button'
 
 export default function DepositsPage() {
   const deposits = [
@@ -44,7 +46,7 @@ export default function DepositsPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Security Deposits</h1>
           <p className='text-gray-600 mt-1'>Track and manage tenant security deposits</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Record Deposit</button>
+        <Button variant="primary" size="lg">+ Record Deposit</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>

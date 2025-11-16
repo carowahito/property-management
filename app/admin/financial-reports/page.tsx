@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
-interface FinancialReport {
+interface Report {
   id: string;
   reportType: 'income-statement' | 'cash-flow' | 'balance-sheet' | 'profit-loss';
   period: string;
@@ -14,7 +15,7 @@ interface FinancialReport {
 }
 
 export default function FinancialReportsPage() {
-  const [reports] = useState<FinancialReport[]>([
+  const [reports] = useState<Report[]>([
     {
       id: '1',
       reportType: 'income-statement',
@@ -86,7 +87,7 @@ export default function FinancialReportsPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Financial Reports</h1>
           <p className='text-gray-600 mt-1'>Generate and analyze comprehensive financial reports</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Generate Report</button>
+        <Button variant="primary" size="lg">+ Generate Report</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>

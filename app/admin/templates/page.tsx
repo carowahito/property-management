@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Template {
   id: string;
@@ -100,7 +101,7 @@ export default function TemplatesPage() {
             Create and manage lease agreement and document templates
           </p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Create Template</button>
+        <Button variant="primary" size="lg">+ Create Template</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
@@ -190,12 +191,12 @@ export default function TemplatesPage() {
                   </span>
                 </td>
                 <td className='px-6 py-4 text-sm space-x-2'>
-                  <button  >
+                  <Button variant="outline" size="sm">
                     Edit
-                  </button>
-                  <button  >
+                  </Button>
+                  <Button variant="primary" size="sm">
                     Use
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}

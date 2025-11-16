@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface ComplianceItem {
   id: string;
@@ -86,7 +87,7 @@ export default function CompliancePage() {
           <h1 className='text-3xl font-bold text-gray-900'>Compliance Management</h1>
           <p className='text-gray-600 mt-1'>Monitor regulatory compliance and certifications</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Add Compliance Item</button>
+        <Button variant="primary" size="lg">+ Add Compliance Item</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
@@ -176,12 +177,12 @@ export default function CompliancePage() {
                   </span>
                 </td>
                 <td className='px-6 py-4 text-sm space-x-2'>
-                  <button  >
+                  <Button variant="primary" size="sm">
                     View
-                  </button>
-                  <button  >
+                  </Button>
+                  <Button variant="success" size="sm">
                     Renew
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}

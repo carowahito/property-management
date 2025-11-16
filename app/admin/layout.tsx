@@ -18,7 +18,6 @@ export default function AdminLayout({
     'Operations': false,
     'Analytics & Insights': false,
     'Documentation': false,
-    'Extensions': false,
   })
 
   const menuSections = [
@@ -33,8 +32,11 @@ export default function AdminLayout({
       items: [
         { href: '/admin/properties', label: 'Properties', icon: '🏠' },
         { href: '/admin/tenants', label: 'Tenants', icon: '👥' },
+        { href: '/admin/landlords', label: 'Landlords', icon: '🏢' },
+        { href: '/admin/vendors', label: 'Vendors', icon: '🔨' },
         { href: '/admin/leases', label: 'Leases', icon: '📋' },
         { href: '/admin/viewings', label: 'Viewings', icon: '👁️' },
+        { href: '/admin/invitations', label: 'Invitations', icon: '✉️' },
       ]
     },
     {
@@ -71,12 +73,6 @@ export default function AdminLayout({
       items: [
         { href: '/admin/documents', label: 'Documents', icon: '📄' },
         { href: '/admin/templates', label: 'Templates', icon: '📑' },
-      ]
-    },
-    {
-      title: 'Extensions',
-      items: [
-        { href: '/admin/real-estate', label: 'Real Estate Hub', icon: '🏘️' },
       ]
     }
   ]

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface SustainabilityMetric {
   id: string;
@@ -74,7 +75,7 @@ export default function SustainabilityPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Sustainability Metrics</h1>
           <p className='text-gray-600 mt-1'>Track environmental impact and green initiatives</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>Download Report</button>
+        <Button variant="primary" size="lg">Download Report</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>

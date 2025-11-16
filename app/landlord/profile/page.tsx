@@ -1,6 +1,8 @@
 'use client'
 
-export default function LandlordProfile() {
+import { Button } from '@/components/ui/button'
+
+export default function LandlordProfilePage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">My Profile</h1>
@@ -22,7 +24,7 @@ export default function LandlordProfile() {
             <input type="text" defaultValue="Landlord" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
           </div>
         </div>
-        <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Update Profile</button>
+        <Button variant="success" size="lg">Update Profile</Button>
       </div>
     </div>
   )

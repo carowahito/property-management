@@ -35,18 +35,22 @@ export default function RealEstateDashboardPage() {
 
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Links</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/real-estate/properties" className="block p-4 border rounded-lg hover:bg-blue-50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <a href="/admin/real-estate/properties" className="block p-4 border rounded-lg hover:bg-blue-50">
             <div className="font-semibold text-blue-900">Manage Properties</div>
             <div className="text-sm text-gray-600">View and manage all properties</div>
           </a>
-          <a href="/real-estate/tenants" className="block p-4 border rounded-lg hover:bg-green-50">
+          <a href="/admin/real-estate/renters" className="block p-4 border rounded-lg hover:bg-green-50">
             <div className="font-semibold text-green-900">Tenant Management</div>
             <div className="text-sm text-gray-600">Manage tenant information</div>
           </a>
-          <a href="/real-estate/leases" className="block p-4 border rounded-lg hover:bg-purple-50">
+          <a href="/admin/real-estate/leases" className="block p-4 border rounded-lg hover:bg-purple-50">
             <div className="font-semibold text-purple-900">Lease Management</div>
             <div className="text-sm text-gray-600">View and manage leases</div>
+          </a>
+          <a href="/admin/real-estate/vendors" className="block p-4 border rounded-lg hover:bg-orange-50">
+            <div className="font-semibold text-orange-900">Vendor Management</div>
+            <div className="text-sm text-gray-600">Manage vendors and contractors</div>
           </a>
         </div>
       </div>

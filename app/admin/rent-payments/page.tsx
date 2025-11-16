@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Payment {
   id: string;
@@ -100,7 +101,7 @@ export default function RentPaymentsPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Rent Payments</h1>
           <p className='text-gray-600 mt-1'>Track and manage rent payment transactions</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Record Payment</button>
+        <Button variant="primary" size="lg">+ Record Payment</Button>
       </div>
 
       {/* Stats Cards */}

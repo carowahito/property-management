@@ -1,6 +1,8 @@
 'use client'
 
-export default function LandlordDocuments() {
+import { Button } from '@/components/ui/button'
+
+export default function LandlordDocumentsPage() {
   const documents = [
     { id: 1, name: 'Lease Agreement - Unit 4B', type: 'lease', date: '2024-01-15', size: '245 KB' },
     { id: 2, name: 'Property Insurance Policy', type: 'insurance', date: '2024-01-01', size: '1.2 MB' },
@@ -11,7 +13,7 @@ export default function LandlordDocuments() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
-        <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">+ Upload Document</button>
+        <Button variant="success" size="lg">+ Upload Document</Button>
       </div>
 
       <div className="bg-white shadow rounded-lg p-6">
@@ -26,8 +28,8 @@ export default function LandlordDocuments() {
                 </div>
               </div>
               <div className="flex space-x-3">
-                <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800">Download</button>
-                <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800">Share</button>
+                <Button variant="primary" size="sm">Download</Button>
+                <Button variant="outline" size="sm">Share</Button>
               </div>
             </div>
           ))}

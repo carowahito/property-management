@@ -1,6 +1,8 @@
 'use client'
 
-export default function LandlordProperties() {
+import { Button } from '@/components/ui/button'
+
+export default function LandlordPropertiesPage() {
   const properties = [
     { id: 1, name: 'Sunset Apartments', location: 'Downtown', units: 12, occupied: 10, monthlyRent: 18000 },
     { id: 2, name: 'Green Valley Condos', location: 'Westside', units: 8, occupied: 8, monthlyRent: 16000 },
@@ -10,9 +12,9 @@ export default function LandlordProperties() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Properties</h1>
-        <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">+ Add Property</button>
+            <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">My Properties</h1>
+        <Button variant="success" size="lg">+ Add Property</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -36,9 +38,9 @@ export default function LandlordProperties() {
                   <span className="font-medium">${property.monthlyRent.toLocaleString()}</span>
                 </div>
               </div>
-              <button className="mt-4 w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+              <Button variant="outline" className="mt-4 w-full">
                 View Details
-              </button>
+              </Button>
             </div>
           </div>
         ))}
