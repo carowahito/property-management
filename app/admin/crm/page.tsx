@@ -2,20 +2,57 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
-import { mockTenants, mockLandlords, mockVendors } from '@/lib/mock-data'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
+
+interface Tenant {
+  id: string
+  name: string
+  email: string
+  phone: string
+  status: string
+  lease?: {
+    property: {
+      name: string
+    }
+    unit: string | null
+  }
+}
+
+interface Landlord {
+  id: string
+  name: string
+  email: string
+  phone: string
+  status: string
+  _count: {
+    properties: number
+  }
+}
+
+interface Vendor {
+  id: string
+  name: string
+  email: string
+  phone: string
+  company: string | null
+  specialization: string
+  rating: number
+  status: string
+}
 
 interface Lead {
   id: string
   name: string
   email: string
   phone: string
-  type: 'Property Inquiry' | 'Service Request' | 'Partnership' | 'General'
-  status: 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Lost'
-  source: 'Website' | 'Referral' | 'Social Media' | 'Walk-in' | 'Email'
-  createdDate: string
-  lastContact?: string
+  type: string
+  status: string
+  source: string
+  createdAt: string
+  lastContactedAt?: string
   assignedTo?: string
   notes?: string
 }
@@ -27,11 +64,41 @@ interface Enquiry {
   phone: string
   subject: string
   message: string
-  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed'
-  priority: 'Low' | 'Medium' | 'High'
-  createdDate: string
-  resolvedDate?: string
+  status: string
+  priority: string
+  createdAt: string
+  resolvedAt?: string
   assignedTo?: string
+}
+
+async function fetchTenants() {
+  const response = await fetch('/api/tenants')
+  if (!response.ok) throw new Error('Failed to fetch tenants')
+  return response.json()
+}
+
+async function fetchLandlords() {
+  const response = await fetch('/api/landlords')
+  if (!response.ok) throw new Error('Failed to fetch landlords')
+  return response.json()
+}
+
+async function fetchVendors() {
+  const response = await fetch('/api/vendors')
+  if (!response.ok) throw new Error('Failed to fetch vendors')
+  return response.json()
+}
+
+async function fetchLeads() {
+  const response = await fetch('/api/leads')
+  if (!response.ok) throw new Error('Failed to fetch leads')
+  return response.json()
+}
+
+async function fetchEnquiries() {
+  const response = await fetch('/api/enquiries')
+  if (!response.ok) throw new Error('Failed to fetch enquiries')
+  return response.json()
 }
 
 export default function CRMContactsPage() {
@@ -40,142 +107,88 @@ export default function CRMContactsPage() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [showAddLeadModal, setShowAddLeadModal] = useState(false)
 
-  // Mock leads data
-  const mockLeads: Lead[] = [
-    {
-      id: 'L001',
-      name: 'Sarah Mitchell',
-      email: 'sarah.mitchell@email.com',
-      phone: '+254 790 123 456',
-      type: 'Property Inquiry',
-      status: 'Qualified',
-      source: 'Website',
-      createdDate: '2024-11-10T09:00:00',
-      lastContact: '2024-11-14T10:30:00',
-      assignedTo: 'Alice Johnson',
-      notes: 'Interested in 2-bedroom apartment in Westlands. Budget: KES 80,000/month',
-    },
-    {
-      id: 'L002',
-      name: 'James Kamau',
-      email: 'james.k@email.com',
-      phone: '+254 722 345 678',
-      type: 'Property Inquiry',
-      status: 'New',
-      source: 'Referral',
-      createdDate: '2024-11-15T14:20:00',
-      assignedTo: 'David Brown',
-      notes: 'Looking for commercial space in Upperhill',
-    },
-    {
-      id: 'L003',
-      name: 'Linda Mwangi',
-      email: 'linda.mwangi@company.com',
-      phone: '+254 733 456 789',
-      type: 'Partnership',
-      status: 'Contacted',
-      source: 'Social Media',
-      createdDate: '2024-11-12T11:00:00',
-      lastContact: '2024-11-13T15:00:00',
-      assignedTo: 'Alice Johnson',
-      notes: 'Property owner with 5 units, interested in management services',
-    },
-    {
-      id: 'L004',
-      name: 'Peter Odhiambo',
-      email: 'p.odhiambo@email.com',
-      phone: '+254 744 567 890',
-      type: 'Service Request',
-      status: 'Lost',
-      source: 'Walk-in',
-      createdDate: '2024-10-28T10:00:00',
-      lastContact: '2024-11-05T12:00:00',
-      assignedTo: 'Bob Smith',
-      notes: 'Chose competitor. Price sensitive.',
-    },
-  ]
+  // Fetch data from APIs
+  const { data: tenantsData, isLoading: isLoadingTenants } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: fetchTenants,
+  })
 
-  // Mock enquiries data
-  const mockEnquiries: Enquiry[] = [
-    {
-      id: 'E001',
-      name: 'Grace Wanjiru',
-      email: 'grace.w@email.com',
-      phone: '+254 755 678 901',
-      subject: 'Lease Terms Question',
-      message: 'What are the penalties for early lease termination?',
-      status: 'Resolved',
-      priority: 'Medium',
-      createdDate: '2024-11-14T09:30:00',
-      resolvedDate: '2024-11-14T14:00:00',
-      assignedTo: 'Carol White',
-    },
-    {
-      id: 'E002',
-      name: 'Michael Otieno',
-      email: 'michael.o@email.com',
-      phone: '+254 766 789 012',
-      subject: 'Payment Methods',
-      message: 'Do you accept cryptocurrency payments?',
-      status: 'In Progress',
-      priority: 'Low',
-      createdDate: '2024-11-15T11:00:00',
-      assignedTo: 'Carol White',
-    },
-    {
-      id: 'E003',
-      name: 'Anna Njeri',
-      email: 'anna.njeri@email.com',
-      phone: '+254 777 890 123',
-      subject: 'Maintenance Emergency',
-      message: 'Water heater not working in Unit 405',
-      status: 'Open',
-      priority: 'High',
-      createdDate: '2024-11-16T08:00:00',
-      assignedTo: 'Bob Smith',
-    },
-  ]
+  const { data: landlordsData, isLoading: isLoadingLandlords } = useQuery({
+    queryKey: ['landlords'],
+    queryFn: fetchLandlords,
+  })
+
+  const { data: vendorsData, isLoading: isLoadingVendors } = useQuery({
+    queryKey: ['vendors'],
+    queryFn: fetchVendors,
+  })
+
+  const { data: leadsData, isLoading: isLoadingLeads } = useQuery({
+    queryKey: ['leads'],
+    queryFn: fetchLeads,
+  })
+
+  const { data: enquiriesData, isLoading: isLoadingEnquiries } = useQuery({
+    queryKey: ['enquiries'],
+    queryFn: fetchEnquiries,
+  })
+
+  const isLoading = isLoadingTenants || isLoadingLandlords || isLoadingVendors || isLoadingLeads || isLoadingEnquiries
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  const tenants = tenantsData?.tenants || []
+  const landlords = landlordsData?.landlords || []
+  const vendors = vendorsData?.vendors || []
+  const leads = leadsData?.leads || []
+  const enquiries = enquiriesData?.enquiries || []
 
   // Combine all contacts
   const allContacts = [
-    ...mockTenants.map(t => ({ ...t, contactType: 'Tenant' as const, link: `/admin/tenants/${t.id}` })),
-    ...mockLandlords.map(l => ({ ...l, contactType: 'Landlord' as const, link: `/admin/landlords/${l.id}` })),
-    ...mockVendors.map(v => ({ ...v, contactType: 'Vendor' as const, link: `/admin/vendors/${v.id}` })),
+    ...tenants.map((t: Tenant) => ({ ...t, contactType: 'Tenant' as const, link: `/admin/tenants/${t.id}` })),
+    ...landlords.map((l: Landlord) => ({ ...l, contactType: 'Landlord' as const, link: `/admin/landlords/${l.id}` })),
+    ...vendors.map((v: Vendor) => ({ ...v, contactType: 'Vendor' as const, link: `/admin/vendors/${v.id}` })),
   ]
 
   const getFilteredData = () => {
     switch (activeTab) {
       case 'tenants':
-        return mockTenants.filter(t => 
+        return tenants.filter((t: Tenant) =>
           t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           t.email.toLowerCase().includes(searchTerm.toLowerCase())
         )
       case 'landlords':
-        return mockLandlords.filter(l => 
+        return landlords.filter((l: Landlord) =>
           l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           l.email.toLowerCase().includes(searchTerm.toLowerCase())
         )
       case 'vendors':
-        return mockVendors.filter(v => 
+        return vendors.filter((v: Vendor) =>
           v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           v.email.toLowerCase().includes(searchTerm.toLowerCase())
         )
       case 'leads':
-        return mockLeads.filter(l => {
+        return leads.filter((l: Lead) => {
           const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             l.email.toLowerCase().includes(searchTerm.toLowerCase())
           const matchesStatus = filterStatus === 'all' || l.status === filterStatus
           return matchesSearch && matchesStatus
         })
       case 'enquiries':
-        return mockEnquiries.filter(e => {
+        return enquiries.filter((e: Enquiry) => {
           const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             e.subject.toLowerCase().includes(searchTerm.toLowerCase())
           const matchesStatus = filterStatus === 'all' || e.status === filterStatus
           return matchesSearch && matchesStatus
         })
       default:
-        return allContacts.filter(c => 
+        return allContacts.filter(c =>
           c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           c.email.toLowerCase().includes(searchTerm.toLowerCase())
         )
@@ -183,21 +196,24 @@ export default function CRMContactsPage() {
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active':
-      case 'Qualified':
-      case 'Resolved':
+    const upperStatus = status.toUpperCase()
+    switch (upperStatus) {
+      case 'ACTIVE':
+      case 'QUALIFIED':
+      case 'RESOLVED':
         return 'bg-green-100 text-green-800'
-      case 'New':
-      case 'Open':
+      case 'NEW':
+      case 'OPEN':
+      case 'PENDING':
         return 'bg-blue-100 text-blue-800'
-      case 'Contacted':
-      case 'In Progress':
+      case 'CONTACTED':
+      case 'IN_PROGRESS':
         return 'bg-yellow-100 text-yellow-800'
-      case 'Lost':
-      case 'Closed':
+      case 'LOST':
+      case 'CLOSED':
+      case 'INACTIVE':
         return 'bg-gray-100 text-gray-800'
-      case 'Converted':
+      case 'CONVERTED':
         return 'bg-purple-100 text-purple-800'
       default:
         return 'bg-gray-100 text-gray-800'
@@ -205,23 +221,25 @@ export default function CRMContactsPage() {
   }
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High': return 'bg-red-100 text-red-800'
-      case 'Medium': return 'bg-yellow-100 text-yellow-800'
-      case 'Low': return 'bg-blue-100 text-blue-800'
+    const upperPriority = priority.toUpperCase()
+    switch (upperPriority) {
+      case 'HIGH':
+      case 'URGENT': return 'bg-red-100 text-red-800'
+      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800'
+      case 'LOW': return 'bg-blue-100 text-blue-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
 
   const stats = {
     totalContacts: allContacts.length,
-    tenants: mockTenants.length,
-    landlords: mockLandlords.length,
-    vendors: mockVendors.length,
-    leads: mockLeads.length,
-    enquiries: mockEnquiries.length,
-    activeLeads: mockLeads.filter(l => ['New', 'Contacted', 'Qualified'].includes(l.status)).length,
-    openEnquiries: mockEnquiries.filter(e => ['Open', 'In Progress'].includes(e.status)).length,
+    tenants: tenants.length,
+    landlords: landlords.length,
+    vendors: vendors.length,
+    leads: leads.length,
+    enquiries: enquiries.length,
+    activeLeads: leads.filter((l: Lead) => ['NEW', 'CONTACTED', 'QUALIFIED'].includes(l.status.toUpperCase())).length,
+    openEnquiries: enquiries.filter((e: Enquiry) => ['OPEN', 'IN_PROGRESS', 'PENDING'].includes(e.status.toUpperCase())).length,
   }
 
   return (
@@ -395,7 +413,9 @@ export default function CRMContactsPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{tenant.name}</p>
-                      <p className="text-sm text-gray-600">{tenant.property} - Unit {tenant.unit}</p>
+                      <p className="text-sm text-gray-600">
+                        {tenant.lease ? `${tenant.lease.property.name} - Unit ${tenant.lease.unit || 'N/A'}` : 'No active lease'}
+                      </p>
                       <p className="text-xs text-gray-500">{tenant.email} • {tenant.phone}</p>
                     </div>
                   </div>
@@ -425,7 +445,7 @@ export default function CRMContactsPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{landlord.name}</p>
-                      <p className="text-sm text-gray-600">{landlord.properties.length} properties • {landlord.totalUnits} units</p>
+                      <p className="text-sm text-gray-600">{landlord._count.properties} properties</p>
                       <p className="text-xs text-gray-500">{landlord.email} • {landlord.phone}</p>
                     </div>
                   </div>
@@ -506,8 +526,8 @@ export default function CRMContactsPage() {
                     <p className="text-sm text-gray-600 bg-gray-50 rounded p-2 mb-2">{lead.notes}</p>
                   )}
                   <div className="flex justify-between text-xs text-gray-500">
-                    <span>Created: {formatDate(lead.createdDate)}</span>
-                    {lead.lastContact && <span>Last contact: {formatDate(lead.lastContact)}</span>}
+                    <span>Created: {formatDate(lead.createdAt)}</span>
+                    {lead.lastContactedAt && <span>Last contact: {formatDate(lead.lastContactedAt)}</span>}
                     {lead.assignedTo && <span>Assigned to: {lead.assignedTo}</span>}
                   </div>
                 </Link>
@@ -543,9 +563,9 @@ export default function CRMContactsPage() {
                     <Button variant="outline" size="sm">Respond</Button>
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 border-t pt-2">
-                    <span>Created: {formatDate(enquiry.createdDate)}</span>
+                    <span>Created: {formatDate(enquiry.createdAt)}</span>
                     {enquiry.assignedTo && <span>Assigned to: {enquiry.assignedTo}</span>}
-                    {enquiry.resolvedDate && <span>Resolved: {formatDate(enquiry.resolvedDate)}</span>}
+                    {enquiry.resolvedAt && <span>Resolved: {formatDate(enquiry.resolvedAt)}</span>}
                   </div>
                 </Link>
               ))}
