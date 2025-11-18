@@ -1,89 +1,111 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { formatDate } from '@/lib/utils';
 
 interface MaintenanceRequest {
-  id: string;
-  tenantName: string;
-  propertyName: string;
-  unitNumber: string;
-  issueType: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'open' | 'in-progress' | 'completed' | 'cancelled';
-  description: string;
-  createdDate: string;
-  assignedTo?: string;
-  estimatedCost?: number;
+  id: string
+  title: string
+  description: string
+  issueType: string
+  priority: string
+  status: string
+  createdAt: string
+  scheduledDate?: string
+  completedDate?: string
+  estimatedCost?: number
+  actualCost?: number
+  tenant?: {
+    id: string
+    name: string
+  }
+  lease?: {
+    id: string
+    unit: string | null
+    property: {
+      id: string
+      name: string
+    }
+  }
+  assignedVendor?: {
+    id: string
+    name: string
+  }
+  workOrders?: {
+    id: string
+    status: string
+  }[]
+}
+
+interface MaintenanceResponse {
+  maintenanceRequests: MaintenanceRequest[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+async function fetchMaintenanceRequests(): Promise<MaintenanceResponse> {
+  const response = await fetch('/api/maintenance-requests')
+  if (!response.ok) throw new Error('Failed to fetch maintenance requests')
+  return response.json()
 }
 
 export default function MaintenancePage() {
-  const [requests] = useState<MaintenanceRequest[]>([
-    {
-      id: '1',
-      tenantName: 'John Mwangi',
-      propertyName: 'Sunset Apartments',
-      unitNumber: '5A',
-      issueType: 'Plumbing',
-      priority: 'high',
-      status: 'open',
-      description: 'Leaking kitchen sink',
-      createdDate: '2024-11-10',
-      estimatedCost: 5000,
-    },
-    {
-      id: '2',
-      tenantName: 'Jane Achieng',
-      propertyName: 'Highland House',
-      unitNumber: '12',
-      issueType: 'Electrical',
-      priority: 'urgent',
-      status: 'in-progress',
-      description: 'Power outage in bedroom',
-      createdDate: '2024-11-12',
-      assignedTo: "Mike's Electrical Services",
-      estimatedCost: 8000,
-    },
-    {
-      id: '3',
-      tenantName: 'Peter Omondi',
-      propertyName: 'Vista Plaza Office',
-      unitNumber: '8B',
-      issueType: 'HVAC',
-      priority: 'medium',
-      status: 'completed',
-      description: 'Air conditioning not cooling properly',
-      createdDate: '2024-11-05',
-      assignedTo: 'Cool Air Solutions',
-      estimatedCost: 12000,
-    },
-  ]);
-
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
 
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['maintenance-requests', filterStatus, filterPriority],
+    queryFn: fetchMaintenanceRequests,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load maintenance requests. Please try again.</p>
+      </div>
+    )
+  }
+
+  const requests = data?.maintenanceRequests || []
+
   const filteredRequests = requests.filter((req) => {
-    const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
-    const matchesPriority = filterPriority === 'all' || req.priority === filterPriority;
+    const matchesStatus = filterStatus === 'all' || req.status.toUpperCase() === filterStatus.toUpperCase();
+    const matchesPriority = filterPriority === 'all' || req.priority.toUpperCase() === filterPriority.toUpperCase();
     return matchesStatus && matchesPriority;
   });
 
   const stats = {
     totalRequests: requests.length,
-    openRequests: requests.filter((r) => r.status === 'open').length,
-    inProgress: requests.filter((r) => r.status === 'in-progress').length,
-    urgent: requests.filter((r) => r.priority === 'urgent').length,
+    openRequests: requests.filter((r) => r.status.toUpperCase() === 'PENDING').length,
+    inProgress: requests.filter((r) => r.status.toUpperCase() === 'IN_PROGRESS').length,
+    urgent: requests.filter((r) => r.priority.toUpperCase() === 'URGENT').length,
   };
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'low':
+    const upperPriority = priority.toUpperCase();
+    switch (upperPriority) {
+      case 'LOW':
         return 'bg-gray-100 text-gray-800';
-      case 'medium':
+      case 'MEDIUM':
         return 'bg-blue-100 text-blue-800';
-      case 'high':
+      case 'HIGH':
         return 'bg-yellow-100 text-yellow-800';
-      case 'urgent':
+      case 'URGENT':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -91,14 +113,15 @@ export default function MaintenancePage() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
+    const upperStatus = status.toUpperCase();
+    switch (upperStatus) {
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
-      case 'in-progress':
+      case 'IN_PROGRESS':
         return 'bg-blue-100 text-blue-800';
-      case 'completed':
+      case 'COMPLETED':
         return 'bg-green-100 text-green-800';
-      case 'cancelled':
+      case 'CANCELLED':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -149,10 +172,10 @@ export default function MaintenancePage() {
             className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
           >
             <option value='all'>All Status</option>
-            <option value='open'>Open</option>
-            <option value='in-progress'>In Progress</option>
-            <option value='completed'>Completed</option>
-            <option value='cancelled'>Cancelled</option>
+            <option value='PENDING'>Pending</option>
+            <option value='IN_PROGRESS'>In Progress</option>
+            <option value='COMPLETED'>Completed</option>
+            <option value='CANCELLED'>Cancelled</option>
           </select>
           <select
             value={filterPriority}
@@ -160,10 +183,10 @@ export default function MaintenancePage() {
             className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
           >
             <option value='all'>All Priority</option>
-            <option value='low'>Low</option>
-            <option value='medium'>Medium</option>
-            <option value='high'>High</option>
-            <option value='urgent'>Urgent</option>
+            <option value='LOW'>Low</option>
+            <option value='MEDIUM'>Medium</option>
+            <option value='HIGH'>High</option>
+            <option value='URGENT'>Urgent</option>
           </select>
         </div>
       </div>
@@ -200,13 +223,13 @@ export default function MaintenancePage() {
             {filteredRequests.map((request) => (
               <tr key={request.id} className='hover:bg-gray-50'>
                 <td className='px-6 py-4'>
-                  <div className='text-sm font-medium text-gray-900'>{request.description}</div>
-                  <div className='text-sm text-gray-500'>by {request.tenantName}</div>
-                  <div className='text-xs text-gray-400'>{request.createdDate}</div>
+                  <div className='text-sm font-medium text-gray-900'>{request.title}</div>
+                  <div className='text-sm text-gray-500'>by {request.tenant?.name || 'Unknown'}</div>
+                  <div className='text-xs text-gray-400'>{formatDate(request.createdAt)}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{request.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {request.unitNumber}</div>
+                  <div className='text-sm text-gray-900'>{request.lease?.property.name || 'N/A'}</div>
+                  <div className='text-sm text-gray-500'>Unit {request.lease?.unit || 'N/A'}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
                   {request.issueType}
@@ -226,7 +249,7 @@ export default function MaintenancePage() {
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {request.assignedTo || <span className='text-gray-400'>Unassigned</span>}
+                  {request.assignedVendor?.name || <span className='text-gray-400'>Unassigned</span>}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2'>
                   <button  >
