@@ -29,7 +29,7 @@ interface LandlordsResponse {
 }
 
 async function fetchLandlords(): Promise<LandlordsResponse> {
-  const response = await fetch('/api/landlords')
+  const response = await fetch('/api/mock/landlords')
   if (!response.ok) {
     throw new Error('Failed to fetch landlords')
   }

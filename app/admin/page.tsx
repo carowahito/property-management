@@ -35,21 +35,24 @@ interface MaintenanceResponse {
 }
 
 async function fetchProperties(): Promise<PropertiesResponse> {
-  const response = await fetch('/api/properties')
+  const response = await fetch('/api/mock/properties')
   if (!response.ok) throw new Error('Failed to fetch properties')
-  return response.json()
+  const properties = await response.json()
+  return { properties }
 }
 
 async function fetchLeases(): Promise<LeasesResponse> {
-  const response = await fetch('/api/leases')
+  const response = await fetch('/api/mock/leases')
   if (!response.ok) throw new Error('Failed to fetch leases')
-  return response.json()
+  const leases = await response.json()
+  return { leases }
 }
 
 async function fetchMaintenanceRequests(): Promise<MaintenanceResponse> {
-  const response = await fetch('/api/maintenance-requests')
+  const response = await fetch('/api/mock/maintenance-requests')
   if (!response.ok) throw new Error('Failed to fetch maintenance requests')
-  return response.json()
+  const maintenanceRequests = await response.json()
+  return { maintenanceRequests }
 }
 
 export default function AdminDashboard() {
