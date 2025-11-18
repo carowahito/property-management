@@ -68,5 +68,5 @@ const mockLeads = [
 ]
 
 export async function GET() {
-  return NextResponse.json(mockLeads)
+  return NextResponse.json({ leads: mockLeads })
 }
