@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { mockAdmins } from '@/lib/mock-data'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -11,35 +11,34 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || '/admin'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
-    // Simulate authentication with mock data
-    setTimeout(() => {
-      const admin = mockAdmins.find(a => a.email === email)
-      
-      if (admin && password === 'password') {
-        // Store admin info in localStorage
-        localStorage.setItem('adminId', admin.id)
-        localStorage.setItem('adminName', admin.name)
-        localStorage.setItem('adminRole', admin.role)
-        setIsLoading(false)
-        router.push('/admin')
-      } else {
+    try {
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      })
+
+      if (result?.error) {
         setError('Invalid email or password')
         setIsLoading(false)
+      } else {
+        // Successful login
+        router.push(callbackUrl)
+        router.refresh()
       }
-    }, 1000)
+    } catch (err) {
+      setError('An error occurred. Please try again.')
+      setIsLoading(false)
+    }
   }
-
-  const demoAccounts = mockAdmins.map(a => ({
-    email: a.email,
-    name: a.name,
-    role: a.role,
-  }))
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 py-12 px-4 sm:px-6 lg:px-8">
@@ -141,19 +140,16 @@ export default function AdminLoginPage() {
           </div>
         </form>
 
-        {/* Demo Accounts */}
+        {/* Demo Credentials */}
         <div className="bg-slate-800 rounded-lg shadow-xl p-6 border border-slate-700">
-          <h3 className="text-sm font-semibold text-white mb-3">Demo Accounts</h3>
-          <div className="space-y-2">
-            {demoAccounts.map((account, idx) => (
-              <div key={idx} className="text-xs bg-slate-700 p-2 rounded border border-slate-600">
-                <div className="font-medium text-white">{account.name}</div>
-                <div className="text-gray-400">Email: {account.email}</div>
-                <div className="text-gray-400">Role: {account.role}</div>
-                <div className="text-gray-400">Password: password</div>
-              </div>
-            ))}
+          <h3 className="text-sm font-semibold text-white mb-3">Demo Account</h3>
+          <div className="text-xs bg-slate-700 p-3 rounded border border-slate-600">
+            <div className="text-gray-300 mb-1">Email: <span className="text-white font-mono">admin@propmanage.com</span></div>
+            <div className="text-gray-300">Password: <span className="text-white font-mono">admin123</span></div>
           </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Use the above credentials for testing. Change password after first login.
+          </p>
         </div>
 
         {/* Back to Home */}
