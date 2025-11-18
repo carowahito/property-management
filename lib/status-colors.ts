@@ -65,6 +65,7 @@ export const getMessageTypeIcon = (type: string) => {
     SMS: '💬',
     IN_APP: '🔔',
     SYSTEM: '⚙️',
+    WHATSAPP: '💚', // WhatsApp green heart
   }
   return icons[type as keyof typeof icons] || '📨'
 }

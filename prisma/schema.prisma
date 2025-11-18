@@ -683,6 +683,7 @@ enum CommunicationType {
   EMAIL
   PHONE
   IN_APP
+  WHATSAPP
 }
 
 enum MessageType {
@@ -690,6 +691,7 @@ enum MessageType {
   SMS
   IN_APP
   SYSTEM
+  WHATSAPP
 }
 
 enum MessageCategory {

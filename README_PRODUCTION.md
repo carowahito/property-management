@@ -53,8 +53,10 @@ This version represents a complete transformation from a prototype to a **95% pr
 #### 7. **Integrations**
 - ✅ SendGrid email service integration
 - ✅ Twilio SMS service integration
+- ✅ WhatsApp Business API integration (Twilio)
 - ✅ Email templates (rent reminders, lease renewals, payouts)
 - ✅ SMS templates (payment confirmations, reminders)
+- ✅ WhatsApp templates (rich formatting, media support)
 - ✅ AWS S3 configuration (ready to use)
 
 #### 8. **Documentation**

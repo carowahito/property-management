@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createMessageSchema } from '@/lib/validations/communication'
+import { sendEmail } from '@/lib/services/email'
+import { sendSMS } from '@/lib/services/sms'
+import { sendWhatsApp } from '@/lib/services/whatsapp'
 
 export async function GET(request: NextRequest) {
   try {
@@ -103,9 +106,61 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // TODO: Trigger actual email/SMS sending based on type
-    // if (message.type === 'EMAIL') await sendEmail(message)
-    // if (message.type === 'SMS') await sendSMS(message)
+    // Send message via appropriate channel
+    try {
+      // Get stakeholder details for contact info
+      let recipientEmail = ''
+      let recipientPhone = ''
+
+      const stakeholder = await (async () => {
+        switch (validatedData.stakeholderType) {
+          case 'TENANT':
+            return await prisma.tenant.findUnique({ where: { id: validatedData.stakeholderId } })
+          case 'LANDLORD':
+            return await prisma.landlord.findUnique({ where: { id: validatedData.stakeholderId } })
+          case 'VENDOR':
+            return await prisma.vendor.findUnique({ where: { id: validatedData.stakeholderId } })
+          case 'LEAD':
+            return await prisma.lead.findUnique({ where: { id: validatedData.stakeholderId } })
+          case 'ENQUIRY':
+            return await prisma.enquiry.findUnique({ where: { id: validatedData.stakeholderId } })
+          default:
+            return null
+        }
+      })()
+
+      if (stakeholder) {
+        recipientEmail = stakeholder.email
+        recipientPhone = stakeholder.phone
+      }
+
+      // Send via appropriate channel
+      if (message.type === 'EMAIL' && recipientEmail) {
+        await sendEmail({
+          to: recipientEmail,
+          subject: validatedData.subject,
+          html: validatedData.content,
+        })
+      } else if (message.type === 'SMS' && recipientPhone) {
+        await sendSMS({
+          to: recipientPhone,
+          message: validatedData.content,
+        })
+      } else if (message.type === 'WHATSAPP' && recipientPhone) {
+        await sendWhatsApp({
+          to: recipientPhone,
+          message: validatedData.content,
+          mediaUrl: validatedData.attachments?.[0], // Send first attachment if available
+        })
+      }
+    } catch (sendError) {
+      console.error('Error sending message:', sendError)
+      // Update message status to FAILED
+      await prisma.message.update({
+        where: { id: message.id },
+        data: { status: 'FAILED' },
+      })
+    }
 
     return NextResponse.json(message, { status: 201 })
   } catch (error: any) {

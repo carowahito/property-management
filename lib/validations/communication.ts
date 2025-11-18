@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const createMessageSchema = z.object({
-  type: z.enum(['EMAIL', 'SMS', 'IN_APP', 'SYSTEM']),
+  type: z.enum(['EMAIL', 'SMS', 'IN_APP', 'SYSTEM', 'WHATSAPP']),
   category: z.enum([
     'RENT_REMINDER',
     'MAINTENANCE',
