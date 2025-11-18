@@ -1,32 +1,101 @@
 'use client'
 
 import { useState } from 'react'
-import { mockPayments, getLandlordById, getTenantById, getPropertyById } from '@/lib/mock-data'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
+
+interface Payment {
+  id: string
+  amount: number
+  type: string
+  method: string
+  status: string
+  dueDate: string
+  paidDate: string | null
+  reference: string | null
+  tenant: {
+    id: string
+    name: string
+    email: string
+  }
+  lease: {
+    id: string
+    property: {
+      id: string
+      name: string
+    }
+  }
+}
+
+interface PaymentsResponse {
+  payments: Payment[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+async function fetchPayments(): Promise<PaymentsResponse> {
+  const response = await fetch('/api/payments')
+  if (!response.ok) {
+    throw new Error('Failed to fetch payments')
+  }
+  return response.json()
+}
 
 export default function AdminPaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Paid' | 'Pending' | 'Overdue'>('all')
-  const [selectedPayment, setSelectedPayment] = useState<typeof mockPayments[0] | null>(null)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PAID' | 'PENDING' | 'OVERDUE'>('all')
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['payments', statusFilter],
+    queryFn: fetchPayments,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load payments. Please try again.</p>
+      </div>
+    )
+  }
+
+  const payments = data?.payments || []
 
   // Calculate statistics
+  const paidPayments = payments.filter(p => p.status === 'PAID')
+  const pendingPayments = payments.filter(p => p.status === 'PENDING')
+  const overduePayments = payments.filter(p => p.status === 'OVERDUE')
+
   const stats = {
-    totalCollected: mockPayments.filter(p => p.status === 'Paid').reduce((sum, p) => sum + p.amount, 0),
-    pending: mockPayments.filter(p => p.status === 'Pending').reduce((sum, p) => sum + p.amount, 0),
-    overdue: mockPayments.filter(p => p.status === 'Overdue').reduce((sum, p) => sum + p.amount, 0),
-    overdueCount: mockPayments.filter(p => p.status === 'Overdue').length,
-    totalTransactions: mockPayments.length,
-    collectionRate: (mockPayments.filter(p => p.status === 'Paid').length / mockPayments.length) * 100,
+    totalCollected: paidPayments.reduce((sum, p) => sum + Number(p.amount), 0),
+    pending: pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0),
+    overdue: overduePayments.reduce((sum, p) => sum + Number(p.amount), 0),
+    overdueCount: overduePayments.length,
+    totalTransactions: payments.length,
+    collectionRate: payments.length > 0 ? (paidPayments.length / payments.length) * 100 : 0,
   }
 
   // Filter payments
-  const filteredPayments = mockPayments.filter(payment => {
-    const matchesSearch = 
-      payment.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.landlordName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
-    
+  const filteredPayments = payments.filter(payment => {
+    const matchesSearch =
+      payment.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.lease.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (payment.reference && payment.reference.toLowerCase().includes(searchTerm.toLowerCase()))
+
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter
 
     return matchesSearch && matchesStatus
@@ -59,7 +128,7 @@ export default function AdminPaymentsPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Collection Rate</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{stats.collectionRate.toFixed(1)}%</p>
-          <p className="text-xs text-gray-500 mt-2">{mockPayments.filter(p => p.status === 'Paid').length} of {stats.totalTransactions} paid</p>
+          <p className="text-xs text-gray-500 mt-2">{paidPayments.length} of {stats.totalTransactions} paid</p>
         </div>
       </div>
 
@@ -84,37 +153,37 @@ export default function AdminPaymentsPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              All ({mockPayments.length})
+              All ({stats.totalTransactions})
             </button>
             <button
-              onClick={() => setStatusFilter('Paid')}
+              onClick={() => setStatusFilter('PAID')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'Paid'
+                statusFilter === 'PAID'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Paid ({mockPayments.filter(p => p.status === 'Paid').length})
+              Paid ({paidPayments.length})
             </button>
             <button
-              onClick={() => setStatusFilter('Pending')}
+              onClick={() => setStatusFilter('PENDING')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'Pending'
+                statusFilter === 'PENDING'
                   ? 'bg-yellow-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Pending ({mockPayments.filter(p => p.status === 'Pending').length})
+              Pending ({pendingPayments.length})
             </button>
             <button
-              onClick={() => setStatusFilter('Overdue')}
+              onClick={() => setStatusFilter('OVERDUE')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'Overdue'
+                statusFilter === 'OVERDUE'
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Overdue ({mockPayments.filter(p => p.status === 'Overdue').length})
+              Overdue ({overduePayments.length})
             </button>
           </div>
         </div>
@@ -172,31 +241,31 @@ export default function AdminPaymentsPage() {
                 filteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {payment.transactionId}
+                      {payment.reference || payment.id.slice(0, 8)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.tenantName}
+                      {payment.tenant.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.landlordName}
+                      N/A
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      Property #{payment.propertyId}
+                      {payment.lease.property.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      KES {payment.amount.toLocaleString()}
+                      KES {Number(payment.amount).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {payment.month}
+                      {new Date(payment.dueDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {payment.method}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        payment.status === 'Paid' 
+                        payment.status === 'PAID'
                           ? 'bg-green-100 text-green-800'
-                          : payment.status === 'Pending'
+                          : payment.status === 'PENDING'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
@@ -204,7 +273,7 @@ export default function AdminPaymentsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(payment.date)}
+                      {formatDate(payment.paidDate || payment.dueDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
@@ -243,14 +312,14 @@ export default function AdminPaymentsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Transaction ID</p>
-                    <p className="text-lg font-semibold text-gray-900">{selectedPayment.transactionId}</p>
+                    <p className="text-lg font-semibold text-gray-900">{selectedPayment.reference || selectedPayment.id.slice(0, 8)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Status</p>
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedPayment.status === 'Paid' 
+                      selectedPayment.status === 'PAID'
                         ? 'bg-green-100 text-green-800'
-                        : selectedPayment.status === 'Pending'
+                        : selectedPayment.status === 'PENDING'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
@@ -264,7 +333,7 @@ export default function AdminPaymentsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Amount</p>
-                      <p className="text-xl font-bold text-gray-900">KES {selectedPayment.amount.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-gray-900">KES {Number(selectedPayment.amount).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Payment Method</p>
@@ -272,12 +341,12 @@ export default function AdminPaymentsPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Period</p>
-                      <p className="text-lg font-semibold text-gray-900">{selectedPayment.month}</p>
+                      <p className="text-lg font-semibold text-gray-900">{new Date(selectedPayment.dueDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Payment Date</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {formatDate(selectedPayment.date)}
+                        {formatDate(selectedPayment.paidDate || selectedPayment.dueDate)}
                       </p>
                     </div>
                   </div>
@@ -289,21 +358,22 @@ export default function AdminPaymentsPage() {
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="text-sm text-gray-600">Tenant</p>
-                        <p className="font-semibold text-gray-900">{selectedPayment.tenantName}</p>
-                        <p className="text-xs text-gray-500">ID: {selectedPayment.tenantId}</p>
+                        <p className="font-semibold text-gray-900">{selectedPayment.tenant.name}</p>
+                        <p className="text-xs text-gray-500">{selectedPayment.tenant.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="text-sm text-gray-600">Landlord</p>
-                        <p className="font-semibold text-gray-900">{selectedPayment.landlordName}</p>
-                        <p className="text-xs text-gray-500">ID: {selectedPayment.landlordId}</p>
+                        <p className="font-semibold text-gray-900">N/A</p>
+                        <p className="text-xs text-gray-500">Not available in payment details</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="text-sm text-gray-600">Property</p>
-                        <p className="font-semibold text-gray-900">Property #{selectedPayment.propertyId}</p>
+                        <p className="font-semibold text-gray-900">{selectedPayment.lease.property.name}</p>
+                        <p className="text-xs text-gray-500">Lease ID: {selectedPayment.lease.id.slice(0, 8)}</p>
                       </div>
                     </div>
                   </div>
