@@ -1,15 +1,113 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+interface Property {
+  id: string
+  units: number
+  status: string
+}
+
+interface Lease {
+  id: string
+  status: string
+  monthlyRent: number
+}
+
+interface MaintenanceRequest {
+  id: string
+  status: string
+  priority: string
+}
+
+interface PropertiesResponse {
+  properties: Property[]
+}
+
+interface LeasesResponse {
+  leases: Lease[]
+}
+
+interface MaintenanceResponse {
+  maintenanceRequests: MaintenanceRequest[]
+}
+
+async function fetchProperties(): Promise<PropertiesResponse> {
+  const response = await fetch('/api/properties')
+  if (!response.ok) throw new Error('Failed to fetch properties')
+  return response.json()
+}
+
+async function fetchLeases(): Promise<LeasesResponse> {
+  const response = await fetch('/api/leases')
+  if (!response.ok) throw new Error('Failed to fetch leases')
+  return response.json()
+}
+
+async function fetchMaintenanceRequests(): Promise<MaintenanceResponse> {
+  const response = await fetch('/api/maintenance-requests')
+  if (!response.ok) throw new Error('Failed to fetch maintenance requests')
+  return response.json()
+}
 
 export default function AdminDashboard() {
+  const { data: propertiesData, isLoading: isLoadingProperties, error: propertiesError } = useQuery({
+    queryKey: ['properties'],
+    queryFn: fetchProperties,
+  })
+
+  const { data: leasesData, isLoading: isLoadingLeases, error: leasesError } = useQuery({
+    queryKey: ['leases'],
+    queryFn: fetchLeases,
+  })
+
+  const { data: maintenanceData, isLoading: isLoadingMaintenance, error: maintenanceError } = useQuery({
+    queryKey: ['maintenance-requests'],
+    queryFn: fetchMaintenanceRequests,
+  })
+
+  const isLoading = isLoadingProperties || isLoadingLeases || isLoadingMaintenance
+  const hasError = propertiesError || leasesError || maintenanceError
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (hasError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
+      </div>
+    )
+  }
+
+  const properties = propertiesData?.properties || []
+  const leases = leasesData?.leases || []
+  const maintenanceRequests = maintenanceData?.maintenanceRequests || []
+
+  // Calculate statistics
+  const activeProperties = properties.filter(p => p.status === 'ACTIVE')
+  const totalUnits = properties.reduce((sum, p) => sum + (p.units || 0), 0)
+  const activeLeases = leases.filter(l => l.status === 'ACTIVE')
+  const occupancyRate = totalUnits > 0 ? (activeLeases.length / totalUnits) * 100 : 0
+  const monthlyRevenue = activeLeases.reduce((sum, l) => sum + Number(l.monthlyRent), 0)
+  const pendingMaintenance = maintenanceRequests.filter(m => m.status === 'PENDING' || m.status === 'IN_PROGRESS')
+  const urgentMaintenance = maintenanceRequests.filter(m => m.priority === 'URGENT' && (m.status === 'PENDING' || m.status === 'IN_PROGRESS'))
+
   const stats = {
-    totalProperties: 5,
-    totalUnits: 106,
-    occupancyRate: 93.4,
-    monthlyRevenue: 5770000,
-    activeLeases: 99,
-    maintenanceRequests: 12,
+    totalProperties: activeProperties.length,
+    totalUnits,
+    occupancyRate: occupancyRate.toFixed(1),
+    monthlyRevenue,
+    activeLeases: activeLeases.length,
+    maintenanceRequests: pendingMaintenance.length,
+    urgentMaintenance: urgentMaintenance.length,
   };
 
   return (
@@ -63,7 +161,7 @@ export default function AdminDashboard() {
         <div className='bg-white shadow rounded-lg p-6'>
           <p className='text-sm text-gray-600'>Maintenance Requests</p>
           <p className='text-3xl font-bold text-orange-600'>{stats.maintenanceRequests}</p>
-          <p className='text-sm text-gray-600 mt-2'>3 urgent</p>
+          <p className='text-sm text-gray-600 mt-2'>{stats.urgentMaintenance} urgent</p>
         </div>
       </div>
 

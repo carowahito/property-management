@@ -1,15 +1,77 @@
 'use client'
 
-import { mockTenants } from '@/lib/mock-data'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Link from 'next/link'
 
+interface Tenant {
+  id: string
+  name: string
+  email: string
+  phone: string
+  status: string
+  unit: string | null
+  property: {
+    id: string
+    name: string
+    address: string
+  }
+  _count: {
+    leases: number
+    payments: number
+  }
+}
+
+interface TenantsResponse {
+  tenants: Tenant[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+async function fetchTenants(): Promise<TenantsResponse> {
+  const response = await fetch('/api/tenants')
+  if (!response.ok) {
+    throw new Error('Failed to fetch tenants')
+  }
+  return response.json()
+}
+
 export default function TenantsPage() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: fetchTenants,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load tenants. Please try again.</p>
+      </div>
+    )
+  }
+
+  const tenants = data?.tenants || []
+  const activeTenants = tenants.filter(t => t.status === 'ACTIVE')
+  const pendingTenants = tenants.filter(t => t.status === 'PENDING')
+
   const stats = [
-    { label: 'Total Tenants', value: mockTenants.length.toString(), change: '2 new this month' },
-    { label: 'Active Leases', value: (mockTenants.filter(t => t.status === 'Active').length).toString(), change: '100% of active' },
-    { label: 'Pending Move-ins', value: '2', change: 'Expected this quarter' },
-    { label: 'Move-outs', value: '0', change: 'In next 30 days' },
+    { label: 'Total Tenants', value: tenants.length.toString(), change: `${activeTenants.length} active` },
+    { label: 'Active Leases', value: activeTenants.length.toString(), change: `${tenants.reduce((sum, t) => sum + t._count.leases, 0)} total leases` },
+    { label: 'Pending Move-ins', value: pendingTenants.length.toString(), change: 'Awaiting confirmation' },
+    { label: 'Total Payments', value: tenants.reduce((sum, t) => sum + t._count.payments, 0).toString(), change: 'All tenants' },
   ]
 
   return (
@@ -36,40 +98,55 @@ export default function TenantsPage() {
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">All Tenants</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Property</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Unit</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Rent</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Lease End</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {mockTenants.map((tenant) => (
-                <tr key={tenant.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => window.location.href = `/admin/tenants/${tenant.id}`}>
-                  <td className="px-6 py-4 text-sm font-medium text-blue-600 hover:text-blue-800">
-                    <Link href={`/admin/tenants/${tenant.id}`}>{tenant.name}</Link>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{tenant.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{tenant.property}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{tenant.unit}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">KSh {tenant.rent.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className="px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700">
-                      {tenant.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{tenant.leaseEnd}</td>
+
+        {tenants.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">No tenants found</p>
+            <Button variant="primary">Add Your First Tenant</Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Property</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Unit</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Leases</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {tenants.map((tenant) => (
+                  <tr key={tenant.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <Link href={`/admin/tenants/${tenant.id}`} className="text-blue-600 hover:text-blue-800">
+                        {tenant.name}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{tenant.email}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{tenant.phone}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{tenant.property.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{tenant.unit || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{tenant._count.leases}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        tenant.status === 'ACTIVE' ? 'bg-green-50 text-green-700' :
+                        tenant.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700' :
+                        tenant.status === 'INACTIVE' ? 'bg-gray-50 text-gray-700' :
+                        'bg-red-50 text-red-700'
+                      }`}>
+                        {tenant.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

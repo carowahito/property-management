@@ -2,27 +2,78 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { mockLandlords, getPropertiesByLandlordId } from '@/lib/mock-data';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+interface Landlord {
+  id: string
+  name: string
+  email: string
+  phone: string
+  status: string
+  _count: {
+    properties: number
+    payouts: number
+  }
+}
+
+interface LandlordsResponse {
+  landlords: Landlord[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+async function fetchLandlords(): Promise<LandlordsResponse> {
+  const response = await fetch('/api/landlords')
+  if (!response.ok) {
+    throw new Error('Failed to fetch landlords')
+  }
+  return response.json()
+}
 
 export default function AdminLandlordsPage() {
-  const [selectedLandlord, setSelectedLandlord] = useState<any | null>(null);
+  const [selectedLandlord, setSelectedLandlord] = useState<Landlord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredLandlords = mockLandlords.filter(
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['landlords'],
+    queryFn: fetchLandlords,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load landlords. Please try again.</p>
+      </div>
+    )
+  }
+
+  const landlords = data?.landlords || []
+
+  const filteredLandlords = landlords.filter(
     (landlord) =>
       landlord.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       landlord.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const stats = {
-    totalLandlords: mockLandlords.length,
-    activeLandlords: mockLandlords.filter((l) => l.status === 'active').length,
-    inactiveLandlords: mockLandlords.filter((l) => l.status === 'inactive').length,
-    totalProperties: mockLandlords.reduce(
-      (sum, l) => sum + getPropertiesByLandlordId(l.id).length,
-      0
-    ),
+    totalLandlords: landlords.length,
+    activeLandlords: landlords.filter((l) => l.status === 'ACTIVE').length,
+    inactiveLandlords: landlords.filter((l) => l.status === 'INACTIVE').length,
+    totalProperties: landlords.reduce((sum, l) => sum + l._count.properties, 0),
   };
 
   return (
@@ -87,58 +138,62 @@ export default function AdminLandlordsPage() {
               </tr>
             </thead>
             <tbody className='bg-white divide-y divide-gray-200'>
-              {filteredLandlords.map((landlord) => {
-                const properties = getPropertiesByLandlordId(landlord.id);
-                return (
-                  <tr key={landlord.id} className='hover:bg-gray-50 cursor-pointer' onClick={() => window.location.href = `/admin/landlords/${landlord.id}`}>
-                    <td className='px-6 py-4'>
-                      <div className='flex items-center'>
-                        <div className='h-10 w-10 rounded-full bg-green-100 flex items-center justify-center'>
-                          <span className='text-green-600 font-semibold text-lg'>
-                            {landlord.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className='ml-4'>
-                          <Link href={`/admin/landlords/${landlord.id}`} className='text-sm font-medium text-blue-600 hover:text-blue-800'>
-                            {landlord.name}
-                          </Link>
-                          <p className='text-sm text-gray-500'>ID: {landlord.id}</p>
-                        </div>
+              {filteredLandlords.map((landlord) => (
+                <tr key={landlord.id} className='hover:bg-gray-50'>
+                  <td className='px-6 py-4'>
+                    <div className='flex items-center'>
+                      <div className='h-10 w-10 rounded-full bg-green-100 flex items-center justify-center'>
+                        <span className='text-green-600 font-semibold text-lg'>
+                          {landlord.name.charAt(0)}
+                        </span>
                       </div>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <p className='text-sm text-gray-900'>{landlord.email}</p>
-                      <p className='text-sm text-gray-500'>{landlord.phone}</p>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <p className='text-sm font-semibold text-blue-600'>{properties.length} properties</p>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          landlord.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {landlord.status}
-                      </span>
-                    </td>
-                    <td className='px-6 py-4 text-sm space-x-2'>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setSelectedLandlord(landlord)}
-                      >
-                        View
-                      </Button>
+                      <div className='ml-4'>
+                        <Link href={`/admin/landlords/${landlord.id}`} className='text-sm font-medium text-blue-600 hover:text-blue-800'>
+                          {landlord.name}
+                        </Link>
+                        <p className='text-sm text-gray-500'>{landlord._count.payouts} payouts</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className='px-6 py-4'>
+                    <p className='text-sm text-gray-900'>{landlord.email}</p>
+                    <p className='text-sm text-gray-500'>{landlord.phone}</p>
+                  </td>
+                  <td className='px-6 py-4'>
+                    <p className='text-sm font-semibold text-blue-600'>{landlord._count.properties} properties</p>
+                  </td>
+                  <td className='px-6 py-4'>
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        landlord.status === 'ACTIVE'
+                          ? 'bg-green-100 text-green-800'
+                          : landlord.status === 'SUSPENDED'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {landlord.status}
+                    </span>
+                  </td>
+                  <td className='px-6 py-4 text-sm space-x-2'>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedLandlord(landlord)
+                      }}
+                    >
+                      View
+                    </Button>
+                    <Link href={`/admin/landlords/${landlord.id}`}>
                       <Button variant="outline" size="sm">
-                        Edit
+                        Details
                       </Button>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -172,20 +227,30 @@ export default function AdminLandlordsPage() {
                   <p className='text-sm text-gray-600'>Name: {selectedLandlord.name}</p>
                   <p className='text-sm text-gray-600'>Email: {selectedLandlord.email}</p>
                   <p className='text-sm text-gray-600'>Phone: {selectedLandlord.phone}</p>
+                  <p className='text-sm text-gray-600'>Status: <span className={`font-semibold ${
+                    selectedLandlord.status === 'ACTIVE' ? 'text-green-600' :
+                    selectedLandlord.status === 'SUSPENDED' ? 'text-red-600' :
+                    'text-gray-600'
+                  }`}>{selectedLandlord.status}</span></p>
                 </div>
 
                 <div className='bg-gray-50 rounded-lg p-4'>
-                  <h3 className='font-semibold text-gray-900 mb-2'>Portfolio</h3>
-                  <p className='text-sm text-gray-600'>
-                    Properties: {getPropertiesByLandlordId(selectedLandlord.id).length}
-                  </p>
-                  <div className='mt-2 space-y-1'>
-                    {getPropertiesByLandlordId(selectedLandlord.id).map((property) => (
-                      <p key={property.id} className='text-sm text-blue-600'>
-                        • {property.name}
-                      </p>
-                    ))}
+                  <h3 className='font-semibold text-gray-900 mb-2'>Portfolio Summary</h3>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <p className='text-sm text-gray-600'>Properties</p>
+                      <p className='text-2xl font-bold text-blue-600'>{selectedLandlord._count.properties}</p>
+                    </div>
+                    <div>
+                      <p className='text-sm text-gray-600'>Payouts</p>
+                      <p className='text-2xl font-bold text-green-600'>{selectedLandlord._count.payouts}</p>
+                    </div>
                   </div>
+                  <Link href={`/admin/landlords/${selectedLandlord.id}`} className="block mt-4">
+                    <Button variant="outline" className="w-full">
+                      View Full Details →
+                    </Button>
+                  </Link>
                 </div>
 
                 <div className='flex gap-3 pt-4'>
@@ -196,9 +261,11 @@ export default function AdminLandlordsPage() {
                   >
                     Close
                   </Button>
-                  <Button variant="primary" className="flex-1">
-                    Edit Details
-                  </Button>
+                  <Link href={`/admin/landlords/${selectedLandlord.id}`} className="flex-1">
+                    <Button variant="primary" className="w-full">
+                      Full Profile
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>

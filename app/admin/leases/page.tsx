@@ -1,45 +1,109 @@
 'use client'
 
 import { useState } from 'react'
-import { mockLeases, getTenantById, getLandlordById, getPropertyById } from '@/lib/mock-data'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
+
+interface Lease {
+  id: string
+  monthlyRent: number
+  securityDeposit: number
+  startDate: string
+  endDate: string
+  status: string
+  unit: string | null
+  tenant: {
+    id: string
+    name: string
+  }
+  property: {
+    id: string
+    name: string
+    landlord: {
+      id: string
+      name: string
+    }
+  }
+  _count: {
+    payments: number
+  }
+}
+
+interface LeasesResponse {
+  leases: Lease[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+async function fetchLeases(): Promise<LeasesResponse> {
+  const response = await fetch('/api/leases')
+  if (!response.ok) {
+    throw new Error('Failed to fetch leases')
+  }
+  return response.json()
+}
 
 export default function AdminLeasesPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Active' | 'Expiring' | 'Renewal'>('all')
-  const [selectedLease, setSelectedLease] = useState<typeof mockLeases[0] | null>(null)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'EXPIRED' | 'TERMINATED'>('all')
+  const [selectedLease, setSelectedLease] = useState<Lease | null>(null)
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['leases', statusFilter],
+    queryFn: fetchLeases,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load leases. Please try again.</p>
+      </div>
+    )
+  }
+
+  const leases = data?.leases || []
 
   // Calculate statistics
   const now = new Date()
   const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
 
+  const activeLeases = leases.filter(l => l.status === 'ACTIVE')
+  const expiringSoon = leases.filter(l => {
+    const endDate = new Date(l.endDate)
+    return endDate > now && endDate <= ninetyDaysFromNow && l.status === 'ACTIVE'
+  })
+
   const stats = {
-    activeLeases: mockLeases.filter(l => l.status === 'Active').length,
-    expiringSoon: mockLeases.filter(l => {
-      const endDate = new Date(l.endDate)
-      return endDate > now && endDate <= ninetyDaysFromNow && l.status === 'Active'
-    }).length,
-    renewalsPending: mockLeases.filter(l => l.renewal).length,
-    totalAnnualValue: mockLeases.reduce((sum, l) => sum + (l.monthlyRent * 12), 0),
+    activeLeases: activeLeases.length,
+    expiringSoon: expiringSoon.length,
+    totalLeases: leases.length,
+    totalAnnualValue: activeLeases.reduce((sum, l) => sum + (Number(l.monthlyRent) * 12), 0),
   }
 
   // Filter leases
-  const filteredLeases = mockLeases.filter(lease => {
-    const matchesSearch = 
-      lease.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lease.landlordName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lease.property.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lease.unit.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const endDate = new Date(lease.endDate)
-    const isExpiringSoon = endDate > now && endDate <= ninetyDaysFromNow
+  const filteredLeases = leases.filter(lease => {
+    const matchesSearch =
+      lease.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lease.property.landlord.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lease.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lease.unit && lease.unit.toLowerCase().includes(searchTerm.toLowerCase()))
 
-    const matchesStatus = 
-      statusFilter === 'all' ||
-      (statusFilter === 'Active' && lease.status === 'Active') ||
-      (statusFilter === 'Expiring' && isExpiringSoon) ||
-      (statusFilter === 'Renewal' && lease.renewal)
+    const matchesStatus =
+      statusFilter === 'all' || lease.status === statusFilter
 
     return matchesSearch && matchesStatus
   })
@@ -64,21 +128,21 @@ export default function AdminLeasesPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Active Leases</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{stats.activeLeases}</p>
-          <p className="text-xs text-gray-500 mt-2">{mockLeases.length} total leases</p>
+          <p className="text-xs text-gray-500 mt-2">{stats.totalLeases} total leases</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Expiring Soon</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.expiringSoon}</p>
+          <p className="text-3xl font-bold text-orange-600 mt-2">{stats.expiringSoon}</p>
           <p className="text-xs text-orange-600 mt-2">Within 90 days</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Renewals Pending</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.renewalsPending}</p>
-          <p className="text-xs text-blue-600 mt-2">Ready for renewal</p>
+          <p className="text-sm text-gray-600">Total Payments</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{leases.reduce((sum, l) => sum + l._count.payments, 0)}</p>
+          <p className="text-xs text-blue-600 mt-2">All lease payments</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Total Annual Value</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">KES {stats.totalAnnualValue.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-green-600 mt-2">KES {stats.totalAnnualValue.toLocaleString()}</p>
           <p className="text-xs text-gray-500 mt-2">Combined rental value</p>
         </div>
       </div>
@@ -104,12 +168,12 @@ export default function AdminLeasesPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              All ({mockLeases.length})
+              All ({stats.totalLeases})
             </button>
             <button
-              onClick={() => setStatusFilter('Active')}
+              onClick={() => setStatusFilter('ACTIVE')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'Active'
+                statusFilter === 'ACTIVE'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
@@ -117,24 +181,24 @@ export default function AdminLeasesPage() {
               Active ({stats.activeLeases})
             </button>
             <button
-              onClick={() => setStatusFilter('Expiring')}
+              onClick={() => setStatusFilter('EXPIRED')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'Expiring'
+                statusFilter === 'EXPIRED'
                   ? 'bg-orange-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Expiring ({stats.expiringSoon})
+              Expired ({leases.filter(l => l.status === 'EXPIRED').length})
             </button>
             <button
-              onClick={() => setStatusFilter('Renewal')}
+              onClick={() => setStatusFilter('TERMINATED')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'Renewal'
-                  ? 'bg-purple-600 text-white'
+                statusFilter === 'TERMINATED'
+                  ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Renewal ({stats.renewalsPending})
+              Terminated ({leases.filter(l => l.status === 'TERMINATED').length})
             </button>
           </div>
         </div>
@@ -193,22 +257,21 @@ export default function AdminLeasesPage() {
                   return (
                     <tr key={lease.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {lease.id}
+                        {lease.id.substring(0, 8)}...
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {lease.tenantName}
-                        <p className="text-xs text-gray-500">ID: {lease.tenantId}</p>
+                        {lease.tenant.name}
+                        <p className="text-xs text-gray-500">{lease._count.payments} payments</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {lease.landlordName}
-                        <p className="text-xs text-gray-500">ID: {lease.landlordId}</p>
+                        {lease.property.landlord.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {lease.property}
-                        <p className="text-xs text-gray-500">Unit {lease.unit}</p>
+                        {lease.property.name}
+                        <p className="text-xs text-gray-500">{lease.unit || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        KES {lease.monthlyRent.toLocaleString()}
+                        KES {Number(lease.monthlyRent).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(lease.startDate)}
@@ -224,20 +287,19 @@ export default function AdminLeasesPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-1">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            lease.status === 'Active' 
+                            lease.status === 'ACTIVE'
                               ? 'bg-green-100 text-green-800'
+                              : lease.status === 'EXPIRED'
+                              ? 'bg-orange-100 text-orange-800'
+                              : lease.status === 'TERMINATED'
+                              ? 'bg-red-100 text-red-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}>
                             {lease.status}
                           </span>
-                          {lease.renewal && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Renewal
-                            </span>
-                          )}
                           {isExpiringSoon && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              Expiring
+                              Expiring Soon
                             </span>
                           )}
                         </div>
@@ -308,13 +370,13 @@ export default function AdminLeasesPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Tenant</p>
-                      <p className="font-semibold text-gray-900">{selectedLease.tenantName}</p>
-                      <p className="text-xs text-gray-500">ID: {selectedLease.tenantId}</p>
+                      <p className="font-semibold text-gray-900">{selectedLease.tenant.name}</p>
+                      <p className="text-xs text-gray-500">{selectedLease._count.payments} payments</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Landlord</p>
-                      <p className="font-semibold text-gray-900">{selectedLease.landlordName}</p>
-                      <p className="text-xs text-gray-500">ID: {selectedLease.landlordId}</p>
+                      <p className="font-semibold text-gray-900">{selectedLease.property.landlord.name}</p>
+                      <p className="text-xs text-gray-500">Property Owner</p>
                     </div>
                   </div>
                 </div>
@@ -325,12 +387,11 @@ export default function AdminLeasesPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Property</p>
-                      <p className="text-lg font-semibold text-gray-900">{selectedLease.property}</p>
-                      <p className="text-xs text-gray-500">ID: {selectedLease.propertyId}</p>
+                      <p className="text-lg font-semibold text-gray-900">{selectedLease.property.name}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Unit</p>
-                      <p className="text-lg font-semibold text-gray-900">{selectedLease.unit}</p>
+                      <p className="text-lg font-semibold text-gray-900">{selectedLease.unit || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -338,14 +399,18 @@ export default function AdminLeasesPage() {
                 {/* Financial Terms */}
                 <div className="border-t border-gray-200 pt-4">
                   <h3 className="font-semibold text-gray-900 mb-3">Financial Terms</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="p-4 bg-blue-50 rounded-lg">
                       <p className="text-sm text-gray-600">Monthly Rent</p>
-                      <p className="text-2xl font-bold text-gray-900">KES {selectedLease.monthlyRent.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-gray-900">KES {Number(selectedLease.monthlyRent).toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <p className="text-sm text-gray-600">Security Deposit</p>
+                      <p className="text-2xl font-bold text-gray-900">KES {Number(selectedLease.securityDeposit).toLocaleString()}</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Annual Value</p>
-                      <p className="text-2xl font-bold text-gray-900">KES {(selectedLease.monthlyRent * 12).toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-gray-900">KES {(Number(selectedLease.monthlyRent) * 12).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -375,25 +440,6 @@ export default function AdminLeasesPage() {
                   </div>
                 </div>
 
-                {/* Documents */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Documents</h3>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
-                    <div className="flex items-center">
-                      <svg className="h-8 w-8 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      <div>
-                        <p className="font-medium text-gray-900">Lease Agreement</p>
-                        <p className="text-xs text-gray-500">{selectedLease.termsFile}</p>
-                      </div>
-                    </div>
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </div>
-                </div>
-
                 <div className="border-t border-gray-200 pt-4 flex gap-3">
                   <button
                     onClick={() => setSelectedLease(null)}
@@ -401,11 +447,9 @@ export default function AdminLeasesPage() {
                   >
                     Close
                   </button>
-                  {selectedLease.renewal && (
-                    <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-                      Process Renewal
-                    </button>
-                  )}
+                  <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    Edit Lease
+                  </button>
                 </div>
               </div>
             </div>

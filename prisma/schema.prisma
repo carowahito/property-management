@@ -1,0 +1,724 @@
+// Prisma Schema for Property Management System
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Authentication & Users
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  name          String?
+  image         String?
+  role          UserRole  @default(ADMIN)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+
+  // Activity tracking
+  assignedTasks Task[]    @relation("AssignedTasks")
+  createdTasks  Task[]    @relation("CreatedTasks")
+  messages      Message[] @relation("SentMessages")
+
+  @@index([email])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  AGENT
+  STAFF
+}
+
+// ============================================
+// Core Entities
+// ============================================
+
+model Property {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  city        String?
+  state       String?
+  postalCode  String?
+  country     String   @default("Kenya")
+  type        PropertyType
+  units       Int      @default(1)
+  yearBuilt   Int?
+  status      PropertyStatus @default(ACTIVE)
+  description String?
+  landlordId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  landlord    Landlord     @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  tenants     Tenant[]
+  leases      Lease[]
+  maintenanceRequests MaintenanceRequest[]
+  inspections Inspection[]
+  viewings    Viewing[]
+  messages    Message[]
+
+  @@index([landlordId])
+  @@index([status])
+  @@map("properties")
+}
+
+model Landlord {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  phone       String
+  idNumber    String?  @unique
+  address     String?
+  bankName    String?
+  bankAccount String?
+  taxId       String?
+  status      StakeholderStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  properties  Property[]
+  payouts     Payout[]
+  messages    Message[]
+
+  @@index([email])
+  @@index([status])
+  @@map("landlords")
+}
+
+model Tenant {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  phone           String
+  idNumber        String?  @unique
+  emergencyContact String?
+  emergencyPhone  String?
+  propertyId      String
+  unit            String?
+  moveInDate      DateTime?
+  moveOutDate     DateTime?
+  status          TenantStatus @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  leases          Lease[]
+  payments        Payment[]
+  maintenanceRequests MaintenanceRequest[]
+  messages        Message[]
+
+  @@index([email])
+  @@index([propertyId])
+  @@index([status])
+  @@map("tenants")
+}
+
+model Vendor {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  phone          String
+  specialization String
+  rating         Float    @default(0)
+  status         StakeholderStatus @default(ACTIVE)
+  address        String?
+  licenseNumber  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  workOrders     WorkOrder[]
+  messages       Message[]
+
+  @@index([email])
+  @@index([specialization])
+  @@index([status])
+  @@map("vendors")
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String
+  type        LeadType @default(TENANT)
+  status      LeadStatus @default(NEW)
+  source      LeadSource @default(WEBSITE)
+  budget      String?
+  moveInDate  DateTime?
+  preferences String?
+  notes       String?
+  assignedTo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastContact DateTime?
+  convertedAt DateTime?
+
+  // Relations
+  tasks       Task[]
+  communications Communication[]
+  notes_rel   Note[]
+
+  @@index([email])
+  @@index([status])
+  @@index([assignedTo])
+  @@map("leads")
+}
+
+model Enquiry {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String
+  subject     String
+  message     String
+  status      EnquiryStatus @default(OPEN)
+  priority    Priority @default(MEDIUM)
+  assignedTo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt  DateTime?
+  propertyId  String?
+
+  // Relations
+  tasks       Task[]
+  communications Communication[]
+  notes_rel   Note[]
+
+  @@index([email])
+  @@index([status])
+  @@index([priority])
+  @@map("enquiries")
+}
+
+// ============================================
+// Financial
+// ============================================
+
+model Lease {
+  id              String   @id @default(cuid())
+  tenantId        String
+  propertyId      String
+  unit            String?
+  startDate       DateTime
+  endDate         DateTime
+  monthlyRent     Decimal  @db.Decimal(10, 2)
+  securityDeposit Decimal  @db.Decimal(10, 2)
+  status          LeaseStatus @default(ACTIVE)
+  terms           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([status])
+  @@map("leases")
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  tenantId        String
+  leaseId         String
+  amount          Decimal  @db.Decimal(10, 2)
+  type            PaymentType @default(RENT)
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  dueDate         DateTime
+  paidDate        DateTime?
+  reference       String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lease           Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([leaseId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("payments")
+}
+
+model Payout {
+  id          String   @id @default(cuid())
+  landlordId  String
+  amount      Decimal  @db.Decimal(10, 2)
+  period      String
+  status      PayoutStatus @default(PENDING)
+  method      PaymentMethod
+  reference   String?
+  notes       String?
+  paidDate    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  landlord    Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+
+  @@index([landlordId])
+  @@index([status])
+  @@map("payouts")
+}
+
+// ============================================
+// Operations
+// ============================================
+
+model MaintenanceRequest {
+  id          String   @id @default(cuid())
+  tenantId    String
+  propertyId  String
+  unit        String?
+  title       String
+  description String
+  priority    Priority @default(MEDIUM)
+  status      MaintenanceStatus @default(PENDING)
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt  DateTime?
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  workOrders  WorkOrder[]
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([priority])
+  @@map("maintenance_requests")
+}
+
+model WorkOrder {
+  id                    String   @id @default(cuid())
+  maintenanceRequestId  String?
+  vendorId              String?
+  title                 String
+  description           String
+  status                WorkOrderStatus @default(PENDING)
+  priority              Priority @default(MEDIUM)
+  estimatedCost         Decimal? @db.Decimal(10, 2)
+  actualCost            Decimal? @db.Decimal(10, 2)
+  scheduledDate         DateTime?
+  completedDate         DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  maintenanceRequest    MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id], onDelete: SetNull)
+  vendor                Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  @@index([vendorId])
+  @@index([status])
+  @@map("work_orders")
+}
+
+model Inspection {
+  id          String   @id @default(cuid())
+  propertyId  String
+  type        InspectionType
+  date        DateTime
+  inspector   String
+  findings    String?
+  status      InspectionStatus @default(SCHEDULED)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([date])
+  @@map("inspections")
+}
+
+model Viewing {
+  id          String   @id @default(cuid())
+  propertyId  String
+  visitorName String
+  visitorEmail String
+  visitorPhone String
+  scheduledDate DateTime
+  status      ViewingStatus @default(SCHEDULED)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([scheduledDate])
+  @@map("viewings")
+}
+
+// ============================================
+// CRM & Communications
+// ============================================
+
+model Task {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  priority        Priority @default(MEDIUM)
+  status          TaskStatus @default(PENDING)
+  dueDate         DateTime
+  reminderDate    DateTime?
+  assignedToId    String
+  assignedById    String
+  stakeholderType StakeholderType?
+  stakeholderId   String?
+  leadId          String?
+  enquiryId       String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+
+  // Relations
+  assignedTo      User     @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: Cascade)
+  assignedBy      User     @relation("CreatedTasks", fields: [assignedById], references: [id], onDelete: Cascade)
+  lead            Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  enquiry         Enquiry? @relation(fields: [enquiryId], references: [id], onDelete: SetNull)
+
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+model Communication {
+  id              String   @id @default(cuid())
+  type            CommunicationType
+  direction       Direction
+  subject         String?
+  content         String
+  status          CommunicationStatus @default(SENT)
+  sentAt          DateTime @default(now())
+  leadId          String?
+  enquiryId       String?
+
+  // Relations
+  lead            Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  enquiry         Enquiry? @relation(fields: [enquiryId], references: [id], onDelete: SetNull)
+
+  @@index([leadId])
+  @@index([enquiryId])
+  @@map("communications")
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  type            MessageType
+  category        MessageCategory
+  direction       Direction
+  stakeholderType StakeholderType
+  stakeholderId   String
+  subject         String
+  content         String
+  sentById        String
+  sentAt          DateTime @default(now())
+  status          MessageStatus @default(SENT)
+  propertyId      String?
+  relatedTo       String?
+  attachments     String[]
+
+  // Relations
+  sentBy          User      @relation("SentMessages", fields: [sentById], references: [id], onDelete: Cascade)
+  property        Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  tenant          Tenant?   @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+  landlord        Landlord? @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+  vendor          Vendor?   @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+
+  @@index([stakeholderId])
+  @@index([sentById])
+  @@map("messages")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  leadId    String?
+  enquiryId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  lead      Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  enquiry   Enquiry? @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([enquiryId])
+  @@map("notes")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  CONDO
+  TOWNHOUSE
+  STUDIO
+  COMMERCIAL
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum StakeholderStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  EVICTED
+}
+
+enum LeadType {
+  TENANT
+  LANDLORD
+  BUYER
+  SELLER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  SOCIAL_MEDIA
+  WALK_IN
+  EMAIL
+  PHONE
+}
+
+enum EnquiryStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum LeaseStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  PENDING
+}
+
+enum PaymentType {
+  RENT
+  DEPOSIT
+  LATE_FEE
+  UTILITY
+  MAINTENANCE
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MPESA
+  CARD
+  CHEQUE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  FAILED
+  REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum MaintenanceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum WorkOrderStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum InspectionType {
+  MOVE_IN
+  MOVE_OUT
+  QUARTERLY
+  ANNUAL
+  MAINTENANCE
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum ViewingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum StakeholderType {
+  TENANT
+  LANDLORD
+  VENDOR
+  LEAD
+  ENQUIRY
+}
+
+enum CommunicationType {
+  EMAIL
+  PHONE
+  IN_APP
+  WHATSAPP
+}
+
+enum MessageType {
+  EMAIL
+  SMS
+  IN_APP
+  SYSTEM
+  WHATSAPP
+}
+
+enum MessageCategory {
+  RENT_REMINDER
+  MAINTENANCE
+  LEASE
+  PAYMENT
+  ANNOUNCEMENT
+  SUPPORT
+  OTHER
+}
+
+enum Direction {
+  SENT
+  RECEIVED
+}
+
+enum CommunicationStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
