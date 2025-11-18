@@ -1,6 +1,28 @@
 # WhatsApp Business API Integration Guide
 
-This guide will help you set up WhatsApp messaging for the Property Management System using Twilio's WhatsApp Business API.
+This guide will help you set up WhatsApp messaging for the Property Management System.
+
+## 🔀 Two Integration Options Available
+
+We support **two ways** to integrate WhatsApp:
+
+### **1. Twilio WhatsApp API** (This Guide)
+- ⚡ **5-minute setup** with sandbox
+- 🎯 **Easier for beginners**
+- 💰 **Pay-as-you-go pricing**
+- 🧪 **Free sandbox for testing**
+
+**→ Use this guide for Twilio setup**
+
+### **2. Meta Cloud API** (Direct from Facebook)
+- 💰 **29-65% cheaper** than Twilio
+- 🏢 **No middleman fees**
+- ⚙️ **More control**
+- 📋 **Requires business verification**
+
+**→ See [WHATSAPP_META_SETUP.md](./WHATSAPP_META_SETUP.md) for Meta Cloud API setup**
+
+---
 
 ## Why WhatsApp?
 
@@ -12,7 +34,9 @@ WhatsApp is the preferred communication channel in many markets, especially in K
 - ✅ **Cost-effective** compared to SMS
 - ✅ **Built-in formatting** (bold, italic, lists)
 
-## Setup Options
+---
+
+## Twilio Setup Options
 
 ### Option 1: Twilio Sandbox (Quick Start - Development Only)
 

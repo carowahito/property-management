@@ -6,6 +6,7 @@ import { createMessageSchema } from '@/lib/validations/communication'
 import { sendEmail } from '@/lib/services/email'
 import { sendSMS } from '@/lib/services/sms'
 import { sendWhatsApp } from '@/lib/services/whatsapp'
+import { sendWhatsAppMeta } from '@/lib/services/whatsapp-meta'
 
 export async function GET(request: NextRequest) {
   try {
@@ -147,11 +148,24 @@ export async function POST(request: NextRequest) {
           message: validatedData.content,
         })
       } else if (message.type === 'WHATSAPP' && recipientPhone) {
-        await sendWhatsApp({
-          to: recipientPhone,
-          message: validatedData.content,
-          mediaUrl: validatedData.attachments?.[0], // Send first attachment if available
-        })
+        // Check which WhatsApp provider to use
+        const whatsappProvider = process.env.WHATSAPP_PROVIDER || 'twilio'
+
+        if (whatsappProvider === 'meta') {
+          // Use Meta Cloud API (direct)
+          await sendWhatsAppMeta({
+            to: recipientPhone,
+            message: validatedData.content,
+            mediaUrl: validatedData.attachments?.[0],
+          })
+        } else {
+          // Use Twilio (default)
+          await sendWhatsApp({
+            to: recipientPhone,
+            message: validatedData.content,
+            mediaUrl: validatedData.attachments?.[0],
+          })
+        }
       }
     } catch (sendError) {
       console.error('Error sending message:', sendError)
