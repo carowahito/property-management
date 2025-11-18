@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth-config'
+import { prisma } from '@/lib/db'
+import { updateLandlordSchema } from '@/lib/validations/landlord'
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const landlord = await prisma.landlord.findUnique({
+      where: { id: params.id },
+      include: {
+        properties: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            type: true,
+            units: true,
+            status: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        payouts: {
+          select: {
+            id: true,
+            amount: true,
+            period: true,
+            status: true,
+            paidDate: true,
+            method: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+        _count: {
+          select: {
+            properties: true,
+            payouts: true,
+            messages: true,
+          },
+        },
+      },
+    })
+
+    if (!landlord) {
+      return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(landlord)
+  } catch (error) {
+    console.error('Error fetching landlord:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const validatedData = updateLandlordSchema.parse(body)
+
+    const landlord = await prisma.landlord.update({
+      where: { id: params.id },
+      data: validatedData,
+    })
+
+    return NextResponse.json(landlord)
+  } catch (error: any) {
+    console.error('Error updating landlord:', error)
+
+    if (error.code === 'P2025') {
+      return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
+    }
+
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Email or ID number already exists' },
+        { status: 400 }
+      )
+    }
+
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.errors },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if landlord has properties
+    const propertiesCount = await prisma.property.count({
+      where: { landlordId: params.id },
+    })
+
+    if (propertiesCount > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete landlord with associated properties' },
+        { status: 400 }
+      )
+    }
+
+    await prisma.landlord.delete({
+      where: { id: params.id },
+    })
+
+    return NextResponse.json({ message: 'Landlord deleted successfully' })
+  } catch (error: any) {
+    console.error('Error deleting landlord:', error)
+
+    if (error.code === 'P2025') {
+      return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
