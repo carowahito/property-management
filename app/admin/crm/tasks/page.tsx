@@ -32,6 +32,20 @@ export default function AllTasksPage() {
   const [filterStakeholderType, setFilterStakeholderType] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [showCreateTask, setShowCreateTask] = useState(false)
+  
+  // Create task form state
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Urgent',
+    dueDate: '',
+    reminderDate: '',
+    assignedTo: '',
+    stakeholderType: 'Tenant' as 'Tenant' | 'Landlord' | 'Vendor' | 'Lead' | 'Enquiry',
+    stakeholderId: '',
+    notes: '',
+  })
 
   // Mock team members
   const teamMembers = [
@@ -309,7 +323,7 @@ export default function AllTasksPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="lg">📊 Task Reports</Button>
-          <Button variant="primary" size="lg">+ Create Task</Button>
+          <Button variant="primary" size="lg" onClick={() => setShowCreateTask(true)}>+ Create Task</Button>
         </div>
       </div>
 
@@ -580,6 +594,239 @@ export default function AllTasksPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Task Modal */}
+      {showCreateTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Create New Task</h3>
+                <button
+                  onClick={() => {
+                    setShowCreateTask(false)
+                    setNewTask({
+                      title: '',
+                      description: '',
+                      priority: 'Medium',
+                      dueDate: '',
+                      reminderDate: '',
+                      assignedTo: '',
+                      stakeholderType: 'Tenant',
+                      stakeholderId: '',
+                      notes: '',
+                    })
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                // Handle task creation here
+                console.log('Creating task:', newTask)
+                setShowCreateTask(false)
+                setNewTask({
+                  title: '',
+                  description: '',
+                  priority: 'Medium',
+                  dueDate: '',
+                  reminderDate: '',
+                  assignedTo: '',
+                  stakeholderType: 'Tenant',
+                  stakeholderId: '',
+                  notes: '',
+                })
+              }} className="space-y-4">
+                {/* Task Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Task Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTask.title}
+                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter task title..."
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={newTask.description}
+                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Describe the task..."
+                  />
+                </div>
+
+                {/* Priority and Assigned To */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority *</label>
+                    <select
+                      required
+                      value={newTask.priority}
+                      onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Assign To *</label>
+                    <select
+                      required
+                      value={newTask.assignedTo}
+                      onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select team member...</option>
+                      {teamMembers.map(member => (
+                        <option key={member.id} value={member.name}>{member.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Due Date and Reminder */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Due Date *</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={newTask.dueDate}
+                      onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Reminder Date</label>
+                    <input
+                      type="datetime-local"
+                      value={newTask.reminderDate}
+                      onChange={(e) => setNewTask({ ...newTask, reminderDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Stakeholder Type and Selection */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Related To (Type) *</label>
+                    <select
+                      required
+                      value={newTask.stakeholderType}
+                      onChange={(e) => setNewTask({ ...newTask, stakeholderType: e.target.value as any, stakeholderId: '' })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="Tenant">Tenant</option>
+                      <option value="Landlord">Landlord</option>
+                      <option value="Vendor">Vendor</option>
+                      <option value="Lead">Lead</option>
+                      <option value="Enquiry">Enquiry</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Select {newTask.stakeholderType} *</label>
+                    <select
+                      required
+                      value={newTask.stakeholderId}
+                      onChange={(e) => setNewTask({ ...newTask, stakeholderId: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select {newTask.stakeholderType.toLowerCase()}...</option>
+                      {newTask.stakeholderType === 'Tenant' && (
+                        <>
+                          <option value="1">John Smith</option>
+                          <option value="2">Sarah Johnson</option>
+                          <option value="3">Jane Doe</option>
+                        </>
+                      )}
+                      {newTask.stakeholderType === 'Landlord' && (
+                        <>
+                          <option value="1">Robert Johnson</option>
+                          <option value="2">Sarah Davis</option>
+                        </>
+                      )}
+                      {newTask.stakeholderType === 'Vendor' && (
+                        <>
+                          <option value="1">John Plumbing Services</option>
+                          <option value="5">Mike HVAC Repairs</option>
+                        </>
+                      )}
+                      {newTask.stakeholderType === 'Lead' && (
+                        <>
+                          <option value="L001">Sarah Mitchell</option>
+                          <option value="L002">James Kamau</option>
+                        </>
+                      )}
+                      {newTask.stakeholderType === 'Enquiry' && (
+                        <>
+                          <option value="E001">Grace Wanjiru</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                  <textarea
+                    rows={3}
+                    value={newTask.notes}
+                    onChange={(e) => setNewTask({ ...newTask, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Additional notes or context..."
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowCreateTask(false)
+                      setNewTask({
+                        title: '',
+                        description: '',
+                        priority: 'Medium',
+                        dueDate: '',
+                        reminderDate: '',
+                        assignedTo: '',
+                        stakeholderType: 'Tenant',
+                        stakeholderId: '',
+                        notes: '',
+                      })
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="primary" className="flex-1">
+                    Create Task
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

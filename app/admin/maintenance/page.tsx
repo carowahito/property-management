@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -224,11 +225,23 @@ export default function MaintenancePage() {
               <tr key={request.id} className='hover:bg-gray-50'>
                 <td className='px-6 py-4'>
                   <div className='text-sm font-medium text-gray-900'>{request.title}</div>
-                  <div className='text-sm text-gray-500'>by {request.tenant?.name || 'Unknown'}</div>
+                  <div className='text-sm text-gray-500'>
+                    by {request.tenant ? (
+                      <Link href={`/admin/tenants/${request.tenant.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                        {request.tenant.name}
+                      </Link>
+                    ) : 'Unknown'}
+                  </div>
                   <div className='text-xs text-gray-400'>{formatDate(request.createdAt)}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{request.lease?.property.name || 'N/A'}</div>
+                  <div className='text-sm'>
+                    {request.lease?.property ? (
+                      <Link href={`/admin/properties/${request.lease.property.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                        {request.lease.property.name}
+                      </Link>
+                    ) : 'N/A'}
+                  </div>
                   <div className='text-sm text-gray-500'>Unit {request.lease?.unit || 'N/A'}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
@@ -249,7 +262,11 @@ export default function MaintenancePage() {
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {request.assignedVendor?.name || <span className='text-gray-400'>Unassigned</span>}
+                  {request.assignedVendor ? (
+                    <Link href={`/admin/vendors/${request.assignedVendor.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                      {request.assignedVendor.name}
+                    </Link>
+                  ) : <span className='text-gray-400'>Unassigned</span>}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2'>
                   <button  >

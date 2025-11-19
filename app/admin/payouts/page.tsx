@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { TimeFilter } from '@/components/shared/TimeFilter';
 
 interface Payout {
   id: string;
+  landlordId: string;
   landlordName: string;
+  propertyId: string;
   propertyName: string;
   period: string;
   rentCollected: number;
@@ -18,10 +22,15 @@ interface Payout {
 }
 
 export default function PayoutsPage() {
+  const [timePeriod, setTimePeriod] = useState('current');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [payouts] = useState<Payout[]>([
     {
       id: '1',
+      landlordId: '1',
       landlordName: 'David Kamau',
+      propertyId: '1',
       propertyName: 'Sunset Apartments',
       period: 'Jan 2024',
       rentCollected: 450000,
@@ -34,7 +43,9 @@ export default function PayoutsPage() {
     },
     {
       id: '2',
+      landlordId: '2',
       landlordName: 'Sarah Njeri',
+      propertyId: '3',
       propertyName: 'Highland House',
       period: 'Jan 2024',
       rentCollected: 600000,
@@ -47,7 +58,9 @@ export default function PayoutsPage() {
     },
     {
       id: '3',
+      landlordId: '3',
       landlordName: 'James Odhiambo',
+      propertyId: '2',
       propertyName: 'Vista Plaza',
       period: 'Feb 2024',
       rentCollected: 800000,
@@ -59,7 +72,9 @@ export default function PayoutsPage() {
     },
     {
       id: '4',
+      landlordId: '4',
       landlordName: 'Mary Wanjiku',
+      propertyId: '4',
       propertyName: 'Garden Estate',
       period: 'Feb 2024',
       rentCollected: 350000,
@@ -125,17 +140,30 @@ export default function PayoutsPage() {
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
-        >
-          <option value='all'>All Status</option>
-          <option value='pending'>Pending</option>
-          <option value='processed'>Processed</option>
-          <option value='completed'>Completed</option>
-        </select>
+      <div className='bg-white shadow rounded-lg p-4 space-y-4'>
+        <div className='flex flex-wrap gap-4 items-end'>
+          <TimeFilter
+            timePeriod={timePeriod}
+            setTimePeriod={setTimePeriod}
+            customStartDate={customStartDate}
+            setCustomStartDate={setCustomStartDate}
+            customEndDate={customEndDate}
+            setCustomEndDate={setCustomEndDate}
+          />
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            >
+              <option value='all'>All Status</option>
+              <option value='pending'>Pending</option>
+              <option value='processed'>Processed</option>
+              <option value='completed'>Completed</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className='bg-white shadow rounded-lg overflow-hidden'>
@@ -174,10 +202,16 @@ export default function PayoutsPage() {
           <tbody className='bg-white divide-y divide-gray-200'>
             {filteredPayouts.map((payout) => (
               <tr key={payout.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>
-                  {payout.landlordName}
+                <td className='px-6 py-4 text-sm font-medium'>
+                  <Link href={`/admin/landlords/${payout.landlordId}`} className='text-blue-600 hover:text-blue-800 hover:underline'>
+                    {payout.landlordName}
+                  </Link>
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{payout.propertyName}</td>
+                <td className='px-6 py-4 text-sm'>
+                  <Link href={`/admin/properties/${payout.propertyId}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                    {payout.propertyName}
+                  </Link>
+                </td>
                 <td className='px-6 py-4 text-sm text-gray-900'>{payout.period}</td>
                 <td className='px-6 py-4 text-sm text-gray-900'>
                   KES {payout.rentCollected.toLocaleString()}

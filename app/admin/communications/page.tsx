@@ -30,6 +30,71 @@ export default function CommunicationsPage() {
   const [categoryFilter, setCategoryFilter] = useState<'all' | Message['category']>('all')
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null)
   const [showCompose, setShowCompose] = useState(false)
+  
+  // Compose form state
+  const [composeRecipientType, setComposeRecipientType] = useState<'tenant' | 'landlord' | 'vendor' | 'all'>('tenant')
+  const [composeRecipient, setComposeRecipient] = useState<string>('')
+  const [composeProperty, setComposeProperty] = useState<string>('all')
+
+  // Mock properties data
+  const mockProperties = [
+    { id: '1', name: 'Sunset Apartments' },
+    { id: '2', name: 'Vista Plaza' },
+    { id: '3', name: 'Highland House' },
+    { id: '4', name: 'Garden Estate' },
+  ]
+
+  // Mock contacts data - in production this would come from API
+  const mockTenants = [
+    { id: '1', name: 'John Smith', propertyId: '1' },
+    { id: '2', name: 'Sarah Johnson', propertyId: '2' },
+    { id: '3', name: 'Michael Chen', propertyId: '3' },
+    { id: '4', name: 'Emily Davis', propertyId: '4' },
+    { id: '5', name: 'Jane Doe', propertyId: '1' },
+  ]
+
+  const mockLandlords = [
+    { id: '1', name: 'Robert Johnson', propertyId: '1' },
+    { id: '2', name: 'Sarah Davis', propertyId: '3' },
+    { id: '3', name: 'Patricia Williams', propertyId: '4' },
+  ]
+
+  const mockVendors = [
+    { id: '1', name: 'Quick Repairs Ltd' },
+    { id: '2', name: 'Professional Cleaners' },
+    { id: '3', name: 'Premier Security Services' },
+    { id: '4', name: 'Landscape Designs' },
+  ]
+
+  // Get filtered recipients based on selected type and property
+  const getRecipientOptions = () => {
+    let contacts: any[] = []
+    
+    if (composeRecipientType === 'all') {
+      return []  // No individual selection when 'all' is selected
+    }
+    
+    switch (composeRecipientType) {
+      case 'tenant':
+        contacts = mockTenants
+        break
+      case 'landlord':
+        contacts = mockLandlords
+        break
+      case 'vendor':
+        contacts = mockVendors
+        break
+      default:
+        contacts = []
+    }
+    
+    // Filter by property if not 'all' and if contacts have propertyId
+    if (composeProperty !== 'all' && (composeRecipientType === 'tenant' || composeRecipientType === 'landlord')) {
+      contacts = contacts.filter(c => c.propertyId === composeProperty)
+    }
+    
+    return contacts
+  }
 
   // Mock data - in production this would come from API
   const mockMessages: Message[] = [
@@ -623,23 +688,62 @@ export default function CommunicationsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Recipient Type</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select 
+                      value={composeRecipientType}
+                      onChange={(e) => {
+                        setComposeRecipientType(e.target.value as 'tenant' | 'landlord' | 'vendor' | 'all')
+                        setComposeRecipient('') // Reset recipient when type changes
+                        setComposeProperty('all') // Reset property filter
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
                       <option value="tenant">Tenant</option>
                       <option value="landlord">Landlord</option>
                       <option value="vendor">Vendor</option>
-                      <option value="all">All (Broadcast)</option>
+                      <option value="all">All Stakeholders (Broadcast)</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Recipient</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                      <option value="">Select recipient...</option>
-                      <option value="1">John Smith (Tenant)</option>
-                      <option value="2">Sarah Johnson (Tenant)</option>
-                      <option value="3">Robert Williams (Landlord)</option>
-                    </select>
-                  </div>
+                  {composeRecipientType !== 'all' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Recipient</label>
+                      <select 
+                        value={composeRecipient}
+                        onChange={(e) => setComposeRecipient(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Select recipient...</option>
+                        <option value="all">All {composeRecipientType}s</option>
+                        {getRecipientOptions().map(contact => (
+                          <option key={contact.id} value={contact.id}>
+                            {contact.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
+
+                {/* Property Filter for Tenants and Landlords */}
+                {(composeRecipientType === 'tenant' || composeRecipientType === 'landlord') && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Property</label>
+                    <select 
+                      value={composeProperty}
+                      onChange={(e) => {
+                        setComposeProperty(e.target.value)
+                        setComposeRecipient('') // Reset recipient when property changes
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Properties</option>
+                      {mockProperties.map(property => (
+                        <option key={property.id} value={property.id}>
+                          {property.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>

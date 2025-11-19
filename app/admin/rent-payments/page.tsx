@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 interface Payment {
   id: string;
+  tenantId: string;
   tenantName: string;
+  propertyId: string;
   propertyName: string;
   unitNumber: string;
   amount: number;
@@ -17,10 +20,15 @@ interface Payment {
 }
 
 export default function RentPaymentsPage() {
+  const [timePeriod, setTimePeriod] = useState<string>('current');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [payments] = useState<Payment[]>([
     {
       id: '1',
+      tenantId: '1',
       tenantName: 'John Mwangi',
+      propertyId: '1',
       propertyName: 'Sunset Apartments',
       unitNumber: '5A',
       amount: 45000,
@@ -32,7 +40,9 @@ export default function RentPaymentsPage() {
     },
     {
       id: '2',
+      tenantId: '2',
       tenantName: 'Jane Achieng',
+      propertyId: '3',
       propertyName: 'Highland House',
       unitNumber: '12',
       amount: 75000,
@@ -41,7 +51,9 @@ export default function RentPaymentsPage() {
     },
     {
       id: '3',
+      tenantId: '3',
       tenantName: 'Peter Omondi',
+      propertyId: '2',
       propertyName: 'Vista Plaza Office',
       unitNumber: '8B',
       amount: 120000,
@@ -50,7 +62,9 @@ export default function RentPaymentsPage() {
     },
     {
       id: '4',
+      tenantId: '4',
       tenantName: 'Mary Wanjiru',
+      propertyId: '4',
       propertyName: 'Garden Estate',
       unitNumber: '3C',
       amount: 60000,
@@ -131,18 +145,61 @@ export default function RentPaymentsPage() {
       </div>
 
       {/* Filter */}
-      <div className='bg-white shadow rounded-lg p-4'>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-        >
-          <option value='all'>All Payments</option>
-          <option value='paid'>Paid</option>
-          <option value='pending'>Pending</option>
-          <option value='overdue'>Overdue</option>
-          <option value='partial'>Partial</option>
-        </select>
+      <div className='bg-white shadow rounded-lg p-4 space-y-4'>
+        <div className='flex flex-wrap gap-4 items-end'>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
+            <select
+              value={timePeriod}
+              onChange={(e) => setTimePeriod(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            >
+              <option value='current'>Current Month</option>
+              <option value='last30'>Last 30 Days</option>
+              <option value='last90'>Last 90 Days</option>
+              <option value='all'>All Time</option>
+              <option value='custom'>Custom Range</option>
+            </select>
+          </div>
+
+          {timePeriod === 'custom' && (
+            <>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            >
+              <option value='all'>All Payments</option>
+              <option value='paid'>Paid</option>
+              <option value='pending'>Pending</option>
+              <option value='overdue'>Overdue</option>
+              <option value='partial'>Partial</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Payments Table */}
@@ -180,10 +237,16 @@ export default function RentPaymentsPage() {
             {filteredPayments.map((payment) => (
               <tr key={payment.id} className='hover:bg-gray-50'>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm font-medium text-gray-900'>{payment.tenantName}</div>
+                  <Link href={`/admin/tenants/${payment.tenantId}`} className='text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline'>
+                    {payment.tenantName}
+                  </Link>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{payment.propertyName}</div>
+                  <div className='text-sm'>
+                    <Link href={`/admin/properties/${payment.propertyId}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                      {payment.propertyName}
+                    </Link>
+                  </div>
                   <div className='text-sm text-gray-500'>Unit {payment.unitNumber}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900'>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -42,6 +43,9 @@ async function fetchTenants(): Promise<TenantsResponse> {
 }
 
 export default function TenantsPage() {
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [filterProperty, setFilterProperty] = useState<string>('all')
+  
   const { data, isLoading, error } = useQuery({
     queryKey: ['tenants'],
     queryFn: fetchTenants,
@@ -64,6 +68,17 @@ export default function TenantsPage() {
   }
 
   const tenants = data?.tenants || []
+  
+  // Get unique properties for filter
+  const properties = Array.from(new Set(tenants.map(t => t.property.name))).sort()
+  
+  // Apply filters
+  const filteredTenants = tenants.filter(tenant => {
+    const matchesStatus = filterStatus === 'all' || tenant.status === filterStatus
+    const matchesProperty = filterProperty === 'all' || tenant.property.name === filterProperty
+    return matchesStatus && matchesProperty
+  })
+  
   const activeTenants = tenants.filter(t => t.status === 'ACTIVE')
   const pendingTenants = tenants.filter(t => t.status === 'PENDING')
 
@@ -96,10 +111,42 @@ export default function TenantsPage() {
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">All Tenants</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">All Tenants</h2>
+          </div>
+          
+          {/* Filters */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="PENDING">Pending</option>
+                <option value="INACTIVE">Inactive</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Property</label>
+              <select
+                value={filterProperty}
+                onChange={(e) => setFilterProperty(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Properties</option>
+                {properties.map(property => (
+                  <option key={property} value={property}>{property}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        {tenants.length === 0 ? (
+        {filteredTenants.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">No tenants found</p>
             <Button variant="primary">Add Your First Tenant</Button>
@@ -119,7 +166,7 @@ export default function TenantsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {tenants.map((tenant) => (
+                {filteredTenants.map((tenant) => (
                   <tr key={tenant.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm font-medium">
                       <Link href={`/admin/tenants/${tenant.id}`} className="text-blue-600 hover:text-blue-800">
@@ -128,7 +175,11 @@ export default function TenantsPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{tenant.email}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{tenant.phone}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{tenant.property.name}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <Link href={`/admin/properties/${tenant.property.id}`} className="text-blue-600 hover:text-blue-800">
+                        {tenant.property.name}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{tenant.unit || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{tenant._count.leases}</td>
                     <td className="px-6 py-4 text-sm">

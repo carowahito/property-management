@@ -39,6 +39,8 @@ async function fetchLandlords(): Promise<LandlordsResponse> {
 export default function AdminLandlordsPage() {
   const [selectedLandlord, setSelectedLandlord] = useState<Landlord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterProperty, setFilterProperty] = useState<string>('all');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['landlords'],
@@ -64,9 +66,14 @@ export default function AdminLandlordsPage() {
   const landlords = data?.landlords || []
 
   const filteredLandlords = landlords.filter(
-    (landlord) =>
-      landlord.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      landlord.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (landlord) => {
+      const matchesSearch = landlord.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        landlord.email.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = filterStatus === 'all' || landlord.status === filterStatus
+      // Note: Property filter would require landlord data to include property names
+      // For now, we'll keep it simple with just status filter
+      return matchesSearch && matchesStatus
+    }
   );
 
   const stats = {
@@ -106,14 +113,27 @@ export default function AdminLandlordsPage() {
       </div>
 
       <div className='bg-white shadow rounded-lg p-6'>
-        <div className='mb-4'>
-          <input
-            type='text'
-            placeholder='Search landlords by name or email...'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-          />
+        <div className='mb-4 grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <div className="md:col-span-2">
+            <input
+              type='text'
+              placeholder='Search landlords by name or email...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            />
+          </div>
+          <div>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            >
+              <option value="all">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+          </div>
         </div>
 
         <div className='overflow-x-auto'>

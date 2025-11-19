@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function AdminLayout({
@@ -10,6 +10,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'Main': true,
@@ -19,6 +20,9 @@ export default function AdminLayout({
     'Analytics & Insights': false,
     'Documentation': false,
   })
+
+  // Don't show back button on main dashboard
+  const showBackButton = pathname !== '/admin'
 
   const menuSections = [
     {
@@ -227,6 +231,18 @@ export default function AdminLayout({
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="px-8 py-6">
+            {showBackButton && (
+              <button
+                onClick={() => router.back()}
+                className="mb-6 flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition group"
+                title="Go back"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="text-sm font-medium">Back</span>
+              </button>
+            )}
             {children}
           </div>
         </main>

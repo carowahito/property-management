@@ -1,47 +1,43 @@
 import { NextResponse } from 'next/server'
-
-const mockLeases = [
-  {
-    id: '1',
-    tenantId: '1',
-    tenantName: 'John Smith',
-    propertyId: '1',
-    propertyName: 'Sunset Apartments',
-    unit: '5A',
-    startDate: '2023-06-15',
-    endDate: '2025-06-14',
-    monthlyRent: 40000,
-    deposit: 80000,
-    status: 'Active',
-  },
-  {
-    id: '2',
-    tenantId: '2',
-    tenantName: 'Sarah Johnson',
-    propertyId: '2',
-    propertyName: 'Vista Plaza',
-    unit: '3B',
-    startDate: '2023-08-22',
-    endDate: '2025-08-21',
-    monthlyRent: 40000,
-    deposit: 80000,
-    status: 'Active',
-  },
-  {
-    id: '3',
-    tenantId: '3',
-    tenantName: 'Michael Chen',
-    propertyId: '3',
-    propertyName: 'Highland House',
-    unit: '2C',
-    startDate: '2024-01-10',
-    endDate: '2025-01-09',
-    monthlyRent: 30000,
-    deposit: 60000,
-    status: 'Active',
-  },
-]
+import { mockLeases, mockPayments } from '@/lib/mock-data'
 
 export async function GET() {
-  return NextResponse.json(mockLeases)
+  // Transform leases to shape expected by the admin UI
+  const transformed = mockLeases.map(lease => {
+    const paymentsForLease = mockPayments.filter(p => p.leaseId === lease.id)
+
+    return {
+      id: lease.id,
+      monthlyRent: lease.monthlyRent,
+      securityDeposit: lease.deposit ?? 0,
+      startDate: lease.startDate,
+      endDate: lease.endDate,
+      status: (lease.status || 'UNKNOWN').toString().toUpperCase(),
+      unit: lease.unit || null,
+      tenant: {
+        id: lease.tenantId || null,
+        name: lease.tenantName || 'Unknown Tenant',
+      },
+      property: {
+        id: lease.propertyId || null,
+        name: lease.propertyName || 'Unknown Property',
+        landlord: {
+          id: lease.landlordId || null,
+          name: lease.landlordName || 'Unknown Landlord',
+        }
+      },
+      _count: {
+        payments: paymentsForLease.length,
+      }
+    }
+  })
+
+  const pagination = {
+    page: 1,
+    limit: transformed.length || 10,
+    total: transformed.length,
+    totalPages: 1,
+  }
+
+  return NextResponse.json({ leases: transformed, pagination })
 }

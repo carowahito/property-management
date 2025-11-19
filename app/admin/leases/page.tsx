@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -260,14 +261,20 @@ export default function AdminLeasesPage() {
                         {lease.id.substring(0, 8)}...
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {lease.tenant.name}
+                        <Link href={`/admin/tenants/${lease.tenant.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                          {lease.tenant.name}
+                        </Link>
                         <p className="text-xs text-gray-500">{lease._count.payments} payments</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {lease.property.landlord.name}
+                        <Link href={`/admin/landlords/${lease.property.landlord.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                          {lease.property.landlord.name}
+                        </Link>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {lease.property.name}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <Link href={`/admin/properties/${lease.property.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                          {lease.property.name}
+                        </Link>
                         <p className="text-xs text-gray-500">{lease.unit || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
@@ -370,12 +377,16 @@ export default function AdminLeasesPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Tenant</p>
-                      <p className="font-semibold text-gray-900">{selectedLease.tenant.name}</p>
+                      <Link href={`/admin/tenants/${selectedLease.tenant.id}`} className="font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                        {selectedLease.tenant.name}
+                      </Link>
                       <p className="text-xs text-gray-500">{selectedLease._count.payments} payments</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Landlord</p>
-                      <p className="font-semibold text-gray-900">{selectedLease.property.landlord.name}</p>
+                      <Link href={`/admin/landlords/${selectedLease.property.landlord.id}`} className="font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                        {selectedLease.property.landlord.name}
+                      </Link>
                       <p className="text-xs text-gray-500">Property Owner</p>
                     </div>
                   </div>
@@ -387,7 +398,9 @@ export default function AdminLeasesPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Property</p>
-                      <p className="text-lg font-semibold text-gray-900">{selectedLease.property.name}</p>
+                      <Link href={`/admin/properties/${selectedLease.property.id}`} className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                        {selectedLease.property.name}
+                      </Link>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Unit</p>

@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { TimeFilter } from '@/components/shared/TimeFilter';
 
 interface LateFee {
   id: string;
+  tenantId: string;
   tenantName: string;
+  propertyId: string;
   propertyName: string;
   unitNumber: string;
   rentAmount: number;
@@ -17,10 +21,15 @@ interface LateFee {
 }
 
 export default function LateFeesPage() {
+  const [timePeriod, setTimePeriod] = useState('current');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [lateFees] = useState<LateFee[]>([
     {
       id: '1',
+      tenantId: '1',
       tenantName: 'John Mwangi',
+      propertyId: '1',
       propertyName: 'Sunset Apartments',
       unitNumber: '5A',
       rentAmount: 45000,
@@ -31,7 +40,9 @@ export default function LateFeesPage() {
     },
     {
       id: '2',
+      tenantId: '4',
       tenantName: 'Mary Wanjiku',
+      propertyId: '4',
       propertyName: 'Garden Estate',
       unitNumber: '3C',
       rentAmount: 40000,
@@ -42,7 +53,9 @@ export default function LateFeesPage() {
     },
     {
       id: '3',
+      tenantId: '3',
       tenantName: 'Peter Omondi',
+      propertyId: '2',
       propertyName: 'Vista Plaza',
       unitNumber: '8B',
       rentAmount: 80000,
@@ -50,11 +63,13 @@ export default function LateFeesPage() {
       daysLate: 5,
       feeAmount: 2000,
       status: 'waived',
-      notes: 'First-time late, waived as courtesy',
+      notes: 'Tenant experienced financial hardship',
     },
     {
       id: '4',
+      tenantId: '5',
       tenantName: 'Grace Akinyi',
+      propertyId: '3',
       propertyName: 'Highland House',
       unitNumber: '12',
       rentAmount: 60000,
@@ -117,17 +132,30 @@ export default function LateFeesPage() {
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
-        >
-          <option value='all'>All Status</option>
-          <option value='pending'>Pending</option>
-          <option value='collected'>Collected</option>
-          <option value='waived'>Waived</option>
-        </select>
+      <div className='bg-white shadow rounded-lg p-4 space-y-4'>
+        <div className='flex flex-wrap gap-4 items-end'>
+          <TimeFilter
+            timePeriod={timePeriod}
+            setTimePeriod={setTimePeriod}
+            customStartDate={customStartDate}
+            setCustomStartDate={setCustomStartDate}
+            customEndDate={customEndDate}
+            setCustomEndDate={setCustomEndDate}
+          />
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            >
+              <option value='all'>All Status</option>
+              <option value='pending'>Pending</option>
+              <option value='collected'>Collected</option>
+              <option value='waived'>Waived</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className='bg-white shadow rounded-lg overflow-hidden'>
@@ -163,9 +191,17 @@ export default function LateFeesPage() {
           <tbody className='bg-white divide-y divide-gray-200'>
             {filteredFees.map((fee) => (
               <tr key={fee.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>{fee.tenantName}</td>
+                <td className='px-6 py-4 text-sm font-medium'>
+                  <Link href={`/admin/tenants/${fee.tenantId}`} className='text-blue-600 hover:text-blue-800 hover:underline'>
+                    {fee.tenantName}
+                  </Link>
+                </td>
                 <td className='px-6 py-4'>
-                  <div className='text-sm text-gray-900'>{fee.propertyName}</div>
+                  <div className='text-sm'>
+                    <Link href={`/admin/properties/${fee.propertyId}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                      {fee.propertyName}
+                    </Link>
+                  </div>
                   <div className='text-sm text-gray-500'>Unit {fee.unitNumber}</div>
                 </td>
                 <td className='px-6 py-4 text-sm text-gray-900'>

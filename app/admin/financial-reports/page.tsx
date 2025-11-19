@@ -56,6 +56,10 @@ export default function FinancialReportsPage() {
   ]);
 
   const [filterType, setFilterType] = useState<string>('all');
+  const [timePeriod, setTimePeriod] = useState<string>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  
   const filteredReports = reports.filter(
     (r) => filterType === 'all' || r.reportType === filterType
   );
@@ -113,18 +117,62 @@ export default function FinancialReportsPage() {
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
-        >
-          <option value='all'>All Report Types</option>
-          <option value='income-statement'>Income Statement</option>
-          <option value='cash-flow'>Cash Flow</option>
-          <option value='balance-sheet'>Balance Sheet</option>
-          <option value='profit-loss'>Profit & Loss</option>
-        </select>
+      <div className='bg-white shadow rounded-lg p-4 space-y-4'>
+        <div className='flex flex-wrap gap-4 items-end'>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
+            <select
+              value={timePeriod}
+              onChange={(e) => setTimePeriod(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            >
+              <option value='all'>All Periods</option>
+              <option value='current-month'>Current Month</option>
+              <option value='last-month'>Last Month</option>
+              <option value='last-quarter'>Last Quarter</option>
+              <option value='last-year'>Last Year</option>
+              <option value='custom'>Custom Range</option>
+            </select>
+          </div>
+
+          {timePeriod === 'custom' && (
+            <>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            >
+              <option value='all'>All Report Types</option>
+              <option value='income-statement'>Income Statement</option>
+              <option value='cash-flow'>Cash Flow</option>
+              <option value='balance-sheet'>Balance Sheet</option>
+              <option value='profit-loss'>Profit & Loss</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className='bg-white shadow rounded-lg overflow-hidden'>

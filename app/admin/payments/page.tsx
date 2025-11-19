@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -15,6 +16,7 @@ interface Payment {
   dueDate: string
   paidDate: string | null
   reference: string | null
+  month?: string
   tenant: {
     id: string
     name: string
@@ -23,6 +25,10 @@ interface Payment {
   lease: {
     id: string
     property: {
+      id: string
+      name: string
+    }
+    landlord?: {
       id: string
       name: string
     }
@@ -40,7 +46,7 @@ interface PaymentsResponse {
 }
 
 async function fetchPayments(): Promise<PaymentsResponse> {
-  const response = await fetch('/api/payments')
+  const response = await fetch('/api/mock/payments')
   if (!response.ok) {
     throw new Error('Failed to fetch payments')
   }
@@ -49,7 +55,10 @@ async function fetchPayments(): Promise<PaymentsResponse> {
 
 export default function AdminPaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'PAID' | 'PENDING' | 'OVERDUE'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'COMPLETED' | 'PENDING' | 'OVERDUE'>('all')
+  const [timePeriod, setTimePeriod] = useState<'all' | 'current' | 'last30' | 'last90' | 'custom'>('current')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
 
   const { data, isLoading, error } = useQuery({
@@ -75,22 +84,54 @@ export default function AdminPaymentsPage() {
 
   const payments = data?.payments || []
 
+  // Get current month for default filter
+  const currentMonth = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })
+
+  // Filter by time period
+  const getFilteredByTime = (payments: Payment[]) => {
+    const now = new Date()
+    
+    switch (timePeriod) {
+      case 'current':
+        return payments.filter(p => {
+          const paymentMonth = new Date(p.dueDate).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+          return paymentMonth === currentMonth
+        })
+      case 'last30':
+        const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        return payments.filter(p => new Date(p.dueDate) >= last30Days)
+      case 'last90':
+        const last90Days = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        return payments.filter(p => new Date(p.dueDate) >= last90Days)
+      case 'custom':
+        if (!customStartDate || !customEndDate) return payments
+        return payments.filter(p => {
+          const dueDate = new Date(p.dueDate)
+          return dueDate >= new Date(customStartDate) && dueDate <= new Date(customEndDate)
+        })
+      default:
+        return payments
+    }
+  }
+
+  const timeFilteredPayments = getFilteredByTime(payments)
+
   // Calculate statistics
-  const paidPayments = payments.filter(p => p.status === 'PAID')
-  const pendingPayments = payments.filter(p => p.status === 'PENDING')
-  const overduePayments = payments.filter(p => p.status === 'OVERDUE')
+  const paidPayments = timeFilteredPayments.filter(p => p.status === 'COMPLETED')
+  const pendingPayments = timeFilteredPayments.filter(p => p.status === 'PENDING')
+  const overduePayments = timeFilteredPayments.filter(p => p.status === 'OVERDUE')
 
   const stats = {
     totalCollected: paidPayments.reduce((sum, p) => sum + Number(p.amount), 0),
     pending: pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0),
     overdue: overduePayments.reduce((sum, p) => sum + Number(p.amount), 0),
     overdueCount: overduePayments.length,
-    totalTransactions: payments.length,
-    collectionRate: payments.length > 0 ? (paidPayments.length / payments.length) * 100 : 0,
+    totalTransactions: timeFilteredPayments.length,
+    collectionRate: timeFilteredPayments.length > 0 ? (paidPayments.length / timeFilteredPayments.length) * 100 : 0,
   }
 
-  // Filter payments
-  const filteredPayments = payments.filter(payment => {
+  // Filter payments by search and status
+  const filteredPayments = timeFilteredPayments.filter(payment => {
     const matchesSearch =
       payment.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.lease.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,6 +144,7 @@ export default function AdminPaymentsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
         <p className="text-gray-600 mt-2">Track and manage all payment transactions across all properties</p>
@@ -133,7 +175,49 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+        {/* Time Period Filter */}
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
+            <select
+              value={timePeriod}
+              onChange={(e) => setTimePeriod(e.target.value as any)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="current">Current Month ({currentMonth})</option>
+              <option value="last30">Last 30 Days</option>
+              <option value="last90">Last 90 Days</option>
+              <option value="all">All Time</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          {timePeriod === 'custom' && (
+            <>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Search and Status Filter */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <input
@@ -156,9 +240,9 @@ export default function AdminPaymentsPage() {
               All ({stats.totalTransactions})
             </button>
             <button
-              onClick={() => setStatusFilter('PAID')}
+              onClick={() => setStatusFilter('COMPLETED')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'PAID'
+                statusFilter === 'COMPLETED'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
@@ -244,13 +328,21 @@ export default function AdminPaymentsPage() {
                       {payment.reference || payment.id.slice(0, 8)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.tenant.name}
+                      <Link href={`/admin/tenants/${payment.tenant.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                        {payment.tenant.name}
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      N/A
+                      {payment.lease.landlord ? (
+                        <Link href={`/admin/landlords/${payment.lease.landlord.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                          {payment.lease.landlord.name}
+                        </Link>
+                      ) : 'N/A'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {payment.lease.property.name}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <Link href={`/admin/properties/${payment.lease.property.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                        {payment.lease.property.name}
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                       KES {Number(payment.amount).toLocaleString()}
@@ -263,13 +355,13 @@ export default function AdminPaymentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        payment.status === 'PAID'
+                        payment.status === 'COMPLETED'
                           ? 'bg-green-100 text-green-800'
                           : payment.status === 'PENDING'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {payment.status}
+                        {payment.status === 'COMPLETED' ? 'PAID' : payment.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -317,13 +409,13 @@ export default function AdminPaymentsPage() {
                   <div>
                     <p className="text-sm text-gray-600">Status</p>
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedPayment.status === 'PAID'
+                      selectedPayment.status === 'COMPLETED'
                         ? 'bg-green-100 text-green-800'
                         : selectedPayment.status === 'PENDING'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {selectedPayment.status}
+                      {selectedPayment.status === 'COMPLETED' ? 'PAID' : selectedPayment.status}
                     </span>
                   </div>
                 </div>
@@ -358,21 +450,31 @@ export default function AdminPaymentsPage() {
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="text-sm text-gray-600">Tenant</p>
-                        <p className="font-semibold text-gray-900">{selectedPayment.tenant.name}</p>
+                        <Link href={`/admin/tenants/${selectedPayment.tenant.id}`} className="font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                          {selectedPayment.tenant.name}
+                        </Link>
                         <p className="text-xs text-gray-500">{selectedPayment.tenant.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="text-sm text-gray-600">Landlord</p>
-                        <p className="font-semibold text-gray-900">N/A</p>
-                        <p className="text-xs text-gray-500">Not available in payment details</p>
+                        {selectedPayment.lease.landlord ? (
+                          <Link href={`/admin/landlords/${selectedPayment.lease.landlord.id}`} className="font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                            {selectedPayment.lease.landlord.name}
+                          </Link>
+                        ) : (
+                          <p className="font-semibold text-gray-900">N/A</p>
+                        )}
+                        <p className="text-xs text-gray-500">Property Owner</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="text-sm text-gray-600">Property</p>
-                        <p className="font-semibold text-gray-900">{selectedPayment.lease.property.name}</p>
+                        <Link href={`/admin/properties/${selectedPayment.lease.property.id}`} className="text-blue-600 hover:text-blue-800 hover:underline font-semibold">
+                          {selectedPayment.lease.property.name}
+                        </Link>
                         <p className="text-xs text-gray-500">Lease ID: {selectedPayment.lease.id.slice(0, 8)}</p>
                       </div>
                     </div>

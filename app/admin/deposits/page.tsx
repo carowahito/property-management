@@ -1,12 +1,22 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { TimeFilter } from '@/components/shared/TimeFilter'
 
 export default function DepositsPage() {
+  const [timePeriod, setTimePeriod] = useState('current')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  
   const deposits = [
     {
       id: '1',
+      tenantId: '1',
       tenant: 'John Mwangi',
+      propertyId: '1',
       property: 'Sunset Apartments',
       unit: '5A',
       amount: 90000,
@@ -15,7 +25,9 @@ export default function DepositsPage() {
     },
     {
       id: '2',
+      tenantId: '2',
       tenant: 'Jane Achieng',
+      propertyId: '3',
       property: 'Highland House',
       unit: '12',
       amount: 150000,
@@ -24,7 +36,9 @@ export default function DepositsPage() {
     },
     {
       id: '3',
+      tenantId: '3',
       tenant: 'Peter Omondi',
+      propertyId: '2',
       property: 'Vista Plaza',
       unit: '8B',
       amount: 240000,
@@ -64,6 +78,32 @@ export default function DepositsPage() {
         </div>
       </div>
 
+      <div className='bg-white shadow rounded-lg p-4 space-y-4'>
+        <div className='flex flex-wrap gap-4 items-end'>
+          <TimeFilter
+            timePeriod={timePeriod}
+            setTimePeriod={setTimePeriod}
+            customStartDate={customStartDate}
+            setCustomStartDate={setCustomStartDate}
+            customEndDate={customEndDate}
+            setCustomEndDate={setCustomEndDate}
+          />
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            >
+              <option value='all'>All Status</option>
+              <option value='held'>Held</option>
+              <option value='refunded'>Refunded</option>
+              <option value='pending'>Pending</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div className='bg-white shadow rounded-lg overflow-hidden'>
         <table className='min-w-full divide-y divide-gray-200'>
           <thead className='bg-gray-50'>
@@ -91,9 +131,15 @@ export default function DepositsPage() {
           <tbody className='bg-white divide-y divide-gray-200'>
             {deposits.map((deposit) => (
               <tr key={deposit.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>{deposit.tenant}</td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
-                  {deposit.property}
+                <td className='px-6 py-4 text-sm font-medium'>
+                  <Link href={`/admin/tenants/${deposit.tenantId}`} className='text-blue-600 hover:text-blue-800 hover:underline'>
+                    {deposit.tenant}
+                  </Link>
+                </td>
+                <td className='px-6 py-4 text-sm'>
+                  <Link href={`/admin/properties/${deposit.propertyId}`} className='text-blue-600 hover:text-blue-800 hover:underline'>
+                    {deposit.property}
+                  </Link>
                   <br />
                   <span className='text-gray-500'>Unit {deposit.unit}</span>
                 </td>

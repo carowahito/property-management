@@ -105,7 +105,8 @@ export default function CRMContactsPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'tenants' | 'landlords' | 'vendors' | 'leads' | 'enquiries'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [showAddLeadModal, setShowAddLeadModal] = useState(false)
+  const [showAddContactModal, setShowAddContactModal] = useState(false)
+  const [contactType, setContactType] = useState<'lead' | 'tenant' | 'landlord' | 'vendor'>('lead')
 
   // Fetch data from APIs
   const { data: tenantsData, isLoading: isLoadingTenants } = useQuery({
@@ -149,11 +150,11 @@ export default function CRMContactsPage() {
   const leads = leadsData?.leads || []
   const enquiries = enquiriesData?.enquiries || []
 
-  // Combine all contacts
+  // Combine all contacts with unique keys
   const allContacts = [
-    ...tenants.map((t: Tenant) => ({ ...t, contactType: 'Tenant' as const, link: `/admin/tenants/${t.id}` })),
-    ...landlords.map((l: Landlord) => ({ ...l, contactType: 'Landlord' as const, link: `/admin/landlords/${l.id}` })),
-    ...vendors.map((v: Vendor) => ({ ...v, contactType: 'Vendor' as const, link: `/admin/vendors/${v.id}` })),
+    ...tenants.map((t: Tenant) => ({ ...t, uniqueKey: `tenant-${t.id}`, contactType: 'Tenant' as const, link: `/admin/tenants/${t.id}` })),
+    ...landlords.map((l: Landlord) => ({ ...l, uniqueKey: `landlord-${l.id}`, contactType: 'Landlord' as const, link: `/admin/landlords/${l.id}` })),
+    ...vendors.map((v: Vendor) => ({ ...v, uniqueKey: `vendor-${v.id}`, contactType: 'Vendor' as const, link: `/admin/vendors/${v.id}` })),
   ]
 
   const getFilteredData = () => {
@@ -252,7 +253,7 @@ export default function CRMContactsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="lg">📊 Reports</Button>
-          <Button variant="primary" size="lg" onClick={() => setShowAddLeadModal(true)}>+ Add Lead</Button>
+          <Button variant="primary" size="lg" onClick={() => setShowAddContactModal(true)}>+ Add Contact</Button>
         </div>
       </div>
 
@@ -365,7 +366,7 @@ export default function CRMContactsPage() {
             <div className="grid gap-3">
               {getFilteredData().map((contact: any) => (
                 <Link
-                  key={contact.id}
+                  key={contact.uniqueKey}
                   href={contact.link}
                   className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md transition"
                 >
@@ -574,15 +575,15 @@ export default function CRMContactsPage() {
         </div>
       </div>
 
-      {/* Add Lead Modal */}
-      {showAddLeadModal && (
+      {/* Add Contact Modal */}
+      {showAddContactModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Add New Lead</h3>
+                <h3 className="text-xl font-bold text-gray-900">Add New Contact</h3>
                 <button
-                  onClick={() => setShowAddLeadModal(false)}
+                  onClick={() => setShowAddContactModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -592,6 +593,20 @@ export default function CRMContactsPage() {
               </div>
 
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact Type *</label>
+                  <select
+                    value={contactType}
+                    onChange={(e) => setContactType(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="lead">Lead</option>
+                    <option value="tenant">Tenant</option>
+                    <option value="landlord">Landlord</option>
+                    <option value="vendor">Vendor</option>
+                  </select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
@@ -606,47 +621,111 @@ export default function CRMContactsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input type="email" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Lead Type *</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                      <option>Property Inquiry</option>
-                      <option>Service Request</option>
-                      <option>Partnership</option>
-                      <option>General</option>
-                    </select>
+
+                {contactType === 'lead' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Lead Type *</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                          <option>Property Inquiry</option>
+                          <option>Service Request</option>
+                          <option>Partnership</option>
+                          <option>General</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Source *</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                          <option>Website</option>
+                          <option>Referral</option>
+                          <option>Social Media</option>
+                          <option>Walk-in</option>
+                          <option>Email</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select team member...</option>
+                        <option>Alice Johnson</option>
+                        <option>Bob Smith</option>
+                        <option>Carol White</option>
+                        <option>David Brown</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {contactType === 'tenant' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ID Number *</label>
+                        <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Property</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select property...</option>
+                          <option>Sunset Apartments</option>
+                          <option>Vista Plaza</option>
+                          <option>Highland House</option>
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {contactType === 'landlord' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">ID/Tax Number *</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Bank Account</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Source *</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                      <option>Website</option>
-                      <option>Referral</option>
-                      <option>Social Media</option>
-                      <option>Walk-in</option>
-                      <option>Email</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select team member...</option>
-                    <option>Alice Johnson</option>
-                    <option>Bob Smith</option>
-                    <option>Carol White</option>
-                    <option>David Brown</option>
-                  </select>
-                </div>
+                )}
+
+                {contactType === 'vendor' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                        <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                          <option>Maintenance</option>
+                          <option>Cleaning</option>
+                          <option>Security</option>
+                          <option>Landscaping</option>
+                          <option>Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                      <input type="text" placeholder="e.g., Plumbing, Electrical" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                   <textarea rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="flex gap-3 pt-4">
-                  <Button variant="outline" onClick={() => setShowAddLeadModal(false)} className="flex-1">
+                  <Button variant="outline" onClick={() => setShowAddContactModal(false)} className="flex-1">
                     Cancel
                   </Button>
                   <Button variant="primary" className="flex-1">
-                    Add Lead
+                    Add {contactType.charAt(0).toUpperCase() + contactType.slice(1)}
                   </Button>
                 </div>
               </div>
