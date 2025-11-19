@@ -13,6 +13,7 @@ export default function AdminLayout({
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    'Administration': true,
     'Main': true,
     'Property Management': true,
     'Financial': false,
@@ -22,17 +23,28 @@ export default function AdminLayout({
     'Documentation': false,
   })
 
+  // In production, get this from auth context
+  const currentUserRole = 'Admin' // or 'Manager', 'Sales', 'Customer Care', 'Caretaker', 'Operations', 'Finance'
+
   // Don't show back button on main dashboard
   const showBackButton = pathname !== '/admin'
 
   const menuSections = [
+    {
+      title: 'Administration',
+      items: [
+        { href: '/admin/admin-panel', label: 'Admin Panel', icon: '🔐', adminOnly: true },
+      ]
+    },
     {
       title: 'Main',
       items: [
         { href: '/admin', label: 'Dashboard', icon: '📊' },
         { href: '/admin/crm', label: 'CRM - All Contacts', icon: '👥' },
         { href: '/admin/crm/tasks', label: 'All Tasks', icon: '✅' },
-        { href: '/admin/communications', label: 'Communications', icon: '💬' },
+        { href: '/admin/crm/leads', label: 'Leads', icon: '🎯' },
+        { href: '/admin/crm/enquiries', label: 'Enquiries', icon: '💬' },
+        { href: '/admin/communications', label: 'Communications', icon: '📧' },
       ]
     },
     {
@@ -95,6 +107,50 @@ export default function AdminLayout({
     }
   ]
 
+  // Filter menu sections based on user role
+  const getVisibleSections = () => {
+    // Admin sees everything
+    if (currentUserRole === 'Admin') {
+      return menuSections
+    }
+
+    // Non-admins don't see Administration section
+    return menuSections.filter(section => {
+      // Remove Administration section for non-admins
+      if (section.title === 'Administration') return false
+      
+      // Role-specific filtering can be added here
+      // For example, Finance role only sees Financial section
+      if (currentUserRole === 'Finance') {
+        return ['Main', 'Financial'].includes(section.title)
+      }
+      
+      // Sales sees Main, Property Management, and CRM-related
+      if (currentUserRole === 'Sales') {
+        return ['Main', 'Property Management'].includes(section.title)
+      }
+      
+      // Customer Care sees Main and Communications
+      if (currentUserRole === 'Customer Care') {
+        return ['Main', 'Operations'].includes(section.title)
+      }
+      
+      // Operations/Caretaker sees Main and Operations
+      if (currentUserRole === 'Operations' || currentUserRole === 'Caretaker') {
+        return ['Main', 'Operations', 'Property Management'].includes(section.title)
+      }
+      
+      // Manager sees most sections except Administration
+      if (currentUserRole === 'Manager') {
+        return section.title !== 'Administration'
+      }
+      
+      return true
+    })
+  }
+
+  const visibleSections = getVisibleSections()
+
   const isActive = (href: string) => pathname === href
 
   const toggleSection = (title: string) => {
@@ -137,9 +193,10 @@ export default function AdminLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {menuSections.map((section, idx) => (
-            <div key={idx} className="mb-2">
+        {/* Navigation Menu */}
+        <nav className="flex-1 overflow-y-auto py-4 px-2">
+          {visibleSections.map((section) => (
+            <div key={section.title} className="mb-6">
               {sidebarOpen ? (
                 <>
                   <button
@@ -158,40 +215,64 @@ export default function AdminLayout({
                   </button>
                   {expandedSections[section.title] && (
                     <div className="space-y-1">
-                      {section.items.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition text-sm font-medium group ${
-                            isActive(item.href)
-                              ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                          }`}
-                        >
-                          <span className="text-lg flex-shrink-0">{item.icon}</span>
-                          <span className="truncate group-hover:text-gray-900">{item.label}</span>
-                        </Link>
-                      ))}
+                      {section.items.map((item: any) => {
+                        // Hide admin-only items from non-admins
+                        if (item.adminOnly && currentUserRole !== 'Admin') {
+                          return null
+                        }
+                        
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition text-sm font-medium group ${
+                              isActive(item.href)
+                                ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            } ${item.adminOnly ? 'bg-gradient-to-r from-red-50 to-transparent' : ''}`}
+                          >
+                            <span className="text-lg flex-shrink-0">{item.icon}</span>
+                            <span className="truncate group-hover:text-gray-900">
+                              {item.label}
+                              {item.adminOnly && (
+                                <span className="ml-2 text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold">
+                                  ADMIN
+                                </span>
+                              )}
+                            </span>
+                          </Link>
+                        )
+                      })}
                     </div>
                   )}
                 </>
               ) : (
                 // Collapsed view - show items without section headers
                 <div className="space-y-1">
-                  {section.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center justify-center p-2 rounded-lg transition text-sm ${
-                        isActive(item.href)
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
-                      title={item.label}
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                    </Link>
-                  ))}
+                  {section.items.map((item: any) => {
+                    // Hide admin-only items from non-admins
+                    if (item.adminOnly && currentUserRole !== 'Admin') {
+                      return null
+                    }
+                    
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center justify-center p-2 rounded-lg transition text-sm relative ${
+                          isActive(item.href)
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        } ${item.adminOnly ? 'ring-2 ring-red-200' : ''}`}
+                        title={item.label}
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        {item.adminOnly && (
+                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                        )}
+                      </Link>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -202,20 +283,6 @@ export default function AdminLayout({
         <div className="border-t border-gray-200 p-3">
           {sidebarOpen ? (
             <div className="space-y-1">
-              <Link
-                href="/admin/settings"
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition text-sm font-medium ${
-                  isActive('/admin/settings')
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Settings</span>
-              </Link>
               <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition text-sm font-medium">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -225,20 +292,6 @@ export default function AdminLayout({
             </div>
           ) : (
             <div className="space-y-1">
-              <Link
-                href="/admin/settings"
-                className={`flex items-center justify-center p-2 rounded-lg transition text-sm ${
-                  isActive('/admin/settings')
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-                title="Settings"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </Link>
               <button className="w-full flex items-center justify-center p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition" title="Logout">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -253,19 +306,35 @@ export default function AdminLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
         <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-          <div className="px-8 py-4 flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">Admin Suite</h2>
+          <div className="px-8 py-3 flex justify-between items-center">
+            <div className="flex flex-col">
+              <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-lg mb-2 w-fit ${
+                currentUserRole === 'Admin' 
+                  ? 'bg-red-100' 
+                  : 'bg-gray-100'
+              }`}>
+                <svg className={`w-4 h-4 ${currentUserRole === 'Admin' ? 'text-red-600' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className={`text-xs font-semibold uppercase tracking-wide ${currentUserRole === 'Admin' ? 'text-red-700' : 'text-gray-700'}`}>
+                  {currentUserRole}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {currentUserRole === 'Admin' ? 'Admin Suite' : `${currentUserRole} Dashboard`}
+              </h2>
+            </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-500 hover:text-gray-900 p-2" title="Notifications">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">
+              <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">Admin</span>
+                <span className="text-sm font-medium text-gray-700">Profile</span>
               </div>
             </div>
           </div>

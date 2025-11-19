@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -16,12 +16,21 @@ export default function LeadCRMPage({ params }: Props) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showConvertModal, setShowConvertModal] = useState(false)
+  const [leadId, setLeadId] = useState<string | null>(null)
 
-  const leadId = 'L001' // Would come from unwrapped params
+  useEffect(() => {
+    params.then(p => setLeadId(p.id))
+  }, [params])
 
-  // Mock lead data
+  if (!leadId) {
+    return <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  }
+
+  // Mock lead data - in production, fetch based on leadId
   const lead = {
-    id: 'L001',
+    id: leadId,
     name: 'Sarah Mitchell',
     email: 'sarah.mitchell@email.com',
     phone: '+254 790 123 456',
@@ -72,11 +81,15 @@ export default function LeadCRMPage({ params }: Props) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'New': return 'bg-blue-100 text-blue-800'
-      case 'Contacted': return 'bg-yellow-100 text-yellow-800'
+      case 'Enquiry': return 'bg-blue-100 text-blue-800'
+      case 'Prospect': return 'bg-purple-100 text-purple-800'
       case 'Qualified': return 'bg-green-100 text-green-800'
-      case 'Converted': return 'bg-purple-100 text-purple-800'
-      case 'Lost': return 'bg-gray-100 text-gray-800'
+      case 'Viewing Scheduled': return 'bg-cyan-100 text-cyan-800'
+      case 'Application Submitted': return 'bg-indigo-100 text-indigo-800'
+      case 'Tenant': return 'bg-emerald-100 text-emerald-800'
+      case 'Past Tenant': return 'bg-amber-100 text-amber-800'
+      case 'Dropped': return 'bg-orange-100 text-orange-800'
+      case 'Lost': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -369,6 +382,186 @@ export default function LeadCRMPage({ params }: Props) {
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setShowConvertModal(false)} className="flex-1">Cancel</Button>
               <Button variant="primary" className="flex-1">Convert & Create Lease</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Lead Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Edit Lead</h3>
+            
+            <div className="space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                <input
+                  type="text"
+                  defaultValue={lead.name}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Email & Phone */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    defaultValue={lead.email}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                  <input
+                    type="tel"
+                    defaultValue={lead.phone}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Status - Primary Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status <span className="text-red-500">*</span>
+                </label>
+                <select
+                  defaultValue={lead.status}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="Enquiry">Enquiry</option>
+                  <option value="Prospect">Prospect</option>
+                  <option value="Qualified">Qualified</option>
+                  <option value="Viewing Scheduled">Viewing Scheduled</option>
+                  <option value="Application Submitted">Application Submitted</option>
+                  <option value="Tenant">Tenant</option>
+                  <option value="Past Tenant">Past Tenant</option>
+                  <option value="Dropped">Dropped</option>
+                  <option value="Lost">Lost</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Track lead progression through the sales pipeline
+                </p>
+              </div>
+
+              {/* Type & Source */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                  <select
+                    defaultValue={lead.type}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="Property Inquiry">Property Inquiry</option>
+                    <option value="Lease Inquiry">Lease Inquiry</option>
+                    <option value="Commercial Space">Commercial Space</option>
+                    <option value="Apartment Rental">Apartment Rental</option>
+                    <option value="Office Space">Office Space</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                  <select
+                    defaultValue={lead.source}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="Website">Website</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Walk-in">Walk-in</option>
+                    <option value="Social Media">Social Media</option>
+                    <option value="Email Campaign">Email Campaign</option>
+                    <option value="Previous Customer">Previous Customer</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Assigned To & Company */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
+                  <select
+                    defaultValue={lead.assignedTo}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="Alice Johnson">Alice Johnson</option>
+                    <option value="Bob Smith">Bob Smith</option>
+                    <option value="Carol White">Carol White</option>
+                    <option value="David Brown">David Brown</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Company (Optional)</label>
+                  <input
+                    type="text"
+                    defaultValue={lead.company}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="Company name"
+                  />
+                </div>
+              </div>
+
+              {/* Budget & Move-in Date */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Budget Range</label>
+                  <input
+                    type="text"
+                    defaultValue={lead.budget}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="e.g., KES 50,000 - 70,000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Move-in Date</label>
+                  <input
+                    type="date"
+                    defaultValue={lead.moveInDate}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Preferences */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Preferences</label>
+                <textarea
+                  rows={3}
+                  defaultValue={lead.preferences}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Bedrooms, amenities, location preferences..."
+                />
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea
+                  rows={4}
+                  defaultValue={lead.notes}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Additional information about this lead..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+              <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button 
+                variant="primary" 
+                className="flex-1"
+                onClick={() => {
+                  // In production, save changes here
+                  setShowEditModal(false)
+                }}
+              >
+                Save Changes
+              </Button>
             </div>
           </div>
         </div>

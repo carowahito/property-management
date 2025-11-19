@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -15,12 +15,21 @@ export default function EnquiryCRMPage({ params }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showResponseModal, setShowResponseModal] = useState(false)
+  const [enquiryId, setEnquiryId] = useState<string | null>(null)
 
-  const enquiryId = 'E001' // Would come from unwrapped params
+  useEffect(() => {
+    params.then(p => setEnquiryId(p.id))
+  }, [params])
 
-  // Mock enquiry data
+  if (!enquiryId) {
+    return <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  }
+
+  // Mock enquiry data - in production, fetch based on enquiryId
   const enquiry = {
-    id: 'E001',
+    id: enquiryId,
     name: 'Grace Wanjiru',
     email: 'grace.w@email.com',
     phone: '+254 755 678 901',
