@@ -16,6 +16,33 @@ export default function TenantCRMPage({ params }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'payments' | 'maintenance' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    property: '',
+    unit: '',
+    rent: '',
+    moveIn: '',
+    status: '',
+  })
+  const [paymentForm, setPaymentForm] = useState({
+    month: '',
+    amount: '',
+    date: '',
+    method: 'Bank Transfer',
+    status: 'Paid',
+  })
+  const [paymentFilters, setPaymentFilters] = useState({
+    month: '',
+    minAmount: '',
+    maxAmount: '',
+    startDate: '',
+    endDate: '',
+    method: '',
+    status: '',
+  })
 
   // In real app, this would be async
   const tenantId = '1' // Would come from unwrapped params
@@ -25,11 +52,93 @@ export default function TenantCRMPage({ params }: Props) {
     return <div>Tenant not found</div>
   }
 
+  // Initialize edit form when modal opens
+  const handleEditClick = () => {
+    setEditForm({
+      name: tenant.name,
+      email: tenant.email,
+      phone: tenant.phone,
+      property: tenant.property,
+      unit: tenant.unit,
+      rent: tenant.rent?.toString() || '',
+      moveIn: tenant.moveIn,
+      status: tenant.status,
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSaveEdit = () => {
+    console.log('Saving tenant updates:', editForm)
+    // In real app, this would make an API call
+    setShowEditModal(false)
+  }
+
+  const handleRecordPayment = () => {
+    console.log('Recording payment:', paymentForm)
+    // In real app, this would make an API call
+    setShowRecordPaymentModal(false)
+    setPaymentForm({
+      month: '',
+      amount: '',
+      date: '',
+      method: 'Bank Transfer',
+      status: 'Paid',
+    })
+  }
+
   // Get related data
   const tenantLeases = mockLeases.filter(l => l.tenantId === tenantId)
   const currentLease = tenantLeases.find(l => l.status === 'Active')
   const tenantPayments = mockPayments.filter(p => p.tenantId === tenantId)
   const tenantMaintenance = mockMaintenanceRequests.filter(m => m.tenantId === tenantId)
+
+  // Filter payments based on filters
+  const filteredPayments = tenantPayments.filter(payment => {
+    // Month filter
+    if (paymentFilters.month && !payment.month.toLowerCase().includes(paymentFilters.month.toLowerCase())) {
+      return false
+    }
+    
+    // Amount range filter
+    if (paymentFilters.minAmount && payment.amount < Number(paymentFilters.minAmount)) {
+      return false
+    }
+    if (paymentFilters.maxAmount && payment.amount > Number(paymentFilters.maxAmount)) {
+      return false
+    }
+    
+    // Date range filter (using paidDate)
+    if (paymentFilters.startDate && payment.paidDate && payment.paidDate < paymentFilters.startDate) {
+      return false
+    }
+    if (paymentFilters.endDate && payment.paidDate && payment.paidDate > paymentFilters.endDate) {
+      return false
+    }
+    
+    // Method filter
+    if (paymentFilters.method && payment.method !== paymentFilters.method) {
+      return false
+    }
+    
+    // Status filter
+    if (paymentFilters.status && payment.status !== paymentFilters.status) {
+      return false
+    }
+    
+    return true
+  })
+
+  const clearFilters = () => {
+    setPaymentFilters({
+      month: '',
+      minAmount: '',
+      maxAmount: '',
+      startDate: '',
+      endDate: '',
+      method: '',
+      status: '',
+    })
+  }
 
   // Mock additional CRM data
   const tenantNotes = [
@@ -134,7 +243,7 @@ export default function TenantCRMPage({ params }: Props) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowEditModal(true)}>
+            <Button variant="outline" onClick={handleEditClick}>
               ✏️ Edit
             </Button>
             <Button variant="primary">
@@ -276,8 +385,127 @@ export default function TenantCRMPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-gray-900">Payment History</h3>
-                <Button variant="primary">+ Record Payment</Button>
+                <Button variant="primary" onClick={() => setShowRecordPaymentModal(true)}>+ Record Payment</Button>
               </div>
+
+              {/* Filters */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium text-gray-900">Filters</h4>
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Month
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentFilters.month}
+                      onChange={(e) => setPaymentFilters({ ...paymentFilters, month: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., November"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Min Amount (KES)
+                    </label>
+                    <input
+                      type="number"
+                      value={paymentFilters.minAmount}
+                      onChange={(e) => setPaymentFilters({ ...paymentFilters, minAmount: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Max Amount (KES)
+                    </label>
+                    <input
+                      type="number"
+                      value={paymentFilters.maxAmount}
+                      onChange={(e) => setPaymentFilters({ ...paymentFilters, maxAmount: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="100000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={paymentFilters.startDate}
+                      onChange={(e) => setPaymentFilters({ ...paymentFilters, startDate: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={paymentFilters.endDate}
+                      onChange={(e) => setPaymentFilters({ ...paymentFilters, endDate: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Payment Method
+                    </label>
+                    <select
+                      value={paymentFilters.method}
+                      onChange={(e) => setPaymentFilters({ ...paymentFilters, method: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Methods</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="M-Pesa">M-Pesa</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="Card">Card</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={paymentFilters.status}
+                      onChange={(e) => setPaymentFilters({ ...paymentFilters, status: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="COMPLETED">Paid</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="OVERDUE">Overdue</option>
+                      <option value="PARTIAL">Partial</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Filter summary */}
+                <div className="mt-3 text-sm text-gray-600">
+                  Showing {filteredPayments.length} of {tenantPayments.length} payments
+                </div>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -290,23 +518,34 @@ export default function TenantCRMPage({ params }: Props) {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {tenantPayments.map(payment => (
-                      <tr key={payment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-900">{payment.month}</td>
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">KES {payment.amount.toLocaleString()}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{formatDate(payment.date)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{payment.method}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            payment.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                            payment.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {payment.status}
-                          </span>
+                    {filteredPayments.length > 0 ? (
+                      filteredPayments.map(payment => (
+                        <tr key={payment.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm text-gray-900">{payment.month}</td>
+                          <td className="px-6 py-4 text-sm font-semibold text-gray-900">KES {payment.amount.toLocaleString()}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {payment.paidDate ? formatDate(payment.paidDate as string) : '-'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">{payment.method}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              payment.status === 'COMPLETED' || payment.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                              payment.status === 'PENDING' || payment.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                              payment.status === 'OVERDUE' || payment.status === 'Overdue' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {payment.status === 'COMPLETED' ? 'Paid' : payment.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                          No payments found matching the selected filters
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -464,6 +703,271 @@ export default function TenantCRMPage({ params }: Props) {
             <div className="flex gap-3 mt-4">
               <Button variant="outline" onClick={() => setShowNoteModal(false)} className="flex-1">Cancel</Button>
               <Button variant="primary" className="flex-1">Save Note</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Tenant Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
+              <h2 className="text-xl font-bold text-gray-900">Edit Tenant Information</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-6">
+              {/* Personal Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status *
+                    </label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Late">Late</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lease Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Lease Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Property *
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.property}
+                      onChange={(e) => setEditForm({ ...editForm, property: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit *
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.unit}
+                      onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Monthly Rent (KES) *
+                    </label>
+                    <input
+                      type="number"
+                      value={editForm.rent}
+                      onChange={(e) => setEditForm({ ...editForm, rent: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Move-in Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={editForm.moveIn}
+                      onChange={(e) => setEditForm({ ...editForm, moveIn: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveEdit}
+                disabled={!editForm.name || !editForm.email || !editForm.phone}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Record Payment Modal */}
+      {showRecordPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full">
+            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
+              <h2 className="text-xl font-bold text-gray-900">Record Payment</h2>
+              <button
+                onClick={() => setShowRecordPaymentModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Month *
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentForm.month}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, month: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., November 2024"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Amount (KES) *
+                  </label>
+                  <input
+                    type="number"
+                    value={paymentForm.amount}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="50000"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={paymentForm.date}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Method *
+                  </label>
+                  <select
+                    value={paymentForm.method}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="M-Pesa">M-Pesa</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Card">Card</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Status *
+                  </label>
+                  <select
+                    value={paymentForm.status}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Overdue">Overdue</option>
+                    <option value="Partial">Partial</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowRecordPaymentModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleRecordPayment}
+                disabled={!paymentForm.month || !paymentForm.amount || !paymentForm.date}
+              >
+                Record Payment
+              </Button>
             </div>
           </div>
         </div>
