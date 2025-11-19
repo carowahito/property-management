@@ -4,12 +4,86 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
-import { mockVendors, mockMaintenanceRequests } from '@/lib/mock-data'
+import { mockMaintenanceRequests } from '@/lib/mock-data'
 import TaskManager from '@/components/crm/TaskManager'
 
 interface Props {
   params: Promise<{ id: string }>
 }
+
+// Mock vendors data matching the vendors page
+const mockVendors = [
+  {
+    id: 'VND-001',
+    name: 'John Plumbing Services',
+    category: 'Plumbing',
+    email: 'john@plumbing.com',
+    phone: '+254 712 345 678',
+    rating: 4.8,
+    completedJobs: 45,
+    activeJobs: 3,
+    status: 'Active',
+    vendorType: 'individual',
+    specialization: 'Residential & Commercial Plumbing',
+    serviceArea: 'Nairobi & Surrounding Areas',
+  },
+  {
+    id: 'VND-002',
+    name: 'Elite Electrical Co.',
+    category: 'Electrical',
+    email: 'info@eliteelectrical.com',
+    phone: '+254 723 456 789',
+    rating: 4.9,
+    completedJobs: 62,
+    activeJobs: 5,
+    status: 'Active',
+    vendorType: 'company',
+    specialization: 'Electrical Installation & Repairs',
+    serviceArea: 'All Areas',
+  },
+  {
+    id: 'VND-003',
+    name: 'Quick Paint Solutions',
+    category: 'Painting',
+    email: 'quickpaint@email.com',
+    phone: '+254 734 567 890',
+    rating: 4.5,
+    completedJobs: 38,
+    activeJobs: 2,
+    status: 'Active',
+    vendorType: 'company',
+    specialization: 'Interior & Exterior Painting',
+    serviceArea: 'Nairobi',
+  },
+  {
+    id: 'VND-004',
+    name: 'Garden Pro Landscaping',
+    category: 'Landscaping',
+    email: 'gardenpro@email.com',
+    phone: '+254 745 678 901',
+    rating: 4.7,
+    completedJobs: 28,
+    activeJobs: 1,
+    status: 'Active',
+    vendorType: 'company',
+    specialization: 'Garden Design & Maintenance',
+    serviceArea: 'Uptown, Riverside',
+  },
+  {
+    id: 'VND-005',
+    name: 'Mike HVAC Repairs',
+    category: 'HVAC',
+    email: 'mike@hvacrepairs.com',
+    phone: '+254 756 789 012',
+    rating: 4.6,
+    completedJobs: 51,
+    activeJobs: 4,
+    status: 'Active',
+    vendorType: 'individual',
+    specialization: 'HVAC Installation & Maintenance',
+    serviceArea: 'All Areas',
+  },
+]
 
 export default function VendorCRMPage({ params }: Props) {
   const router = useRouter()
