@@ -179,7 +179,7 @@ export default function AnalyticsPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
-              <YAxis tickFormatter={(value) => `KES ${(value / 1000).toFixed(0)}K`} />
+              <YAxis tickFormatter={(value: number) => `KES ${(value / 1000).toFixed(0)}K`} />
               <Tooltip
                 formatter={(value: any) => `KES ${value.toLocaleString()}`}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
@@ -216,8 +216,8 @@ export default function AnalyticsPage() {
             <BarChart data={propertyPerformance}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
-              <YAxis yAxisId="left" tickFormatter={(value) => `KES ${(value / 1000).toFixed(0)}K`} />
-              <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => `${value}%`} />
+              <YAxis yAxisId="left" tickFormatter={(value: number) => `KES ${(value / 1000).toFixed(0)}K`} />
+              <YAxis yAxisId="right" orientation="right" tickFormatter={(value: number) => `${value}%`} />
               <Tooltip
                 formatter={(value: any, name: string) => {
                   if (name === 'Occupancy') return `${value}%`;
