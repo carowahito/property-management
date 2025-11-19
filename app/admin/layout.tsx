@@ -31,7 +31,9 @@ export default function AdminLayout({
         { href: '/admin', label: 'Dashboard', icon: '📊' },
         { href: '/admin/crm', label: 'CRM - All Contacts', icon: '👥' },
         { href: '/admin/crm/tasks', label: 'All Tasks', icon: '✅' },
-        { href: '/admin/communications', label: 'Communications', icon: '💬' },
+        { href: '/admin/crm/leads', label: 'Leads', icon: '🎯' },
+        { href: '/admin/crm/enquiries', label: 'Enquiries', icon: '💬' },
+        { href: '/admin/communications', label: 'Communications', icon: '�' },
       ]
     },
     {
