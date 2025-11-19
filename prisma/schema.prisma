@@ -33,6 +33,9 @@ model User {
   createdTasks  Task[]    @relation("CreatedTasks")
   messages      Message[] @relation("SentMessages")
 
+  // Team member profile
+  teamMember    TeamMember?
+
   @@index([email])
   @@map("users")
 }
@@ -721,4 +724,167 @@ enum MessageStatus {
   DELIVERED
   READ
   FAILED
+}
+
+// ============================================
+// Team & HR Management
+// ============================================
+
+model TeamMember {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  employeeId      String   @unique
+  department      Department
+  position        String
+  reportingTo     String?
+  hireDate        DateTime
+  salary          Decimal? @db.Decimal(10, 2)
+  status          EmployeeStatus @default(ACTIVE)
+  skills          String[]
+  certifications  String[]
+  emergencyContact String?
+  emergencyPhone   String?
+  address         String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportingToMember TeamMember? @relation("ReportsTo", fields: [reportingTo], references: [id], onDelete: SetNull)
+  subordinates    TeamMember[] @relation("ReportsTo")
+  attendanceRecords Attendance[]
+  performanceReviews PerformanceReview[]
+  leaveRequests   LeaveRequest[]
+
+  @@index([userId])
+  @@index([employeeId])
+  @@index([department])
+  @@index([status])
+  @@map("team_members")
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  memberId    String
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      AttendanceStatus @default(PRESENT)
+  notes       String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  member      TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, date])
+  @@index([memberId])
+  @@index([date])
+  @@map("attendance")
+}
+
+model PerformanceReview {
+  id              String   @id @default(cuid())
+  memberId        String
+  reviewerId      String
+  reviewPeriod    String
+  overallRating   Int      // 1-5
+  strengths       String[]
+  areasForImprovement String[]
+  goals           String[]
+  feedback        String?
+  status          ReviewStatus @default(PENDING)
+  reviewDate      DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  member          TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([reviewDate])
+  @@map("performance_reviews")
+}
+
+model LeaveRequest {
+  id          String   @id @default(cuid())
+  memberId    String
+  leaveType   LeaveType
+  startDate   DateTime
+  endDate     DateTime
+  days        Int
+  reason      String
+  status      LeaveStatus @default(PENDING)
+  approvedBy  String?
+  approvedAt  DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  member      TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([startDate])
+  @@index([status])
+  @@map("leave_requests")
+}
+
+// ============================================
+// Team Enums
+// ============================================
+
+enum Department {
+  MANAGEMENT
+  SALES
+  CUSTOMER_CARE
+  OPERATIONS
+  FINANCE
+  MAINTENANCE
+  HR
+  IT
+  MARKETING
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+  SUSPENDED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  WORK_FROM_HOME
+  SICK_LEAVE
+  LEAVE
+}
+
+enum ReviewStatus {
+  PENDING
+  COMPLETED
+  REVIEWED
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  PERSONAL
+  MATERNITY
+  PATERNITY
+  UNPAID
+  EMERGENCY
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }

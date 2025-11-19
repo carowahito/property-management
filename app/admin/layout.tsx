@@ -18,6 +18,7 @@ export default function AdminLayout({
     'Property Management': true,
     'Financial': false,
     'Operations': false,
+    'Team & HR': true,
     'AI & Insights': true,
     'Analytics & Reports': false,
     'Documentation': false,
@@ -77,6 +78,14 @@ export default function AdminLayout({
         { href: '/admin/inspections', label: 'Inspections', icon: '🔍' },
         { href: '/admin/renewals', label: 'Renewals', icon: '🔄' },
         { href: '/admin/occupancy', label: 'Occupancy', icon: '📐' },
+      ]
+    },
+    {
+      title: 'Team & HR',
+      items: [
+        { href: '/admin/team', label: 'Team Overview', icon: '👥' },
+        { href: '/admin/team/ai-workload', label: 'AI Workload Analysis', icon: '📊' },
+        { href: '/admin/team/leaderboard', label: 'Team Leaderboard', icon: '🏆' },
       ]
     },
     {
