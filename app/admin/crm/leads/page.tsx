@@ -11,13 +11,14 @@ interface Lead {
   email: string
   phone: string
   type: string
-  status: 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Lost'
+  status: 'Enquiry' | 'Prospect' | 'Qualified' | 'Viewing Scheduled' | 'Application Submitted' | 'Tenant' | 'Past Tenant' | 'Dropped' | 'Lost'
   source: string
   assignedTo: string
   createdDate: string
   lastContact?: string
   budget?: string
   priority: 'Low' | 'Medium' | 'High'
+  stage?: string
 }
 
 export default function LeadsPage() {
@@ -49,7 +50,7 @@ export default function LeadsPage() {
       email: 'michael.o@email.com',
       phone: '+254 722 456 789',
       type: 'Lease Inquiry',
-      status: 'Contacted',
+      status: 'Prospect',
       source: 'Referral',
       assignedTo: 'Bob Smith',
       createdDate: '2024-11-12T14:00:00',
@@ -63,7 +64,7 @@ export default function LeadsPage() {
       email: 'grace.w@email.com',
       phone: '+254 733 567 890',
       type: 'Commercial Space',
-      status: 'New',
+      status: 'Enquiry',
       source: 'Walk-in',
       assignedTo: 'Alice Johnson',
       createdDate: '2024-11-15T09:30:00',
@@ -76,7 +77,7 @@ export default function LeadsPage() {
       email: 'david.kamau@email.com',
       phone: '+254 744 678 901',
       type: 'Property Inquiry',
-      status: 'Converted',
+      status: 'Tenant',
       source: 'Social Media',
       assignedTo: 'Carol White',
       createdDate: '2024-10-20T10:00:00',
@@ -90,7 +91,7 @@ export default function LeadsPage() {
       email: 'jane.a@email.com',
       phone: '+254 755 789 012',
       type: 'Lease Inquiry',
-      status: 'Lost',
+      status: 'Dropped',
       source: 'Email Campaign',
       assignedTo: 'Bob Smith',
       createdDate: '2024-11-05T11:00:00',
@@ -104,13 +105,55 @@ export default function LeadsPage() {
       email: 'peter.m@email.com',
       phone: '+254 766 890 123',
       type: 'Property Inquiry',
-      status: 'Qualified',
+      status: 'Viewing Scheduled',
       source: 'Website',
       assignedTo: 'Alice Johnson',
       createdDate: '2024-11-18T08:00:00',
       lastContact: '2024-11-19T10:00:00',
       budget: 'KES 100,000 - 120,000',
       priority: 'High',
+    },
+    {
+      id: 'L007',
+      name: 'Lucy Wambui',
+      email: 'lucy.w@email.com',
+      phone: '+254 777 901 234',
+      type: 'Apartment Rental',
+      status: 'Application Submitted',
+      source: 'Referral',
+      assignedTo: 'Carol White',
+      createdDate: '2024-11-16T14:00:00',
+      lastContact: '2024-11-18T16:00:00',
+      budget: 'KES 55,000 - 65,000',
+      priority: 'High',
+    },
+    {
+      id: 'L008',
+      name: 'James Kipchoge',
+      email: 'james.k@email.com',
+      phone: '+254 788 012 345',
+      type: 'Property Inquiry',
+      status: 'Past Tenant',
+      source: 'Previous Customer',
+      assignedTo: 'Bob Smith',
+      createdDate: '2024-11-12T09:00:00',
+      lastContact: '2024-11-13T14:00:00',
+      budget: 'KES 80,000 - 100,000',
+      priority: 'Medium',
+    },
+    {
+      id: 'L009',
+      name: 'Mary Njeri',
+      email: 'mary.n@email.com',
+      phone: '+254 799 123 456',
+      type: 'Office Space',
+      status: 'Lost',
+      source: 'Website',
+      assignedTo: 'Alice Johnson',
+      createdDate: '2024-11-08T11:00:00',
+      lastContact: '2024-11-10T09:00:00',
+      budget: 'KES 120,000 - 150,000',
+      priority: 'Low',
     },
   ]
 
@@ -128,19 +171,33 @@ export default function LeadsPage() {
 
   const stats = {
     total: mockLeads.length,
-    new: mockLeads.filter(l => l.status === 'New').length,
+    enquiry: mockLeads.filter(l => l.status === 'Enquiry').length,
     qualified: mockLeads.filter(l => l.status === 'Qualified').length,
-    converted: mockLeads.filter(l => l.status === 'Converted').length,
+    tenant: mockLeads.filter(l => l.status === 'Tenant').length,
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'New': return 'bg-blue-100 text-blue-800'
-      case 'Contacted': return 'bg-purple-100 text-purple-800'
-      case 'Qualified': return 'bg-green-100 text-green-800'
-      case 'Converted': return 'bg-emerald-100 text-emerald-800'
-      case 'Lost': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Enquiry':
+        return 'bg-blue-100 text-blue-800'
+      case 'Prospect':
+        return 'bg-purple-100 text-purple-800'
+      case 'Qualified':
+        return 'bg-green-100 text-green-800'
+      case 'Viewing Scheduled':
+        return 'bg-cyan-100 text-cyan-800'
+      case 'Application Submitted':
+        return 'bg-indigo-100 text-indigo-800'
+      case 'Tenant':
+        return 'bg-emerald-100 text-emerald-800'
+      case 'Past Tenant':
+        return 'bg-amber-100 text-amber-800'
+      case 'Dropped':
+        return 'bg-orange-100 text-orange-800'
+      case 'Lost':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -170,57 +227,57 @@ export default function LeadsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Leads</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
+              <p className="text-sm text-gray-500 mb-1">Total Leads</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-blue-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">New Leads</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.new}</p>
+              <p className="text-sm text-gray-500 mb-1">New Enquiries</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.enquiry}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-blue-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Qualified</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.qualified}</p>
+              <p className="text-sm text-gray-500 mb-1">Qualified</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.qualified}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-green-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Converted</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.converted}</p>
+              <p className="text-sm text-gray-500 mb-1">Active Tenants</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.tenant}</p>
             </div>
-            <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-emerald-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -250,10 +307,14 @@ export default function LeadsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Statuses</option>
-              <option value="New">New</option>
-              <option value="Contacted">Contacted</option>
+              <option value="Enquiry">Enquiry</option>
+              <option value="Prospect">Prospect</option>
               <option value="Qualified">Qualified</option>
-              <option value="Converted">Converted</option>
+              <option value="Viewing Scheduled">Viewing Scheduled</option>
+              <option value="Application Submitted">Application Submitted</option>
+              <option value="Tenant">Tenant</option>
+              <option value="Past Tenant">Past Tenant</option>
+              <option value="Dropped">Dropped</option>
               <option value="Lost">Lost</option>
             </select>
           </div>
