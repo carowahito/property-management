@@ -36,12 +36,25 @@ export default function TenantCRMPage({ params }: Props) {
   })
   const [paymentFilters, setPaymentFilters] = useState({
     month: '',
-    minAmount: '',
-    maxAmount: '',
     startDate: '',
     endDate: '',
     method: '',
     status: '',
+  })
+  const [maintenanceFilters, setMaintenanceFilters] = useState({
+    status: '',
+    priority: '',
+    vendor: '',
+    startDate: '',
+    endDate: '',
+  })
+  const [documentSearch, setDocumentSearch] = useState('')
+  const [communicationFilters, setCommunicationFilters] = useState({
+    status: '',
+    type: '',
+    startDate: '',
+    endDate: '',
+    category: '',
   })
 
   // In real app, this would be async
@@ -92,18 +105,40 @@ export default function TenantCRMPage({ params }: Props) {
   const tenantPayments = mockPayments.filter(p => p.tenantId === tenantId)
   const tenantMaintenance = mockMaintenanceRequests.filter(m => m.tenantId === tenantId)
 
+  // Mock additional CRM data
+  const tenantNotes = [
+    { id: '1', date: '2024-11-20T10:00:00', author: 'Alice Johnson', note: 'Tenant requested early lease renewal. Discussed 3% increase, tenant agreed.' },
+    { id: '2', date: '2024-10-15T14:30:00', author: 'Bob Smith', note: 'Always pays rent on time. Excellent tenant, no issues.' },
+    { id: '3', date: '2024-09-01T09:00:00', note: 'Move-in inspection completed. Unit in excellent condition.' },
+  ]
+
+  const communications = [
+    { id: '1', date: '2024-11-25T10:00:00', type: 'email', subject: 'Rent Payment Reminder', status: 'sent', category: 'Rent Reminder' },
+    { id: '2', date: '2024-11-10T15:30:00', type: 'sms', subject: 'Maintenance Update', status: 'delivered', category: 'Maintenance' },
+    { id: '3', date: '2024-10-28T11:20:00', type: 'in-app', subject: 'Lease Renewal Discussion', status: 'read', category: 'Lease' },
+    { id: '4', date: '2024-10-15T09:00:00', type: 'email', subject: 'Community Announcement', status: 'sent', category: 'Announcement' },
+    { id: '5', date: '2024-09-30T16:45:00', type: 'sms', subject: 'Payment Received Confirmation', status: 'delivered', category: 'Payment Confirmation' },
+  ]
+
+  const activityLog = [
+    { id: '1', date: '2024-11-25T10:00:00', type: 'payment', description: 'Rent payment received - KES 50,000', user: 'System' },
+    { id: '2', date: '2024-11-20T14:30:00', type: 'note', description: 'Note added by Alice Johnson', user: 'Alice Johnson' },
+    { id: '3', date: '2024-11-15T09:15:00', type: 'maintenance', description: 'Maintenance request submitted - Leaky faucet', user: 'John Smith' },
+    { id: '4', date: '2024-11-10T16:45:00', type: 'communication', description: 'Email sent - Maintenance update', user: 'System' },
+    { id: '5', date: '2024-10-25T10:00:00', type: 'payment', description: 'Rent payment received - KES 50,000', user: 'System' },
+  ]
+
+  const documents = [
+    { id: '1', name: 'Lease Agreement - 2024.pdf', type: 'Lease', date: '2024-01-15', size: '2.4 MB' },
+    { id: '2', name: 'ID Copy - John Smith.pdf', type: 'Identification', date: '2024-01-10', size: '856 KB' },
+    { id: '3', name: 'Income Verification.pdf', type: 'Financial', date: '2024-01-10', size: '1.2 MB' },
+    { id: '4', name: 'Move-in Inspection Report.pdf', type: 'Inspection', date: '2024-02-01', size: '3.1 MB' },
+  ]
+
   // Filter payments based on filters
   const filteredPayments = tenantPayments.filter(payment => {
     // Month filter
-    if (paymentFilters.month && !payment.month.toLowerCase().includes(paymentFilters.month.toLowerCase())) {
-      return false
-    }
-    
-    // Amount range filter
-    if (paymentFilters.minAmount && payment.amount < Number(paymentFilters.minAmount)) {
-      return false
-    }
-    if (paymentFilters.maxAmount && payment.amount > Number(paymentFilters.maxAmount)) {
+    if (paymentFilters.month && payment.month !== paymentFilters.month) {
       return false
     }
     
@@ -128,11 +163,77 @@ export default function TenantCRMPage({ params }: Props) {
     return true
   })
 
-  const clearFilters = () => {
+  // Filter maintenance requests
+  const filteredMaintenance = tenantMaintenance.filter(request => {
+    // Status filter
+    if (maintenanceFilters.status && request.status !== maintenanceFilters.status) {
+      return false
+    }
+    
+    // Priority filter
+    if (maintenanceFilters.priority && request.priority !== maintenanceFilters.priority) {
+      return false
+    }
+    
+    // Vendor filter
+    if (maintenanceFilters.vendor && request.vendorName && !request.vendorName.toLowerCase().includes(maintenanceFilters.vendor.toLowerCase())) {
+      return false
+    }
+    
+    // Date range filter
+    if (maintenanceFilters.startDate && request.dateSubmitted < maintenanceFilters.startDate) {
+      return false
+    }
+    if (maintenanceFilters.endDate && request.dateSubmitted > maintenanceFilters.endDate) {
+      return false
+    }
+    
+    return true
+  })
+
+  // Filter documents
+  const filteredDocuments = documents.filter(doc => {
+    if (!documentSearch) return true
+    
+    const searchLower = documentSearch.toLowerCase()
+    return doc.name.toLowerCase().includes(searchLower) || 
+           doc.type.toLowerCase().includes(searchLower)
+  })
+
+  // Filter communications
+  const filteredCommunications = communications.filter(comm => {
+    // Status filter
+    if (communicationFilters.status && comm.status !== communicationFilters.status) {
+      return false
+    }
+    
+    // Type filter
+    if (communicationFilters.type && comm.type !== communicationFilters.type) {
+      return false
+    }
+    
+    // Category filter
+    if (communicationFilters.category && comm.category !== communicationFilters.category) {
+      return false
+    }
+    
+    // Date range filter
+    if (communicationFilters.startDate && comm.date < communicationFilters.startDate) {
+      return false
+    }
+    if (communicationFilters.endDate && comm.date > communicationFilters.endDate) {
+      return false
+    }
+    
+    return true
+  })
+
+  // Get unique months from payments for dropdown
+  const uniqueMonths = Array.from(new Set(tenantPayments.map(p => p.month))).sort().reverse()
+
+  const clearPaymentFilters = () => {
     setPaymentFilters({
       month: '',
-      minAmount: '',
-      maxAmount: '',
       startDate: '',
       endDate: '',
       method: '',
@@ -140,33 +241,25 @@ export default function TenantCRMPage({ params }: Props) {
     })
   }
 
-  // Mock additional CRM data
-  const tenantNotes = [
-    { id: '1', date: '2024-11-20T10:00:00', author: 'Alice Johnson', note: 'Tenant requested early lease renewal. Discussed 3% increase, tenant agreed.' },
-    { id: '2', date: '2024-10-15T14:30:00', author: 'Bob Smith', note: 'Always pays rent on time. Excellent tenant, no issues.' },
-    { id: '3', date: '2024-09-01T09:00:00', note: 'Move-in inspection completed. Unit in excellent condition.' },
-  ]
+  const clearMaintenanceFilters = () => {
+    setMaintenanceFilters({
+      status: '',
+      priority: '',
+      vendor: '',
+      startDate: '',
+      endDate: '',
+    })
+  }
 
-  const communications = [
-    { id: '1', date: '2024-11-25T10:00:00', type: 'email', subject: 'Rent Payment Reminder', status: 'sent' },
-    { id: '2', date: '2024-11-10T15:30:00', type: 'sms', subject: 'Maintenance Update', status: 'delivered' },
-    { id: '3', date: '2024-10-28T11:20:00', type: 'in-app', subject: 'Lease Renewal Discussion', status: 'read' },
-  ]
-
-  const activityLog = [
-    { id: '1', date: '2024-11-25T10:00:00', type: 'payment', description: 'Rent payment received - KES 50,000', user: 'System' },
-    { id: '2', date: '2024-11-20T14:30:00', type: 'note', description: 'Note added by Alice Johnson', user: 'Alice Johnson' },
-    { id: '3', date: '2024-11-15T09:15:00', type: 'maintenance', description: 'Maintenance request submitted - Leaky faucet', user: 'John Smith' },
-    { id: '4', date: '2024-11-10T16:45:00', type: 'communication', description: 'Email sent - Maintenance update', user: 'System' },
-    { id: '5', date: '2024-10-25T10:00:00', type: 'payment', description: 'Rent payment received - KES 50,000', user: 'System' },
-  ]
-
-  const documents = [
-    { id: '1', name: 'Lease Agreement - 2024.pdf', type: 'Lease', date: '2024-01-15', size: '2.4 MB' },
-    { id: '2', name: 'ID Copy - John Smith.pdf', type: 'Identification', date: '2024-01-10', size: '856 KB' },
-    { id: '3', name: 'Income Verification.pdf', type: 'Financial', date: '2024-01-10', size: '1.2 MB' },
-    { id: '4', name: 'Move-in Inspection Report.pdf', type: 'Inspection', date: '2024-02-01', size: '3.1 MB' },
-  ]
+  const clearCommunicationFilters = () => {
+    setCommunicationFilters({
+      status: '',
+      type: '',
+      startDate: '',
+      endDate: '',
+      category: '',
+    })
+  }
 
   // Calculate statistics
   const totalPaid = tenantPayments.filter(p => p.status === 'Paid').reduce((sum, p) => sum + p.amount, 0)
@@ -393,51 +486,28 @@ export default function TenantCRMPage({ params }: Props) {
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-medium text-gray-900">Filters</h4>
                   <button
-                    onClick={clearFilters}
+                    onClick={clearPaymentFilters}
                     className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                   >
                     Clear All
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Month
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={paymentFilters.month}
                       onChange={(e) => setPaymentFilters({ ...paymentFilters, month: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., November"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Min Amount (KES)
-                    </label>
-                    <input
-                      type="number"
-                      value={paymentFilters.minAmount}
-                      onChange={(e) => setPaymentFilters({ ...paymentFilters, minAmount: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Max Amount (KES)
-                    </label>
-                    <input
-                      type="number"
-                      value={paymentFilters.maxAmount}
-                      onChange={(e) => setPaymentFilters({ ...paymentFilters, maxAmount: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="100000"
-                    />
+                    >
+                      <option value="">All Months</option>
+                      {uniqueMonths.map(month => (
+                        <option key={month} value={month}>{month}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
@@ -555,8 +625,100 @@ export default function TenantCRMPage({ params }: Props) {
           {/* Maintenance Tab */}
           {activeTab === 'maintenance' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900">Maintenance Requests</h3>
-              {tenantMaintenance.map(request => (
+              <h3 className="font-semibold text-gray-900 mb-4">Maintenance Requests</h3>
+
+              {/* Filters */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium text-gray-900">Filters</h4>
+                  <button
+                    onClick={clearMaintenanceFilters}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={maintenanceFilters.status}
+                      onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, status: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Priority
+                    </label>
+                    <select
+                      value={maintenanceFilters.priority}
+                      onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, priority: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Priorities</option>
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Emergency">Emergency</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Vendor
+                    </label>
+                    <input
+                      type="text"
+                      value={maintenanceFilters.vendor}
+                      onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, vendor: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Search vendor..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={maintenanceFilters.startDate}
+                      onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, startDate: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={maintenanceFilters.endDate}
+                      onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, endDate: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Filter summary */}
+                <div className="mt-3 text-sm text-gray-600">
+                  Showing {filteredMaintenance.length} of {tenantMaintenance.length} requests
+                </div>
+              </div>
+
+              {filteredMaintenance.map(request => (
                 <div key={request.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -597,21 +759,55 @@ export default function TenantCRMPage({ params }: Props) {
                 <h3 className="font-semibold text-gray-900">Documents</h3>
                 <Button variant="primary">📤 Upload Document</Button>
               </div>
+
+              {/* Search */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Search Documents
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={documentSearch}
+                    onChange={(e) => setDocumentSearch(e.target.value)}
+                    className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Search by document name or type..."
+                  />
+                  <svg 
+                    className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  Showing {filteredDocuments.length} of {documents.length} documents
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-3">
-                {documents.map(doc => (
-                  <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-red-100 rounded flex items-center justify-center">
-                        <span className="text-red-600">📄</span>
+                {filteredDocuments.length > 0 ? (
+                  filteredDocuments.map(doc => (
+                    <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-red-100 rounded flex items-center justify-center">
+                          <span className="text-red-600">📄</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{doc.name}</p>
+                          <p className="text-xs text-gray-500">{doc.type} • {doc.size} • {formatDate(doc.date)}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{doc.name}</p>
-                        <p className="text-xs text-gray-500">{doc.type} • {doc.size} • {formatDate(doc.date)}</p>
-                      </div>
+                      <Button variant="outline" size="sm">Download</Button>
                     </div>
-                    <Button variant="outline" size="sm">Download</Button>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No documents found matching your search
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
@@ -623,23 +819,131 @@ export default function TenantCRMPage({ params }: Props) {
                 <h3 className="font-semibold text-gray-900">Communication History</h3>
                 <Button variant="primary">✉️ Send Message</Button>
               </div>
-              {communications.map(comm => (
-                <div key={comm.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-medium text-gray-900">{comm.subject}</h4>
-                      <p className="text-sm text-gray-600 capitalize">{comm.type} • {formatDate(comm.date)}</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      comm.status === 'read' ? 'bg-green-100 text-green-800' :
-                      comm.status === 'delivered' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {comm.status}
-                    </span>
+
+              {/* Filters */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium text-gray-900">Filters</h4>
+                  <button
+                    onClick={clearCommunicationFilters}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={communicationFilters.status}
+                      onChange={(e) => setCommunicationFilters({ ...communicationFilters, status: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="sent">Sent</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="read">Read</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Method
+                    </label>
+                    <select
+                      value={communicationFilters.type}
+                      onChange={(e) => setCommunicationFilters({ ...communicationFilters, type: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Methods</option>
+                      <option value="email">Email</option>
+                      <option value="sms">SMS</option>
+                      <option value="in-app">In-App</option>
+                      <option value="phone">Phone</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={communicationFilters.category}
+                      onChange={(e) => setCommunicationFilters({ ...communicationFilters, category: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">All Categories</option>
+                      <option value="Rent Reminder">Rent Reminder</option>
+                      <option value="Payment Confirmation">Payment Confirmation</option>
+                      <option value="Maintenance">Maintenance</option>
+                      <option value="Lease">Lease</option>
+                      <option value="Announcement">Announcement</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={communicationFilters.startDate}
+                      onChange={(e) => setCommunicationFilters({ ...communicationFilters, startDate: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={communicationFilters.endDate}
+                      onChange={(e) => setCommunicationFilters({ ...communicationFilters, endDate: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                 </div>
-              ))}
+
+                {/* Filter summary */}
+                <div className="mt-3 text-sm text-gray-600">
+                  Showing {filteredCommunications.length} of {communications.length} communications
+                </div>
+              </div>
+
+              {filteredCommunications.length > 0 ? (
+                filteredCommunications.map(comm => (
+                  <div key={comm.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{comm.subject}</h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          <span className="capitalize">{comm.type}</span> • {formatDate(comm.date)}
+                          {comm.category && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">{comm.category}</span>}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        comm.status === 'read' ? 'bg-green-100 text-green-800' :
+                        comm.status === 'delivered' ? 'bg-blue-100 text-blue-800' :
+                        comm.status === 'sent' ? 'bg-gray-100 text-gray-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {comm.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No communications found matching the selected filters
+                </div>
+              )}
             </div>
           )}
 
