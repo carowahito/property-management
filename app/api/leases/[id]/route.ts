@@ -6,17 +6,19 @@ import { updateLeaseSchema } from '@/lib/validations/lease'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const lease = await prisma.lease.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         tenant: {
           select: {
@@ -76,10 +78,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -119,7 +123,7 @@ export async function PATCH(
     }
 
     const lease = await prisma.lease.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         tenant: {
@@ -160,10 +164,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -171,7 +177,7 @@ export async function DELETE(
 
     // Check if lease has payments
     const paymentsCount = await prisma.payment.count({
-      where: { leaseId: params.id },
+      where: { leaseId: id },
     })
 
     if (paymentsCount > 0) {
@@ -182,7 +188,7 @@ export async function DELETE(
     }
 
     await prisma.lease.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Lease deleted successfully' })

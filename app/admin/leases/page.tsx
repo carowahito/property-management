@@ -15,6 +15,7 @@ interface Lease {
   endDate: string
   status: string
   unit: string | null
+  renewal?: boolean
   tenant: {
     id: string
     name: string

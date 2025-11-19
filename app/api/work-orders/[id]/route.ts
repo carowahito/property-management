@@ -6,17 +6,19 @@ import { updateWorkOrderSchema } from '@/lib/validations/work-order'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const workOrder = await prisma.workOrder.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         vendor: {
           select: {
@@ -68,10 +70,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -113,7 +117,7 @@ export async function PATCH(
     }
 
     const workOrder = await prisma.workOrder.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         vendor: {
@@ -147,17 +151,19 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     await prisma.workOrder.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Work order deleted successfully' })

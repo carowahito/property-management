@@ -6,17 +6,19 @@ import { updateTaskSchema } from '@/lib/validations/task'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const task = await prisma.task.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         assignedTo: {
           select: {
@@ -49,10 +51,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -76,7 +80,7 @@ export async function PATCH(
     }
 
     const task = await prisma.task.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         assignedTo: {
@@ -110,17 +114,19 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     await prisma.task.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Task deleted successfully' })

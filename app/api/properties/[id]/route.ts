@@ -6,17 +6,19 @@ import { updatePropertySchema } from '@/lib/validations/property'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const property = await prisma.property.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         landlord: {
           select: {
@@ -89,10 +91,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -113,7 +117,7 @@ export async function PATCH(
     }
 
     const property = await prisma.property.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
       include: {
         landlord: {
@@ -148,10 +152,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -160,7 +166,7 @@ export async function DELETE(
     // Check if property has active leases
     const activeLeases = await prisma.lease.count({
       where: {
-        propertyId: params.id,
+        propertyId: id,
         status: 'ACTIVE',
       },
     })
@@ -173,7 +179,7 @@ export async function DELETE(
     }
 
     await prisma.property.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Property deleted successfully' })

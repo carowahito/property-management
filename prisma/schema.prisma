@@ -492,9 +492,9 @@ model Message {
   // Relations
   sentBy          User      @relation("SentMessages", fields: [sentById], references: [id], onDelete: Cascade)
   property        Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
-  tenant          Tenant?   @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
-  landlord        Landlord? @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
-  vendor          Vendor?   @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+  tenant          Tenant?   @relation(fields: [stakeholderId], references: [id], onDelete: Cascade, map: "messages_tenant_fkey")
+  landlord        Landlord? @relation(fields: [stakeholderId], references: [id], onDelete: Cascade, map: "messages_landlord_fkey")
+  vendor          Vendor?   @relation(fields: [stakeholderId], references: [id], onDelete: Cascade, map: "messages_vendor_fkey")
 
   @@index([stakeholderId])
   @@index([sentById])

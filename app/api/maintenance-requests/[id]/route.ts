@@ -6,17 +6,19 @@ import { updateMaintenanceRequestSchema } from '@/lib/validations/maintenance'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const maintenanceRequest = await prisma.maintenanceRequest.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         tenant: {
           select: {
@@ -74,10 +76,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -99,7 +103,7 @@ export async function PATCH(
     }
 
     const maintenanceRequest = await prisma.maintenanceRequest.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         tenant: {
@@ -140,17 +144,19 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     await prisma.maintenanceRequest.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Maintenance request deleted successfully' })

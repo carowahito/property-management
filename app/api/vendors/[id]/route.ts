@@ -6,17 +6,19 @@ import { updateVendorSchema } from '@/lib/validations/vendor'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const vendor = await prisma.vendor.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         workOrders: {
           select: {
@@ -54,10 +56,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -67,7 +71,7 @@ export async function PATCH(
     const validatedData = updateVendorSchema.parse(body)
 
     const vendor = await prisma.vendor.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
     })
 
@@ -99,10 +103,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -110,7 +116,7 @@ export async function DELETE(
 
     // Check if vendor has work orders
     const workOrdersCount = await prisma.workOrder.count({
-      where: { vendorId: params.id },
+      where: { vendorId: id },
     })
 
     if (workOrdersCount > 0) {
@@ -121,7 +127,7 @@ export async function DELETE(
     }
 
     await prisma.vendor.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Vendor deleted successfully' })

@@ -35,6 +35,9 @@ export default function CommunicationsPage() {
   const [composeRecipientType, setComposeRecipientType] = useState<'tenant' | 'landlord' | 'vendor' | 'all'>('tenant')
   const [composeRecipient, setComposeRecipient] = useState<string>('')
   const [composeProperty, setComposeProperty] = useState<string>('all')
+  const [composeSubject, setComposeSubject] = useState<string>('')
+  const [composeMessage, setComposeMessage] = useState<string>('')
+  const [isImprovingText, setIsImprovingText] = useState(false)
 
   // Mock properties data
   const mockProperties = [
@@ -94,6 +97,24 @@ export default function CommunicationsPage() {
     }
     
     return contacts
+  }
+
+  // AI text improvement handler
+  const handleImproveWithAI = async (field: 'message' | 'subject') => {
+    setIsImprovingText(true)
+    
+    // Simulate AI API call - in production, this would call your LLM API configured in settings
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    if (field === 'message' && composeMessage) {
+      const improved = composeMessage + '\n\nThis message has been enhanced for clarity and professionalism.'
+      setComposeMessage(improved)
+    } else if (field === 'subject' && composeSubject) {
+      const improved = '✨ ' + composeSubject
+      setComposeSubject(improved)
+    }
+    
+    setIsImprovingText(false)
   }
 
   // Mock data - in production this would come from API
@@ -746,18 +767,48 @@ export default function CommunicationsPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Subject</label>
+                    <button
+                      type="button"
+                      onClick={() => handleImproveWithAI('subject')}
+                      disabled={!composeSubject || isImprovingText}
+                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      {isImprovingText ? 'Improving...' : 'Improve with AI'}
+                    </button>
+                  </div>
                   <input
                     type="text"
+                    value={composeSubject}
+                    onChange={(e) => setComposeSubject(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter message subject..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Message</label>
+                    <button
+                      type="button"
+                      onClick={() => handleImproveWithAI('message')}
+                      disabled={!composeMessage || isImprovingText}
+                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      {isImprovingText ? 'Improving...' : 'Improve with AI'}
+                    </button>
+                  </div>
                   <textarea
                     rows={8}
+                    value={composeMessage}
+                    onChange={(e) => setComposeMessage(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Type your message here..."
                   />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -12,6 +12,7 @@ interface Props {
 }
 
 export default function TenantCRMPage({ params }: Props) {
+  const [tenantId, setTenantId] = useState<string | null>(null)
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'payments' | 'maintenance' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
@@ -56,18 +57,45 @@ export default function TenantCRMPage({ params }: Props) {
     endDate: '',
     category: '',
   })
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
-  const [whatsAppMessage, setWhatsAppMessage] = useState({
+  const [showSendMessageModal, setShowSendMessageModal] = useState(false)
+  const [messageForm, setMessageForm] = useState({
+    method: 'email',
+    subject: '',
     message: '',
     template: '',
   })
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [isImprovingText, setIsImprovingText] = useState(false)
 
-  // In real app, this would be async
-  const tenantId = '1' // Would come from unwrapped params
-  const tenant = mockTenants.find(t => t.id === tenantId)
+  // Unwrap params to get tenant ID
+  useEffect(() => {
+    params.then(p => setTenantId(p.id))
+  }, [params])
+
+  // Get tenant data based on ID
+  const tenant = tenantId ? mockTenants.find(t => t.id === tenantId) : null
+
+  // Show loading state while params are being unwrapped
+  if (!tenantId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading tenant data...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!tenant) {
-    return <div>Tenant not found</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Tenant Not Found</h1>
+          <p className="mt-2 text-gray-600">The tenant with ID {tenantId} could not be found.</p>
+        </div>
+      </div>
+    )
   }
 
   // Initialize edit form when modal opens
@@ -279,27 +307,67 @@ export default function TenantCRMPage({ params }: Props) {
     })
   }
 
-  const handleSendWhatsApp = () => {
-    console.log('Sending WhatsApp message:', {
+  const handleSendMessage = () => {
+    console.log('Sending message:', {
       to: tenant.phone,
-      message: whatsAppMessage.message,
-      template: whatsAppMessage.template,
+      method: messageForm.method,
+      subject: messageForm.subject,
+      message: messageForm.message,
+      template: messageForm.template,
+      attachments: attachments.map(f => f.name),
     })
-    // In real app, this would call WhatsApp Business API
-    setShowWhatsAppModal(false)
-    setWhatsAppMessage({ message: '', template: '' })
+    // In real app, this would call appropriate API (Email, SMS, or WhatsApp)
+    setShowSendMessageModal(false)
+    setMessageForm({ method: 'email', subject: '', message: '', template: '' })
+    setAttachments([])
   }
 
-  const whatsAppTemplates = [
-    { id: 'rent_reminder', name: 'Rent Reminder', message: 'Hi {name}, this is a friendly reminder that your rent payment of KES {amount} is due on {date}. Thank you!' },
-    { id: 'payment_confirmation', name: 'Payment Confirmation', message: 'Hi {name}, we have received your payment of KES {amount}. Thank you for your prompt payment!' },
-    { id: 'maintenance_update', name: 'Maintenance Update', message: 'Hi {name}, your maintenance request has been updated. Status: {status}. We will keep you informed.' },
-    { id: 'lease_renewal', name: 'Lease Renewal', message: 'Hi {name}, your lease is expiring soon on {date}. Please contact us to discuss renewal options.' },
-    { id: 'custom', name: 'Custom Message', message: '' },
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      const newFiles = Array.from(files)
+      setAttachments(prev => [...prev, ...newFiles])
+    }
+  }
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
+
+  const handleImproveWithAI = async (field: 'message' | 'subject') => {
+    setIsImprovingText(true)
+    
+    // Simulate AI API call
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    if (field === 'message' && messageForm.message) {
+      // In real app, this would call your LLM API configured in settings
+      const improved = messageForm.message + '\n\nThis message has been enhanced for clarity and professionalism.'
+      setMessageForm({ ...messageForm, message: improved })
+    } else if (field === 'subject' && messageForm.subject) {
+      const improved = '✨ ' + messageForm.subject
+      setMessageForm({ ...messageForm, subject: improved })
+    }
+    
+    setIsImprovingText(false)
+  }
+
+  const messageTemplates = [
+    { id: 'rent_reminder', name: 'Rent Reminder', category: 'all', message: 'Hi {name}, this is a friendly reminder that your rent payment of KES {amount} is due on {date}. Thank you!', subject: 'Rent Payment Reminder' },
+    { id: 'payment_confirmation', name: 'Payment Confirmation', category: 'all', message: 'Hi {name}, we have received your payment of KES {amount}. Thank you for your prompt payment!', subject: 'Payment Received Confirmation' },
+    { id: 'maintenance_update', name: 'Maintenance Update', category: 'all', message: 'Hi {name}, your maintenance request has been updated. Status: {status}. We will keep you informed.', subject: 'Maintenance Request Update' },
+    { id: 'lease_renewal', name: 'Lease Renewal', category: 'all', message: 'Hi {name}, your lease is expiring soon on {date}. Please contact us to discuss renewal options.', subject: 'Lease Renewal Notice' },
+    { id: 'custom', name: 'Custom Message', category: 'all', message: '', subject: '' },
   ]
 
   const handleTemplateSelect = (templateId: string) => {
-    const template = whatsAppTemplates.find(t => t.id === templateId)
+    const template = messageTemplates.find(t => t.id === templateId)
     if (template && template.message) {
       // Replace placeholders with actual data
       let message = template.message
@@ -308,9 +376,12 @@ export default function TenantCRMPage({ params }: Props) {
         .replace('{date}', formatDate(currentLease?.endDate || new Date().toISOString()))
         .replace('{status}', 'In Progress')
       
-      setWhatsAppMessage({ ...whatsAppMessage, template: templateId, message })
+      let subject = template.subject
+        .replace('{name}', tenant.name.split(' ')[0])
+      
+      setMessageForm({ ...messageForm, template: templateId, message, subject })
     } else {
-      setWhatsAppMessage({ ...whatsAppMessage, template: templateId, message: '' })
+      setMessageForm({ ...messageForm, template: templateId, message: '', subject: '' })
     }
   }
 
@@ -392,7 +463,7 @@ export default function TenantCRMPage({ params }: Props) {
             <Button variant="outline" onClick={handleEditClick}>
               ✏️ Edit
             </Button>
-            <Button variant="primary">
+            <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>
               💬 Contact
             </Button>
           </div>
@@ -874,12 +945,7 @@ export default function TenantCRMPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-gray-900">Communication History</h3>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setShowWhatsAppModal(true)}>
-                    💬 Send WhatsApp
-                  </Button>
-                  <Button variant="primary">✉️ Send Message</Button>
-                </div>
+                <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>✉️ Send Message</Button>
               </div>
 
               {/* Filters */}
@@ -1339,17 +1405,17 @@ export default function TenantCRMPage({ params }: Props) {
         </div>
       )}
 
-      {/* Send WhatsApp Modal */}
-      {showWhatsAppModal && (
+      {/* Send Message Modal */}
+      {showSendMessageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full">
-            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Send WhatsApp Message</h2>
-                <p className="text-sm text-gray-600 mt-1">To: {tenant.name} ({tenant.phone})</p>
+                <h2 className="text-xl font-bold text-gray-900">Send Message</h2>
+                <p className="text-sm text-gray-600 mt-1">To: {tenant.name} ({tenant.email} / {tenant.phone})</p>
               </div>
               <button
-                onClick={() => setShowWhatsAppModal(false)}
+                onClick={() => setShowSendMessageModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1359,64 +1425,207 @@ export default function TenantCRMPage({ params }: Props) {
             </div>
 
             <div className="px-6 py-4 space-y-4">
+              {/* Communication Method */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message Type *
+                </label>
+                <select
+                  value={messageForm.method}
+                  onChange={(e) => setMessageForm({ ...messageForm, method: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="email">� Email</option>
+                  <option value="sms">💬 SMS</option>
+                  <option value="whatsapp">📱 WhatsApp</option>
+                  <option value="in-app">📱 In-App Notification</option>
+                </select>
+              </div>
+
+              {/* Message Template */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Message Template
                 </label>
                 <select
-                  value={whatsAppMessage.template}
+                  value={messageForm.template}
                   onChange={(e) => handleTemplateSelect(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select a template...</option>
-                  {whatsAppTemplates.map(template => (
+                  {messageTemplates.map(template => (
                     <option key={template.id} value={template.id}>{template.name}</option>
                   ))}
                 </select>
               </div>
 
+              {/* Subject (Email only) */}
+              {messageForm.method === 'email' && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Subject *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleImproveWithAI('subject')}
+                      disabled={!messageForm.subject || isImprovingText}
+                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      {isImprovingText ? 'Improving...' : 'Improve with AI'}
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={messageForm.subject}
+                    onChange={(e) => setMessageForm({ ...messageForm, subject: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter email subject..."
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Message */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Message *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => handleImproveWithAI('message')}
+                    disabled={!messageForm.message || isImprovingText}
+                    className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    {isImprovingText ? 'Improving...' : 'Improve with AI'}
+                  </button>
+                </div>
                 <textarea
-                  rows={6}
-                  value={whatsAppMessage.message}
-                  onChange={(e) => setWhatsAppMessage({ ...whatsAppMessage, message: e.target.value })}
+                  rows={messageForm.method === 'sms' ? 4 : 8}
+                  value={messageForm.message}
+                  onChange={(e) => setMessageForm({ ...messageForm, message: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Type your message here..."
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {whatsAppMessage.message.length} characters
+                  {messageForm.message.length} characters
+                  {messageForm.method === 'sms' && messageForm.message.length > 160 && (
+                    <span className="text-orange-600 ml-2">
+                      (Will be sent as {Math.ceil(messageForm.message.length / 160)} SMS)
+                    </span>
+                  )}
                 </p>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900">WhatsApp Business API</p>
-                    <p className="text-xs text-blue-700 mt-1">
-                      This message will be sent via WhatsApp Business API. Ensure you have the necessary permissions and the tenant has opted in to receive WhatsApp messages.
-                    </p>
+              {/* Attachments */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Attachments
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 cursor-pointer transition">
+                  <input
+                    type="file"
+                    id="file-upload"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="mt-2 text-sm text-gray-600">Click to upload files or drag and drop</p>
+                    <p className="text-xs text-gray-500">PDF, DOC, JPG, PNG, Excel up to 10MB each</p>
+                  </label>
+                </div>
+
+                {/* Attached Files List */}
+                {attachments.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {attachments.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(index)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                        >
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Method-specific notices */}
+              {messageForm.method === 'whatsapp' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-green-900">WhatsApp Business API</p>
+                      <p className="text-xs text-green-700 mt-1">
+                        This message will be sent via WhatsApp Business API. Ensure you have configured your API keys in Settings and the tenant has opted in.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {messageForm.method === 'sms' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900">SMS Gateway</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        SMS messages over 160 characters will be split into multiple messages. Configure your SMS gateway in Settings.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowWhatsAppModal(false)}>
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowSendMessageModal(false)}>
                 Cancel
               </Button>
               <Button
                 variant="primary"
-                onClick={handleSendWhatsApp}
-                disabled={!whatsAppMessage.message}
+                onClick={handleSendMessage}
+                disabled={
+                  !messageForm.message || 
+                  (messageForm.method === 'email' && !messageForm.subject)
+                }
               >
-                📤 Send WhatsApp
+                {messageForm.method === 'email' && '📧 Send Email'}
+                {messageForm.method === 'sms' && '💬 Send SMS'}
+                {messageForm.method === 'whatsapp' && '� Send WhatsApp'}
               </Button>
             </div>
           </div>

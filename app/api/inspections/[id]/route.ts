@@ -6,7 +6,7 @@ import { updateInspectionSchema } from '@/lib/validations/inspection'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,8 +15,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     const inspection = await prisma.inspection.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         property: {
           select: {
@@ -50,7 +52,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -59,6 +61,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const validatedData = updateInspectionSchema.parse(body)
 
@@ -70,7 +73,7 @@ export async function PATCH(
     }
 
     const inspection = await prisma.inspection.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         property: {
@@ -104,7 +107,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -113,8 +116,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     await prisma.inspection.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Inspection deleted successfully' })

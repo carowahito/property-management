@@ -6,17 +6,19 @@ import { updatePayoutSchema } from '@/lib/validations/payout'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const payout = await prisma.payout.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         landlord: {
           select: {
@@ -51,10 +53,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -76,7 +80,7 @@ export async function PATCH(
     }
 
     const payout = await prisma.payout.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         landlord: {
@@ -110,10 +114,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -121,7 +127,7 @@ export async function DELETE(
 
     // Only allow deletion of PENDING or FAILED payouts
     const payout = await prisma.payout.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     if (!payout) {
@@ -136,7 +142,7 @@ export async function DELETE(
     }
 
     await prisma.payout.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Payout deleted successfully' })

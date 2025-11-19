@@ -6,17 +6,19 @@ import { updateTenantSchema } from '@/lib/validations/tenant'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const tenant = await prisma.tenant.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         property: {
           select: {
@@ -49,12 +51,12 @@ export async function GET(
           select: {
             id: true,
             amount: true,
-            paymentDate: true,
-            paymentMethod: true,
+            paidDate: true,
+            method: true,
             status: true,
             type: true,
           },
-          orderBy: { paymentDate: 'desc' },
+          orderBy: { paidDate: 'desc' },
           take: 10,
         },
         maintenanceRequests: {
@@ -93,10 +95,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -128,7 +132,7 @@ export async function PATCH(
     }
 
     const tenant = await prisma.tenant.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         property: {
@@ -169,10 +173,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -181,7 +187,7 @@ export async function DELETE(
     // Check if tenant has active leases
     const activeLeases = await prisma.lease.count({
       where: {
-        tenantId: params.id,
+        tenantId: id,
         status: 'ACTIVE',
       },
     })
@@ -194,7 +200,7 @@ export async function DELETE(
     }
 
     await prisma.tenant.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Tenant deleted successfully' })

@@ -6,17 +6,19 @@ import { updateLandlordSchema } from '@/lib/validations/landlord'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const landlord = await prisma.landlord.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         properties: {
           select: {
@@ -64,10 +66,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -77,7 +81,7 @@ export async function PATCH(
     const validatedData = updateLandlordSchema.parse(body)
 
     const landlord = await prisma.landlord.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
     })
 
@@ -109,10 +113,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
+
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -120,7 +126,7 @@ export async function DELETE(
 
     // Check if landlord has properties
     const propertiesCount = await prisma.property.count({
-      where: { landlordId: params.id },
+      where: { landlordId: id },
     })
 
     if (propertiesCount > 0) {
@@ -131,7 +137,7 @@ export async function DELETE(
     }
 
     await prisma.landlord.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Landlord deleted successfully' })

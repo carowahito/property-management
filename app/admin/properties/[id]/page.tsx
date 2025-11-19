@@ -60,6 +60,7 @@ export default function PropertyDetailPage() {
   const id = params.id as string
   const [showAddUnitModal, setShowAddUnitModal] = useState(false)
   const [showAddLandlordModal, setShowAddLandlordModal] = useState(false)
+  const [isImprovingText, setIsImprovingText] = useState(false)
   const [newUnit, setNewUnit] = useState({
     unitNumber: '',
     floor: '',
@@ -179,6 +180,20 @@ export default function PropertyDetailPage() {
       accountNumber: '',
     })
     // TODO: Refetch landlords and set newUnit.landlordId to the newly created landlord's ID
+  }
+
+  const handleImproveWithAI = async () => {
+    setIsImprovingText(true)
+    
+    // Simulate AI API call - in production, this would call your LLM API configured in settings
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    if (newUnit.description) {
+      const improved = newUnit.description + '\n\nEnhanced with professional details highlighting unit features and amenities.'
+      setNewUnit({ ...newUnit, description: improved })
+    }
+    
+    setIsImprovingText(false)
   }
 
   const toggleUnitAmenity = (amenity: string) => {
@@ -661,9 +676,22 @@ export default function PropertyDetailPage() {
                   </div>
 
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Description
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleImproveWithAI}
+                        disabled={!newUnit.description || isImprovingText}
+                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        {isImprovingText ? 'Improving...' : 'Improve with AI'}
+                      </button>
+                    </div>
                     <textarea
                       value={newUnit.description}
                       onChange={(e) => setNewUnit({ ...newUnit, description: e.target.value })}
