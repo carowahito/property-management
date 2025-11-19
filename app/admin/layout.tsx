@@ -17,7 +17,8 @@ export default function AdminLayout({
     'Property Management': true,
     'Financial': false,
     'Operations': false,
-    'Analytics & Insights': false,
+    'AI & Insights': true,
+    'Analytics & Reports': false,
     'Documentation': false,
   })
 
@@ -54,7 +55,6 @@ export default function AdminLayout({
         { href: '/admin/payouts', label: 'Payouts', icon: '💸' },
         { href: '/admin/late-fees', label: 'Late Fees', icon: '⏰' },
         { href: '/admin/deposits', label: 'Deposits', icon: '🏦' },
-        { href: '/admin/financial-reports', label: 'Financial Reports', icon: '📑' },
       ]
     },
     {
@@ -68,9 +68,20 @@ export default function AdminLayout({
       ]
     },
     {
-      title: 'Analytics & Insights',
+      title: 'AI & Insights',
       items: [
-        { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
+        { href: '/admin/ai-insights', label: 'AI Insights Dashboard', icon: '🤖' },
+        { href: '/admin/ai-forecasts', label: 'Predictive Analytics', icon: '📈' },
+        { href: '/admin/ai-sentiment', label: 'Sentiment Analysis', icon: '💬' },
+        { href: '/admin/ai-query', label: 'Ask AI', icon: '🔍' },
+        { href: '/admin/ai-reports', label: 'AI Reports', icon: '📄' },
+      ]
+    },
+    {
+      title: 'Analytics & Reports',
+      items: [
+        { href: '/admin/analytics', label: 'Analytics', icon: '📊' },
+        { href: '/admin/financial-reports', label: 'Financial Reports', icon: '📑' },
         { href: '/admin/compliance', label: 'Compliance', icon: '✅' },
         { href: '/admin/sustainability', label: 'Sustainability', icon: '🌱' },
       ]
