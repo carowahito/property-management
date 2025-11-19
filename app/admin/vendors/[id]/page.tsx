@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -15,12 +15,29 @@ export default function VendorCRMPage({ params }: Props) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'invoices' | 'performance' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
+  const [vendorId, setVendorId] = useState<string | null>(null)
 
-  const vendorId = '1'
+  useEffect(() => {
+    params.then(p => setVendorId(p.id))
+  }, [params])
+
+  if (!vendorId) {
+    return <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+    </div>
+  }
+
   const vendor = mockVendors.find(v => v.id === vendorId)
 
   if (!vendor) {
-    return <div>Vendor not found</div>
+    return <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <p className="text-gray-500 text-lg">Vendor not found</p>
+        <Button onClick={() => router.push('/admin/vendors')} className="mt-4">
+          Back to Vendors
+        </Button>
+      </div>
+    </div>
   }
 
   // Get related data (mock)

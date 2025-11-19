@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -15,12 +15,29 @@ export default function LandlordCRMPage({ params }: Props) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'financials' | 'tenants' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
+  const [landlordId, setLandlordId] = useState<string | null>(null)
 
-  const landlordId = '1'
+  useEffect(() => {
+    params.then(p => setLandlordId(p.id))
+  }, [params])
+
+  if (!landlordId) {
+    return <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+    </div>
+  }
+
   const landlord = mockLandlords.find(l => l.id === landlordId)
 
   if (!landlord) {
-    return <div>Landlord not found</div>
+    return <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <p className="text-gray-500 text-lg">Landlord not found</p>
+        <Button onClick={() => router.push('/admin/landlords')} className="mt-4">
+          Back to Landlords
+        </Button>
+      </div>
+    </div>
   }
 
   // Get related data

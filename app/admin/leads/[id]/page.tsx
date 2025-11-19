@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -16,12 +16,21 @@ export default function LeadCRMPage({ params }: Props) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showConvertModal, setShowConvertModal] = useState(false)
+  const [leadId, setLeadId] = useState<string | null>(null)
 
-  const leadId = 'L001' // Would come from unwrapped params
+  useEffect(() => {
+    params.then(p => setLeadId(p.id))
+  }, [params])
 
-  // Mock lead data
+  if (!leadId) {
+    return <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  }
+
+  // Mock lead data - in production, fetch based on leadId
   const lead = {
-    id: 'L001',
+    id: leadId,
     name: 'Sarah Mitchell',
     email: 'sarah.mitchell@email.com',
     phone: '+254 790 123 456',
