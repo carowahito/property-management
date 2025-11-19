@@ -56,6 +56,11 @@ export default function TenantCRMPage({ params }: Props) {
     endDate: '',
     category: '',
   })
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
+  const [whatsAppMessage, setWhatsAppMessage] = useState({
+    message: '',
+    template: '',
+  })
 
   // In real app, this would be async
   const tenantId = '1' // Would come from unwrapped params
@@ -175,9 +180,15 @@ export default function TenantCRMPage({ params }: Props) {
       return false
     }
     
-    // Vendor filter
-    if (maintenanceFilters.vendor && request.vendorName && !request.vendorName.toLowerCase().includes(maintenanceFilters.vendor.toLowerCase())) {
-      return false
+    // Vendor filter (exact match for dropdown)
+    if (maintenanceFilters.vendor) {
+      if (maintenanceFilters.vendor === 'unassigned') {
+        if (request.vendorName && request.vendorName !== '') {
+          return false
+        }
+      } else if (request.vendorName !== maintenanceFilters.vendor) {
+        return false
+      }
     }
     
     // Date range filter
@@ -231,6 +242,13 @@ export default function TenantCRMPage({ params }: Props) {
   // Get unique months from payments for dropdown
   const uniqueMonths = Array.from(new Set(tenantPayments.map(p => p.month))).sort().reverse()
 
+  // Get unique vendors from maintenance requests for dropdown
+  const uniqueVendors = Array.from(new Set(
+    tenantMaintenance
+      .map(r => r.vendorName)
+      .filter(name => name && name !== '')
+  )).sort()
+
   const clearPaymentFilters = () => {
     setPaymentFilters({
       month: '',
@@ -259,6 +277,41 @@ export default function TenantCRMPage({ params }: Props) {
       endDate: '',
       category: '',
     })
+  }
+
+  const handleSendWhatsApp = () => {
+    console.log('Sending WhatsApp message:', {
+      to: tenant.phone,
+      message: whatsAppMessage.message,
+      template: whatsAppMessage.template,
+    })
+    // In real app, this would call WhatsApp Business API
+    setShowWhatsAppModal(false)
+    setWhatsAppMessage({ message: '', template: '' })
+  }
+
+  const whatsAppTemplates = [
+    { id: 'rent_reminder', name: 'Rent Reminder', message: 'Hi {name}, this is a friendly reminder that your rent payment of KES {amount} is due on {date}. Thank you!' },
+    { id: 'payment_confirmation', name: 'Payment Confirmation', message: 'Hi {name}, we have received your payment of KES {amount}. Thank you for your prompt payment!' },
+    { id: 'maintenance_update', name: 'Maintenance Update', message: 'Hi {name}, your maintenance request has been updated. Status: {status}. We will keep you informed.' },
+    { id: 'lease_renewal', name: 'Lease Renewal', message: 'Hi {name}, your lease is expiring soon on {date}. Please contact us to discuss renewal options.' },
+    { id: 'custom', name: 'Custom Message', message: '' },
+  ]
+
+  const handleTemplateSelect = (templateId: string) => {
+    const template = whatsAppTemplates.find(t => t.id === templateId)
+    if (template && template.message) {
+      // Replace placeholders with actual data
+      let message = template.message
+        .replace('{name}', tenant.name.split(' ')[0])
+        .replace('{amount}', tenant.rent?.toLocaleString() || '0')
+        .replace('{date}', formatDate(currentLease?.endDate || new Date().toISOString()))
+        .replace('{status}', 'In Progress')
+      
+      setWhatsAppMessage({ ...whatsAppMessage, template: templateId, message })
+    } else {
+      setWhatsAppMessage({ ...whatsAppMessage, template: templateId, message: '' })
+    }
   }
 
   // Calculate statistics
@@ -678,13 +731,17 @@ export default function TenantCRMPage({ params }: Props) {
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Vendor
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={maintenanceFilters.vendor}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, vendor: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Search vendor..."
-                    />
+                    >
+                      <option value="">All Vendors</option>
+                      {uniqueVendors.map(vendor => (
+                        <option key={vendor} value={vendor}>{vendor}</option>
+                      ))}
+                      <option value="unassigned">Unassigned</option>
+                    </select>
                   </div>
 
                   <div>
@@ -817,7 +874,12 @@ export default function TenantCRMPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-gray-900">Communication History</h3>
-                <Button variant="primary">✉️ Send Message</Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowWhatsAppModal(true)}>
+                    💬 Send WhatsApp
+                  </Button>
+                  <Button variant="primary">✉️ Send Message</Button>
+                </div>
               </div>
 
               {/* Filters */}
@@ -1271,6 +1333,90 @@ export default function TenantCRMPage({ params }: Props) {
                 disabled={!paymentForm.month || !paymentForm.amount || !paymentForm.date}
               >
                 Record Payment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send WhatsApp Modal */}
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full">
+            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Send WhatsApp Message</h2>
+                <p className="text-sm text-gray-600 mt-1">To: {tenant.name} ({tenant.phone})</p>
+              </div>
+              <button
+                onClick={() => setShowWhatsAppModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message Template
+                </label>
+                <select
+                  value={whatsAppMessage.template}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a template...</option>
+                  {whatsAppTemplates.map(template => (
+                    <option key={template.id} value={template.id}>{template.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message *
+                </label>
+                <textarea
+                  rows={6}
+                  value={whatsAppMessage.message}
+                  onChange={(e) => setWhatsAppMessage({ ...whatsAppMessage, message: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Type your message here..."
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {whatsAppMessage.message.length} characters
+                </p>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900">WhatsApp Business API</p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      This message will be sent via WhatsApp Business API. Ensure you have the necessary permissions and the tenant has opted in to receive WhatsApp messages.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowWhatsAppModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSendWhatsApp}
+                disabled={!whatsAppMessage.message}
+              >
+                📤 Send WhatsApp
               </Button>
             </div>
           </div>
