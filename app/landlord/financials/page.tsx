@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function LandlordFinancials() {
   const [selectedPeriod, setSelectedPeriod] = useState('this-month')
@@ -25,16 +26,24 @@ export default function LandlordFinancials() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Financial Overview</h1>
-        <select
-          value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-md"
-        >
-          <option value="this-month">This Month</option>
-          <option value="last-month">Last Month</option>
-          <option value="this-quarter">This Quarter</option>
-          <option value="this-year">This Year</option>
-        </select>
+        <div className="flex gap-3">
+          <Link
+            href="/landlord/financials/statements"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            📊 View Statements
+          </Link>
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-md"
+          >
+            <option value="this-month">This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="this-quarter">This Quarter</option>
+            <option value="this-year">This Year</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
