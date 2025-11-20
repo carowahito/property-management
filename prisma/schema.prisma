@@ -115,6 +115,8 @@ model Property {
   inspections Inspection[]
   viewings    Viewing[]
   messages    Message[]
+  rentTransactions RentTransaction[]
+  statements  LandlordStatement[]
 
   @@index([landlordId])
   @@index([status])
@@ -139,6 +141,8 @@ model Landlord {
   properties  Property[]
   payouts     Payout[]
   messages    Message[]
+  rentTransactions RentTransaction[]
+  statements  LandlordStatement[]
 
   @@index([email])
   @@index([status])
@@ -167,6 +171,7 @@ model Tenant {
   payments        Payment[]
   maintenanceRequests MaintenanceRequest[]
   messages        Message[]
+  rentTransactions RentTransaction[]
 
   @@index([email])
   @@index([propertyId])
@@ -274,6 +279,8 @@ model Lease {
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   payments        Payment[]
+  rentTransactions RentTransaction[]
+  workOrders      WorkOrder[]
 
   @@index([tenantId])
   @@index([propertyId])
@@ -299,6 +306,7 @@ model Payment {
   // Relations
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   lease           Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  rentTransaction RentTransaction?
 
   @@index([tenantId])
   @@index([leaseId])
@@ -322,10 +330,152 @@ model Payout {
 
   // Relations
   landlord    Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  rentTransactions RentTransaction[]
 
   @@index([landlordId])
   @@index([status])
   @@map("payouts")
+}
+
+// ============================================
+// Rent Distribution & Statements
+// ============================================
+
+model RentTransaction {
+  id                String   @id @default(cuid())
+  paymentId         String   @unique
+  leaseId           String
+  landlordId        String
+  propertyId        String
+  unitId            String?
+  tenantId          String
+  
+  // Rent Details
+  grossRent         Decimal  @db.Decimal(10, 2)
+  rentPeriod        String   // e.g., "November 2025"
+  dueDate           DateTime
+  paidDate          DateTime
+  
+  // Deductions
+  serviceCharge     Decimal  @db.Decimal(10, 2) @default(0) // Monthly service charge
+  managementFee     Decimal  @db.Decimal(10, 2) @default(0) // Management commission
+  maintenanceFees   Decimal  @db.Decimal(10, 2) @default(0) // Agreed maintenance costs
+  otherDeductions   Decimal  @db.Decimal(10, 2) @default(0) // Other agreed deductions
+  totalDeductions   Decimal  @db.Decimal(10, 2)
+  
+  // Net Amount
+  netAmount         Decimal  @db.Decimal(10, 2) // Amount paid to landlord
+  
+  // Late Fees (Property Manager Income - not shown to landlord)
+  lateFees          Decimal  @db.Decimal(10, 2) @default(0)
+  
+  // Payout Details
+  payoutId          String?
+  payoutStatus      PayoutStatus @default(PENDING)
+  payoutDate        DateTime?
+  payoutMethod      PaymentMethod?
+  payoutReference   String?
+  
+  // Metadata
+  notes             String?
+  processed         Boolean  @default(false)
+  processedAt       DateTime?
+  processedBy       String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  payment           Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  lease             Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  landlord          Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payout            Payout?  @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  distributionItems RentDistributionItem[]
+
+  @@index([paymentId])
+  @@index([landlordId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([rentPeriod])
+  @@index([payoutStatus])
+  @@map("rent_transactions")
+}
+
+model RentDistributionItem {
+  id                  String   @id @default(cuid())
+  rentTransactionId   String
+  
+  // Distribution Details
+  type                DistributionType
+  description         String
+  amount              Decimal  @db.Decimal(10, 2)
+  recipientType       RecipientType // LANDLORD, MANAGER, SERVICE_PROVIDER, etc.
+  recipientId         String?
+  recipientName       String?
+  
+  // Payment Details
+  paid                Boolean  @default(false)
+  paidDate            DateTime?
+  paymentMethod       PaymentMethod?
+  reference           String?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  rentTransaction     RentTransaction @relation(fields: [rentTransactionId], references: [id], onDelete: Cascade)
+
+  @@index([rentTransactionId])
+  @@index([type])
+  @@index([recipientType])
+  @@map("rent_distribution_items")
+}
+
+model LandlordStatement {
+  id              String   @id @default(cuid())
+  landlordId      String
+  propertyId      String?
+  
+  // Statement Period
+  period          String   // e.g., "November 2025"
+  startDate       DateTime
+  endDate         DateTime
+  
+  // Financial Summary
+  totalGrossRent       Decimal  @db.Decimal(10, 2)
+  totalServiceCharges  Decimal  @db.Decimal(10, 2)
+  totalManagementFees  Decimal  @db.Decimal(10, 2)
+  totalMaintenanceFees Decimal  @db.Decimal(10, 2)
+  totalOtherDeductions Decimal  @db.Decimal(10, 2)
+  totalDeductions      Decimal  @db.Decimal(10, 2)
+  totalNetAmount       Decimal  @db.Decimal(10, 2)
+  
+  // Metadata
+  transactionCount Int      @default(0)
+  generated        Boolean  @default(false)
+  generatedAt      DateTime?
+  generatedBy      String?
+  sent             Boolean  @default(false)
+  sentAt           DateTime?
+  
+  // Export
+  pdfUrl           String?
+  
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  landlord         Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  property         Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@unique([landlordId, period, propertyId])
+  @@index([landlordId])
+  @@index([period])
+  @@index([startDate, endDate])
+  @@map("landlord_statements")
 }
 
 // ============================================
@@ -362,12 +512,15 @@ model WorkOrder {
   id                    String   @id @default(cuid())
   maintenanceRequestId  String?
   vendorId              String?
+  leaseId               String?
   title                 String
   description           String
   status                WorkOrderStatus @default(PENDING)
   priority              Priority @default(MEDIUM)
   estimatedCost         Decimal? @db.Decimal(10, 2)
   actualCost            Decimal? @db.Decimal(10, 2)
+  cost                  Decimal? @db.Decimal(10, 2) // Billable cost
+  landlordApproved      Boolean  @default(false)
   scheduledDate         DateTime?
   completedDate         DateTime?
   createdAt             DateTime @default(now())
@@ -376,8 +529,10 @@ model WorkOrder {
   // Relations
   maintenanceRequest    MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id], onDelete: SetNull)
   vendor                Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  lease                 Lease?              @relation(fields: [leaseId], references: [id], onDelete: SetNull)
 
   @@index([vendorId])
+  @@index([leaseId])
   @@index([status])
   @@map("work_orders")
 }
@@ -629,6 +784,29 @@ enum PayoutStatus {
   PROCESSING
   PAID
   FAILED
+}
+
+enum DistributionType {
+  GROSS_RENT
+  SERVICE_CHARGE
+  MANAGEMENT_FEE
+  MAINTENANCE_FEE
+  REPAIR_COST
+  INSURANCE
+  PROPERTY_TAX
+  LATE_FEE
+  OTHER_DEDUCTION
+  NET_PAYOUT
+}
+
+enum RecipientType {
+  LANDLORD
+  MANAGER
+  SERVICE_PROVIDER
+  VENDOR
+  GOVERNMENT
+  INSURANCE_COMPANY
+  OTHER
 }
 
 enum MaintenanceStatus {
