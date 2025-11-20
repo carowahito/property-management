@@ -1,10 +1,51 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 
 export default function LandlordLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+
+  const isActive = (path: string) => pathname?.startsWith(path)
+
+  const navItems = [
+    { href: '/landlord/dashboard', label: 'Dashboard', icon: '📊' },
+    { href: '/landlord/properties', label: 'Properties', icon: '🏢' },
+    { 
+      label: 'Financials', 
+      icon: '💰',
+      submenu: [
+        { href: '/landlord/financials', label: 'Overview' },
+        { href: '/landlord/financials/statements', label: 'Statements' },
+      ]
+    },
+    { 
+      label: 'Operations', 
+      icon: '🔧',
+      submenu: [
+        { href: '/landlord/maintenance', label: 'Maintenance' },
+        { href: '/landlord/quotes', label: 'Quotes' },
+        { href: '/landlord/repairs', label: 'Work Evidence' },
+      ]
+    },
+    { 
+      label: 'Management', 
+      icon: '📋',
+      submenu: [
+        { href: '/landlord/tenants', label: 'Tenants' },
+        { href: '/landlord/leases', label: 'Leases' },
+        { href: '/landlord/documents', label: 'Documents' },
+      ]
+    },
+    { href: '/landlord/analytics', label: 'Analytics', icon: '📈' },
+  ]
+
   return (
     <>
       <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -14,23 +55,70 @@ export default function LandlordLayout({
               <Link href="/landlord/dashboard" className="flex items-center">
                 <span className="text-xl font-bold text-green-600">Landlord Portal</span>
               </Link>
-              <div className="ml-10 flex space-x-6">
-                <Link href="/landlord/dashboard" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-green-600">Dashboard</Link>
-                <Link href="/landlord/properties" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Properties</Link>
-                <Link href="/landlord/tenants" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Tenants</Link>
-                <Link href="/landlord/maintenance" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Maintenance</Link>
-                <Link href="/landlord/quotes" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Quotes</Link>
-                <Link href="/landlord/repairs" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Work Evidence</Link>
-                <Link href="/landlord/financials" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Financials</Link>
-                <Link href="/landlord/leases" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Leases</Link>
-                <Link href="/landlord/documents" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Documents</Link>
-                <Link href="/landlord/analytics" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900">Analytics</Link>
+              <div className="ml-10 flex space-x-1">
+                {navItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className="relative"
+                    onMouseEnter={() => item.submenu && setActiveDropdown(item.label)}
+                    onMouseLeave={() => setActiveDropdown(null)}
+                  >
+                    {item.submenu ? (
+                      // Dropdown menu item
+                      <>
+                        <button
+                          className={`inline-flex items-center px-3 py-5 text-sm font-medium transition ${
+                            item.submenu.some(sub => isActive(sub.href))
+                              ? 'text-green-600 border-b-2 border-green-600'
+                              : 'text-gray-500 hover:text-gray-900'
+                          }`}
+                        >
+                          <span className="mr-1">{item.icon}</span>
+                          {item.label}
+                          <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {activeDropdown === item.label && (
+                          <div className="absolute left-0 mt-0 w-48 bg-white shadow-lg rounded-md py-1 z-50 border border-gray-200">
+                            {item.submenu.map((subItem) => (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                className={`block px-4 py-2 text-sm transition ${
+                                  isActive(subItem.href)
+                                    ? 'bg-green-50 text-green-600 font-medium'
+                                    : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                              >
+                                {subItem.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      // Regular link
+                      <Link
+                        href={item.href!}
+                        className={`inline-flex items-center px-3 py-5 text-sm font-medium transition ${
+                          isActive(item.href!)
+                            ? 'text-green-600 border-b-2 border-green-600'
+                            : 'text-gray-500 hover:text-gray-900'
+                        }`}
+                      >
+                        <span className="mr-1">{item.icon}</span>
+                        {item.label}
+                      </Link>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/landlord/settings" className="text-sm font-medium text-gray-700 hover:text-gray-900">Settings</Link>
-              <Link href="/landlord/profile" className="text-sm font-medium text-gray-700 hover:text-gray-900">Profile</Link>
-              <Link href="/" className="text-sm font-medium text-red-600 hover:text-red-800">Logout</Link>
+              <Link href="/landlord/settings" className="text-sm font-medium text-gray-700 hover:text-gray-900">⚙️ Settings</Link>
+              <Link href="/landlord/profile" className="text-sm font-medium text-gray-700 hover:text-gray-900">👤 Profile</Link>
+              <Link href="/" className="text-sm font-medium text-red-600 hover:text-red-800">🚪 Logout</Link>
             </div>
           </div>
         </div>
