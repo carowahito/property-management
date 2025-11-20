@@ -301,7 +301,15 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Financials Tab */}
           {activeTab === 'financials' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900">Financial History</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-gray-900">Financial History</h3>
+                <Button 
+                  variant="primary" 
+                  onClick={() => router.push(`/admin/landlords/${landlordId}/statements`)}
+                >
+                  📊 View Detailed Statements
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
