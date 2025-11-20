@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { mockLandlordStatements, mockLandlords } from '@/lib/mock-data';
 
 interface Statement {
   landlordId: string;
@@ -70,12 +71,22 @@ export default function LandlordStatementsPage() {
   const fetchStatement = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `/api/landlords/${landlordId}/statement?year=${selectedYear}&month=${selectedMonth}`
+      // Use mock data
+      const monthName = months[selectedMonth - 1];
+      const period = `${monthName} ${selectedYear}`;
+      
+      const mockStatement = mockLandlordStatements.find(
+        s => s.landlordId === landlordId && s.period === period
       );
-      const data = await response.json();
-      if (data.success) {
-        setStatement(data.statement);
+      
+      if (mockStatement) {
+        const landlord = mockLandlords.find(l => l.id === landlordId);
+        setStatement({
+          ...mockStatement,
+          landlordName: landlord?.name || 'Unknown Landlord',
+        });
+      } else {
+        setStatement(null);
       }
     } catch (error) {
       console.error('Error fetching statement:', error);
@@ -86,13 +97,12 @@ export default function LandlordStatementsPage() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch(
-        `/api/landlords/${landlordId}/statement?type=history`
-      );
-      const data = await response.json();
-      if (data.success) {
-        setStatementHistory(data.statements);
-      }
+      // Use mock data - filter by landlordId and sort by date
+      const history = mockLandlordStatements
+        .filter(s => s.landlordId === landlordId)
+        .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+      
+      setStatementHistory(history);
     } catch (error) {
       console.error('Error fetching history:', error);
     }
