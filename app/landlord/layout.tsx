@@ -123,9 +123,9 @@ export default function LandlordLayout({
           </div>
         </div>
       </nav>
-      <main className="min-h-screen bg-gray-50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</main>
+      <main className="min-h-screen bg-gray-50">{children}</main>
       <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="py-6 px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-gray-500">© 2025 Catalyst Suite - Landlord Portal</p>
         </div>
       </footer>

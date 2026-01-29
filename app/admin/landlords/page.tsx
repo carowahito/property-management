@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import AddLandlordForm from '@/components/forms/AddLandlordForm';
 
 interface Landlord {
   id: string
@@ -40,7 +41,13 @@ export default function AdminLandlordsPage() {
   const [selectedLandlord, setSelectedLandlord] = useState<Landlord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterProperty, setFilterProperty] = useState<string>('all');
+  const [showAddLandlordModal, setShowAddLandlordModal] = useState(false);
+  
+  const handleLandlordSubmit = (data: unknown) => {
+    console.log('Submitting landlord:', data);
+    // TODO: API call to create landlord
+    setShowAddLandlordModal(false);
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['landlords'],
@@ -90,7 +97,7 @@ export default function AdminLandlordsPage() {
           <h1 className='text-3xl font-bold text-gray-900'>Landlords CRM</h1>
           <p className='text-gray-600 mt-1'>Manage landlord relationships and portfolios</p>
         </div>
-        <Button variant="primary" size="lg">+ Add Landlord</Button>
+        <Button variant="primary" size="lg" onClick={() => setShowAddLandlordModal(true)}>+ Add Landlord</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
@@ -291,6 +298,14 @@ export default function AdminLandlordsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Landlord Modal */}
+      {showAddLandlordModal && (
+        <AddLandlordForm
+          onClose={() => setShowAddLandlordModal(false)}
+          onSubmit={handleLandlordSubmit}
+        />
       )}
     </div>
   );

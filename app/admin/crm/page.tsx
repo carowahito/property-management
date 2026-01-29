@@ -607,20 +607,24 @@ export default function CRMContactsPage() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                    <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-                    <input type="tel" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                  <input type="email" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                </div>
+                {contactType !== 'tenant' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                        <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                        <input type="tel" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <input type="email" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </>
+                )}
 
                 {contactType === 'lead' && (
                   <>
@@ -659,23 +663,37 @@ export default function CRMContactsPage() {
                 )}
 
                 {contactType === 'tenant' && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-6 h-6 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">ID Number *</label>
-                        <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Property</label>
-                        <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                          <option value="">Select property...</option>
-                          <option>Sunset Apartments</option>
-                          <option>Vista Plaza</option>
-                          <option>Highland House</option>
-                        </select>
+                        <p className="text-lg font-medium text-blue-900">Tenant Registration Required</p>
+                        <p className="text-sm text-blue-700 mt-2">
+                          To add a new tenant, please use the dedicated tenant registration form which includes:
+                        </p>
+                        <ul className="text-sm text-blue-700 mt-2 list-disc list-inside space-y-1">
+                          <li>Personal information and contact details</li>
+                          <li>Property and unit assignment</li>
+                          <li>Financial terms (rent, deposit, service charges)</li>
+                          <li>Lease details and dates</li>
+                          <li>Required document uploads (ID, passport photo)</li>
+                          <li>Automatic lease document generation</li>
+                        </ul>
+                        <Link 
+                          href="/admin/tenants" 
+                          onClick={() => setShowAddContactModal(false)}
+                          className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        >
+                          Go to Tenant Registration
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
 
                 {contactType === 'landlord' && (
@@ -716,18 +734,22 @@ export default function CRMContactsPage() {
                   </>
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                  <textarea rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <Button variant="outline" onClick={() => setShowAddContactModal(false)} className="flex-1">
-                    Cancel
-                  </Button>
-                  <Button variant="primary" className="flex-1">
-                    Add {contactType.charAt(0).toUpperCase() + contactType.slice(1)}
-                  </Button>
-                </div>
+                {contactType !== 'tenant' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                      <textarea rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <Button variant="outline" onClick={() => setShowAddContactModal(false)} className="flex-1">
+                        Cancel
+                      </Button>
+                      <Button variant="primary" className="flex-1">
+                        Add {contactType.charAt(0).toUpperCase() + contactType.slice(1)}
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

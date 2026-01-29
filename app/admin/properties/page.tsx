@@ -24,6 +24,54 @@ interface Property {
   }
 }
 
+// Unit types
+const unitTypes = [
+  { value: 'studio', label: 'Studio' },
+  { value: 'bedsitter', label: 'Bedsitter' },
+  { value: '1br', label: '1 Bedroom' },
+  { value: '2br', label: '2 Bedroom' },
+  { value: '3br', label: '3 Bedroom' },
+  { value: '4br', label: '4 Bedroom' },
+  { value: '5br', label: '5+ Bedroom' },
+  { value: 'penthouse', label: 'Penthouse' },
+  { value: 'duplex', label: 'Duplex' },
+  { value: 'office', label: 'Office Space' },
+  { value: 'retail', label: 'Retail Space' },
+  { value: 'warehouse', label: 'Warehouse' },
+  { value: 'other', label: 'Other' },
+]
+
+// Unit status options
+const unitStatuses = [
+  { value: 'vacant', label: 'Vacant' },
+  { value: 'occupied', label: 'Occupied' },
+  { value: 'maintenance', label: 'Under Maintenance' },
+  { value: 'reserved', label: 'Reserved' },
+]
+
+// Mock landlords for linking
+const mockLandlords = [
+  { id: 'l1', name: 'John Doe' },
+  { id: 'l2', name: 'Jane Smith' },
+  { id: 'l3', name: 'ABC Properties Ltd' },
+  { id: 'l4', name: 'XYZ Investments' },
+]
+
+interface UnitDetail {
+  unitNumber: string;
+  unitType: string;
+  floor: string;
+  bedrooms: string;
+  bathrooms: string;
+  squareFootage: string;
+  monthlyRent: string;
+  securityDeposit: string;
+  status: string;
+  landlordId: string;
+  amenities: string[];
+  description: string;
+}
+
 interface PropertiesResponse {
   properties: Property[]
   pagination: {
@@ -44,6 +92,8 @@ async function fetchProperties(): Promise<PropertiesResponse> {
 
 export default function PropertiesPage() {
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showUnitSection, setShowUnitSection] = useState(false)
+  const [units, setUnits] = useState<UnitDetail[]>([])
   const [newProperty, setNewProperty] = useState({
     name: '',
     address: '',
@@ -192,10 +242,13 @@ export default function PropertiesPage() {
   const handleAddProperty = () => {
     // TODO: API call to create property
     console.log('Creating property:', newProperty)
+    console.log('Units:', units)
     console.log('Photo files:', newProperty.photos)
     console.log('Video URLs:', newProperty.videoUrls)
     setShowAddModal(false)
     // Reset form
+    setUnits([])
+    setShowUnitSection(false)
     setNewProperty({
       name: '',
       address: '',
@@ -301,6 +354,59 @@ export default function PropertiesPage() {
     
     setIsImprovingText(false)
   }
+
+  // Unit Management Functions
+  const generateUnits = (count: number) => {
+    const numUnits = parseInt(count.toString()) || 0
+    if (numUnits > 1 && numUnits <= 100) {
+      setShowUnitSection(true)
+      const newUnits: UnitDetail[] = Array.from({ length: numUnits }, (_, i) => ({
+        unitNumber: `${i + 1}`,
+        unitType: '',
+        floor: '',
+        bedrooms: '',
+        bathrooms: '',
+        squareFootage: '',
+        monthlyRent: '',
+        securityDeposit: '',
+        status: 'vacant',
+        landlordId: '',
+        amenities: [],
+        description: '',
+      }))
+      setUnits(newUnits)
+    } else if (numUnits === 1) {
+      setShowUnitSection(false)
+      setUnits([])
+    }
+  }
+
+  const updateUnit = (index: number, field: keyof UnitDetail, value: string | string[]) => {
+    setUnits(prev => prev.map((unit, i) => 
+      i === index ? { ...unit, [field]: value } : unit
+    ))
+  }
+
+  const toggleUnitAmenity = (index: number, amenity: string) => {
+    setUnits(prev => prev.map((unit, i) => {
+      if (i === index) {
+        const newAmenities = unit.amenities.includes(amenity)
+          ? unit.amenities.filter(a => a !== amenity)
+          : [...unit.amenities, amenity]
+        return { ...unit, amenities: newAmenities }
+      }
+      return unit
+    }))
+  }
+
+  const applyToAllUnits = (field: keyof UnitDetail, value: string) => {
+    setUnits(prev => prev.map(unit => ({ ...unit, [field]: value })))
+  }
+
+  const unitAmenities = [
+    'Balcony', 'En-suite', 'Walk-in Closet', 'Air Conditioning', 'Furnished', 
+    'Semi-furnished', 'Kitchen Appliances', 'Water Heater', 'CCTV', 'Intercom'
+  ]
 
   const removeVideoUrl = (index: number) => {
     setNewProperty(prev => ({
@@ -573,12 +679,21 @@ export default function PropertiesPage() {
                     <input
                       type="number"
                       value={newProperty.totalUnits}
-                      onChange={(e) => setNewProperty({ ...newProperty, totalUnits: e.target.value })}
+                      onChange={(e) => {
+                        setNewProperty({ ...newProperty, totalUnits: e.target.value })
+                        generateUnits(parseInt(e.target.value) || 0)
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="e.g., 50"
                       min="1"
+                      max="100"
                       required
                     />
+                    {parseInt(newProperty.totalUnits) > 1 && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        ℹ️ {newProperty.totalUnits} units will be created. Configure each unit below.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -926,7 +1041,7 @@ export default function PropertiesPage() {
 
               {/* Amenities */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Amenities</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Property Amenities</h3>
                 <p className="text-sm text-gray-600 mb-4">Select all amenities available at this property</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {commonAmenities.map((amenity) => (
@@ -945,6 +1060,256 @@ export default function PropertiesPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Individual Unit Management Section */}
+              {showUnitSection && units.length > 1 && (
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Individual Unit Configuration</h3>
+                      <p className="text-sm text-gray-600">Configure details for each of the {units.length} units</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-lg"
+                        onChange={(e) => {
+                          if (e.target.value) applyToAllUnits('unitType', e.target.value)
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="">Apply type to all...</option>
+                        {unitTypes.map(type => (
+                          <option key={type.value} value={type.value}>{type.label}</option>
+                        ))}
+                      </select>
+                      <select
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-lg"
+                        onChange={(e) => {
+                          if (e.target.value) applyToAllUnits('landlordId', e.target.value)
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="">Apply landlord to all...</option>
+                        {mockLandlords.map(ll => (
+                          <option key={ll.id} value={ll.id}>{ll.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    {units.map((unit, index) => (
+                      <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-semibold text-gray-800">Unit {index + 1}</h4>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            unit.status === 'vacant' ? 'bg-green-100 text-green-700' :
+                            unit.status === 'occupied' ? 'bg-blue-100 text-blue-700' :
+                            unit.status === 'maintenance' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-purple-100 text-purple-700'
+                          }`}>
+                            {unitStatuses.find(s => s.value === unit.status)?.label || 'Vacant'}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {/* Unit Number */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit Number *</label>
+                            <input
+                              type="text"
+                              value={unit.unitNumber}
+                              onChange={(e) => updateUnit(index, 'unitNumber', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="e.g., A1, 101"
+                            />
+                          </div>
+
+                          {/* Unit Type */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit Type *</label>
+                            <select
+                              value={unit.unitType}
+                              onChange={(e) => updateUnit(index, 'unitType', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select type...</option>
+                              {unitTypes.map(type => (
+                                <option key={type.value} value={type.value}>{type.label}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Floor */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Floor</label>
+                            <input
+                              type="text"
+                              value={unit.floor}
+                              onChange={(e) => updateUnit(index, 'floor', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="e.g., 1, 2, G"
+                            />
+                          </div>
+
+                          {/* Status */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                            <select
+                              value={unit.status}
+                              onChange={(e) => updateUnit(index, 'status', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                              {unitStatuses.map(status => (
+                                <option key={status.value} value={status.value}>{status.label}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Bedrooms */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Bedrooms</label>
+                            <input
+                              type="number"
+                              value={unit.bedrooms}
+                              onChange={(e) => updateUnit(index, 'bedrooms', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              min="0"
+                              placeholder="0"
+                            />
+                          </div>
+
+                          {/* Bathrooms */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Bathrooms</label>
+                            <input
+                              type="number"
+                              value={unit.bathrooms}
+                              onChange={(e) => updateUnit(index, 'bathrooms', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              min="0"
+                              step="0.5"
+                              placeholder="1"
+                            />
+                          </div>
+
+                          {/* Square Footage */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Size (sq ft)</label>
+                            <input
+                              type="number"
+                              value={unit.squareFootage}
+                              onChange={(e) => updateUnit(index, 'squareFootage', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              min="0"
+                              placeholder="500"
+                            />
+                          </div>
+
+                          {/* Monthly Rent */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Monthly Rent (KES)</label>
+                            <input
+                              type="number"
+                              value={unit.monthlyRent}
+                              onChange={(e) => updateUnit(index, 'monthlyRent', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              min="0"
+                              placeholder="25000"
+                            />
+                          </div>
+
+                          {/* Security Deposit */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Security Deposit</label>
+                            <input
+                              type="number"
+                              value={unit.securityDeposit}
+                              onChange={(e) => updateUnit(index, 'securityDeposit', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              min="0"
+                              placeholder="25000"
+                            />
+                          </div>
+
+                          {/* Landlord Assignment */}
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Assign Landlord
+                              <Link href="/admin/landlords" className="ml-2 text-blue-600 hover:underline text-xs">
+                                + Add New
+                              </Link>
+                            </label>
+                            <select
+                              value={unit.landlordId}
+                              onChange={(e) => updateUnit(index, 'landlordId', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select landlord...</option>
+                              {mockLandlords.map(ll => (
+                                <option key={ll.id} value={ll.id}>{ll.name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Description */}
+                          <div className="col-span-2 md:col-span-4">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit Description</label>
+                            <textarea
+                              value={unit.description}
+                              onChange={(e) => updateUnit(index, 'description', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              rows={2}
+                              placeholder="Additional details about this unit..."
+                            />
+                          </div>
+
+                          {/* Unit Amenities */}
+                          <div className="col-span-2 md:col-span-4">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit-Specific Amenities</label>
+                            <div className="flex flex-wrap gap-2">
+                              {unitAmenities.map(amenity => (
+                                <label key={amenity} className="flex items-center gap-1 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={unit.amenities.includes(amenity)}
+                                    onChange={() => toggleUnitAmenity(index, amenity)}
+                                    className="w-3 h-3 text-blue-600 rounded"
+                                  />
+                                  {amenity}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Summary */}
+                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <h5 className="font-medium text-blue-800 mb-2">Units Summary</h5>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                      <div>
+                        <span className="text-blue-600">Total Units:</span>
+                        <span className="ml-1 font-semibold">{units.length}</span>
+                      </div>
+                      <div>
+                        <span className="text-blue-600">Vacant:</span>
+                        <span className="ml-1 font-semibold">{units.filter(u => u.status === 'vacant').length}</span>
+                      </div>
+                      <div>
+                        <span className="text-blue-600">Configured:</span>
+                        <span className="ml-1 font-semibold">{units.filter(u => u.unitType && u.unitNumber).length}</span>
+                      </div>
+                      <div>
+                        <span className="text-blue-600">With Landlord:</span>
+                        <span className="ml-1 font-semibold">{units.filter(u => u.landlordId).length}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
