@@ -269,44 +269,38 @@ export class LandlordStatementGenerator {
    */
   private async saveStatementToDatabase(statement: StatementSummary) {
     try {
-      await prisma.landlordStatement.upsert({
-        where: {
-          landlordId_period_propertyId: {
-            landlordId: statement.landlordId,
-            period: statement.period,
-            propertyId: statement.propertyBreakdown[0]?.propertyId || null,
-          },
-        },
-        create: {
-          landlordId: statement.landlordId,
-          propertyId: statement.propertyBreakdown[0]?.propertyId || null,
-          period: statement.period,
-          startDate: statement.startDate,
-          endDate: statement.endDate,
-          totalGrossRent: statement.totalGrossRent,
-          totalServiceCharges: statement.totalServiceCharges,
-          totalManagementFees: statement.totalManagementFees,
-          totalMaintenanceFees: statement.totalMaintenanceFees,
-          totalOtherDeductions: statement.totalOtherDeductions,
-          totalDeductions: statement.totalDeductions,
-          totalNetAmount: statement.totalNetAmount,
-          transactionCount: statement.transactionCount,
-          generated: true,
-          generatedAt: new Date(),
-        },
-        update: {
-          totalGrossRent: statement.totalGrossRent,
-          totalServiceCharges: statement.totalServiceCharges,
-          totalManagementFees: statement.totalManagementFees,
-          totalMaintenanceFees: statement.totalMaintenanceFees,
-          totalOtherDeductions: statement.totalOtherDeductions,
-          totalDeductions: statement.totalDeductions,
-          totalNetAmount: statement.totalNetAmount,
-          transactionCount: statement.transactionCount,
-          generated: true,
-          generatedAt: new Date(),
-        },
+      const propertyId = statement.propertyBreakdown[0]?.propertyId || null;
+      const financials = {
+        totalGrossRent: statement.totalGrossRent,
+        totalServiceCharges: statement.totalServiceCharges,
+        totalManagementFees: statement.totalManagementFees,
+        totalMaintenanceFees: statement.totalMaintenanceFees,
+        totalOtherDeductions: statement.totalOtherDeductions,
+        totalDeductions: statement.totalDeductions,
+        totalNetAmount: statement.totalNetAmount,
+        transactionCount: statement.transactionCount,
+        generated: true,
+        generatedAt: new Date(),
+      };
+
+      const existing = await prisma.landlordStatement.findFirst({
+        where: { landlordId: statement.landlordId, period: statement.period, propertyId },
       });
+
+      if (existing) {
+        await prisma.landlordStatement.update({ where: { id: existing.id }, data: financials });
+      } else {
+        await prisma.landlordStatement.create({
+          data: {
+            landlordId: statement.landlordId,
+            propertyId,
+            period: statement.period,
+            startDate: statement.startDate,
+            endDate: statement.endDate,
+            ...financials,
+          },
+        });
+      }
     } catch (error) {
       console.error('Error saving statement:', error);
       // Don't throw - statement generation can succeed even if save fails

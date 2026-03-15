@@ -33,12 +33,12 @@ interface Transaction {
   deductions: {
     serviceCharge: number;
     managementFee: number;
-    maintenanceFees: number;
-    otherDeductions: number;
+    maintenance: number;
+    other: number;
     total: number;
   };
   netAmount: number;
-  paidDate: string;
+  paidDate?: string | null;
   payoutStatus: string;
 }
 

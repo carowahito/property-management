@@ -3,7 +3,7 @@
  * Handles rent collection, deduction calculations, and distribution to landlords
  */
 
-import { PrismaClient, PaymentType, PayoutStatus, PaymentMethod } from '@prisma/client';
+import { PrismaClient, PaymentType, PayoutStatus, PaymentMethod, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -379,7 +379,7 @@ export class RentProcessor {
       landlordName: string;
     }
   ) {
-    const items = [
+    const items: Prisma.RentDistributionItemCreateManyInput[] = [
       {
         rentTransactionId,
         type: 'GROSS_RENT' as const,
