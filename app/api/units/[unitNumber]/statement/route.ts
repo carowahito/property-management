@@ -5,24 +5,20 @@ import { prisma } from '@/lib/prisma'
 
 // GET /api/units/:unitNumber/statement?from=2025-07-01&to=2026-03-31
 //
-// STATEMENT RULES:
-//   Landlord sees:
-//     - Rent due (agreed monthly rent from lease — NOT the actual deposit from tenant)
-//     - Less: Service charge (e.g. KES 2,000)
-//     - Less: Management fee (e.g. KES 1,500)
-//     - Less: Repairs/maintenance (if any)
-//     - Net payout to landlord
-//
-//   Landlord does NOT see:
-//     - Actual amount deposited by tenant (may include late fees — company income)
-//     - Late payment penalties (LATE_FEE)
-//     - Agent commission (AGENT_COMMISSION — one-off company income when tenant placed)
-//
-//   Admin / Manager sees everything including:
-//     - Actual tenant deposits
-//     - Late fees collected (company income)
-//     - Agent commission
-//     - Full deduction breakdown and running balance
+// ┌─────────────────────────┬──────────┬──────────┬───────┐
+// │ Item                    │ Admin    │ Landlord │ Tenant│
+// ├─────────────────────────┼──────────┼──────────┼───────┤
+// │ Rent payments (receipt) │ ✅       │ ✅ (due) │ ✅    │
+// │ Actual deposit amount   │ ✅       │ ❌       │ ✅    │
+// │ Service charge          │ ✅       │ ✅       │ ✅    │
+// │ Late fees / penalties   │ ✅       │ ❌       │ ✅    │
+// │ Repairs & maintenance   │ ✅       │ ✅       │ ✅    │
+// │ Management fee          │ ✅       │ ✅       │ ❌    │
+// │ Agent commission        │ ✅       │ ❌       │ ❌    │
+// │ Deposit refund (move-out)│ ✅      │ ❌       │ ✅    │
+// │ Landlord payout details │ ✅       │ ✅       │ ❌    │
+// │ Net to landlord         │ ✅       │ ✅       │ ❌    │
+// └─────────────────────────┴──────────┴──────────┴───────┘
 //
 // Query params:
 //   from  — ISO date, start of period (default: first day of current month)
@@ -70,7 +66,10 @@ export async function GET(
   }
 
   const role = session.user.role
-  const isAdmin = role === 'ADMIN' || role === 'MANAGER'
+  const isAdmin  = role === 'ADMIN' || role === 'MANAGER'
+  // Tenant role will be added when tenant portal auth is implemented.
+  // For now any non-admin session where the user email matches the tenant is treated as tenant.
+  const isTenant = !isAdmin && unit.tenants.some(t => t.email === session.user.email)
 
   const activeLease = unit.leases[0] ?? null
   const agreedMonthlyRent = activeLease ? Number(activeLease.monthlyRent) : Number(unit.monthlyRent ?? 0)
@@ -224,6 +223,95 @@ export async function GET(
 
   // Types hidden from landlord — company income only
   const HIDDEN_FROM_LANDLORD: string[] = ['LATE_FEE', 'AGENT_COMMISSION']
+
+  // Types hidden from tenant — internal financial splits
+  const HIDDEN_FROM_TENANT: string[] = ['MANAGEMENT_FEE', 'AGENT_COMMISSION', 'NET_PAYOUT']
+
+  // ── TENANT view ───────────────────────────────────────────────────────────
+  // Tenant sees: their own payments, service charges, late fees, repairs,
+  //              deposit refund due, lease details. NOT landlord financials.
+  if (isTenant) {
+    // All payments on this tenant's lease (rent, late fees, service charges, repairs)
+    const tenantPayments = await prisma.payment.findMany({
+      where: {
+        tenantId: unit.tenants[0]?.id,
+        lease: { unitId: unit.id },
+        ...(from || to ? { paidDate: { gte: from, lte: to } } : {}),
+      },
+      orderBy: { paidDate: 'desc' },
+      select: {
+        reference: true,
+        amount: true,
+        type: true,
+        method: true,
+        status: true,
+        dueDate: true,
+        paidDate: true,
+        notes: true,
+      },
+    })
+
+    // Deposit refund — any REFUNDED payment or OTHER type after moveOutDate
+    const depositRefunds = await prisma.payment.findMany({
+      where: {
+        tenantId: unit.tenants[0]?.id,
+        OR: [{ status: 'REFUNDED' }, { type: 'OTHER', notes: { contains: 'refund' } }],
+      },
+      orderBy: { paidDate: 'desc' },
+      select: { reference: true, amount: true, status: true, paidDate: true, notes: true },
+    })
+
+    // Charges on this unit visible to tenant (service charge, repairs, late fees)
+    const tenantCharges = distributionItems
+      .filter(d => !HIDDEN_FROM_TENANT.includes(d.type))
+
+    const totalPaid      = tenantPayments.filter(p => p.status === 'PAID').reduce((s, p) => s + Number(p.amount), 0)
+    const totalDue       = rentTransactions.reduce((s, t) => s + Number(t.grossRent) + Number(t.lateFees), 0)
+    const totalLateFees  = rentTransactions.reduce((s, t) => s + Number(t.lateFees), 0)
+    const totalRepairs   = tenantCharges.filter(d => d.type === 'MAINTENANCE_FEE' || d.type === 'REPAIR_COST').reduce((s, d) => s + Number(d.amount), 0)
+    const totalSvcCharge = tenantCharges.filter(d => d.type === 'SERVICE_CHARGE').reduce((s, d) => s + Number(d.amount), 0)
+    const outstanding    = totalDue - totalPaid
+
+    return NextResponse.json({
+      unit: {
+        unitNumber:  unit.unitNumber,
+        property:    { name: unit.property.name, address: unit.property.address, city: unit.property.city },
+        bedrooms:    unit.bedrooms,
+        bathrooms:   unit.bathrooms,
+        agreedMonthlyRent,
+        serviceCharge: Number(unit.serviceCharge ?? 0),
+      },
+      lease: activeLease
+        ? {
+            startDate:       activeLease.startDate,
+            endDate:         activeLease.endDate,
+            monthlyRent:     Number(activeLease.monthlyRent),
+            securityDeposit: Number(activeLease.securityDeposit),
+            status:          activeLease.status,
+            terms:           activeLease.terms,
+          }
+        : null,
+      period,
+      summary: {
+        totalPaid,
+        totalDue,
+        totalLateFees,
+        totalServiceCharges: totalSvcCharge,
+        totalRepairs,
+        outstanding,          // positive = tenant owes, negative = overpaid
+      },
+      payments: tenantPayments,
+      charges: tenantCharges.map(d => ({
+        reference:   d.reference,
+        type:        d.type,
+        description: d.description,
+        amount:      d.amount,
+        paid:        d.paid,
+        paidDate:    d.paidDate,
+      })),
+      depositRefunds,
+    })
+  }
 
   // ── LANDLORD view — rent due + deductions + net payout only ──────────────
   // Landlord sees: agreed rent, deductions, net.
