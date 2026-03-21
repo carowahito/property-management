@@ -563,6 +563,71 @@ export default function PropertyDetailPage() {
         )}
       </div>
 
+      {/* Units List */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            Units ({((property as any).propertyUnits)?.length ?? 0})
+          </h2>
+          <Button variant="primary" onClick={() => setShowAddUnitModal(true)}>+ Add Unit</Button>
+        </div>
+
+        {!((property as any).propertyUnits)?.length ? (
+          <div className="text-center py-10 text-gray-400">
+            <p className="text-lg font-medium">No units yet</p>
+            <p className="text-sm mt-1">Click &quot;+ Add Unit&quot; to add the first unit to this property.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Unit</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Specs</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Rent</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Owner</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tenant</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {((property as any).propertyUnits).map((unit: any) => (
+                  <tr key={unit.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-semibold text-gray-900">{unit.unitNumber}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {[unit.bedrooms && `${unit.bedrooms}bd`, unit.bathrooms && `${unit.bathrooms}ba`, unit.floor && `Flr ${unit.floor}`].filter(Boolean).join(' · ') || '—'}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      KES {unit.monthlyRent ? Number(unit.monthlyRent).toLocaleString() : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{unit.landlord?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {unit.tenants?.[0]?.name ?? <span className="text-gray-400">Vacant</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        unit.status === 'OCCUPIED' ? 'bg-green-100 text-green-700' :
+                        unit.status === 'VACANT' ? 'bg-gray-100 text-gray-600' :
+                        unit.status === 'MAINTENANCE' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {unit.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/units/${unit.unitNumber}`} className="text-blue-600 hover:underline text-sm">
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Add Unit Modal */}
       {showAddUnitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

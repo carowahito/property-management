@@ -55,6 +55,23 @@ export async function GET(
           },
           orderBy: { startDate: 'desc' },
         },
+        propertyUnits: {
+          select: {
+            id: true,
+            unitNumber: true,
+            floor: true,
+            bedrooms: true,
+            bathrooms: true,
+            monthlyRent: true,
+            serviceCharge: true,
+            managementFee: true,
+            status: true,
+            description: true,
+            landlord: { select: { id: true, name: true } },
+            tenants: { where: { status: 'ACTIVE' }, select: { id: true, name: true } },
+          },
+          orderBy: { unitNumber: 'asc' },
+        },
         maintenanceRequests: {
           select: {
             id: true,
