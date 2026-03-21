@@ -5,10 +5,23 @@ import { prisma } from '@/lib/prisma'
 
 // GET /api/units/:unitNumber/statement?from=2025-07-01&to=2026-03-31
 //
-// Accessible by:
-//   ADMIN / MANAGER — full view (all columns including agent commission, late fees)
-//   LANDLORD        — net view (gross rent, deductions, net payout — no internal fees shown)
-//   TENANT          — payment view (only their own rent deposits and service charges)
+// STATEMENT RULES:
+//   Landlord sees:
+//     - Rent due (agreed monthly rent from lease — NOT the actual deposit from tenant)
+//     - Less: Service charge (e.g. KES 2,000)
+//     - Less: Management fee (e.g. KES 1,500)
+//     - Less: Repairs/maintenance (if any)
+//     - Net payout to landlord
+//
+//   Landlord does NOT see:
+//     - Actual amount deposited by tenant (may include late fees — company income)
+//     - Late payment penalties
+//
+//   Admin / Manager sees everything including:
+//     - Actual tenant deposits
+//     - Late fees collected (company income)
+//     - Full deduction breakdown
+//     - Running balance
 //
 // Query params:
 //   from  — ISO date, start of period (default: first day of current month)
@@ -32,7 +45,6 @@ export async function GET(
     ? new Date(searchParams.get('to')!)
     : now
 
-  // Load unit with all linked data
   const unit = await prisma.unit.findUnique({
     where: { unitNumber },
     include: {
@@ -56,34 +68,16 @@ export async function GET(
     return NextResponse.json({ error: `Unit "${unitNumber}" not found` }, { status: 404 })
   }
 
-  const role = session.user.role // ADMIN | MANAGER | AGENT | STAFF
+  const role = session.user.role
   const isAdmin = role === 'ADMIN' || role === 'MANAGER'
 
-  // Tenant access: only their own unit
-  // (Extend this when tenant portal auth is added)
+  const activeLease = unit.leases[0] ?? null
+  const agreedMonthlyRent = activeLease ? Number(activeLease.monthlyRent) : Number(unit.monthlyRent ?? 0)
 
-  // ── Payments from tenant (rent deposits) ──────────────────────────────────
-  const payments = await prisma.payment.findMany({
-    where: {
-      lease: { unitId: unit.id },
-      paidDate: { gte: from, lte: to },
-    },
-    orderBy: { paidDate: 'asc' },
-    select: {
-      id: true,
-      reference: true,
-      amount: true,
-      type: true,
-      method: true,
-      status: true,
-      dueDate: true,
-      paidDate: true,
-      notes: true,
-    },
-  })
-
-  // ── Payouts to landlord ───────────────────────────────────────────────────
-  const payouts = await prisma.payout.findMany({
+  // ── Rent transactions (the authoritative record per period) ───────────────
+  // RentTransaction.grossRent = agreed rent due (from lease), NOT what tenant paid.
+  // RentTransaction.lateFees  = company income — never shown to landlord.
+  const rentTransactions = await prisma.rentTransaction.findMany({
     where: {
       unitId: unit.id,
       paidDate: { gte: from, lte: to },
@@ -91,17 +85,34 @@ export async function GET(
     orderBy: { paidDate: 'asc' },
     select: {
       id: true,
-      reference: true,
-      amount: true,
-      period: true,
-      method: true,
-      status: true,
+      rentPeriod: true,
+      grossRent: true,         // agreed rent due
+      serviceCharge: true,
+      managementFee: true,
+      maintenanceFees: true,
+      otherDeductions: true,
+      totalDeductions: true,
+      netAmount: true,         // what landlord gets
+      lateFees: true,          // company income — admin only
+      payoutStatus: true,
+      payoutDate: true,
+      payoutMethod: true,
+      payoutReference: true,
+      dueDate: true,
       paidDate: true,
       notes: true,
+      payment: {
+        select: {
+          reference: true,     // receipt / transaction ID
+          amount: true,        // actual deposit — admin only
+          method: true,
+          status: true,
+        },
+      },
     },
   })
 
-  // ── Distribution line items (service charge, repairs, commission) ─────────
+  // ── Standalone distribution items (service charge, repairs, commission) ───
   const distributionItems = await prisma.rentDistributionItem.findMany({
     where: {
       unitId: unit.id,
@@ -109,7 +120,6 @@ export async function GET(
     },
     orderBy: { createdAt: 'asc' },
     select: {
-      id: true,
       reference: true,
       type: true,
       description: true,
@@ -122,110 +132,135 @@ export async function GET(
     },
   })
 
+  // ── Payouts to landlord ───────────────────────────────────────────────────
+  const payouts = await prisma.payout.findMany({
+    where: {
+      unitId: unit.id,
+      paidDate: { gte: from, lte: to },
+    },
+    orderBy: { paidDate: 'asc' },
+    select: {
+      reference: true,
+      amount: true,
+      period: true,
+      method: true,
+      status: true,
+      paidDate: true,
+      notes: true,
+    },
+  })
+
   // ── Totals ────────────────────────────────────────────────────────────────
-  const totalRentDeposited = payments
-    .filter(p => p.type === 'RENT' && p.status === 'PAID')
-    .reduce((sum, p) => sum + Number(p.amount), 0)
+  const totalRentDue          = rentTransactions.reduce((s, t) => s + Number(t.grossRent), 0)
+  const totalActualDeposited  = rentTransactions.reduce((s, t) => s + Number(t.payment.amount), 0)
+  const totalLateFees         = rentTransactions.reduce((s, t) => s + Number(t.lateFees), 0)
+  const totalServiceCharges   = rentTransactions.reduce((s, t) => s + Number(t.serviceCharge), 0)
+  const totalManagementFees   = rentTransactions.reduce((s, t) => s + Number(t.managementFee), 0)
+  const totalRepairs          = rentTransactions.reduce((s, t) => s + Number(t.maintenanceFees), 0)
+  const totalOtherDeductions  = rentTransactions.reduce((s, t) => s + Number(t.otherDeductions), 0)
+  const totalDeductions       = totalServiceCharges + totalManagementFees + totalRepairs + totalOtherDeductions
+  const totalNetToLandlord    = rentTransactions.reduce((s, t) => s + Number(t.netAmount), 0)
+  const totalPaidToLandlord   = payouts.filter(p => p.status === 'PAID').reduce((s, p) => s + Number(p.amount), 0)
 
-  const totalPaidToLandlord = payouts
-    .filter(p => p.status === 'PAID')
-    .reduce((sum, p) => sum + Number(p.amount), 0)
-
-  const totalServiceCharges = distributionItems
-    .filter(d => d.type === 'SERVICE_CHARGE')
-    .reduce((sum, d) => sum + Number(d.amount), 0)
-
-  const totalRepairs = distributionItems
-    .filter(d => d.type === 'MAINTENANCE_FEE' || d.type === 'REPAIR_COST')
-    .reduce((sum, d) => sum + Number(d.amount), 0)
-
-  const totalManagementFees = distributionItems
-    .filter(d => d.type === 'MANAGEMENT_FEE')
-    .reduce((sum, d) => sum + Number(d.amount), 0)
-
-  const totalDeductions = totalServiceCharges + totalRepairs + totalManagementFees
-
-  // ── Build response based on role ──────────────────────────────────────────
   const unitInfo = {
     unitNumber: unit.unitNumber,
-    property: { name: unit.property.name, address: unit.property.address, city: unit.property.city },
-    landlord: { name: unit.landlord.name, email: unit.landlord.email, phone: unit.landlord.phone },
+    property:   { name: unit.property.name, address: unit.property.address, city: unit.property.city },
+    landlord:   { name: unit.landlord.name, email: unit.landlord.email, phone: unit.landlord.phone },
     activeTenant: unit.tenants[0] ?? null,
-    activeLease: unit.leases[0] ?? null,
-    bedrooms: unit.bedrooms,
-    bathrooms: unit.bathrooms,
-    monthlyRent: unit.monthlyRent,
-    serviceCharge: unit.serviceCharge,
-    managementFee: unit.managementFee,
+    activeLease,
+    bedrooms:     unit.bedrooms,
+    bathrooms:    unit.bathrooms,
+    agreedMonthlyRent,
+    serviceCharge:  Number(unit.serviceCharge ?? 0),
+    managementFee:  Number(unit.managementFee ?? 0),
   }
 
   const period = { from: from.toISOString(), to: to.toISOString() }
 
-  // Admin / Manager — full picture
+  // ── ADMIN / MANAGER — full view ───────────────────────────────────────────
   if (isAdmin) {
     return NextResponse.json({
       unit: unitInfo,
       period,
       summary: {
-        totalRentDeposited,
-        totalPaidToLandlord,
+        totalRentDue,
+        totalActualDeposited,       // what tenant actually paid (includes late fees)
+        totalLateFees,              // company income
         totalServiceCharges,
-        totalRepairs,
         totalManagementFees,
+        totalRepairs,
+        totalOtherDeductions,
         totalDeductions,
-        balance: totalRentDeposited - totalPaidToLandlord - totalDeductions,
+        totalNetToLandlord,         // what landlord is owed
+        totalPaidToLandlord,        // what has actually been paid out
+        outstanding: totalNetToLandlord - totalPaidToLandlord,
       },
-      transactions: {
-        payments,
-        payouts,
-        distributionItems,
-      },
+      transactions: rentTransactions.map(t => ({
+        rentPeriod:      t.rentPeriod,
+        receiptNo:       t.payment.reference,
+        rentDue:         Number(t.grossRent),
+        actualDeposit:   Number(t.payment.amount),
+        lateFees:        Number(t.lateFees),
+        serviceCharge:   Number(t.serviceCharge),
+        managementFee:   Number(t.managementFee),
+        repairs:         Number(t.maintenanceFees),
+        otherDeductions: Number(t.otherDeductions),
+        totalDeductions: Number(t.totalDeductions),
+        netToLandlord:   Number(t.netAmount),
+        payoutStatus:    t.payoutStatus,
+        payoutDate:      t.payoutDate,
+        payoutReference: t.payoutReference,
+        dueDate:         t.dueDate,
+        paidDate:        t.paidDate,
+        method:          t.payment.method,
+        notes:           t.notes,
+      })),
+      distributionItems,
+      payouts,
     })
   }
 
-  // Landlord view — no internal fees (management fee hidden)
+  // ── LANDLORD view — rent due + deductions + net payout only ──────────────
+  // Landlord sees: agreed rent, deductions, net — NOT actual deposit or late fees.
   return NextResponse.json({
     unit: {
-      unitNumber: unitInfo.unitNumber,
-      property: unitInfo.property,
+      unitNumber:   unitInfo.unitNumber,
+      property:     unitInfo.property,
       activeTenant: unitInfo.activeTenant
         ? { name: unitInfo.activeTenant.name, moveInDate: unitInfo.activeTenant.moveInDate }
         : null,
-      activeLease: unitInfo.activeLease,
-      bedrooms: unitInfo.bedrooms,
-      bathrooms: unitInfo.bathrooms,
-      monthlyRent: unitInfo.monthlyRent,
-      serviceCharge: unitInfo.serviceCharge,
+      activeLease:  unitInfo.activeLease,
+      bedrooms:     unitInfo.bedrooms,
+      bathrooms:    unitInfo.bathrooms,
+      agreedMonthlyRent: unitInfo.agreedMonthlyRent,
     },
     period,
     summary: {
-      totalRentReceived: totalRentDeposited,
+      totalRentDue,
       totalServiceCharges,
+      totalManagementFees,
       totalRepairs,
-      totalDeductions: totalServiceCharges + totalRepairs,
-      totalNetPaidToYou: totalPaidToLandlord,
+      totalOtherDeductions,
+      totalDeductions,
+      totalNetToLandlord,
+      totalPaidToLandlord,
+      outstanding: totalNetToLandlord - totalPaidToLandlord,
     },
-    transactions: {
-      payments: payments.map(p => ({
-        reference: p.reference,
-        amount: p.amount,
-        type: p.type,
-        method: p.method,
-        status: p.status,
-        paidDate: p.paidDate,
-        notes: p.notes,
-      })),
-      payouts,
-      charges: distributionItems
-        .filter(d => d.type !== 'MANAGEMENT_FEE') // hide management fee from landlord
-        .map(d => ({
-          reference: d.reference,
-          type: d.type,
-          description: d.description,
-          amount: d.amount,
-          paid: d.paid,
-          paidDate: d.paidDate,
-        })),
-    },
+    // Per-period breakdown — shows rent due and each deduction, net payout
+    statement: rentTransactions.map(t => ({
+      rentPeriod:    t.rentPeriod,
+      receiptNo:     t.payment.reference,
+      rentDue:       Number(t.grossRent),         // agreed rent, NOT actual deposit
+      serviceCharge: Number(t.serviceCharge),
+      managementFee: Number(t.managementFee),
+      repairs:       Number(t.maintenanceFees),
+      otherDeductions: Number(t.otherDeductions),
+      totalDeductions: Number(t.totalDeductions),
+      netPayout:     Number(t.netAmount),
+      payoutStatus:  t.payoutStatus,
+      payoutDate:    t.payoutDate,
+      dueDate:       t.dueDate,
+    })),
+    payouts,
   })
 }
