@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -11,43 +11,58 @@ interface PropertyDetail {
   id: string
   name: string
   address: string
-  units: number
-  occupied: number
-  totalRent: number
-  landlordId: string
-  landlord: string
-  status: string
-  yearBuilt: number
+  city?: string
+  state?: string
+  postalCode?: string
+  country?: string
+  totalUnits: number
   type: string
+  status: string
+  description?: string
+  yearBuilt?: number
+  createdAt?: string
+  updatedAt?: string
+  landlordId?: string
+  landlord?: {
+    id: string
+    name: string
+    email?: string
+    phone?: string
+    bankName?: string
+    bankAccount?: string
+  }
   tenants: Array<{
     id: string
     name: string
-    email: string
-    phone: string
-    unit: string
-    rent: number
+    email?: string
+    phone?: string
     status: string
   }>
   leases: Array<{
     id: string
     tenant: { id: string; name: string }
-    unit: string
     monthlyRent: number
     startDate: string
     endDate: string
     status: string
   }>
-  stats: {
-    totalUnits: number
-    occupiedUnits: number
-    vacantUnits: number
-    occupancyRate: string
-    totalRent: number
-    activeLeases: number
+  maintenanceRequests?: Array<{
+    id: string
+    title: string
+    status: string
+    priority: string
+    createdAt: string
+  }>
+  _count?: {
+    tenants: number
+    leases: number
+    maintenanceRequests: number
+    inspections: number
+    viewings: number
   }
 }
 
-async function fetchProperty(id: string): Promise<{ property: PropertyDetail }> {
+async function fetchProperty(id: string): Promise<PropertyDetail> {
   const response = await fetch(`/api/properties/${id}`)
   if (!response.ok) {
     throw new Error('Failed to fetch property')
@@ -83,6 +98,47 @@ export default function PropertyDetailPage() {
     bankName: '',
     accountNumber: '',
   })
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    type: '',
+    units: '',
+    yearBuilt: '',
+    status: '',
+    description: '',
+    landlordId: '',
+  })
+  const queryClient = useQueryClient()
+
+  const updatePropertyMutation = useMutation({
+    mutationFn: async (formData: any) => {
+      const response = await fetch(`/api/properties/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update property')
+      }
+
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['property', id] })
+      setShowEditModal(false)
+      alert('Property updated successfully!')
+    },
+    onError: (error: any) => {
+      alert(`Error updating property: ${error.message}`)
+    },
+  })
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['property', id],
@@ -92,11 +148,31 @@ export default function PropertyDetailPage() {
   const { data: landlordsData } = useQuery({
     queryKey: ['landlords'],
     queryFn: async () => {
-      const response = await fetch('/api/mock/landlords')
+      const response = await fetch('/api/landlords')
       if (!response.ok) throw new Error('Failed to fetch landlords')
       return response.json()
     },
   })
+
+  // Initialize edit form with property data when it loads
+  useEffect(() => {
+    if (data) {
+      setEditFormData({
+        name: data.name || '',
+        address: data.address || '',
+        city: data.city || '',
+        state: data.state || '',
+        postalCode: data.postalCode || '',
+        country: data.country || '',
+        type: data.type || '',
+        units: String(data.totalUnits || ''),
+        yearBuilt: String(data.yearBuilt || ''),
+        status: data.status || '',
+        description: data.description || '',
+        landlordId: data.landlordId || '',
+      })
+    }
+  }, [data])
 
   if (isLoading) {
     return (
@@ -114,7 +190,7 @@ export default function PropertyDetailPage() {
     )
   }
 
-  const property = data?.property
+  const property = data
 
   if (!property) {
     return (
@@ -211,11 +287,9 @@ export default function PropertyDetailPage() {
   const propertyLandlords = property ? 
     Array.from(new Set(
       property.leases
-        .map(lease => lease.tenant.id) // This is a simplification, in real data you'd have landlordId
+        .map(lease => lease.tenant.id)
         .filter(Boolean)
     )).map(id => {
-      // In a real scenario, you'd fetch actual landlord data
-      // For now, we'll use mock data
       return landlords.find((l: any) => l.id === id)
     }).filter(Boolean)
     : []
@@ -245,7 +319,7 @@ export default function PropertyDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">Edit Property</Button>
+            <Button variant="outline" onClick={() => setShowEditModal(true)}>Edit Property</Button>
             <Button variant="primary" onClick={() => setShowAddUnitModal(true)}>+ Add Unit</Button>
           </div>
         </div>
@@ -255,25 +329,27 @@ export default function PropertyDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Total Units</p>
-          <p className="text-3xl font-bold text-blue-600 mt-2">{property.stats.totalUnits}</p>
+          <p className="text-3xl font-bold text-blue-600 mt-2">{property.totalUnits}</p>
           <p className="text-xs text-gray-500 mt-1">{property.type}</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Occupied Units</p>
-          <p className="text-3xl font-bold text-green-600 mt-2">{property.stats.occupiedUnits}</p>
-          <p className="text-xs text-gray-500 mt-1">{property.stats.vacantUnits} vacant</p>
+          <p className="text-3xl font-bold text-green-600 mt-2">{property.tenants.length}</p>
+          <p className="text-xs text-gray-500 mt-1">{property.totalUnits - property.tenants.length} vacant</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Occupancy Rate</p>
-          <p className="text-3xl font-bold text-purple-600 mt-2">{property.stats.occupancyRate}%</p>
+          <p className="text-3xl font-bold text-purple-600 mt-2">
+            {property.totalUnits > 0 ? Math.round((property.tenants.length / property.totalUnits) * 100) : 0}%
+          </p>
           <p className="text-xs text-gray-500 mt-1">Current rate</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm text-gray-600">Monthly Revenue</p>
           <p className="text-3xl font-bold text-orange-600 mt-2">
-            KES {property.stats.totalRent.toLocaleString()}
+            KES {property.leases.reduce((sum, lease) => sum + Number(lease.monthlyRent), 0).toLocaleString()}
           </p>
-          <p className="text-xs text-gray-500 mt-1">{property.stats.activeLeases} active leases</p>
+          <p className="text-xs text-gray-500 mt-1">{property._count?.leases || 0} active leases</p>
         </div>
       </div>
 
@@ -324,20 +400,24 @@ export default function PropertyDetailPage() {
         )}
 
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm font-semibold flex-shrink-0">
-              {property.landlord.split(' ').map(n => n[0]).join('')}
+          {property.landlord ? (
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm font-semibold flex-shrink-0">
+                {property.landlord.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Primary Contact</p>
+                <Link 
+                  href={`/admin/landlords/${property.landlordId}`}
+                  className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  {property.landlord.name}
+                </Link>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Primary Contact</p>
-              <Link 
-                href={`/admin/landlords/${property.landlordId}`}
-                className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                {property.landlord}
-              </Link>
-            </div>
-          </div>
+          ) : (
+            <p className="text-sm text-gray-500">No primary landlord assigned</p>
+          )}
         </div>
       </div>
 
@@ -355,11 +435,11 @@ export default function PropertyDetailPage() {
           </div>
           <div>
             <p className="text-sm text-gray-600">Year Built</p>
-            <p className="text-lg font-medium text-gray-900">{property.yearBuilt}</p>
+            <p className="text-lg font-medium text-gray-900">{property.yearBuilt || 'N/A'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Total Units</p>
-            <p className="text-lg font-medium text-gray-900">{property.units} units</p>
+            <p className="text-lg font-medium text-gray-900">{property.totalUnits} units</p>
           </div>
         </div>
       </div>
@@ -378,9 +458,7 @@ export default function PropertyDetailPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Tenant</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Unit</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Rent</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
                 </tr>
               </thead>
@@ -395,13 +473,9 @@ export default function PropertyDetailPage() {
                         {tenant.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{tenant.unit}</td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">{tenant.email}</div>
                       <div className="text-xs text-gray-500">{tenant.phone}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                      KES {tenant.rent.toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(tenant.status)}`}>
@@ -430,7 +504,6 @@ export default function PropertyDetailPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Tenant</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Unit</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Monthly Rent</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Start Date</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">End Date</th>
@@ -448,7 +521,6 @@ export default function PropertyDetailPage() {
                         {lease.tenant.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{lease.unit}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">
                       KES {lease.monthlyRent.toLocaleString()}
                     </td>
@@ -883,6 +955,193 @@ export default function PropertyDetailPage() {
                 disabled={!newLandlord.name || !newLandlord.email || !newLandlord.phone}
               >
                 Add Landlord
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Property Modal */}
+      {showEditModal && property && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">Edit Property</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Name *</label>
+                  <input
+                    type="text"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Property name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                  <select
+                    value={editFormData.type}
+                    onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select type</option>
+                    <option value="APARTMENT">Apartment</option>
+                    <option value="HOUSE">House</option>
+                    <option value="CONDO">Condo</option>
+                    <option value="TOWNHOUSE">Townhouse</option>
+                    <option value="STUDIO">Studio</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                <input
+                  type="text"
+                  value={editFormData.address}
+                  onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Street address"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <input
+                    type="text"
+                    value={editFormData.city}
+                    onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State/Province</label>
+                  <input
+                    type="text"
+                    value={editFormData.state}
+                    onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="State"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                  <input
+                    type="text"
+                    value={editFormData.postalCode}
+                    onChange={(e) => setEditFormData({ ...editFormData, postalCode: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Postal code"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                  <input
+                    type="text"
+                    value={editFormData.country}
+                    onChange={(e) => setEditFormData({ ...editFormData, country: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Country"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Total Units</label>
+                  <input
+                    type="number"
+                    value={editFormData.units}
+                    onChange={(e) => setEditFormData({ ...editFormData, units: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year Built</label>
+                  <input
+                    type="number"
+                    value={editFormData.yearBuilt}
+                    onChange={(e) => setEditFormData({ ...editFormData, yearBuilt: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Year"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select status</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Property description"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowEditModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const updatedData: any = {
+                    name: editFormData.name || undefined,
+                    address: editFormData.address || undefined,
+                    city: editFormData.city || undefined,
+                    state: editFormData.state || undefined,
+                    postalCode: editFormData.postalCode || undefined,
+                    country: editFormData.country || undefined,
+                    type: editFormData.type || undefined,
+                    totalUnits: editFormData.units ? parseInt(editFormData.units) : undefined,
+                    yearBuilt: editFormData.yearBuilt ? parseInt(editFormData.yearBuilt) : undefined,
+                    status: editFormData.status || undefined,
+                    description: editFormData.description || undefined,
+                  }
+
+                  // Remove undefined values
+                  Object.keys(updatedData).forEach(key => 
+                    updatedData[key] === undefined && delete updatedData[key]
+                  )
+
+                  updatePropertyMutation.mutate(updatedData)
+                }}
+                disabled={!editFormData.name || !editFormData.address}
+              >
+                Save Changes
               </Button>
             </div>
           </div>

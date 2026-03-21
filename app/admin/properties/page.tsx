@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Link from 'next/link'
@@ -12,7 +12,7 @@ interface Property {
   address: string
   city: string | null
   type: string
-  units: number
+  totalUnits: number
   status: string
   landlord: {
     id: string
@@ -47,14 +47,6 @@ const unitStatuses = [
   { value: 'occupied', label: 'Occupied' },
   { value: 'maintenance', label: 'Under Maintenance' },
   { value: 'reserved', label: 'Reserved' },
-]
-
-// Mock landlords for linking
-const mockLandlords = [
-  { id: 'l1', name: 'John Doe' },
-  { id: 'l2', name: 'Jane Smith' },
-  { id: 'l3', name: 'ABC Properties Ltd' },
-  { id: 'l4', name: 'XYZ Investments' },
 ]
 
 interface UnitDetail {
@@ -128,9 +120,44 @@ export default function PropertiesPage() {
   const [currentVideoUrl, setCurrentVideoUrl] = useState('')
   const [isImprovingText, setIsImprovingText] = useState(false)
 
+  const queryClient = useQueryClient()
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['properties'],
     queryFn: fetchProperties,
+  })
+
+  const { data: landlordsData } = useQuery({
+    queryKey: ['landlords'],
+    queryFn: async () => {
+      const response = await fetch('/api/landlords')
+      if (!response.ok) {
+        throw new Error('Failed to fetch landlords')
+      }
+      return response.json()
+    },
+  })
+
+  const createPropertyMutation = useMutation({
+    mutationFn: async (propertyData: any) => {
+      const response = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(propertyData),
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to create property')
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+      alert('Property created successfully!')
+    },
+    onError: (error: any) => {
+      alert(`Error creating property: ${error.message}`)
+    },
   })
 
   if (isLoading) {
@@ -150,7 +177,7 @@ export default function PropertiesPage() {
   }
 
   const properties = data?.properties || []
-  const totalUnits = properties.reduce((sum, p) => sum + p.units, 0)
+  const totalUnits = properties.reduce((sum, p) => sum + p.totalUnits, 0)
   const totalOccupied = properties.reduce((sum, p) => sum + p._count.tenants, 0)
   const occupancyRate = totalUnits > 0 ? ((totalOccupied / totalUnits) * 100).toFixed(1) : '0'
 
@@ -239,46 +266,83 @@ export default function PropertiesPage() {
     'Conference Room', 'Reception/Lobby', 'Wheelchair Access', 'Pet-friendly'
   ]
 
-  const handleAddProperty = () => {
-    // TODO: API call to create property
-    console.log('Creating property:', newProperty)
-    console.log('Units:', units)
-    console.log('Photo files:', newProperty.photos)
-    console.log('Video URLs:', newProperty.videoUrls)
-    setShowAddModal(false)
-    // Reset form
-    setUnits([])
-    setShowUnitSection(false)
-    setNewProperty({
-      name: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'Kenya',
-      propertyType: '',
-      propertySubtype: '',
-      totalUnits: '',
-      description: '',
-      yearBuilt: '',
-      squareFootage: '',
-      lotSize: '',
-      amenities: [],
-      parkingSpaces: '',
-      floors: '',
-      managementType: 'full-service',
-      caretakerName: '',
-      caretakerPhone: '',
-      caretakerEmail: '',
-      managementCompany: '',
-      managementContactName: '',
-      managementPhone: '',
-      managementEmail: '',
-      photos: [],
-      videoUrls: [],
-    })
-    setPhotoPreview([])
-    setCurrentVideoUrl('')
+  const landlords = landlordsData?.landlords || []
+
+  const handleAddProperty = async () => {
+    // Validate required fields
+    if (!newProperty.name || !newProperty.address || !newProperty.city || !newProperty.propertyType) {
+      alert('Please fill in all required fields (Name, Address, City, Property Type)')
+      return
+    }
+
+    if (!newProperty.zipCode) {
+      alert('Please fill in the postal code')
+      return
+    }
+
+    // Get first landlord from the API data
+    const landlords = landlordsData?.landlords || []
+    const landlordId = landlords[0]?.id
+    if (!landlordId) {
+      alert('No landlord available. Please create a landlord first.')
+      return
+    }
+
+    // Prepare data for API - map form fields to database schema
+    const propertyData = {
+      name: newProperty.name,
+      address: newProperty.address,
+      city: newProperty.city,
+      state: newProperty.state,
+      postalCode: newProperty.zipCode,
+      country: newProperty.country,
+      type: newProperty.propertyType.toUpperCase(),
+      totalUnits: newProperty.totalUnits ? parseInt(newProperty.totalUnits) : 1,
+      description: newProperty.description,
+      yearBuilt: newProperty.yearBuilt ? parseInt(newProperty.yearBuilt) : undefined,
+      landlordId,
+    }
+
+    try {
+      await createPropertyMutation.mutateAsync(propertyData)
+      
+      // Reset form
+      setShowAddModal(false)
+      setUnits([])
+      setShowUnitSection(false)
+      setNewProperty({
+        name: '',
+        address: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'Kenya',
+        propertyType: '',
+        propertySubtype: '',
+        totalUnits: '',
+        description: '',
+        yearBuilt: '',
+        squareFootage: '',
+        lotSize: '',
+        amenities: [],
+        parkingSpaces: '',
+        floors: '',
+        managementType: 'full-service',
+        caretakerName: '',
+        caretakerPhone: '',
+        caretakerEmail: '',
+        managementCompany: '',
+        managementContactName: '',
+        managementPhone: '',
+        managementEmail: '',
+        photos: [],
+        videoUrls: [],
+      })
+      setPhotoPreview([])
+      setCurrentVideoUrl('')
+    } catch (error) {
+      console.error('Error creating property:', error)
+    }
   }
 
   const toggleAmenity = (amenity: string) => {
@@ -485,9 +549,9 @@ export default function PropertiesPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{property.units} Units</p>
-                    <p className={`text-xs ${property._count.tenants === property.units ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {property._count.tenants}/{property.units} Occupied
+                    <p className="text-sm font-medium text-gray-900">{property.totalUnits} Units</p>
+                    <p className={`text-xs ${property._count.tenants === property.totalUnits ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {property._count.tenants}/{property.totalUnits} Occupied
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {property._count.leases} Leases
@@ -1090,7 +1154,7 @@ export default function PropertiesPage() {
                         defaultValue=""
                       >
                         <option value="">Apply landlord to all...</option>
-                        {mockLandlords.map(ll => (
+                        {landlords.map((ll: any) => (
                           <option key={ll.id} value={ll.id}>{ll.name}</option>
                         ))}
                       </select>
@@ -1246,7 +1310,7 @@ export default function PropertiesPage() {
                               className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Select landlord...</option>
-                              {mockLandlords.map(ll => (
+                              {landlords.map((ll: any) => (
                                 <option key={ll.id} value={ll.id}>{ll.name}</option>
                               ))}
                             </select>
@@ -1316,6 +1380,7 @@ export default function PropertiesPage() {
               <Button
                 variant="outline"
                 onClick={() => setShowAddModal(false)}
+                disabled={createPropertyMutation.isPending}
               >
                 Cancel
               </Button>
@@ -1329,10 +1394,11 @@ export default function PropertiesPage() {
                   !newProperty.country ||
                   !newProperty.propertyType ||
                   !newProperty.propertySubtype ||
-                  !newProperty.totalUnits
+                  !newProperty.totalUnits ||
+                  createPropertyMutation.isPending
                 }
               >
-                Add Property
+                {createPropertyMutation.isPending ? 'Creating...' : 'Add Property'}
               </Button>
             </div>
           </div>

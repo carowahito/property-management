@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 
@@ -39,35 +40,17 @@ export default function CommunicationsPage() {
   const [composeMessage, setComposeMessage] = useState<string>('')
   const [isImprovingText, setIsImprovingText] = useState(false)
 
-  // Mock properties data
-  const mockProperties = [
-    { id: '1', name: 'Sunset Apartments' },
-    { id: '2', name: 'Vista Plaza' },
-    { id: '3', name: 'Highland House' },
-    { id: '4', name: 'Garden Estate' },
-  ]
+  // Fetch properties for the compose dropdown
+  const { data: propertiesData } = useQuery({
+    queryKey: ['properties'],
+    queryFn: async () => {
+      const response = await fetch('/api/properties')
+      if (!response.ok) throw new Error('Failed to fetch properties')
+      return response.json()
+    },
+  })
 
-  // Mock contacts data - in production this would come from API
-  const mockTenants = [
-    { id: '1', name: 'John Smith', propertyId: '1' },
-    { id: '2', name: 'Sarah Johnson', propertyId: '2' },
-    { id: '3', name: 'Michael Chen', propertyId: '3' },
-    { id: '4', name: 'Emily Davis', propertyId: '4' },
-    { id: '5', name: 'Jane Doe', propertyId: '1' },
-  ]
-
-  const mockLandlords = [
-    { id: '1', name: 'Robert Johnson', propertyId: '1' },
-    { id: '2', name: 'Sarah Davis', propertyId: '3' },
-    { id: '3', name: 'Patricia Williams', propertyId: '4' },
-  ]
-
-  const mockVendors = [
-    { id: '1', name: 'Quick Repairs Ltd' },
-    { id: '2', name: 'Professional Cleaners' },
-    { id: '3', name: 'Premier Security Services' },
-    { id: '4', name: 'Landscape Designs' },
-  ]
+  const properties = propertiesData?.properties || []
 
   // Get filtered recipients based on selected type and property
   const getRecipientOptions = () => {
@@ -77,25 +60,7 @@ export default function CommunicationsPage() {
       return []  // No individual selection when 'all' is selected
     }
     
-    switch (composeRecipientType) {
-      case 'tenant':
-        contacts = mockTenants
-        break
-      case 'landlord':
-        contacts = mockLandlords
-        break
-      case 'vendor':
-        contacts = mockVendors
-        break
-      default:
-        contacts = []
-    }
-    
-    // Filter by property if not 'all' and if contacts have propertyId
-    if (composeProperty !== 'all' && (composeRecipientType === 'tenant' || composeRecipientType === 'landlord')) {
-      contacts = contacts.filter(c => c.propertyId === composeProperty)
-    }
-    
+    // TODO: Fetch real contacts from API based on type and property
     return contacts
   }
 
@@ -117,182 +82,11 @@ export default function CommunicationsPage() {
     setIsImprovingText(false)
   }
 
-  // Mock data - in production this would come from API
-  const mockMessages: Message[] = [
-    {
-      id: 'msg_001',
-      type: 'email',
-      category: 'rent-reminder',
-      direction: 'sent',
-      stakeholderType: 'tenant',
-      stakeholderId: '1',
-      stakeholderName: 'John Smith',
-      subject: 'Rent Payment Reminder - December 2024',
-      message: 'Dear John,\n\nThis is a friendly reminder that your rent payment of KES 50,000 for December 2024 is due on December 1st, 2024.\n\nPlease ensure timely payment to avoid late fees.\n\nThank you,\nProperty Management Team',
-      sentBy: 'Alice Johnson',
-      sentDate: '2024-11-25T10:00:00',
-      status: 'read',
-      propertyId: '1',
-      propertyName: 'Sunset Apartments',
-      relatedTo: 'Monthly Rent - December 2024',
-    },
-    {
-      id: 'msg_002',
-      type: 'sms',
-      category: 'maintenance',
-      direction: 'sent',
-      stakeholderType: 'vendor',
-      stakeholderId: '1',
-      stakeholderName: 'Quick Repairs Ltd',
-      subject: 'New Work Order Assignment',
-      message: 'New work order #WO-456 assigned. Property: Vista Plaza, Unit 3B. Issue: AC not cooling. Priority: High. Please confirm receipt.',
-      sentBy: 'System',
-      sentDate: '2024-11-24T14:30:00',
-      status: 'delivered',
-      propertyId: '2',
-      propertyName: 'Vista Plaza',
-      relatedTo: 'Work Order #WO-456',
-    },
-    {
-      id: 'msg_003',
-      type: 'in-app',
-      category: 'maintenance',
-      direction: 'received',
-      stakeholderType: 'tenant',
-      stakeholderId: '2',
-      stakeholderName: 'Sarah Johnson',
-      subject: 'Maintenance Request Update Inquiry',
-      message: 'Hi, I submitted a maintenance request for my leaky faucet 3 days ago. Can you provide an update on when it will be fixed? Thanks.',
-      sentBy: 'Sarah Johnson',
-      sentDate: '2024-11-23T16:45:00',
-      status: 'read',
-      propertyId: '2',
-      propertyName: 'Vista Plaza',
-      relatedTo: 'Maintenance Request #MR-789',
-    },
-    {
-      id: 'msg_004',
-      type: 'email',
-      category: 'lease',
-      direction: 'sent',
-      stakeholderType: 'tenant',
-      stakeholderId: '3',
-      stakeholderName: 'Michael Brown',
-      subject: 'Lease Renewal Offer - Riverside Tower Unit 8C',
-      message: 'Dear Michael,\n\nYour current lease is expiring on January 31st, 2025. We would like to offer you a lease renewal with the following terms:\n\n- New Term: 12 months\n- Monthly Rent: KES 52,500 (5% increase)\n- Security Deposit: No change\n\nPlease review and let us know your decision by December 15th, 2024.\n\nBest regards,\nProperty Management Team',
-      sentBy: 'Bob Smith',
-      sentDate: '2024-11-22T09:15:00',
-      status: 'read',
-      propertyId: '3',
-      propertyName: 'Riverside Tower',
-      relatedTo: 'Lease Renewal - Unit 8C',
-    },
-    {
-      id: 'msg_005',
-      type: 'email',
-      category: 'payment',
-      direction: 'sent',
-      stakeholderType: 'landlord',
-      stakeholderId: '1',
-      stakeholderName: 'Robert K. Williams',
-      subject: 'November Rent Collection Report',
-      message: 'Dear Mr. Williams,\n\nPlease find attached your rent collection report for November 2024:\n\n- Total Collected: KES 250,000\n- Outstanding: KES 50,000\n- Collection Rate: 83.3%\n\nYour payout of KES 237,500 (after 5% management fee) will be processed on December 5th, 2024.\n\nBest regards,\nFinance Team',
-      sentBy: 'Carol White',
-      sentDate: '2024-11-21T11:00:00',
-      status: 'delivered',
-      propertyId: '1',
-      propertyName: 'Sunset Apartments',
-      relatedTo: 'Monthly Payout - November 2024',
-      attachments: ['november_2024_report.pdf'],
-    },
-    {
-      id: 'msg_006',
-      type: 'sms',
-      category: 'rent-reminder',
-      direction: 'sent',
-      stakeholderType: 'tenant',
-      stakeholderId: '4',
-      stakeholderName: 'Emily Davis',
-      subject: 'Late Rent Payment Notice',
-      message: 'Your rent payment for November 2024 is now 5 days overdue. Please pay KES 45,000 + KES 2,250 late fee immediately to avoid further penalties. Pay via M-Pesa: 0712345678',
-      sentBy: 'System',
-      sentDate: '2024-11-20T08:00:00',
-      status: 'delivered',
-      propertyId: '4',
-      propertyName: 'Garden View Estate',
-      relatedTo: 'Late Payment - November 2024',
-    },
-    {
-      id: 'msg_007',
-      type: 'in-app',
-      category: 'maintenance',
-      direction: 'sent',
-      stakeholderType: 'tenant',
-      stakeholderId: '2',
-      stakeholderName: 'Sarah Johnson',
-      subject: 'Re: Maintenance Request Update',
-      message: 'Hi Sarah,\n\nThank you for your inquiry. Your maintenance request for the leaky faucet has been assigned to Quick Repairs Ltd. A technician will visit your unit tomorrow (November 24th) between 2-4 PM.\n\nPlease ensure someone is available to provide access.\n\nBest regards,\nMaintenance Team',
-      sentBy: 'Bob Smith',
-      sentDate: '2024-11-23T17:00:00',
-      status: 'read',
-      propertyId: '2',
-      propertyName: 'Vista Plaza',
-      relatedTo: 'Maintenance Request #MR-789',
-    },
-    {
-      id: 'msg_008',
-      type: 'email',
-      category: 'announcement',
-      direction: 'sent',
-      stakeholderType: 'all',
-      stakeholderId: 'all',
-      stakeholderName: 'All Tenants - Sunset Apartments',
-      subject: 'Scheduled Water Maintenance - December 2nd',
-      message: 'Dear Residents,\n\nPlease be informed that scheduled water system maintenance will take place on December 2nd, 2024, from 9:00 AM to 3:00 PM.\n\nWater supply will be interrupted during this period. Please plan accordingly and store sufficient water.\n\nWe apologize for any inconvenience.\n\nBest regards,\nProperty Management',
-      sentBy: 'Alice Johnson',
-      sentDate: '2024-11-19T15:30:00',
-      status: 'sent',
-      propertyId: '1',
-      propertyName: 'Sunset Apartments',
-      relatedTo: 'Maintenance Notice',
-    },
-    {
-      id: 'msg_009',
-      type: 'email',
-      category: 'support',
-      direction: 'received',
-      stakeholderType: 'landlord',
-      stakeholderId: '2',
-      stakeholderName: 'Jennifer M. Anderson',
-      subject: 'Question about Tax Documentation',
-      message: 'Hello,\n\nI need the annual tax documentation for my rental properties for the 2024 tax year. Can you please send me the rental income statements and expense reports?\n\nThank you,\nJennifer Anderson',
-      sentBy: 'Jennifer M. Anderson',
-      sentDate: '2024-11-18T10:20:00',
-      status: 'read',
-      relatedTo: 'Tax Documentation Request',
-    },
-    {
-      id: 'msg_010',
-      type: 'in-app',
-      category: 'maintenance',
-      direction: 'received',
-      stakeholderType: 'vendor',
-      stakeholderId: '1',
-      stakeholderName: 'Quick Repairs Ltd',
-      subject: 'Work Order #WO-456 Completed',
-      message: 'Work order completed successfully. AC unit refrigerant recharged and compressor checked. All systems functioning normally. Invoice #INV-1234 submitted for KES 8,500.\n\nPlease approve payment.\n\nThank you,\nQuick Repairs Ltd',
-      sentBy: 'Quick Repairs Ltd',
-      sentDate: '2024-11-17T16:00:00',
-      status: 'read',
-      propertyId: '2',
-      propertyName: 'Vista Plaza',
-      relatedTo: 'Work Order #WO-456',
-      attachments: ['invoice_1234.pdf', 'completion_photos.zip'],
-    },
-  ]
+  // TODO: Fetch real messages from API
+  const messages: Message[] = []
 
   // Filter messages
-  const filteredMessages = mockMessages.filter(msg => {
+  const filteredMessages = messages.filter(msg => {
     const matchesSearch = 
       msg.stakeholderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       msg.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -308,10 +102,10 @@ export default function CommunicationsPage() {
 
   // Statistics
   const stats = {
-    total: mockMessages.length,
-    sent: mockMessages.filter(m => m.direction === 'sent').length,
-    received: mockMessages.filter(m => m.direction === 'received').length,
-    unread: mockMessages.filter(m => m.status !== 'read' && m.direction === 'received').length,
+    total: messages.length,
+    sent: messages.filter(m => m.direction === 'sent').length,
+    received: messages.filter(m => m.direction === 'received').length,
+    unread: messages.filter(m => m.status !== 'read' && m.direction === 'received').length,
   }
 
   const getStatusColor = (status: Message['status']) => {
@@ -757,7 +551,7 @@ export default function CommunicationsPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="all">All Properties</option>
-                      {mockProperties.map(property => (
+                      {properties.map((property: any) => (
                         <option key={property.id} value={property.id}>
                           {property.name}
                         </option>

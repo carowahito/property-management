@@ -45,74 +45,7 @@ export default function TaskManager({ stakeholderId, stakeholderName, stakeholde
   const [taskAssignedTo, setTaskAssignedTo] = useState('')
   const [taskNotes, setTaskNotes] = useState('')
 
-  // Mock team members
-  const teamMembers = [
-    { id: '1', name: 'Alice Johnson', role: 'Property Manager' },
-    { id: '2', name: 'Bob Smith', role: 'Maintenance Coordinator' },
-    { id: '3', name: 'Carol White', role: 'Finance Manager' },
-    { id: '4', name: 'David Brown', role: 'Leasing Agent' },
-    { id: '5', name: 'Eva Martinez', role: 'Customer Success' },
-  ]
-
-  // Mock tasks data (will be replaced with real data)
-  const mockTasks: Task[] = tasks.length > 0 ? tasks : [
-    {
-      id: '1',
-      title: 'Schedule follow-up call',
-      description: 'Call to discuss lease renewal options',
-      priority: 'High',
-      status: 'Pending',
-      dueDate: '2024-11-30T10:00:00',
-      reminderDate: '2024-11-29T09:00:00',
-      assignedTo: 'Alice Johnson',
-      assignedBy: 'Bob Smith',
-      createdDate: '2024-11-16T14:30:00',
-      stakeholder: {
-        id: stakeholderId,
-        name: stakeholderName,
-        type: stakeholderType,
-      },
-      notes: 'Tenant expressed interest in renewing. Prepare renewal terms.',
-    },
-    {
-      id: '2',
-      title: 'Send payment reminder',
-      description: 'Monthly rent payment overdue by 3 days',
-      priority: 'Urgent',
-      status: 'In Progress',
-      dueDate: '2024-11-18T12:00:00',
-      reminderDate: '2024-11-18T09:00:00',
-      assignedTo: 'Carol White',
-      assignedBy: 'Alice Johnson',
-      createdDate: '2024-11-15T11:00:00',
-      stakeholder: {
-        id: stakeholderId,
-        name: stakeholderName,
-        type: stakeholderType,
-      },
-      notes: 'Send SMS and email reminder. If no response, schedule call.',
-    },
-    {
-      id: '3',
-      title: 'Property inspection',
-      description: 'Quarterly property inspection scheduled',
-      priority: 'Medium',
-      status: 'Completed',
-      dueDate: '2024-11-10T14:00:00',
-      assignedTo: 'Bob Smith',
-      assignedBy: 'Alice Johnson',
-      createdDate: '2024-11-01T09:00:00',
-      completedDate: '2024-11-10T15:30:00',
-      stakeholder: {
-        id: stakeholderId,
-        name: stakeholderName,
-        type: stakeholderType,
-      },
-      notes: 'Inspection completed. No major issues found.',
-    },
-  ]
-
-  const filteredTasks = mockTasks.filter(task => {
+  const filteredTasks = tasks.filter(task => {
     if (filterStatus === 'all') return true
     return task.status === filterStatus
   })
@@ -191,7 +124,7 @@ export default function TaskManager({ stakeholderId, stakeholderName, stakeholde
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          All ({mockTasks.length})
+          All ({tasks.length})
         </button>
         <button
           onClick={() => setFilterStatus('Pending')}
@@ -201,7 +134,7 @@ export default function TaskManager({ stakeholderId, stakeholderName, stakeholde
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          Pending ({mockTasks.filter(t => t.status === 'Pending').length})
+          Pending ({tasks.filter(t => t.status === 'Pending').length})
         </button>
         <button
           onClick={() => setFilterStatus('In Progress')}
@@ -211,7 +144,7 @@ export default function TaskManager({ stakeholderId, stakeholderName, stakeholde
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          In Progress ({mockTasks.filter(t => t.status === 'In Progress').length})
+          In Progress ({tasks.filter(t => t.status === 'In Progress').length})
         </button>
         <button
           onClick={() => setFilterStatus('Completed')}
@@ -221,7 +154,7 @@ export default function TaskManager({ stakeholderId, stakeholderName, stakeholde
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          Completed ({mockTasks.filter(t => t.status === 'Completed').length})
+          Completed ({tasks.filter(t => t.status === 'Completed').length})
         </button>
       </div>
 
@@ -379,11 +312,7 @@ export default function TaskManager({ stakeholderId, stakeholderName, stakeholde
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select team member...</option>
-                    {teamMembers.map(member => (
-                      <option key={member.id} value={member.name}>
-                        {member.name} - {member.role}
-                      </option>
-                    ))}
+                    {/* TODO: Fetch team members from API */}
                   </select>
                 </div>
 

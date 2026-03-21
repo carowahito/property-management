@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import AddLandlordForm from '@/components/forms/AddLandlordForm';
@@ -42,11 +42,85 @@ export default function AdminLandlordsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showAddLandlordModal, setShowAddLandlordModal] = useState(false);
-  
+  const queryClient = useQueryClient();
+
+  const createLandlordMutation = useMutation({
+    mutationFn: async (formData: any) => {
+      // Validate required fields
+      if (!formData.firstName || !formData.lastName) {
+        throw new Error('First name and last name are required');
+      }
+      if (!formData.email) {
+        throw new Error('Email is required');
+      }
+      if (!formData.phoneNumber) {
+        throw new Error('Phone number is required');
+      }
+
+      // Extract only the fields that the API accepts
+      const landlordData = {
+        name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phoneNumber.trim(),
+        idNumber: formData.idNumber?.trim() || undefined,
+        address: (formData.postalAddress || formData.physicalAddress)?.trim() || undefined,
+        bankName: formData.bankName?.trim() || undefined,
+        bankAccount: formData.bankAccountNumber?.trim() || undefined,
+        taxId: formData.kraPin?.trim() || undefined,
+        status: 'ACTIVE',
+      };
+
+      // Remove undefined values
+      Object.keys(landlordData).forEach(key => 
+        landlordData[key as keyof typeof landlordData] === undefined && delete landlordData[key as keyof typeof landlordData]
+      );
+
+      console.log('Sending landlord data:', landlordData);
+
+      const response = await fetch('/api/landlords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(landlordData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('API Error:', error);
+        
+        // Provide more user-friendly error messages
+        if (error.error?.includes('Email or ID number already exists')) {
+          throw new Error('This email or ID number is already registered. Please use different values or check your existing landlords.');
+        }
+        
+        throw new Error(error.error || JSON.stringify(error.details) || 'Failed to create landlord');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['landlords'] });
+      setShowAddLandlordModal(false);
+      alert('Landlord created successfully!');
+    },
+    onError: (error: any) => {
+      alert(`Error creating landlord: ${error.message}`);
+    },
+  });
+
   const handleLandlordSubmit = (data: unknown) => {
-    console.log('Submitting landlord:', data);
-    // TODO: API call to create landlord
-    setShowAddLandlordModal(false);
+    const formData = data as any;
+    
+    // Check for duplicates in current list
+    const emailLower = formData.email?.trim().toLowerCase();
+    const existingByEmail = landlords.find(l => l.email.toLowerCase() === emailLower);
+    
+    if (existingByEmail) {
+      alert(`A landlord with email "${formData.email}" already exists. To make changes, please use the edit function or delete and recreate with new information.`);
+      return;
+    }
+
+    console.log('Submitting landlord:', formData);
+    createLandlordMutation.mutate(formData);
   };
 
   const { data, isLoading, error } = useQuery({

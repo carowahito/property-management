@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 
 // Types
@@ -124,64 +125,6 @@ interface LandlordFormData {
   // Management Agreement
   generateManagementAgreement: boolean;
 }
-
-// Mock data for properties and units
-const mockProperties = [
-  { 
-    id: '1', 
-    name: 'Sunset Apartments', 
-    address: 'Kilimani, Nairobi',
-    type: 'residential',
-    units: [
-      { id: 'u1', name: '1A', type: '2br', floor: '1', status: 'vacant' }, 
-      { id: 'u2', name: '1B', type: '2br', floor: '1', status: 'occupied' }, 
-      { id: 'u3', name: '2A', type: '3br', floor: '2', status: 'vacant' }
-    ] 
-  },
-  { 
-    id: '2', 
-    name: 'Vista Plaza', 
-    address: 'Westlands, Nairobi',
-    type: 'commercial',
-    units: [
-      { id: 'u4', name: '101', type: 'office', floor: '1', status: 'vacant' }, 
-      { id: 'u5', name: '102', type: 'retail', floor: '1', status: 'occupied' }
-    ] 
-  },
-  { 
-    id: '3', 
-    name: 'Highland House', 
-    address: 'Karen, Nairobi',
-    type: 'residential',
-    units: [
-      { id: 'u6', name: 'A1', type: '1br', floor: 'G', status: 'vacant' }, 
-      { id: 'u7', name: 'B1', type: '1br', floor: 'G', status: 'vacant' }
-    ] 
-  },
-];
-
-// Mock tenants for unit assignment
-const mockTenants = [
-  { id: 't1', name: 'Alice Wanjiku', phone: '+254 722 111 111', email: 'alice@email.com' },
-  { id: 't2', name: 'Bob Kamau', phone: '+254 733 222 222', email: 'bob@email.com' },
-  { id: 't3', name: 'Carol Akinyi', phone: '+254 711 333 333', email: 'carol@email.com' },
-  { id: 't4', name: 'David Omondi', phone: '+254 722 444 444', email: 'david@email.com' },
-  { id: 't5', name: 'Esther Muthoni', phone: '+254 733 555 555', email: 'esther@email.com' },
-];
-
-// Mock vendors for maintenance
-const mockVendors = [
-  { id: 'v1', name: 'ProFix Plumbing', specialty: 'Plumbing', phone: '+254 722 100 100' },
-  { id: 'v2', name: 'Spark Electric Services', specialty: 'Electrical', phone: '+254 733 200 200' },
-  { id: 'v3', name: 'CleanPro Janitorial', specialty: 'Cleaning', phone: '+254 711 300 300' },
-  { id: 'v4', name: 'CoolAir HVAC', specialty: 'HVAC', phone: '+254 722 400 400' },
-  { id: 'v5', name: 'SecureGuard Services', specialty: 'Security', phone: '+254 733 500 500' },
-  { id: 'v6', name: 'GreenScape Landscaping', specialty: 'Landscaping', phone: '+254 711 600 600' },
-  { id: 'v7', name: 'PaintPro Decorators', specialty: 'Painting', phone: '+254 722 700 700' },
-  { id: 'v8', name: 'Roofing Masters', specialty: 'Roofing', phone: '+254 733 800 800' },
-  { id: 'v9', name: 'Pest Control Kenya', specialty: 'Pest Control', phone: '+254 711 900 900' },
-  { id: 'v10', name: 'General Repairs Ltd', specialty: 'General Maintenance', phone: '+254 722 000 000' },
-];
 
 // Residential unit types
 const residentialUnitTypes = [
@@ -346,6 +289,18 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
     generateManagementAgreement: false,
   });
 
+  // Fetch properties from API
+  const { data: propertiesData } = useQuery({
+    queryKey: ['properties'],
+    queryFn: async () => {
+      const response = await fetch('/api/properties');
+      if (!response.ok) throw new Error('Failed to fetch properties');
+      return response.json();
+    },
+  });
+
+  const properties = propertiesData?.properties || [];
+
   // Get unit types based on property type
   const getUnitTypes = () => {
     return formData.propertyType === 'residential' ? residentialUnitTypes : commercialUnitTypes;
@@ -422,7 +377,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
       return;
     }
     
-    const property = mockProperties.find(p => p.id === propertyId);
+    const property = properties.find((p: any) => p.id === propertyId);
     setFormData(prev => ({
       ...prev,
       selectedPropertyId: propertyId,
@@ -467,36 +422,9 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
   };
 
   const selectExistingUnit = (unitId: string) => {
-    const property = mockProperties.find(p => p.id === formData.selectedPropertyId);
-    const existingUnit = property?.units.find(u => u.id === unitId);
-    
-    if (existingUnit && !formData.landlordUnits.find(u => u.unitId === unitId)) {
-      const bedrooms = getBedroomsFromType(existingUnit.type);
-      const unitDetail: UnitDetail = {
-        unitId: existingUnit.id,
-        unitNumber: existingUnit.name,
-        unitType: existingUnit.type,
-        floor: existingUnit.floor,
-        bedrooms: bedrooms,
-        bathrooms: '1',
-        squareFootage: '',
-        monthlyRent: '',
-        securityDeposit: '',
-        securityDepositType: '1_month',
-        status: existingUnit.status,
-        tenantId: '',
-        amenities: [],
-        description: '',
-        utilitiesPaidByTenant: [],
-        monthlyServiceCharge: '',
-        leaseTerm: '12_months',
-        leaseTermCustom: '',
-      };
-      setFormData(prev => ({
-        ...prev,
-        landlordUnits: [...prev.landlordUnits, unitDetail]
-      }));
-    }
+    // TODO: For now, we're not loading existing units from API
+    // This would require fetching units for the selected property from the API
+    console.log('Unit selection not yet implemented:', unitId);
   };
 
   const updateLandlordUnit = (index: number, field: keyof UnitDetail, value: string | string[]) => {
@@ -598,7 +526,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
   const smallLabelClass = "block text-xs font-medium text-gray-600 mb-1";
   const checkboxClass = "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded";
 
-  const getSelectedProperty = () => mockProperties.find(p => p.id === formData.selectedPropertyId);
+  const getSelectedProperty = () => properties.find((p: any) => p.id === formData.selectedPropertyId);
 
   const renderStep = () => {
     switch (currentStep) {
@@ -1000,11 +928,11 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 className={selectClass}
               >
                 <option value="">-- Select a property --</option>
-                {mockProperties
-                  .filter(p => p.type === formData.propertyType)
-                  .map(property => (
+                {properties
+                  .filter((p: any) => p.type?.toLowerCase() === formData.propertyType?.toLowerCase())
+                  .map((property: any) => (
                   <option key={property.id} value={property.id}>
-                    {property.name} - {property.address} ({property.units.length} units)
+                    {property.name} - {property.address} (ID: {property.id})
                   </option>
                 ))}
                 <option value="add_new" className="text-blue-600 font-medium">
@@ -1039,7 +967,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     <div className="mb-4">
                       <label className={smallLabelClass}>Select Existing Units</label>
                       <div className="flex flex-wrap gap-2">
-                        {getSelectedProperty()!.units.map(unit => {
+                        {getSelectedProperty()!.units.map((unit: any) => {
                           const isSelected = formData.landlordUnits.some(u => u.unitId === unit.id);
                           return (
                             <button
@@ -1154,11 +1082,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                                 className={selectClass}
                               >
                                 <option value="">-- Select Tenant --</option>
-                                {mockTenants.map(tenant => (
-                                  <option key={tenant.id} value={tenant.id}>
-                                    {tenant.name} ({tenant.phone})
-                                  </option>
-                                ))}
+                                {/* TODO: Fetch real tenants from API */}
                                 <option value="add_new" className="text-blue-600">
                                   ➕ Add New Tenant
                                 </option>
@@ -1805,13 +1729,13 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 {formData.preferredVendorIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 pb-3 border-b">
                     {formData.preferredVendorIds.map(vendorId => {
-                      const vendor = mockVendors.find(v => v.id === vendorId);
-                      return vendor ? (
+                      // TODO: Fetch real vendors from API
+                      return (
                         <span 
                           key={vendorId} 
                           className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                         >
-                          {vendor.name} ({vendor.specialty})
+                          {vendorId}
                           <button
                             type="button"
                             onClick={() => handleArrayToggle('preferredVendorIds', vendorId)}
@@ -1820,34 +1744,15 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                             ×
                           </button>
                         </span>
-                      ) : null;
+                      );
                     })}
                   </div>
                 )}
                 
                 {/* Vendor Selection Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                  {mockVendors.map(vendor => (
-                    <label 
-                      key={vendor.id} 
-                      className={`flex items-center gap-2 p-2 rounded cursor-pointer transition ${
-                        formData.preferredVendorIds.includes(vendor.id)
-                          ? 'bg-blue-50 border border-blue-200'
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.preferredVendorIds.includes(vendor.id)}
-                        onChange={() => handleArrayToggle('preferredVendorIds', vendor.id)}
-                        className={checkboxClass}
-                      />
-                      <div>
-                        <span className="text-sm font-medium">{vendor.name}</span>
-                        <span className="text-xs text-gray-500 ml-2">({vendor.specialty})</span>
-                      </div>
-                    </label>
-                  ))}
+                  {/* TODO: Fetch real vendors from API */}
+                  <p className="text-sm text-gray-500">No vendors available. Please configure vendors in settings.</p>
                 </div>
                 
                 {/* Add New Vendor Option */}
@@ -1875,7 +1780,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 <input
                   type="text"
                   name="insuranceCarrier"
-                  value={formData.insuranceCarrier}
+                  value={formData.insuranceCarrier ?? ''}
                   onChange={handleInputChange}
                   className={inputClass}
                 />
@@ -1885,7 +1790,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 <input
                   type="text"
                   name="policyNumber"
-                  value={formData.policyNumber}
+                  value={formData.policyNumber ?? ''}
                   onChange={handleInputChange}
                   className={inputClass}
                 />
@@ -1895,7 +1800,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 <input
                   type="date"
                   name="insuranceExpiration"
-                  value={formData.insuranceExpiration}
+                  value={formData.insuranceExpiration ?? ''}
                   onChange={handleInputChange}
                   className={inputClass}
                 />
