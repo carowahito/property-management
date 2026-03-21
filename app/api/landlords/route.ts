@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
             select: {
               properties: true,
               payouts: true,
-              messages: true,
             },
           },
         },
