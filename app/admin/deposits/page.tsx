@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { TimeFilter } from '@/components/shared/TimeFilter'
@@ -10,42 +10,27 @@ export default function DepositsPage() {
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  
-  const deposits = [
-    {
-      id: '1',
-      tenantId: '1',
-      tenant: 'John Mwangi',
-      propertyId: '1',
-      property: 'Sunset Apartments',
-      unit: '5A',
-      amount: 90000,
-      status: 'held',
-      date: '2024-01-01',
-    },
-    {
-      id: '2',
-      tenantId: '2',
-      tenant: 'Jane Achieng',
-      propertyId: '3',
-      property: 'Highland House',
-      unit: '12',
-      amount: 150000,
-      status: 'held',
-      date: '2024-03-15',
-    },
-    {
-      id: '3',
-      tenantId: '3',
-      tenant: 'Peter Omondi',
-      propertyId: '2',
-      property: 'Vista Plaza',
-      unit: '8B',
-      amount: 240000,
-      status: 'held',
-      date: '2024-02-01',
-    },
-  ];
+  const [deposits, setDeposits] = useState<{ id: string; tenantId: string; tenant: string; propertyId: string; property: string; unit: string; amount: number; status: string; date: string }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/leases?status=ACTIVE&limit=100')
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.leases || []).map((l: any) => ({
+          id: l.id,
+          tenantId: l.tenantId,
+          tenant: l.tenant?.name || '',
+          propertyId: l.propertyId,
+          property: l.property?.name || '',
+          unit: l.unit || l.unitId || '',
+          amount: Number(l.securityDeposit) || 0,
+          status: 'held',
+          date: l.startDate ? l.startDate.split('T')[0] : '',
+        }));
+        setDeposits(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   const stats = {
     totalHeld: deposits.reduce((sum, d) => sum + d.amount, 0),

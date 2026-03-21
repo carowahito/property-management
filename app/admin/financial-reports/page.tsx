@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface Report {
@@ -15,45 +15,26 @@ interface Report {
 }
 
 export default function FinancialReportsPage() {
-  const [reports] = useState<Report[]>([
-    {
-      id: '1',
-      reportType: 'income-statement',
-      period: 'Feb 2024',
-      totalRevenue: 5770000,
-      totalExpenses: 1850000,
-      netIncome: 3920000,
-      generatedDate: '2024-03-01',
-    },
-    {
-      id: '2',
-      reportType: 'cash-flow',
-      period: 'Feb 2024',
-      totalRevenue: 5770000,
-      totalExpenses: 2100000,
-      netIncome: 3670000,
-      generatedDate: '2024-03-01',
-    },
-    {
-      id: '3',
-      reportType: 'profit-loss',
-      period: 'Jan 2024',
-      totalRevenue: 5450000,
-      totalExpenses: 1750000,
-      netIncome: 3700000,
-      generatedDate: '2024-02-01',
-    },
-    {
-      id: '4',
-      reportType: 'income-statement',
-      period: 'Jan 2024',
-      propertyName: 'Vista Plaza',
-      totalRevenue: 2160000,
-      totalExpenses: 580000,
-      netIncome: 1580000,
-      generatedDate: '2024-02-01',
-    },
-  ]);
+  const [reports] = useState<Report[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalPayouts, setTotalPayouts] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/payments?status=PAID&limit=500')
+      .then(r => r.json())
+      .then(data => {
+        const rev = (data.payments || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+        setTotalRevenue(rev);
+      })
+      .catch(() => {});
+    fetch('/api/payouts?limit=500')
+      .then(r => r.json())
+      .then(data => {
+        const paid = (data.payouts || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+        setTotalPayouts(paid);
+      })
+      .catch(() => {});
+  }, []);
 
   const [filterType, setFilterType] = useState<string>('all');
   const [timePeriod, setTimePeriod] = useState<string>('all');
@@ -64,24 +45,13 @@ export default function FinancialReportsPage() {
     (r) => filterType === 'all' || r.reportType === filterType
   );
 
+  const netIncome = totalRevenue - totalPayouts;
+  const profitMargin = totalRevenue > 0 ? ((netIncome / totalRevenue) * 100).toFixed(1) : '0.0';
   const stats = {
-    totalRevenue:
-      reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.totalRevenue, 0) /
-      2,
-    totalExpenses:
-      reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.totalExpenses, 0) /
-      2,
-    netIncome:
-      reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.netIncome, 0) / 2,
-    profitMargin: (
-      (reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.netIncome, 0) /
-        2 /
-        (reports
-          .filter((r) => r.period === 'Feb 2024')
-          .reduce((sum, r) => sum + r.totalRevenue, 0) /
-          2)) *
-      100
-    ).toFixed(1),
+    totalRevenue,
+    totalExpenses: totalPayouts,
+    netIncome,
+    profitMargin,
   };
 
   return (
@@ -96,19 +66,19 @@ export default function FinancialReportsPage() {
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Revenue (Feb)</p>
+          <p className='text-sm text-gray-600'>Total Revenue</p>
           <p className='text-3xl font-bold text-green-600'>
             KES {stats.totalRevenue.toLocaleString()}
           </p>
         </div>
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Expenses (Feb)</p>
+          <p className='text-sm text-gray-600'>Total Payouts</p>
           <p className='text-3xl font-bold text-red-600'>
             KES {stats.totalExpenses.toLocaleString()}
           </p>
         </div>
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Net Income (Feb)</p>
+          <p className='text-sm text-gray-600'>Net Income</p>
           <p className='text-3xl font-bold text-blue-600'>KES {stats.netIncome.toLocaleString()}</p>
         </div>
         <div className='bg-white shadow rounded-lg p-6'>

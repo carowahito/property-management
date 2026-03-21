@@ -26,7 +26,7 @@ export async function GET(
             name: true,
             address: true,
             type: true,
-            units: true,
+            totalUnits: true,
             status: true,
           },
           orderBy: { createdAt: 'desc' },

@@ -16,48 +16,7 @@ interface SustainabilityMetric {
 }
 
 export default function SustainabilityPage() {
-  const [metrics] = useState<SustainabilityMetric[]>([
-    {
-      id: '1',
-      propertyName: 'Sunset Apartments',
-      energyUsage: 8500,
-      waterUsage: 125000,
-      wasteRecycled: 450,
-      carbonFootprint: 4.2,
-      solarGeneration: 2100,
-      greenCertification: 'LEED Silver',
-      month: 'Feb 2024',
-    },
-    {
-      id: '2',
-      propertyName: 'Highland House',
-      energyUsage: 6200,
-      waterUsage: 95000,
-      wasteRecycled: 320,
-      carbonFootprint: 3.1,
-      month: 'Feb 2024',
-    },
-    {
-      id: '3',
-      propertyName: 'Vista Plaza',
-      energyUsage: 12000,
-      waterUsage: 180000,
-      wasteRecycled: 680,
-      carbonFootprint: 6.0,
-      solarGeneration: 3500,
-      greenCertification: 'LEED Gold',
-      month: 'Feb 2024',
-    },
-    {
-      id: '4',
-      propertyName: 'Garden Estate',
-      energyUsage: 4800,
-      waterUsage: 72000,
-      wasteRecycled: 210,
-      carbonFootprint: 2.4,
-      month: 'Feb 2024',
-    },
-  ]);
+  const [metrics] = useState<SustainabilityMetric[]>([]);
 
   const stats = {
     totalEnergy: metrics.reduce((sum, m) => sum + m.energyUsage, 0),

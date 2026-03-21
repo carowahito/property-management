@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
-import { mockMaintenanceRequests } from '@/lib/mock-data'
 import TaskManager from '@/components/crm/TaskManager'
 
 interface Props {
@@ -114,49 +113,19 @@ export default function VendorCRMPage({ params }: Props) {
     </div>
   }
 
-  // Get related data (mock)
-  const vendorJobs = mockMaintenanceRequests.filter(m => ['1', '2', '3'].includes(m.id))
-
-  const vendorNotes = [
-    { id: '1', date: '2024-11-20T10:00:00', author: 'Alice Johnson', note: 'Excellent work on emergency plumbing repair. Very responsive.' },
-    { id: '2', date: '2024-10-15T14:30:00', author: 'Bob Smith', note: 'Vendor provides competitive quotes. Reliable for HVAC work.' },
-    { id: '3', date: '2024-09-05T09:00:00', note: 'All certifications verified and up to date.' },
-  ]
-
-  const communications = [
-    { id: '1', date: '2024-11-22T11:00:00', type: 'email', subject: 'New Work Order Assignment - Unit 203', status: 'read' },
-    { id: '2', date: '2024-11-15T09:30:00', type: 'sms', subject: 'Urgent: Emergency plumbing request', status: 'read' },
-    { id: '3', date: '2024-11-08T14:20:00', type: 'in-app', subject: 'Payment processed for Invoice #INV-1234', status: 'read' },
-  ]
-
-  const activityLog = [
-    { id: '1', date: '2024-11-24T10:00:00', type: 'job', description: 'Completed work order #WO-157', user: 'System' },
-    { id: '2', date: '2024-11-22T11:00:00', type: 'communication', description: 'New work order assigned', user: 'Alice Johnson' },
-    { id: '3', date: '2024-11-20T14:00:00', type: 'payment', description: 'Payment received - KES 45,000', user: 'System' },
-    { id: '4', date: '2024-11-18T09:00:00', type: 'job', description: 'Started work order #WO-157', user: vendor.name },
-    { id: '5', date: '2024-11-15T10:00:00', type: 'note', description: 'Note added by Alice Johnson', user: 'Alice Johnson' },
-  ]
-
-  const documents = [
-    { id: '1', name: 'Business License 2024.pdf', type: 'License', date: '2024-01-10', size: '1.2 MB' },
-    { id: '2', name: 'Insurance Certificate.pdf', type: 'Insurance', date: '2024-02-15', size: '850 KB' },
-    { id: '3', name: 'Tax Compliance Certificate.pdf', type: 'Tax', date: '2024-03-01', size: '620 KB' },
-    { id: '4', name: 'Service Agreement 2024.pdf', type: 'Contract', date: '2024-01-05', size: '2.1 MB' },
-  ]
-
-  const invoices = [
-    { id: 'INV-1234', date: '2024-11-20', amount: 45000, description: 'Plumbing repair - Unit 203', status: 'Paid' },
-    { id: 'INV-1198', date: '2024-11-05', amount: 32000, description: 'HVAC maintenance - Common area', status: 'Paid' },
-    { id: 'INV-1156', date: '2024-10-28', amount: 28500, description: 'Electrical inspection', status: 'Paid' },
-    { id: 'INV-1112', date: '2024-10-15', amount: 51000, description: 'Emergency repair - Water heater', status: 'Paid' },
-  ]
+  const vendorJobs: any[] = []
+  const vendorNotes: any[] = []
+  const communications: any[] = []
+  const activityLog: any[] = []
+  const documents: any[] = []
+  const invoices: any[] = []
 
   // Calculate statistics
-  const totalJobs = 47
-  const completedJobs = 42
-  const completionRate = Math.round((completedJobs / totalJobs) * 100)
-  const averageRating = 4.7
-  const totalEarnings = invoices.reduce((sum, inv) => sum + inv.amount, 0)
+  const totalJobs = 0
+  const completedJobs = 0
+  const completionRate = 0
+  const averageRating = vendor.rating || 0
+  const totalEarnings = 0
 
   const getActivityIcon = (type: string) => {
     switch (type) {

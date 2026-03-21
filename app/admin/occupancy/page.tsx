@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface PropertyOccupancy {
@@ -15,76 +15,43 @@ interface PropertyOccupancy {
 }
 
 export default function OccupancyPage() {
-  const [properties] = useState<PropertyOccupancy[]>([
-    {
-      id: '1',
-      propertyName: 'Sunset Apartments',
-      totalUnits: 24,
-      occupiedUnits: 22,
-      vacantUnits: 2,
-      occupancyRate: 91.7,
-      avgVacancyDays: 12,
-      monthlyRevenue: 990000,
-    },
-    {
-      id: '2',
-      propertyName: 'Highland House',
-      totalUnits: 16,
-      occupiedUnits: 16,
-      vacantUnits: 0,
-      occupancyRate: 100,
-      avgVacancyDays: 0,
-      monthlyRevenue: 960000,
-    },
-    {
-      id: '3',
-      propertyName: 'Vista Plaza',
-      totalUnits: 30,
-      occupiedUnits: 27,
-      vacantUnits: 3,
-      occupancyRate: 90,
-      avgVacancyDays: 18,
-      monthlyRevenue: 2160000,
-    },
-    {
-      id: '4',
-      propertyName: 'Garden Estate',
-      totalUnits: 12,
-      occupiedUnits: 10,
-      vacantUnits: 2,
-      occupancyRate: 83.3,
-      avgVacancyDays: 25,
-      monthlyRevenue: 400000,
-    },
-    {
-      id: '5',
-      propertyName: 'Riverside Towers',
-      totalUnits: 20,
-      occupiedUnits: 18,
-      vacantUnits: 2,
-      occupancyRate: 90,
-      avgVacancyDays: 15,
-      monthlyRevenue: 1260000,
-    },
-  ]);
+  const [properties, setProperties] = useState<PropertyOccupancy[]>([]);
+
+  useEffect(() => {
+    fetch('/api/properties?limit=100')
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.properties || []).map((p: any) => {
+          const total = p.totalUnits || 0;
+          const occupied = p._count?.leases || 0;
+          const vacant = Math.max(0, total - occupied);
+          const rate = total > 0 ? Math.round((occupied / total) * 1000) / 10 : 0;
+          return {
+            id: p.id,
+            propertyName: p.name,
+            totalUnits: total,
+            occupiedUnits: occupied,
+            vacantUnits: vacant,
+            occupancyRate: rate,
+            avgVacancyDays: 0,
+            monthlyRevenue: 0,
+          };
+        });
+        setProperties(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   const stats = {
     totalUnits: properties.reduce((sum, p) => sum + p.totalUnits, 0),
     totalOccupied: properties.reduce((sum, p) => sum + p.occupiedUnits, 0),
     totalVacant: properties.reduce((sum, p) => sum + p.vacantUnits, 0),
-    avgOccupancyRate: (
-      properties.reduce((sum, p) => sum + p.occupancyRate, 0) / properties.length
-    ).toFixed(1),
+    avgOccupancyRate: properties.length > 0
+      ? (properties.reduce((sum, p) => sum + p.occupancyRate, 0) / properties.length).toFixed(1)
+      : '0.0',
   };
 
-  const monthlyTrend = [
-    { month: 'Oct', rate: 88 },
-    { month: 'Nov', rate: 90 },
-    { month: 'Dec', rate: 92 },
-    { month: 'Jan', rate: 91 },
-    { month: 'Feb', rate: 93 },
-    { month: 'Mar', rate: parseFloat(stats.avgOccupancyRate) },
-  ];
+  const monthlyTrend: { month: string; rate: number }[] = [];
 
   return (
     <div className='p-6 space-y-6'>

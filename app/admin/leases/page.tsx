@@ -44,7 +44,7 @@ interface LeasesResponse {
 }
 
 async function fetchLeases(): Promise<LeasesResponse> {
-  const response = await fetch('/api/mock/leases')
+  const response = await fetch('/api/leases')
   if (!response.ok) {
     throw new Error('Failed to fetch leases')
   }

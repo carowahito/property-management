@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import {
   LineChart,
   Line,
@@ -21,33 +22,56 @@ export default function AnalyticsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [properties, setProperties] = useState<any[]>([]);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetch('/api/payments?status=PAID&limit=200').then(r => r.json()),
+      fetch('/api/properties?limit=100').then(r => r.json()),
+    ]).then(([paymentsData, propertiesData]) => {
+      setPayments(paymentsData.payments || []);
+      setProperties(propertiesData.properties || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const totalRevenue = payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+  const totalUnits = properties.reduce((sum: number, p: any) => sum + (p.totalUnits || 0), 0);
+  const activeLeases = properties.reduce((sum: number, p: any) => sum + (p._count?.leases || 0), 0);
+  const occupancyRate = totalUnits > 0 ? Math.round((activeLeases / totalUnits) * 1000) / 10 : 0;
+  const avgRentPrice = activeLeases > 0 ? Math.round(totalRevenue / Math.max(payments.length, 1)) : 0;
+
+  // Group payments by month for chart
+  const monthMap: Record<string, number> = {};
+  payments.forEach((p: any) => {
+    if (p.paidDate) {
+      const key = new Date(p.paidDate).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      monthMap[key] = (monthMap[key] || 0) + Number(p.amount);
+    }
+  });
+  const monthlyData = Object.entries(monthMap)
+    .map(([month, revenue]) => ({ month, revenue, expenses: 0 }))
+    .slice(-6);
+
+  const propertyPerformance = properties.map((p: any) => ({
+    name: p.name,
+    revenue: 0,
+    occupancy: p.totalUnits > 0 ? Math.round(((p._count?.leases || 0) / p.totalUnits) * 100) : 0,
+    units: p.totalUnits || 0,
+  }));
 
   const stats = {
-    totalRevenue: 1800000,
-    revenueChange: 12.5,
-    occupancyRate: 87.5,
-    occupancyChange: 3.2,
-    avgRentPrice: 62000,
-    priceChange: -2.1,
-    maintenanceCost: 145000,
-    costChange: 8.4,
+    totalRevenue,
+    revenueChange: 0,
+    occupancyRate,
+    occupancyChange: 0,
+    avgRentPrice,
+    priceChange: 0,
+    maintenanceCost: 0,
+    costChange: 0,
   };
-
-  const monthlyData = [
-    { month: 'Jun', revenue: 1600000, expenses: 120000 },
-    { month: 'Jul', revenue: 1650000, expenses: 135000 },
-    { month: 'Aug', revenue: 1700000, expenses: 142000 },
-    { month: 'Sep', revenue: 1750000, expenses: 138000 },
-    { month: 'Oct', revenue: 1780000, expenses: 145000 },
-    { month: 'Nov', revenue: 1800000, expenses: 145000 },
-  ];
-
-  const propertyPerformance = [
-    { name: 'Sunset Apartments', revenue: 540000, occupancy: 92, units: 12 },
-    { name: 'Highland House', revenue: 600000, occupancy: 88, units: 8 },
-    { name: 'Vista Plaza', revenue: 480000, occupancy: 80, units: 4 },
-    { name: 'Garden Estate', revenue: 180000, occupancy: 75, units: 3 },
-  ];
 
   return (
     <div className="space-y-6">

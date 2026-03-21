@@ -15,58 +15,7 @@ interface ComplianceItem {
 }
 
 export default function CompliancePage() {
-  const [items] = useState<ComplianceItem[]>([
-    {
-      id: '1',
-      propertyName: 'Sunset Apartments',
-      requirement: 'Fire Safety Certificate',
-      category: 'safety',
-      issueDate: '2023-06-01',
-      expiryDate: '2024-06-01',
-      status: 'expiring-soon',
-      certificationBody: 'Nairobi County Fire Department',
-    },
-    {
-      id: '2',
-      propertyName: 'Highland House',
-      requirement: 'Building Permit',
-      category: 'licensing',
-      issueDate: '2022-01-15',
-      expiryDate: '2025-01-15',
-      status: 'valid',
-      certificationBody: 'County Government',
-    },
-    {
-      id: '3',
-      propertyName: 'Vista Plaza',
-      requirement: 'Environmental Compliance',
-      category: 'environmental',
-      issueDate: '2023-03-10',
-      expiryDate: '2024-03-10',
-      status: 'expiring-soon',
-      certificationBody: 'NEMA',
-    },
-    {
-      id: '4',
-      propertyName: 'Garden Estate',
-      requirement: 'Property Insurance',
-      category: 'insurance',
-      issueDate: '2024-01-01',
-      expiryDate: '2025-01-01',
-      status: 'valid',
-      certificationBody: 'Britam Insurance',
-    },
-    {
-      id: '5',
-      propertyName: 'Riverside Towers',
-      requirement: 'Health & Safety Inspection',
-      category: 'health',
-      issueDate: '2023-09-01',
-      expiryDate: '2024-02-01',
-      status: 'expired',
-      certificationBody: 'Ministry of Health',
-    },
-  ]);
+  const [items] = useState<ComplianceItem[]>([]);
 
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const filteredItems = items.filter(

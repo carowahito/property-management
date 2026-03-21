@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { mockMaintenanceRequests, getTenantById, getPropertyById, getLandlordById } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
 
 interface MaintenanceRequest {
@@ -25,94 +24,7 @@ interface MaintenanceRequest {
 export default function LandlordMaintenancePage() {
   const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null)
 
-  const requests: MaintenanceRequest[] = [
-    { 
-      id: 'MR-001', 
-      property: 'Skyline Apartments',
-      unit: '4B', 
-      issue: 'Leaking faucet', 
-      description: 'Kitchen faucet drips constantly, wasting water',
-      priority: 'high', 
-      status: 'in-progress', 
-      tenant: 'John Smith', 
-      date: '2025-11-05',
-      vendor: 'Nairobi Plumbing Services',
-      vendorCategory: 'Plumbing',
-      vendorRating: 4.8,
-      quoteAmount: 15000,
-      quoteId: 'QR-001'
-    },
-    { 
-      id: 'MR-002', 
-      property: 'Riverside Towers',
-      unit: '7A', 
-      issue: 'AC not cooling', 
-      description: 'Air conditioning unit runs but does not cool the room',
-      priority: 'urgent', 
-      status: 'assigned', 
-      tenant: 'Sarah Johnson', 
-      date: '2025-11-04',
-      vendor: 'HVAC Masters',
-      vendorCategory: 'HVAC',
-      vendorRating: 4.6,
-      quoteAmount: 23000,
-      quoteId: 'QR-005'
-    },
-    { 
-      id: 'MR-003', 
-      property: 'Skyline Apartments',
-      unit: '2C', 
-      issue: 'Door lock stuck', 
-      description: 'Front door lock is difficult to turn, tenant struggling to enter',
-      priority: 'medium', 
-      status: 'quote-submitted', 
-      tenant: 'Mike Davis', 
-      date: '2025-11-03',
-      vendor: 'Quick Fix Services',
-      vendorCategory: 'General Maintenance',
-      vendorRating: 4.5,
-      quoteAmount: 5500,
-      quoteId: 'QR-007'
-    },
-    { 
-      id: 'MR-004', 
-      property: 'Garden View Estate',
-      unit: '1A', 
-      issue: 'Broken window', 
-      description: 'Living room window cracked, needs replacement',
-      priority: 'medium', 
-      status: 'quote-requested', 
-      tenant: 'Emily Brown', 
-      date: '2025-11-02'
-    },
-    { 
-      id: 'MR-005', 
-      property: 'Riverside Towers',
-      unit: '3B', 
-      issue: 'Water heater not working', 
-      description: 'No hot water for 2 days, heater making strange noises',
-      priority: 'high', 
-      status: 'pending', 
-      tenant: 'David Wilson', 
-      date: '2025-11-01'
-    },
-    { 
-      id: 'MR-006', 
-      property: 'Skyline Apartments',
-      unit: 'Basement', 
-      issue: 'Main water line leak', 
-      description: 'Emergency - basement flooding from main line',
-      priority: 'urgent', 
-      status: 'completed', 
-      tenant: 'N/A (Common Area)', 
-      date: '2025-11-10',
-      vendor: 'Nairobi Plumbing Services',
-      vendorCategory: 'Plumbing',
-      vendorRating: 4.8,
-      quoteAmount: 85000,
-      quoteId: 'QR-004'
-    },
-  ]
+  const requests: MaintenanceRequest[] = []
 
   const getPriorityColor = (priority: string) => {
     return priority === 'urgent' ? 'bg-red-100 text-red-800' :

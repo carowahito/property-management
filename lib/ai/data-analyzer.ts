@@ -79,7 +79,7 @@ export class DataAnalyzer {
     });
 
     const totalProperties = properties.length;
-    const totalUnits = properties.reduce((sum, p) => sum + p.units, 0);
+    const totalUnits = properties.reduce((sum, p) => sum + (p.totalUnits ?? 0), 0);
     const occupiedUnits = properties.reduce((sum, p) => sum + p.tenants.length, 0);
 
     // Calculate current month metrics
@@ -194,11 +194,11 @@ export class DataAnalyzer {
 
     for (const property of properties) {
       const occupiedUnits = property.tenants.length;
-      const occupancy = property.units > 0 ? (occupiedUnits / property.units) * 100 : 0;
+      const occupancy = property.totalUnits > 0 ? (occupiedUnits / property.totalUnits) * 100 : 0;
 
       // Calculate revenue from active leases
       const revenue = property.leases.reduce((sum, l) => sum + Number(l.monthlyRent), 0);
-      const revenuePerUnit = property.units > 0 ? revenue / property.units : 0;
+      const revenuePerUnit = property.totalUnits > 0 ? revenue / property.totalUnits : 0;
 
       // Calculate maintenance costs
       const workOrders = await prisma.workOrder.findMany({
@@ -213,7 +213,7 @@ export class DataAnalyzer {
       });
 
       const maintenanceCost = workOrders.reduce((sum, wo) => sum + Number(wo.actualCost || 0), 0);
-      const maintenanceCostPerUnit = property.units > 0 ? maintenanceCost / property.units : 0;
+      const maintenanceCostPerUnit = property.totalUnits > 0 ? maintenanceCost / property.totalUnits : 0;
 
       // Calculate average tenant tenure
       const tenantsWithMoveIn = property.tenants.filter((t) => t.moveInDate);
@@ -244,7 +244,7 @@ export class DataAnalyzer {
       performanceData.push({
         id: property.id,
         name: property.name,
-        units: property.units,
+        units: property.totalUnits,
         occupancy: Number(occupancy.toFixed(1)),
         revenue,
         revenuePerUnit,
@@ -328,7 +328,7 @@ export class DataAnalyzer {
         },
       });
 
-      const totalUnits = properties.reduce((sum, p) => sum + p.units, 0);
+      const totalUnits = properties.reduce((sum, p) => sum + (p.totalUnits ?? 0), 0);
       const occupiedUnits = properties.reduce((sum, p) => sum + p.tenants.length, 0);
       const occupancy = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 

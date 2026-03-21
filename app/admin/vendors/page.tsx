@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -21,69 +21,28 @@ export default function AdminVendorsPage() {
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [vendors, setVendors] = useState<Vendor[]>([]);
 
-  const vendors: Vendor[] = [
-    {
-      id: 'VND-001',
-      name: 'John Plumbing Services',
-      category: 'Plumbing',
-      email: 'john@plumbing.com',
-      phone: '+254 712 345 678',
-      rating: 4.8,
-      completedJobs: 45,
-      activeJobs: 3,
-      status: 'active',
-      vendorType: 'individual',
-    },
-    {
-      id: 'VND-002',
-      name: 'Elite Electrical Co.',
-      category: 'Electrical',
-      email: 'info@eliteelectrical.com',
-      phone: '+254 723 456 789',
-      rating: 4.9,
-      completedJobs: 62,
-      activeJobs: 5,
-      status: 'active',
-      vendorType: 'company',
-    },
-    {
-      id: 'VND-003',
-      name: 'Quick Paint Solutions',
-      category: 'Painting',
-      email: 'quickpaint@email.com',
-      phone: '+254 734 567 890',
-      rating: 4.5,
-      completedJobs: 38,
-      activeJobs: 2,
-      status: 'active',
-      vendorType: 'company',
-    },
-    {
-      id: 'VND-004',
-      name: 'Garden Pro Landscaping',
-      category: 'Landscaping',
-      email: 'gardenpro@email.com',
-      phone: '+254 745 678 901',
-      rating: 4.7,
-      completedJobs: 28,
-      activeJobs: 1,
-      status: 'active',
-      vendorType: 'company',
-    },
-    {
-      id: 'VND-005',
-      name: 'Mike HVAC Repairs',
-      category: 'HVAC',
-      email: 'mike@hvacrepairs.com',
-      phone: '+254 756 789 012',
-      rating: 4.6,
-      completedJobs: 51,
-      activeJobs: 4,
-      status: 'active',
-      vendorType: 'individual',
-    },
-  ];
+  useEffect(() => {
+    fetch('/api/vendors?limit=100')
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.vendors || []).map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          category: v.specialization || 'General',
+          email: v.email,
+          phone: v.phone,
+          rating: v.rating || 0,
+          completedJobs: v._count?.workOrders || 0,
+          activeJobs: 0,
+          status: (v.status || 'ACTIVE').toLowerCase() as Vendor['status'],
+          vendorType: 'company' as Vendor['vendorType'],
+        }));
+        setVendors(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   const filteredVendors = vendors.filter(
     (vendor) =>
@@ -96,7 +55,7 @@ export default function AdminVendorsPage() {
     totalVendors: vendors.length,
     activeVendors: vendors.filter((v) => v.status === 'active').length,
     totalCompletedJobs: vendors.reduce((sum, v) => sum + v.completedJobs, 0),
-    avgRating: (vendors.reduce((sum, v) => sum + v.rating, 0) / vendors.length).toFixed(1),
+    avgRating: vendors.length > 0 ? (vendors.reduce((sum, v) => sum + v.rating, 0) / vendors.length).toFixed(1) : '0.0',
   };
 
   return (

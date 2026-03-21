@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Property {
   id: string
-  units: number
+  totalUnits: number
   status: string
 }
 
@@ -35,19 +35,19 @@ interface MaintenanceResponse {
 }
 
 async function fetchProperties(): Promise<PropertiesResponse> {
-  const response = await fetch('/api/mock/properties')
+  const response = await fetch('/api/properties')
   if (!response.ok) throw new Error('Failed to fetch properties')
   return response.json()
 }
 
 async function fetchLeases(): Promise<LeasesResponse> {
-  const response = await fetch('/api/mock/leases')
+  const response = await fetch('/api/leases')
   if (!response.ok) throw new Error('Failed to fetch leases')
   return response.json()
 }
 
 async function fetchMaintenanceRequests(): Promise<MaintenanceResponse> {
-  const response = await fetch('/api/mock/maintenance-requests')
+  const response = await fetch('/api/maintenance-requests')
   if (!response.ok) throw new Error('Failed to fetch maintenance requests')
   return response.json()
 }
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
 
   // Calculate statistics
   const activeProperties = properties.filter(p => p.status === 'ACTIVE')
-  const totalUnits = properties.reduce((sum, p) => sum + (p.units || 0), 0)
+  const totalUnits = properties.reduce((sum, p) => sum + (p.totalUnits || 0), 0)
   const activeLeases = leases.filter(l => l.status === 'ACTIVE')
   const occupancyRate = totalUnits > 0 ? (activeLeases.length / totalUnits) * 100 : 0
   const monthlyRevenue = activeLeases.reduce((sum, l) => sum + Number(l.monthlyRent), 0)
@@ -190,24 +190,7 @@ export default function AdminDashboard() {
 
         <div className='bg-white shadow rounded-lg p-6'>
           <h2 className='text-xl font-semibold text-gray-900 mb-4'>Recent Activity</h2>
-          <div className='space-y-4'>
-            <div className='border-l-4 border-blue-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>New lease signed</div>
-              <div className='text-xs text-gray-600'>Vista Plaza, Unit 8B - 2 hours ago</div>
-            </div>
-            <div className='border-l-4 border-green-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>Payment received</div>
-              <div className='text-xs text-gray-600'>Sunset Apartments, Unit 5A - 3 hours ago</div>
-            </div>
-            <div className='border-l-4 border-orange-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>Maintenance request</div>
-              <div className='text-xs text-gray-600'>Highland House, Unit 12 - 5 hours ago</div>
-            </div>
-            <div className='border-l-4 border-purple-500 pl-3'>
-              <div className='text-sm font-medium text-gray-900'>Viewing scheduled</div>
-              <div className='text-xs text-gray-600'>Garden Estate, Unit 3C - 1 day ago</div>
-            </div>
-          </div>
+          <div className='text-sm text-gray-500'>No recent activity to display.</div>
         </div>
       </div>
     </div>

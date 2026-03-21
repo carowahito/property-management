@@ -46,7 +46,7 @@ interface PaymentsResponse {
 }
 
 async function fetchPayments(): Promise<PaymentsResponse> {
-  const response = await fetch('/api/mock/payments')
+  const response = await fetch('/api/payments')
   if (!response.ok) {
     throw new Error('Failed to fetch payments')
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { TimeFilter } from '@/components/shared/TimeFilter';
@@ -24,61 +24,34 @@ export default function LateFeesPage() {
   const [timePeriod, setTimePeriod] = useState('current');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
-  const [lateFees] = useState<LateFee[]>([
-    {
-      id: '1',
-      tenantId: '1',
-      tenantName: 'John Mwangi',
-      propertyId: '1',
-      propertyName: 'Sunset Apartments',
-      unitNumber: '5A',
-      rentAmount: 45000,
-      dueDate: '2024-03-01',
-      daysLate: 8,
-      feeAmount: 2250,
-      status: 'pending',
-    },
-    {
-      id: '2',
-      tenantId: '4',
-      tenantName: 'Mary Wanjiku',
-      propertyId: '4',
-      propertyName: 'Garden Estate',
-      unitNumber: '3C',
-      rentAmount: 40000,
-      dueDate: '2024-02-01',
-      daysLate: 15,
-      feeAmount: 3000,
-      status: 'collected',
-    },
-    {
-      id: '3',
-      tenantId: '3',
-      tenantName: 'Peter Omondi',
-      propertyId: '2',
-      propertyName: 'Vista Plaza',
-      unitNumber: '8B',
-      rentAmount: 80000,
-      dueDate: '2024-03-01',
-      daysLate: 5,
-      feeAmount: 2000,
-      status: 'waived',
-      notes: 'Tenant experienced financial hardship',
-    },
-    {
-      id: '4',
-      tenantId: '5',
-      tenantName: 'Grace Akinyi',
-      propertyId: '3',
-      propertyName: 'Highland House',
-      unitNumber: '12',
-      rentAmount: 60000,
-      dueDate: '2024-03-01',
-      daysLate: 12,
-      feeAmount: 3600,
-      status: 'pending',
-    },
-  ]);
+  const [lateFees, setLateFees] = useState<LateFee[]>([]);
+
+  useEffect(() => {
+    fetch('/api/payments?status=OVERDUE&limit=100')
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.payments || []).map((p: any) => {
+          const dueDate = p.dueDate ? new Date(p.dueDate) : new Date();
+          const now = new Date();
+          const daysLate = Math.max(0, Math.floor((now.getTime() - dueDate.getTime()) / 86400000));
+          return {
+            id: p.id,
+            tenantId: p.tenantId,
+            tenantName: p.tenant?.name || '',
+            propertyId: p.lease?.propertyId || '',
+            propertyName: p.lease?.property?.name || '',
+            unitNumber: p.lease?.unit || '',
+            rentAmount: Number(p.amount) || 0,
+            dueDate: p.dueDate ? p.dueDate.split('T')[0] : '',
+            daysLate,
+            feeAmount: daysLate * 500,
+            status: 'pending' as LateFee['status'],
+          };
+        });
+        setLateFees(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const filteredFees = lateFees.filter((f) => filterStatus === 'all' || f.status === filterStatus);

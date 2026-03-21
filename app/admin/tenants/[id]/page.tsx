@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
-import { mockTenants, mockLeases, mockPayments, mockMaintenanceRequests } from '@/lib/mock-data'
 import TaskManager from '@/components/crm/TaskManager'
 
 interface Props {
@@ -67,16 +66,35 @@ export default function TenantCRMPage({ params }: Props) {
   const [attachments, setAttachments] = useState<File[]>([])
   const [isImprovingText, setIsImprovingText] = useState(false)
 
+  const [tenantApiData, setTenantApiData] = useState<any>(null)
+  const [isLoadingTenant, setIsLoadingTenant] = useState(false)
+
   // Unwrap params to get tenant ID
   useEffect(() => {
     params.then(p => setTenantId(p.id))
   }, [params])
 
-  // Get tenant data based on ID
-  const tenant = tenantId ? mockTenants.find(t => t.id === tenantId) : null
+  // Fetch real tenant data from API
+  useEffect(() => {
+    if (!tenantId) return
+    setIsLoadingTenant(true)
+    fetch(`/api/tenants/${tenantId}`)
+      .then(r => r.json())
+      .then(data => { setTenantApiData(data); setIsLoadingTenant(false) })
+      .catch(() => setIsLoadingTenant(false))
+  }, [tenantId])
+
+  // Adapt API response to shape used by this component
+  const tenant = tenantApiData ? {
+    ...tenantApiData,
+    property: tenantApiData.property?.name || '',
+    unit: tenantApiData.unit || tenantApiData.unitRef?.unitNumber || '',
+    rent: Number(tenantApiData.leases?.[0]?.monthlyRent) || 0,
+    moveIn: tenantApiData.moveInDate ? tenantApiData.moveInDate.split('T')[0] : '',
+  } : null
 
   // Show loading state while params are being unwrapped
-  if (!tenantId) {
+  if (!tenantId || isLoadingTenant) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -132,44 +150,28 @@ export default function TenantCRMPage({ params }: Props) {
     })
   }
 
-  // Get related data
-  const tenantLeases = mockLeases.filter(l => l.tenantId === tenantId)
-  const currentLease = tenantLeases.find(l => l.status === 'Active')
-  const tenantPayments = mockPayments.filter(p => p.tenantId === tenantId)
-  const tenantMaintenance = mockMaintenanceRequests.filter(m => m.tenantId === tenantId)
+  // Get related data from API response
+  const tenantLeases = tenantApiData?.leases || []
+  const currentLease = tenantLeases.find((l: any) => l.status === 'ACTIVE')
+  const tenantPayments = (tenantApiData?.payments || []).map((p: any) => ({
+    ...p,
+    month: p.paidDate ? new Date(p.paidDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '',
+    paidDate: p.paidDate ? p.paidDate.split('T')[0] : '',
+    status: p.status === 'PAID' ? 'Paid' : p.status === 'OVERDUE' ? 'Overdue' : p.status,
+  }))
+  const tenantMaintenance = (tenantApiData?.maintenanceRequests || []).map((m: any) => ({
+    ...m,
+    dateSubmitted: m.createdAt ? m.createdAt.split('T')[0] : '',
+    vendorName: '',
+  }))
 
-  // Mock additional CRM data
-  const tenantNotes = [
-    { id: '1', date: '2024-11-20T10:00:00', author: 'Alice Johnson', note: 'Tenant requested early lease renewal. Discussed 3% increase, tenant agreed.' },
-    { id: '2', date: '2024-10-15T14:30:00', author: 'Bob Smith', note: 'Always pays rent on time. Excellent tenant, no issues.' },
-    { id: '3', date: '2024-09-01T09:00:00', note: 'Move-in inspection completed. Unit in excellent condition.' },
-  ]
-
-  const communications = [
-    { id: '1', date: '2024-11-25T10:00:00', type: 'email', subject: 'Rent Payment Reminder', status: 'sent', category: 'Rent Reminder' },
-    { id: '2', date: '2024-11-10T15:30:00', type: 'sms', subject: 'Maintenance Update', status: 'delivered', category: 'Maintenance' },
-    { id: '3', date: '2024-10-28T11:20:00', type: 'in-app', subject: 'Lease Renewal Discussion', status: 'read', category: 'Lease' },
-    { id: '4', date: '2024-10-15T09:00:00', type: 'email', subject: 'Community Announcement', status: 'sent', category: 'Announcement' },
-    { id: '5', date: '2024-09-30T16:45:00', type: 'sms', subject: 'Payment Received Confirmation', status: 'delivered', category: 'Payment Confirmation' },
-  ]
-
-  const activityLog = [
-    { id: '1', date: '2024-11-25T10:00:00', type: 'payment', description: 'Rent payment received - KES 50,000', user: 'System' },
-    { id: '2', date: '2024-11-20T14:30:00', type: 'note', description: 'Note added by Alice Johnson', user: 'Alice Johnson' },
-    { id: '3', date: '2024-11-15T09:15:00', type: 'maintenance', description: 'Maintenance request submitted - Leaky faucet', user: 'John Smith' },
-    { id: '4', date: '2024-11-10T16:45:00', type: 'communication', description: 'Email sent - Maintenance update', user: 'System' },
-    { id: '5', date: '2024-10-25T10:00:00', type: 'payment', description: 'Rent payment received - KES 50,000', user: 'System' },
-  ]
-
-  const documents = [
-    { id: '1', name: 'Lease Agreement - 2024.pdf', type: 'Lease', date: '2024-01-15', size: '2.4 MB' },
-    { id: '2', name: 'ID Copy - John Smith.pdf', type: 'Identification', date: '2024-01-10', size: '856 KB' },
-    { id: '3', name: 'Income Verification.pdf', type: 'Financial', date: '2024-01-10', size: '1.2 MB' },
-    { id: '4', name: 'Move-in Inspection Report.pdf', type: 'Inspection', date: '2024-02-01', size: '3.1 MB' },
-  ]
+  const tenantNotes: any[] = []
+  const communications: any[] = []
+  const activityLog: any[] = []
+  const documents: any[] = []
 
   // Filter payments based on filters
-  const filteredPayments = tenantPayments.filter(payment => {
+  const filteredPayments = tenantPayments.filter((payment: any) => {
     // Month filter
     if (paymentFilters.month && payment.month !== paymentFilters.month) {
       return false
@@ -197,7 +199,7 @@ export default function TenantCRMPage({ params }: Props) {
   })
 
   // Filter maintenance requests
-  const filteredMaintenance = tenantMaintenance.filter(request => {
+  const filteredMaintenance = tenantMaintenance.filter((request: any) => {
     // Status filter
     if (maintenanceFilters.status && request.status !== maintenanceFilters.status) {
       return false
@@ -268,14 +270,14 @@ export default function TenantCRMPage({ params }: Props) {
   })
 
   // Get unique months from payments for dropdown
-  const uniqueMonths = Array.from(new Set(tenantPayments.map(p => p.month))).sort().reverse()
+  const uniqueMonths: string[] = [...new Set<string>(tenantPayments.map((p: any) => p.month as string))].sort().reverse()
 
   // Get unique vendors from maintenance requests for dropdown
-  const uniqueVendors = Array.from(new Set(
+  const uniqueVendors: string[] = [...new Set<string>(
     tenantMaintenance
-      .map(r => r.vendorName)
-      .filter(name => name && name !== '')
-  )).sort()
+      .map((r: any) => r.vendorName as string)
+      .filter((name: string) => name && name !== '')
+  )].sort()
 
   const clearPaymentFilters = () => {
     setPaymentFilters({
@@ -386,9 +388,9 @@ export default function TenantCRMPage({ params }: Props) {
   }
 
   // Calculate statistics
-  const totalPaid = tenantPayments.filter(p => p.status === 'Paid').reduce((sum, p) => sum + p.amount, 0)
-  const totalOverdue = tenantPayments.filter(p => p.status === 'Overdue').reduce((sum, p) => sum + p.amount, 0)
-  const onTimePayments = tenantPayments.filter(p => p.status === 'Paid').length
+  const totalPaid = tenantPayments.filter((p: any) => p.status === 'Paid').reduce((sum: number, p: any) => sum + p.amount, 0)
+  const totalOverdue = tenantPayments.filter((p: any) => p.status === 'Overdue').reduce((sum: number, p: any) => sum + p.amount, 0)
+  const onTimePayments = tenantPayments.filter((p: any) => p.status === 'Paid').length
   const totalPayments = tenantPayments.length
   const paymentRate = totalPayments > 0 ? Math.round((onTimePayments / totalPayments) * 100) : 0
 
@@ -419,7 +421,7 @@ export default function TenantCRMPage({ params }: Props) {
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {tenant.name.split(' ').map(n => n[0]).join('')}
+              {tenant.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -578,7 +580,7 @@ export default function TenantCRMPage({ params }: Props) {
                 <h3 className="font-semibold text-gray-900 mb-4">Payment History (Last 6 Months)</h3>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="grid grid-cols-6 gap-2">
-                    {tenantPayments.slice(0, 6).map((payment, idx) => (
+                    {tenantPayments.slice(0, 6).map((payment: any, idx: number) => (
                       <div key={idx} className="text-center">
                         <div className={`h-20 rounded flex items-end justify-center pb-2 ${
                           payment.status === 'Paid' ? 'bg-green-500' : 
@@ -713,7 +715,7 @@ export default function TenantCRMPage({ params }: Props) {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredPayments.length > 0 ? (
-                      filteredPayments.map(payment => (
+                      filteredPayments.map((payment: any) => (
                         <tr key={payment.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">{payment.month}</td>
                           <td className="px-6 py-4 text-sm font-semibold text-gray-900">KES {payment.amount.toLocaleString()}</td>
@@ -846,7 +848,7 @@ export default function TenantCRMPage({ params }: Props) {
                 </div>
               </div>
 
-              {filteredMaintenance.map(request => (
+              {filteredMaintenance.map((request: any) => (
                 <div key={request.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>

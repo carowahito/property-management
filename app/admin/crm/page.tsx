@@ -72,31 +72,31 @@ interface Enquiry {
 }
 
 async function fetchTenants() {
-  const response = await fetch('/api/mock/tenants')
+  const response = await fetch('/api/tenants')
   if (!response.ok) throw new Error('Failed to fetch tenants')
   return response.json()
 }
 
 async function fetchLandlords() {
-  const response = await fetch('/api/mock/landlords')
+  const response = await fetch('/api/landlords')
   if (!response.ok) throw new Error('Failed to fetch landlords')
   return response.json()
 }
 
 async function fetchVendors() {
-  const response = await fetch('/api/mock/vendors')
+  const response = await fetch('/api/vendors')
   if (!response.ok) throw new Error('Failed to fetch vendors')
   return response.json()
 }
 
 async function fetchLeads() {
-  const response = await fetch('/api/mock/leads')
+  const response = await fetch('/api/leads')
   if (!response.ok) throw new Error('Failed to fetch leads')
   return response.json()
 }
 
 async function fetchEnquiries() {
-  const response = await fetch('/api/mock/enquiries')
+  const response = await fetch('/api/enquiries')
   if (!response.ok) throw new Error('Failed to fetch enquiries')
   return response.json()
 }

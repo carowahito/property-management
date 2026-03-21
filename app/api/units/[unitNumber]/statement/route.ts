@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { authOptions } from '@/lib/auth-config'
+import { prisma } from '@/lib/db'
 
 // GET /api/units/:unitNumber/statement?from=2025-07-01&to=2026-03-31
 //

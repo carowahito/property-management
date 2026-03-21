@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { mockVendorUsers } from '@/lib/mock-data'
 
 export default function VendorLogin() {
   const router = useRouter()
@@ -19,29 +18,12 @@ export default function VendorLogin() {
     setIsLoading(true)
     setError('')
     
-    // Simulate authentication with mock data
     setTimeout(() => {
-      const vendor = mockVendorUsers.find(v => v.email === formData.email)
-      
-      if (vendor && formData.password === 'password') {
-        // Store vendor info in localStorage
-        localStorage.setItem('vendorId', vendor.vendorId)
-        localStorage.setItem('vendorUserId', vendor.id)
-        localStorage.setItem('vendorName', vendor.name)
-        localStorage.setItem('vendorEmail', vendor.email)
-        setIsLoading(false)
-        router.push('/vendor/jobs')
-      } else {
-        setError('Invalid email or password')
-        setIsLoading(false)
-      }
-    }, 1000)
+      setError('Vendor portal login is not yet available.')
+      setIsLoading(false)
+    }, 500)
   }
 
-  const demoAccounts = mockVendorUsers.map(v => ({
-    email: v.email,
-    name: v.name,
-  }))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center px-4">
@@ -114,20 +96,6 @@ export default function VendorLogin() {
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Need help? <Link href="/support" className="text-orange-600 hover:text-orange-800">Contact Support</Link>
-        </div>
-
-        {/* Demo Accounts */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Demo Vendor Accounts</h3>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {demoAccounts.map((account, idx) => (
-              <div key={idx} className="text-xs bg-gray-50 p-2 rounded border border-gray-200">
-                <div className="font-medium text-gray-900">{account.name}</div>
-                <div className="text-gray-600">Email: {account.email}</div>
-                <div className="text-gray-600">Password: password</div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Back to Home */}

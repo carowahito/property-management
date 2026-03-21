@@ -52,7 +52,7 @@ interface MaintenanceResponse {
 }
 
 async function fetchMaintenanceRequests(): Promise<MaintenanceResponse> {
-  const response = await fetch('/api/mock/maintenance-requests')
+  const response = await fetch('/api/maintenance-requests')
   if (!response.ok) throw new Error('Failed to fetch maintenance requests')
   return response.json()
 }

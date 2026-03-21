@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
               name: true,
               address: true,
               type: true,
-              units: true,
+              totalUnits: true,
               landlord: {
                 select: {
                   id: true,

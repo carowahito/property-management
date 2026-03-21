@@ -13,23 +13,19 @@ export default function RealEstateDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white shadow rounded-lg p-6">
           <p className="text-sm text-gray-600">Total Properties</p>
-          <p className="text-3xl font-bold text-gray-900">24</p>
-          <p className="text-sm text-green-600 mt-2">↑ 12% from last month</p>
+          <p className="text-3xl font-bold text-gray-900">—</p>
         </div>
         <div className="bg-white shadow rounded-lg p-6">
           <p className="text-sm text-gray-600">Total Units</p>
-          <p className="text-3xl font-bold text-gray-900">342</p>
-          <p className="text-sm text-blue-600 mt-2">289 occupied</p>
+          <p className="text-3xl font-bold text-gray-900">—</p>
         </div>
         <div className="bg-white shadow rounded-lg p-6">
           <p className="text-sm text-gray-600">Occupancy Rate</p>
-          <p className="text-3xl font-bold text-green-600">84.5%</p>
-          <p className="text-sm text-gray-600 mt-2">Industry avg: 85%</p>
+          <p className="text-3xl font-bold text-green-600">—</p>
         </div>
         <div className="bg-white shadow rounded-lg p-6">
           <p className="text-sm text-gray-600">Monthly Revenue</p>
-          <p className="text-3xl font-bold text-gray-900">KES 12.5M</p>
-          <p className="text-sm text-green-600 mt-2">↑ 8% from last month</p>
+          <p className="text-3xl font-bold text-gray-900">—</p>
         </div>
       </div>
 

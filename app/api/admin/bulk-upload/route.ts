@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
 
 // Simple CSV parser that handles quoted fields
@@ -155,7 +155,7 @@ async function uploadProperties(rows: Record<string, string>[]) {
           postalCode: row.postalCode || null,
           country: row.country || 'Kenya',
           type: propertyType as 'APARTMENT' | 'HOUSE' | 'CONDO' | 'TOWNHOUSE' | 'STUDIO' | 'COMMERCIAL',
-          units: row.units ? parseInt(row.units) : 1,
+          totalUnits: row.units ? parseInt(row.units) : 1,
           yearBuilt: row.yearBuilt ? parseInt(row.yearBuilt) : null,
           status: (row.status as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE') || 'ACTIVE',
           description: row.description || null,
@@ -169,7 +169,7 @@ async function uploadProperties(rows: Record<string, string>[]) {
           postalCode: row.postalCode || null,
           country: row.country || 'Kenya',
           type: propertyType as 'APARTMENT' | 'HOUSE' | 'CONDO' | 'TOWNHOUSE' | 'STUDIO' | 'COMMERCIAL',
-          units: row.units ? parseInt(row.units) : 1,
+          totalUnits: row.units ? parseInt(row.units) : 1,
           yearBuilt: row.yearBuilt ? parseInt(row.yearBuilt) : null,
           status: (row.status as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE') || 'ACTIVE',
           description: row.description || null,
@@ -216,7 +216,7 @@ async function uploadUnits(rows: Record<string, string>[]) {
 
     try {
       await prisma.unit.upsert({
-        where: { propertyId_unitNumber: { propertyId: property.id, unitNumber: row.unitNumber } },
+        where: { unitNumber: row.unitNumber },
         update: {
           landlordId: landlord.id,
           floor: row.floor ? parseInt(row.floor) : null,
@@ -389,11 +389,14 @@ async function uploadTransactions(rows: Record<string, string>[]) {
     const method = (row.paymentMethod as 'CASH' | 'BANK_TRANSFER' | 'MPESA' | 'CARD' | 'CHEQUE') || 'BANK_TRANSFER'
     const unit = row.unitNumber.trim()
 
-    // Find the lease for this unit
-    const lease = await prisma.lease.findFirst({
-      where: { unit },
-      include: { tenant: true, property: { include: { landlord: true } } },
-    })
+    // Find the unit record then lease linked to it
+    const unitRecord = await prisma.unit.findUnique({ where: { unitNumber: unit } })
+    const lease = unitRecord
+      ? await prisma.lease.findFirst({
+          where: { unitId: unitRecord.id, status: 'ACTIVE' },
+          include: { tenant: true, property: { include: { landlord: true } } },
+        })
+      : null
 
     if (!lease) {
       results.errors.push(`Transaction ${row.receiptNo}: no lease found for unit "${unit}"`)
@@ -434,15 +437,16 @@ async function uploadTransactions(rows: Record<string, string>[]) {
       }
 
       // Record landlord payout
-      if (landlordPayment > 0) {
+      if (landlordPayment > 0 && lease.property.landlordId) {
         const period = txDate.toLocaleString('default', { month: 'long', year: 'numeric' })
         const existing = await prisma.payout.findFirst({
-          where: { landlordId: lease.property.landlordId, paidDate: txDate },
+          where: { landlordId: lease.property.landlordId!, paidDate: txDate },
         })
         if (!existing) {
           await prisma.payout.create({
             data: {
-              landlordId: lease.property.landlordId,
+              landlordId: lease.property.landlordId!,
+              unitId: unitRecord!.id,
               amount: landlordPayment,
               period,
               status: 'PAID',

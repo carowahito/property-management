@@ -4,14 +4,49 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Starting database seed...')
+  console.log('🗑️  Clearing all existing data...')
 
-  // Create Admin User
+  // Truncate all tables in dependency order
+  await prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE
+      rent_distribution_items,
+      rent_transactions,
+      payouts,
+      landlord_statements,
+      payments,
+      work_orders,
+      maintenance_requests,
+      inspections,
+      viewings,
+      leases,
+      tenants,
+      units,
+      properties,
+      landlords,
+      messages,
+      notes,
+      communications,
+      tasks,
+      leads,
+      enquiries,
+      vendors,
+      leave_requests,
+      performance_reviews,
+      attendance,
+      team_members,
+      sessions,
+      accounts,
+      verification_tokens,
+      users
+    CASCADE
+  `)
+
+  console.log('✅ All data cleared')
+
+  // ── Admin User ────────────────────────────────────────────────────────────
   const hashedPassword = await bcrypt.hash('admin123', 10)
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@propmanage.com' },
-    update: {},
-    create: {
+  const admin = await prisma.user.create({
+    data: {
       email: 'admin@propmanage.com',
       password: hashedPassword,
       name: 'Admin User',
@@ -19,316 +54,285 @@ async function main() {
       active: true,
     },
   })
-
   console.log('✅ Admin user created:', admin.email)
 
-  // Create additional team members
-  const alice = await prisma.user.upsert({
-    where: { email: 'alice@propmanage.com' },
-    update: {},
-    create: {
-      email: 'alice@propmanage.com',
-      password: await bcrypt.hash('password123', 10),
-      name: 'Alice Johnson',
-      role: 'MANAGER',
-      active: true,
-    },
-  })
-
-  const bob = await prisma.user.upsert({
-    where: { email: 'bob@propmanage.com' },
-    update: {},
-    create: {
-      email: 'bob@propmanage.com',
-      password: await bcrypt.hash('password123', 10),
-      name: 'Bob Smith',
-      role: 'AGENT',
-      active: true,
-    },
-  })
-
-  console.log('✅ Team members created')
-
-  // Create sample landlords
-  const landlord1 = await prisma.landlord.create({
+  // ── Landlord: Ann Karuga ──────────────────────────────────────────────────
+  const landlord = await prisma.landlord.create({
     data: {
-      name: 'Robert Johnson',
-      email: 'robert.j@example.com',
-      phone: '+254712345678',
-      idNumber: 'ID12345678',
-      address: '123 Main St, Nairobi',
-      bankName: 'KCB Bank',
-      bankAccount: '1234567890',
+      name: 'Ann Karuga',
+      email: 'carowahito@gmail.com',
+      phone: '+254721998499',
+      idNumber: '27206034',
+      address: 'Nyeri',
+      bankName: 'Family Bank',
+      bankAccount: '055000000204',
       status: 'ACTIVE',
     },
   })
+  console.log('✅ Landlord created:', landlord.name)
 
-  const landlord2 = await prisma.landlord.create({
+  // ── Property: Greatwall Gardens II ───────────────────────────────────────
+  const property = await prisma.property.create({
     data: {
-      name: 'Sarah Davis',
-      email: 'sarah.d@example.com',
-      phone: '+254723456789',
-      idNumber: 'ID23456789',
-      status: 'ACTIVE',
-    },
-  })
-
-  console.log('✅ Landlords created')
-
-  // Create sample properties
-  const property1 = await prisma.property.create({
-    data: {
-      name: 'Sunset Apartments',
-      address: '456 Oak Avenue',
-      city: 'Nairobi',
-      state: 'Nairobi County',
-      postalCode: '00100',
+      name: 'Greatwall Gardens II',
+      address: 'Shanghai Road',
+      city: 'Athi River',
+      state: 'Machakos',
+      country: 'Kenya',
       type: 'APARTMENT',
-      units: 20,
-      yearBuilt: 2015,
+      totalUnits: 1,
       status: 'ACTIVE',
-      landlordId: landlord1.id,
-      description: 'Modern apartments in the heart of Nairobi',
+      landlordId: landlord.id,
     },
   })
+  console.log('✅ Property created:', property.name)
 
-  const property2 = await prisma.property.create({
+  // ── Unit: GWG2-A55 ───────────────────────────────────────────────────────
+  const unit = await prisma.unit.create({
     data: {
-      name: 'Vista Plaza',
-      address: '789 Elm Street',
-      city: 'Nairobi',
-      state: 'Nairobi County',
-      postalCode: '00200',
-      type: 'APARTMENT',
-      units: 15,
-      yearBuilt: 2018,
-      status: 'ACTIVE',
-      landlordId: landlord2.id,
+      unitNumber: 'GWG2-A55',
+      propertyId: property.id,
+      landlordId: landlord.id,
+      bedrooms: 3,
+      bathrooms: 2,
+      status: 'OCCUPIED',
+      monthlyRent: 30000,
+      serviceCharge: 2000,
+      managementFee: 1500,
     },
   })
+  console.log('✅ Unit created:', unit.unitNumber)
 
-  const property3 = await prisma.property.create({
+  // ── Tenant: Faridah Achieng Kassim ───────────────────────────────────────
+  const tenant = await prisma.tenant.create({
     data: {
-      name: 'Riverside Tower',
-      address: '321 River Road',
-      city: 'Mombasa',
-      state: 'Mombasa County',
-      postalCode: '80100',
-      type: 'CONDO',
-      units: 30,
-      yearBuilt: 2020,
-      status: 'ACTIVE',
-      landlordId: landlord1.id,
-    },
-  })
-
-  console.log('✅ Properties created')
-
-  // Create sample tenants
-  const tenant1 = await prisma.tenant.create({
-    data: {
-      name: 'John Smith',
-      email: 'john.smith@example.com',
-      phone: '+254734567890',
-      idNumber: 'ID34567890',
-      emergencyContact: 'Jane Smith',
-      emergencyPhone: '+254745678901',
-      propertyId: property1.id,
-      unit: 'Unit 101',
-      moveInDate: new Date('2023-01-15'),
+      name: 'Faridah Achieng Kassim',
+      email: 'faridahkassim592@gmail.com',
+      phone: '+254721656564',
+      idNumber: '23836035',
+      propertyId: property.id,
+      unitId: unit.id,
+      unit: 'GWG2-A55',
+      moveInDate: new Date('2025-01-30'),
       status: 'ACTIVE',
     },
   })
+  console.log('✅ Tenant created:', tenant.name)
 
-  const tenant2 = await prisma.tenant.create({
+  // ── Lease 1 (expired) — original 12-month term ───────────────────────────
+  const expiredLease = await prisma.lease.create({
     data: {
-      name: 'Sarah Johnson',
-      email: 'sarah.j@example.com',
-      phone: '+254756789012',
-      idNumber: 'ID45678901',
-      propertyId: property2.id,
-      unit: 'Unit 3B',
-      moveInDate: new Date('2023-03-01'),
+      tenantId: tenant.id,
+      propertyId: property.id,
+      unitId: unit.id,
+      unit: 'GWG2-A55',
+      startDate: new Date('2025-02-01'),
+      endDate: new Date('2026-01-31'),
+      monthlyRent: 30000,
+      securityDeposit: 30000,
+      status: 'EXPIRED',
+      terms: 'Late payment penalty: KES 500 per day fixed. Rent due 5th of each month.',
+    },
+  })
+
+  // ── Lease 2 (active) — current renewal ───────────────────────────────────
+  const activeLease = await prisma.lease.create({
+    data: {
+      tenantId: tenant.id,
+      propertyId: property.id,
+      unitId: unit.id,
+      unit: 'GWG2-A55',
+      startDate: new Date('2026-02-01'),
+      endDate: new Date('2027-01-31'),
+      monthlyRent: 30000,
+      securityDeposit: 30000,
       status: 'ACTIVE',
+      terms: 'Late payment penalty: KES 500 per day fixed. Rent due 5th of each month.',
     },
   })
+  console.log('✅ Leases created (expired + active)')
 
-  console.log('✅ Tenants created')
+  // ── Transaction history ───────────────────────────────────────────────────
+  // Gross rent: 30,000 | Service charge: 2,000 | Management fee: 1,500 | Net to landlord: 26,500
+  //
+  // Source: GWG2-A55.xlsx — "Transactions History" sheet
+  //   Column D = Rent deposit from tenant (M-Pesa inflow to manager)
+  //   Column F = Rent Payment to Landlord (payout receipt number used as payout reference)
+  //
+  // One Payment + RentTransaction + Payout record per paid month.
+  // Payment references use the tenant's M-Pesa deposit receipt where known;
+  // otherwise a synthetic ref is used (funds were covered by a prior lump deposit).
 
-  // Create sample leases
-  const lease1 = await prisma.lease.create({
-    data: {
-      tenantId: tenant1.id,
-      propertyId: property1.id,
-      unit: 'Unit 101',
-      startDate: new Date('2023-01-15'),
-      endDate: new Date('2024-01-14'),
-      monthlyRent: 50000,
-      securityDeposit: 50000,
-      status: 'ACTIVE',
+  type MonthRecord = {
+    period: string
+    dueDate: string
+    paidDate: string
+    paymentRef: string        // tenant → manager receipt
+    payoutRef: string         // manager → landlord receipt
+    payoutDate: string
+    leaseId: string
+  }
+
+  const months: MonthRecord[] = [
+    // ── Under expired lease ─────────────────────────────────────────────────
+    {
+      period: 'July 2025',
+      dueDate: '2025-07-05',
+      paidDate: '2025-07-05',     // covered by earlier deposit (not in workbook window)
+      paymentRef: 'DEP-GWG2A55-202507',
+      payoutRef: 'TGA8D6O33O',
+      payoutDate: '2025-07-10',
+      leaseId: expiredLease.id,
     },
-  })
-
-  const lease2 = await prisma.lease.create({
-    data: {
-      tenantId: tenant2.id,
-      propertyId: property2.id,
-      unit: 'Unit 3B',
-      startDate: new Date('2023-03-01'),
-      endDate: new Date('2024-02-29'),
-      monthlyRent: 45000,
-      securityDeposit: 45000,
-      status: 'ACTIVE',
+    {
+      period: 'August 2025',
+      dueDate: '2025-08-05',
+      paidDate: '2025-08-05',     // TH583BXHG8: 60,000 lump (covers Aug + Sep)
+      paymentRef: 'TH583BXHG8',
+      payoutRef: 'TH654YJC83',
+      payoutDate: '2025-08-06',
+      leaseId: expiredLease.id,
     },
-  })
-
-  console.log('✅ Leases created')
-
-  // Create sample vendors
-  const vendor1 = await prisma.vendor.create({
-    data: {
-      name: 'Quick Repairs Ltd',
-      email: 'info@quickrepairs.com',
-      phone: '+254767890123',
-      specialization: 'General Maintenance',
-      rating: 4.5,
-      status: 'ACTIVE',
+    {
+      period: 'September 2025',
+      dueDate: '2025-09-05',
+      paidDate: '2025-09-05',     // TI56LIZ3L8: 30,000
+      paymentRef: 'TI56LIZ3L8',
+      payoutRef: 'TI80YR8X26',
+      payoutDate: '2025-09-08',
+      leaseId: expiredLease.id,
     },
-  })
-
-  const vendor2 = await prisma.vendor.create({
-    data: {
-      name: 'Mike HVAC Repairs',
-      email: 'mike@hvacrepairs.com',
-      phone: '+254778901234',
-      specialization: 'HVAC',
-      rating: 4.8,
-      status: 'ACTIVE',
+    {
+      period: 'October 2025',
+      dueDate: '2025-10-05',
+      paidDate: '2025-10-18',     // TJI6F7O2V4: 20,000 + TJR6F8I2LB: 40,000
+      paymentRef: 'TJI6F7O2V4',
+      payoutRef: 'TJGSN2HOKX',
+      payoutDate: '2025-10-16',
+      leaseId: expiredLease.id,
     },
-  })
-
-  console.log('✅ Vendors created')
-
-  // Create sample leads
-  const lead1 = await prisma.lead.create({
-    data: {
-      name: 'Sarah Mitchell',
-      email: 'sarah.mitchell@example.com',
-      phone: '+254789012345',
-      type: 'TENANT',
-      status: 'QUALIFIED',
-      source: 'WEBSITE',
-      budget: 'KES 40,000 - 55,000',
-      moveInDate: new Date('2024-12-01'),
-      preferences: '2BR, pet-friendly, parking',
-      notes: 'Very interested, has good credit',
-      assignedTo: alice.id,
-      lastContact: new Date(),
+    {
+      period: 'November 2025',
+      dueDate: '2025-11-05',
+      paidDate: '2025-11-05',     // covered by Oct lump overpayment
+      paymentRef: 'DEP-GWG2A55-202511',
+      payoutRef: 'TK8SN3B9YB',
+      payoutDate: '2025-11-08',
+      leaseId: expiredLease.id,
     },
-  })
-
-  const lead2 = await prisma.lead.create({
-    data: {
-      name: 'James Kamau',
-      email: 'james.k@example.com',
-      phone: '+254790123456',
-      type: 'TENANT',
-      status: 'CONTACTED',
-      source: 'REFERRAL',
-      budget: 'KES 35,000 - 45,000',
-      moveInDate: new Date('2024-11-25'),
-      assignedTo: bob.id,
-      notes: 'Referred by current tenant',
+    {
+      period: 'December 2025',
+      dueDate: '2025-12-05',
+      paidDate: '2025-12-27',     // TLR6F23HDO: 50,000 (covers Dec + Jan)
+      paymentRef: 'TLR6F23HDO',
+      payoutRef: 'TLNSN4WOOF',
+      payoutDate: '2025-12-23',
+      leaseId: expiredLease.id,
     },
-  })
-
-  console.log('✅ Leads created')
-
-  // Create sample enquiries
-  const enquiry1 = await prisma.enquiry.create({
-    data: {
-      name: 'Grace Wanjiru',
-      email: 'grace.w@example.com',
-      phone: '+254701234567',
-      subject: 'Early lease termination',
-      message: 'Can I terminate my lease 2 months early? What are the penalties?',
-      status: 'RESOLVED',
-      priority: 'MEDIUM',
-      assignedTo: alice.id,
-      resolvedAt: new Date(),
+    {
+      period: 'January 2026',
+      dueDate: '2026-01-05',
+      paidDate: '2026-01-03',     // covered by Dec lump deposit
+      paymentRef: 'DEP-GWG2A55-202601',
+      payoutRef: 'UA3SN5A4CS',
+      payoutDate: '2026-01-03',
+      leaseId: expiredLease.id,
     },
-  })
-
-  console.log('✅ Enquiries created')
-
-  // Create sample tasks
-  await prisma.task.create({
-    data: {
-      title: 'Schedule follow-up call with Sarah Mitchell',
-      description: 'Call to discuss property options and schedule viewing',
-      priority: 'HIGH',
-      status: 'PENDING',
-      dueDate: new Date('2024-11-25T10:00:00'),
-      reminderDate: new Date('2024-11-24T09:00:00'),
-      assignedToId: alice.id,
-      assignedById: admin.id,
-      stakeholderType: 'LEAD',
-      leadId: lead1.id,
-      notes: 'Lead is very interested. Has budget ready.',
+    // ── Under active lease ──────────────────────────────────────────────────
+    {
+      period: 'February 2026',
+      dueDate: '2026-02-05',
+      paidDate: '2026-02-16',
+      paymentRef: 'DEP-GWG2A55-202602',
+      payoutRef: 'UBGSN6UZUE',
+      payoutDate: '2026-02-16',
+      leaseId: activeLease.id,
     },
-  })
-
-  await prisma.task.create({
-    data: {
-      title: 'Send lease renewal terms to John Smith',
-      description: 'Prepare and send lease renewal offer with updated terms',
-      priority: 'MEDIUM',
-      status: 'IN_PROGRESS',
-      dueDate: new Date('2024-11-27T15:00:00'),
-      assignedToId: bob.id,
-      assignedById: alice.id,
-      stakeholderType: 'TENANT',
-      notes: 'Tenant requested early renewal. Offer 2% increase.',
+    {
+      period: 'March 2026',
+      dueDate: '2026-03-05',
+      paidDate: '2026-03-06',
+      paymentRef: 'DEP-GWG2A55-202603',
+      payoutRef: 'UC6SN7KEF6',
+      payoutDate: '2026-03-06',
+      leaseId: activeLease.id,
     },
-  })
+  ]
 
-  console.log('✅ Tasks created')
+  for (const m of months) {
+    // Payment: tenant pays 30,000 gross rent to manager
+    const payment = await prisma.payment.create({
+      data: {
+        tenantId: tenant.id,
+        leaseId: m.leaseId,
+        amount: 30000,
+        type: 'RENT',
+        method: 'MPESA',
+        status: 'PAID',
+        dueDate: new Date(m.dueDate),
+        paidDate: new Date(m.paidDate),
+        reference: m.paymentRef,
+      },
+    })
 
-  // Create sample payments
-  await prisma.payment.create({
-    data: {
-      tenantId: tenant1.id,
-      leaseId: lease1.id,
-      amount: 50000,
-      type: 'RENT',
-      method: 'MPESA',
-      status: 'PAID',
-      dueDate: new Date('2024-11-01'),
-      paidDate: new Date('2024-11-01'),
-      reference: 'MPESA-REF-123456',
-    },
-  })
+    // Payout: manager pays 26,500 net to landlord
+    const payout = await prisma.payout.create({
+      data: {
+        landlordId: landlord.id,
+        unitId: unit.id,
+        amount: 26500,
+        period: m.period,
+        status: 'PAID',
+        method: 'BANK_TRANSFER',
+        reference: m.payoutRef,
+        paidDate: new Date(m.payoutDate),
+      },
+    })
 
-  await prisma.payment.create({
-    data: {
-      tenantId: tenant2.id,
-      leaseId: lease2.id,
-      amount: 45000,
-      type: 'RENT',
-      method: 'BANK_TRANSFER',
-      status: 'OVERDUE',
-      dueDate: new Date('2024-11-01'),
-    },
-  })
+    // RentTransaction: reconciliation record
+    await prisma.rentTransaction.create({
+      data: {
+        paymentId: payment.id,
+        tenantId: tenant.id,
+        unitId: unit.id,
+        leaseId: m.leaseId,
+        landlordId: landlord.id,
+        propertyId: property.id,
+        grossRent: 30000,
+        rentPeriod: m.period,
+        dueDate: new Date(m.dueDate),
+        paidDate: new Date(m.paidDate),
+        serviceCharge: 2000,
+        managementFee: 1500,
+        maintenanceFees: 0,
+        otherDeductions: 0,
+        totalDeductions: 3500,
+        netAmount: 26500,
+        lateFees: 0,
+        payoutId: payout.id,
+        payoutStatus: 'PAID',
+        payoutDate: new Date(m.payoutDate),
+        payoutMethod: 'BANK_TRANSFER',
+        payoutReference: m.payoutRef,
+        processed: true,
+        processedAt: new Date(m.payoutDate),
+        processedBy: admin.id,
+      },
+    })
+  }
 
-  console.log('✅ Payments created')
+  console.log(`✅ Created ${months.length} months of payment history (Jul 2025 – Mar 2026)`)
 
-  console.log('🎉 Database seeding completed!')
+  console.log('\n🎉 Seed complete — 1 unit, 1 landlord, 1 tenant, 9 paid months')
+  console.log('   Unit:     GWG2-A55')
+  console.log('   Landlord: Ann Karuga')
+  console.log('   Tenant:   Faridah Achieng Kassim')
+  console.log('   Admin:    admin@propmanage.com / admin123')
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error seeding database:', e)
+    console.error('❌ Seed error:', e)
     process.exit(1)
   })
   .finally(async () => {

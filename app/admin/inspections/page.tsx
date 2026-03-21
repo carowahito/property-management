@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface Inspection {
@@ -16,57 +16,27 @@ interface Inspection {
 }
 
 export default function InspectionsPage() {
-  const [inspections] = useState<Inspection[]>([
-    {
-      id: '1',
-      propertyName: 'Sunset Apartments',
-      unitNumber: '5A',
-      type: 'move-in',
-      scheduledDate: '2024-03-15',
-      inspector: 'John Kamau',
-      status: 'scheduled',
-    },
-    {
-      id: '2',
-      propertyName: 'Highland House',
-      unitNumber: '12',
-      type: 'move-out',
-      scheduledDate: '2024-03-10',
-      inspector: 'Sarah Njeri',
-      status: 'completed',
-      issuesFound: 3,
-      notes: 'Minor wall damage, carpet cleaning needed',
-    },
-    {
-      id: '3',
-      propertyName: 'Vista Plaza',
-      unitNumber: '8B',
-      type: 'routine',
-      scheduledDate: '2024-03-20',
-      inspector: 'Peter Omondi',
-      status: 'scheduled',
-    },
-    {
-      id: '4',
-      propertyName: 'Garden Estate',
-      unitNumber: '3C',
-      type: 'maintenance',
-      scheduledDate: '2024-03-08',
-      inspector: 'Mary Wanjiku',
-      status: 'completed',
-      issuesFound: 0,
-      notes: 'All systems functioning properly',
-    },
-    {
-      id: '5',
-      propertyName: 'Riverside Towers',
-      unitNumber: '15D',
-      type: 'move-in',
-      scheduledDate: '2024-03-12',
-      inspector: 'James Otieno',
-      status: 'cancelled',
-    },
-  ]);
+  const [inspections, setInspections] = useState<Inspection[]>([]);
+
+  useEffect(() => {
+    fetch('/api/inspections?limit=100')
+      .then(r => r.json())
+      .then(data => {
+        const mapped = (data.inspections || []).map((i: any) => ({
+          id: i.id,
+          propertyName: i.property?.name || '',
+          unitNumber: '',
+          type: (i.type || 'MAINTENANCE').toLowerCase().replace('_', '-') as Inspection['type'],
+          scheduledDate: i.date ? i.date.split('T')[0] : '',
+          inspector: i.inspector || '',
+          status: (i.status || 'SCHEDULED').toLowerCase() as Inspection['status'],
+          issuesFound: undefined,
+          notes: i.findings || undefined,
+        }));
+        setInspections(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   const [filterType, setFilterType] = useState<string>('all');
   const filteredInspections = inspections.filter(

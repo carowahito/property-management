@@ -48,7 +48,7 @@ interface PropertyDetail {
 }
 
 async function fetchProperty(id: string): Promise<{ property: PropertyDetail }> {
-  const response = await fetch(`/api/mock/properties/${id}`)
+  const response = await fetch(`/api/properties/${id}`)
   if (!response.ok) {
     throw new Error('Failed to fetch property')
   }

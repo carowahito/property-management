@@ -104,9 +104,9 @@ export class RentProcessor {
         data: {
           paymentId: payment.id,
           leaseId: lease.id,
-          landlordId: lease.property.landlordId,
+          landlordId: lease.property.landlordId!,
           propertyId: lease.propertyId,
-          unitId: lease.unit || null,
+          unitId: lease.unitId!,
           tenantId: payment.tenantId,
 
           grossRent,
@@ -136,8 +136,9 @@ export class RentProcessor {
         maintenanceFees,
         otherDeductions,
         netAmount,
-        landlordId: lease.property.landlordId,
-        landlordName: lease.property.landlord.name,
+        landlordId: lease.property.landlordId!,
+        landlordName: lease.property.landlord?.name ?? '',
+        unitId: lease.unitId!,
       });
 
       return {
@@ -222,11 +223,13 @@ export class RentProcessor {
 
       // Get rent period from first transaction
       const period = transactions[0].rentPeriod;
+      const unitId = transactions[0].unitId;
 
       // Create payout
       const payout = await prisma.payout.create({
         data: {
           landlordId,
+          unitId,
           amount: totalAmount,
           period,
           status: PayoutStatus.PENDING,
@@ -377,11 +380,13 @@ export class RentProcessor {
       netAmount: number;
       landlordId: string;
       landlordName: string;
+      unitId: string;
     }
   ) {
     const items: Prisma.RentDistributionItemCreateManyInput[] = [
       {
         rentTransactionId,
+        unitId: data.unitId,
         type: 'GROSS_RENT' as const,
         description: 'Gross rent payment received from tenant',
         amount: data.grossRent,
@@ -391,6 +396,7 @@ export class RentProcessor {
       },
       {
         rentTransactionId,
+        unitId: data.unitId,
         type: 'SERVICE_CHARGE' as const,
         description: 'Monthly service charge for property management company',
         amount: -data.serviceCharge,
@@ -399,6 +405,7 @@ export class RentProcessor {
       },
       {
         rentTransactionId,
+        unitId: data.unitId,
         type: 'MANAGEMENT_FEE' as const,
         description: 'Property management commission',
         amount: -data.managementFee,
@@ -410,6 +417,7 @@ export class RentProcessor {
     if (data.maintenanceFees > 0) {
       items.push({
         rentTransactionId,
+        unitId: data.unitId,
         type: 'MAINTENANCE_FEE' as const,
         description: 'Approved maintenance and repair costs',
         amount: -data.maintenanceFees,
@@ -421,6 +429,7 @@ export class RentProcessor {
     if (data.otherDeductions > 0) {
       items.push({
         rentTransactionId,
+        unitId: data.unitId,
         type: 'OTHER_DEDUCTION' as const,
         description: 'Other agreed deductions',
         amount: -data.otherDeductions,
@@ -431,6 +440,7 @@ export class RentProcessor {
 
     items.push({
       rentTransactionId,
+      unitId: data.unitId,
       type: 'NET_PAYOUT' as const,
       description: 'Net amount to be paid to landlord',
       amount: data.netAmount,

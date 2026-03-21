@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { mockLandlords } from '@/lib/mock-data'
 
 export default function LandlordLoginPage() {
   const [email, setEmail] = useState('')
@@ -17,27 +16,12 @@ export default function LandlordLoginPage() {
     setIsLoading(true)
     setError('')
 
-    // Simulate authentication with mock data
     setTimeout(() => {
-      const landlord = mockLandlords.find(l => l.email === email)
-      
-      if (landlord && password === 'password') {
-        // Store landlord info in localStorage (in production, use proper session management)
-        localStorage.setItem('landlordId', landlord.id)
-        localStorage.setItem('landlordName', landlord.name)
-        setIsLoading(false)
-        router.push('/landlord/dashboard')
-      } else {
-        setError('Invalid email or password')
-        setIsLoading(false)
-      }
-    }, 1000)
+      setError('Landlord portal login is not yet available.')
+      setIsLoading(false)
+    }, 500)
   }
 
-  const demoAccounts = mockLandlords.map(l => ({
-    email: l.email,
-    name: l.name,
-  }))
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -138,20 +122,6 @@ export default function LandlordLoginPage() {
             </p>
           </div>
         </form>
-
-        {/* Demo Accounts */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Demo Accounts</h3>
-          <div className="space-y-2">
-            {demoAccounts.map((account, idx) => (
-              <div key={idx} className="text-xs bg-gray-50 p-2 rounded border border-gray-200">
-                <div className="font-medium text-gray-900">{account.name}</div>
-                <div className="text-gray-600">Email: {account.email}</div>
-                <div className="text-gray-600">Password: password</div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Back to Home */}
         <div className="text-center">

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
-import { mockLandlords, mockProperties, mockTenants, mockPayments } from '@/lib/mock-data'
 import TaskManager from '@/components/crm/TaskManager'
 
 interface Props {
@@ -16,18 +15,29 @@ export default function LandlordCRMPage({ params }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'financials' | 'tenants' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [landlordId, setLandlordId] = useState<string | null>(null)
+  const [landlordApiData, setLandlordApiData] = useState<any>(null)
+  const [isLoadingLandlord, setIsLoadingLandlord] = useState(false)
 
   useEffect(() => {
     params.then(p => setLandlordId(p.id))
   }, [params])
 
-  if (!landlordId) {
+  useEffect(() => {
+    if (!landlordId) return
+    setIsLoadingLandlord(true)
+    fetch(`/api/landlords/${landlordId}`)
+      .then(r => r.json())
+      .then(data => { setLandlordApiData(data); setIsLoadingLandlord(false) })
+      .catch(() => setIsLoadingLandlord(false))
+  }, [landlordId])
+
+  if (!landlordId || isLoadingLandlord) {
     return <div className="flex items-center justify-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
     </div>
   }
 
-  const landlord = mockLandlords.find(l => l.id === landlordId)
+  const landlord = landlordApiData
 
   if (!landlord) {
     return <div className="flex items-center justify-center h-64">
@@ -40,43 +50,21 @@ export default function LandlordCRMPage({ params }: Props) {
     </div>
   }
 
-  // Get related data
-  const landlordProperties = mockProperties.filter(p => p.id === landlordId).slice(0, 3) // Mock: showing sample properties
-  const landlordTenants = mockTenants.filter(t => ['1', '2', '3'].includes(t.id)) // Mock
-  const landlordPayouts = mockPayments.filter(p => ['1', '2'].includes(p.id)) // Mock
+  // Get related data from API response
+  const landlordProperties = landlordApiData?.properties || []
+  const landlordTenants: any[] = []
+  const landlordPayouts = landlordApiData?.payouts || []
 
-  const tenantNotes = [
-    { id: '1', date: '2024-11-15T10:00:00', author: 'Alice Johnson', note: 'Discussed adding 2 new properties to portfolio. Landlord interested in full-service management.' },
-    { id: '2', date: '2024-10-20T14:30:00', author: 'Carol White', note: 'Monthly payout processed successfully. No issues with rent collection this month.' },
-    { id: '3', date: '2024-09-10T09:00:00', note: 'Landlord prefers email communication. Responsive to tenant concerns.' },
-  ]
+  const tenantNotes: any[] = []
+  const communications: any[] = []
+  const activityLog: any[] = []
+  const documents: any[] = []
 
-  const communications = [
-    { id: '1', date: '2024-11-21T11:00:00', type: 'email', subject: 'November Rent Collection Report', status: 'delivered' },
-    { id: '2', date: '2024-11-05T09:30:00', type: 'email', subject: 'Property Inspection Report - Sunset Apartments', status: 'read' },
-    { id: '3', date: '2024-10-25T14:20:00', type: 'in-app', subject: 'Payout Notification', status: 'read' },
-  ]
-
-  const activityLog = [
-    { id: '1', date: '2024-11-25T10:00:00', type: 'payment', description: 'Payout processed - KES 237,500', user: 'System' },
-    { id: '2', date: '2024-11-21T11:00:00', type: 'communication', description: 'Monthly report sent', user: 'Carol White' },
-    { id: '3', date: '2024-11-15T14:00:00', type: 'note', description: 'Note added by Alice Johnson', user: 'Alice Johnson' },
-    { id: '4', date: '2024-11-01T09:00:00', type: 'document', description: 'Financial statement uploaded', user: 'System' },
-    { id: '5', date: '2024-10-25T10:00:00', type: 'payment', description: 'Payout processed - KES 225,000', user: 'System' },
-  ]
-
-  const documents = [
-    { id: '1', name: 'Management Agreement - 2024.pdf', type: 'Contract', date: '2024-01-15', size: '3.2 MB' },
-    { id: '2', name: 'Tax Documentation - 2024.pdf', type: 'Tax', date: '2024-11-01', size: '1.8 MB' },
-    { id: '3', name: 'Property Insurance - Sunset Apartments.pdf', type: 'Insurance', date: '2024-03-10', size: '2.1 MB' },
-    { id: '4', name: 'October 2024 Financial Statement.pdf', type: 'Financial', date: '2024-11-05', size: '956 KB' },
-  ]
-
-  // Calculate statistics
+  // Calculate statistics from real data
   const totalProperties = landlordProperties.length
-  const totalUnits = landlordProperties.reduce((sum, p) => sum + (p.units || 0), 0)
-  const occupiedUnits = Math.floor(totalUnits * 0.85) // Mock 85% occupancy
-  const totalMonthlyRevenue = landlordProperties.reduce((sum, p) => sum + (p.units || 0) * 45000, 0) // Mock rent
+  const totalUnits = landlordProperties.reduce((sum: number, p: any) => sum + (p.totalUnits || 0), 0)
+  const occupiedUnits = 0
+  const totalMonthlyRevenue = landlordPayouts.filter((p: any) => p.status === 'PAID').reduce((sum: number, p: any) => sum + Number(p.amount), 0)
   const yearlyRevenue = totalMonthlyRevenue * 12
 
   const getActivityIcon = (type: string) => {
@@ -97,7 +85,7 @@ export default function LandlordCRMPage({ params }: Props) {
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
             <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {landlord.name.split(' ').map(n => n[0]).join('')}
+              {landlord.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -278,7 +266,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 <Button variant="primary">+ Add Property</Button>
               </div>
               <div className="grid gap-4">
-                {landlordProperties.map(property => (
+                {landlordProperties.map((property: any) => (
                   <div key={property.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>

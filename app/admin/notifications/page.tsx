@@ -1,10 +1,8 @@
 'use client'
 
-import { mockNotifications, mockPayments, mockMaintenanceRequests } from '@/lib/mock-data'
-
 export default function NotificationsPage() {
-  const unreadCount = mockNotifications.filter(n => !n.read).length
-  const recentNotifications = mockNotifications.slice(0, 10)
+  const unreadCount = 0
+  const recentNotifications: any[] = []
 
   return (
     <div className="space-y-6">
@@ -18,7 +16,7 @@ export default function NotificationsPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-sm text-gray-600">Total Notifications</div>
-          <div className="text-3xl font-bold text-gray-900">{mockNotifications.length}</div>
+          <div className="text-3xl font-bold text-gray-900">0</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-sm text-gray-600">Unread</div>
@@ -54,10 +52,10 @@ export default function NotificationsPage() {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Active Notification Types</h2>
         <div className="space-y-3">
           {[
-            { type: 'Payment Reminders', count: mockPayments.filter(p => p.status === 'Pending').length },
-            { type: 'Maintenance Updates', count: mockMaintenanceRequests.length },
-            { type: 'Lease Renewals', count: mockNotifications.filter(n => n.type === 'lease').length },
-            { type: 'Vendor Services', count: mockNotifications.filter(n => n.type === 'vendor').length },
+            { type: 'Payment Reminders', count: 0 },
+            { type: 'Maintenance Updates', count: 0 },
+            { type: 'Lease Renewals', count: 0 },
+            { type: 'Vendor Services', count: 0 },
           ].map(item => (
             <div key={item.type} className="flex justify-between items-center p-3 bg-gray-50 rounded">
               <span className="text-gray-700">{item.type}</span>

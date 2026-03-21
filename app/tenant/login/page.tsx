@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { mockTenants } from '@/lib/mock-data'
 
 export default function TenantLoginPage() {
   const [email, setEmail] = useState('')
@@ -17,22 +16,10 @@ export default function TenantLoginPage() {
     setIsLoading(true)
     setError('')
 
-    // Simulate authentication with mock data
     setTimeout(() => {
-      const tenant = mockTenants.find(t => t.email === email)
-      
-      if (tenant && password === 'password') {
-        // Store tenant info in localStorage
-        localStorage.setItem('tenantId', tenant.id)
-        localStorage.setItem('tenantName', tenant.name)
-        localStorage.setItem('propertyId', tenant.propertyId)
-        setIsLoading(false)
-        router.push('/tenant/dashboard')
-      } else {
-        setError('Invalid email or password')
-        setIsLoading(false)
-      }
-    }, 1000)
+      setError('Tenant portal login is not yet available.')
+      setIsLoading(false)
+    }, 500)
   }
 
   return (
