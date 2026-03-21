@@ -147,11 +147,13 @@ model Unit {
   updatedAt     DateTime   @updatedAt
 
   // Relations
-  property         Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  landlord         Landlord          @relation(fields: [landlordId], references: [id], onDelete: Cascade)
-  tenants          Tenant[]
-  leases           Lease[]
-  rentTransactions RentTransaction[]
+  property              Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  landlord              Landlord               @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  tenants               Tenant[]
+  leases                Lease[]
+  rentTransactions      RentTransaction[]
+  payouts               Payout[]
+  distributionItems     RentDistributionItem[]
 
   @@index([propertyId])
   @@index([landlordId])
@@ -363,21 +365,24 @@ model Payment {
 model Payout {
   id          String   @id @default(cuid())
   landlordId  String
+  unitId      String   // payout is always for a specific unit's income
   amount      Decimal  @db.Decimal(10, 2)
   period      String
   status      PayoutStatus @default(PENDING)
   method      PaymentMethod
-  reference   String?
+  reference   String?  @unique
   notes       String?
   paidDate    DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  landlord    Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  landlord         Landlord         @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  unit             Unit             @relation(fields: [unitId], references: [id], onDelete: Cascade)
   rentTransactions RentTransaction[]
 
   @@index([landlordId])
+  @@index([unitId])
   @@index([status])
   @@map("payouts")
 }
@@ -458,28 +463,33 @@ model RentTransaction {
 model RentDistributionItem {
   id                  String   @id @default(cuid())
   rentTransactionId   String
-  
+  // Direct unit link — service charge, repairs, agent commission are all
+  // for a specific unit regardless of which transaction they belong to.
+  unitId              String
+
   // Distribution Details
-  type                DistributionType
+  type                DistributionType  // SERVICE_CHARGE | MANAGEMENT_FEE | MAINTENANCE_FEE | REPAIR_COST | NET_PAYOUT etc.
   description         String
   amount              Decimal  @db.Decimal(10, 2)
-  recipientType       RecipientType // LANDLORD, MANAGER, SERVICE_PROVIDER, etc.
+  recipientType       RecipientType     // LANDLORD | MANAGER | SERVICE_PROVIDER | VENDOR etc.
   recipientId         String?
   recipientName       String?
-  
+
   // Payment Details
   paid                Boolean  @default(false)
   paidDate            DateTime?
   paymentMethod       PaymentMethod?
-  reference           String?
-  
+  reference           String?  @unique  // receipt/transaction ID for this specific line item
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   // Relations
   rentTransaction     RentTransaction @relation(fields: [rentTransactionId], references: [id], onDelete: Cascade)
+  unit                Unit            @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
   @@index([rentTransactionId])
+  @@index([unitId])
   @@index([type])
   @@index([recipientType])
   @@map("rent_distribution_items")
