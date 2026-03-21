@@ -128,7 +128,10 @@ model Property {
 
 model Unit {
   id            String     @id @default(cuid())
-  unitNumber    String     // e.g. "GWG2-A55"
+  // unitNumber is globally unique — it encodes the building prefix (e.g. GWG2-A55).
+  // One active tenant at a time is enforced at the application layer.
+  // A landlord can own many units: GWG2-A55, GWG2-A56, GWG2-A57, etc.
+  unitNumber    String     @unique
   propertyId    String
   landlordId    String
   floor         Int?
@@ -150,7 +153,6 @@ model Unit {
   leases           Lease[]
   rentTransactions RentTransaction[]
 
-  @@unique([propertyId, unitNumber])
   @@index([propertyId])
   @@index([landlordId])
   @@index([status])
@@ -339,7 +341,9 @@ model Payment {
   status          PaymentStatus @default(PENDING)
   dueDate         DateTime
   paidDate        DateTime?
-  reference       String?
+  // reference = Receipt No / Transaction ID (e.g. "UC6SN7KEF6").
+  // Unique when present — use this to look up any transaction.
+  reference       String?  @unique
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
