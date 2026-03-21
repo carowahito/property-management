@@ -99,16 +99,19 @@ model Property {
   postalCode  String?
   country     String   @default("Kenya")
   type        PropertyType
-  units       Int      @default(1)
+  totalUnits  Int      @default(1)
   yearBuilt   Int?
   status      PropertyStatus @default(ACTIVE)
   description String?
-  landlordId  String
+  // Optional: set if one landlord owns the entire building.
+  // Leave null when different units are owned by different landlords.
+  landlordId  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  landlord    Landlord     @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  landlord    Landlord?    @relation(fields: [landlordId], references: [id], onDelete: SetNull)
+  propertyUnits Unit[]
   tenants     Tenant[]
   leases      Lease[]
   maintenanceRequests MaintenanceRequest[]
@@ -121,6 +124,37 @@ model Property {
   @@index([landlordId])
   @@index([status])
   @@map("properties")
+}
+
+model Unit {
+  id            String     @id @default(cuid())
+  unitNumber    String     // e.g. "GWG2-A55"
+  propertyId    String
+  landlordId    String
+  floor         Int?
+  bedrooms      Int?
+  bathrooms     Int?
+  sizeSqm       Float?
+  status        UnitStatus @default(VACANT)
+  monthlyRent   Decimal?   @db.Decimal(10, 2)
+  serviceCharge Decimal?   @db.Decimal(10, 2)
+  managementFee Decimal?   @db.Decimal(10, 2)
+  description   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  property         Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  landlord         Landlord          @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  tenants          Tenant[]
+  leases           Lease[]
+  rentTransactions RentTransaction[]
+
+  @@unique([propertyId, unitNumber])
+  @@index([propertyId])
+  @@index([landlordId])
+  @@index([status])
+  @@map("units")
 }
 
 model Landlord {
@@ -139,6 +173,7 @@ model Landlord {
 
   // Relations
   properties  Property[]
+  units       Unit[]
   payouts     Payout[]
   messages    Message[]
   rentTransactions RentTransaction[]
@@ -158,7 +193,8 @@ model Tenant {
   emergencyContact String?
   emergencyPhone  String?
   propertyId      String
-  unit            String?
+  unitId          String?
+  unit            String?  // kept for backward compatibility
   moveInDate      DateTime?
   moveOutDate     DateTime?
   status          TenantStatus @default(ACTIVE)
@@ -166,7 +202,8 @@ model Tenant {
   updatedAt       DateTime @updatedAt
 
   // Relations
-  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unitRef         Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
   leases          Lease[]
   payments        Payment[]
   maintenanceRequests MaintenanceRequest[]
@@ -175,6 +212,7 @@ model Tenant {
 
   @@index([email])
   @@index([propertyId])
+  @@index([unitId])
   @@index([status])
   @@map("tenants")
 }
@@ -265,7 +303,8 @@ model Lease {
   id              String   @id @default(cuid())
   tenantId        String
   propertyId      String
-  unit            String?
+  unitId          String?
+  unit            String?  // kept for backward compatibility
   startDate       DateTime
   endDate         DateTime
   monthlyRent     Decimal  @db.Decimal(10, 2)
@@ -278,12 +317,14 @@ model Lease {
   // Relations
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unitRef         Unit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
   payments        Payment[]
   rentTransactions RentTransaction[]
   workOrders      WorkOrder[]
 
   @@index([tenantId])
   @@index([propertyId])
+  @@index([unitId])
   @@index([status])
   @@map("leases")
 }
@@ -344,60 +385,67 @@ model Payout {
 model RentTransaction {
   id                String   @id @default(cuid())
   paymentId         String   @unique
-  leaseId           String
-  landlordId        String
-  propertyId        String
-  unitId            String?
+
+  // Core chain: transactionId + tenantId + unitId fully identifies a transaction.
+  // landlordId and propertyId are denormalized from unit for query performance —
+  // they are set automatically from the unit when a transaction is created.
   tenantId          String
-  
+  unitId            String   // FK to Unit → auto-derives landlordId + propertyId
+  leaseId           String
+  landlordId        String   // denormalized from unit.landlordId
+  propertyId        String   // denormalized from unit.propertyId
+
   // Rent Details
   grossRent         Decimal  @db.Decimal(10, 2)
   rentPeriod        String   // e.g., "November 2025"
   dueDate           DateTime
   paidDate          DateTime
-  
+
   // Deductions
   serviceCharge     Decimal  @db.Decimal(10, 2) @default(0) // Monthly service charge
   managementFee     Decimal  @db.Decimal(10, 2) @default(0) // Management commission
   maintenanceFees   Decimal  @db.Decimal(10, 2) @default(0) // Agreed maintenance costs
   otherDeductions   Decimal  @db.Decimal(10, 2) @default(0) // Other agreed deductions
   totalDeductions   Decimal  @db.Decimal(10, 2)
-  
+
   // Net Amount
   netAmount         Decimal  @db.Decimal(10, 2) // Amount paid to landlord
-  
-  // Late Fees (Property Manager Income - not shown to landlord)
+
+  // Late Fees (Property Manager Income — not shown to landlord)
   lateFees          Decimal  @db.Decimal(10, 2) @default(0)
-  
+
   // Payout Details
   payoutId          String?
   payoutStatus      PayoutStatus @default(PENDING)
   payoutDate        DateTime?
   payoutMethod      PaymentMethod?
   payoutReference   String?
-  
+
   // Metadata
   notes             String?
   processed         Boolean  @default(false)
   processedAt       DateTime?
   processedBy       String?
-  
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   // Relations
   payment           Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  unit              Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
   lease             Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
   landlord          Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
   property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   payout            Payout?  @relation(fields: [payoutId], references: [id], onDelete: SetNull)
   distributionItems RentDistributionItem[]
 
   @@index([paymentId])
+  @@index([tenantId])
+  @@index([unitId])
+  @@index([leaseId])
   @@index([landlordId])
   @@index([propertyId])
-  @@index([tenantId])
   @@index([rentPeriod])
   @@index([payoutStatus])
   @@map("rent_transactions")
@@ -680,6 +728,13 @@ model Note {
 // ============================================
 // Enums
 // ============================================
+
+enum UnitStatus {
+  VACANT
+  OCCUPIED
+  MAINTENANCE
+  RESERVED
+}
 
 enum PropertyType {
   APARTMENT
