@@ -5,20 +5,21 @@ import { prisma } from '@/lib/prisma'
 
 // GET /api/units/:unitNumber/statement?from=2025-07-01&to=2026-03-31
 //
-// ┌─────────────────────────┬──────────┬──────────┬───────┐
-// │ Item                    │ Admin    │ Landlord │ Tenant│
-// ├─────────────────────────┼──────────┼──────────┼───────┤
-// │ Rent payments (receipt) │ ✅       │ ✅ (due) │ ✅    │
-// │ Actual deposit amount   │ ✅       │ ❌       │ ✅    │
-// │ Service charge          │ ✅       │ ✅       │ ✅    │
-// │ Late fees / penalties   │ ✅       │ ❌       │ ✅    │
-// │ Repairs & maintenance   │ ✅       │ ✅       │ ✅    │
-// │ Management fee          │ ✅       │ ✅       │ ❌    │
-// │ Agent commission        │ ✅       │ ❌       │ ❌    │
-// │ Deposit refund (move-out)│ ✅      │ ❌       │ ✅    │
-// │ Landlord payout details │ ✅       │ ✅       │ ❌    │
-// │ Net to landlord         │ ✅       │ ✅       │ ❌    │
-// └─────────────────────────┴──────────┴──────────┴───────┘
+// ┌──────────────────────────────┬──────────┬──────────┬───────┐
+// │ Item                         │ Admin    │ Landlord │ Tenant│
+// ├──────────────────────────────┼──────────┼──────────┼───────┤
+// │ Tenant payment receipts      │ ✅       │ ❌       │ ✅    │
+// │ Actual deposit amount        │ ✅       │ ❌       │ ✅    │
+// │ Rent due (agreed amount)     │ ✅       │ ✅       │ ✅    │
+// │ Service charge               │ ✅       │ ✅       │ ✅    │
+// │ Late fees / penalties        │ ✅       │ ❌       │ ✅    │
+// │ Repairs & maintenance        │ ✅       │ ✅       │ ✅    │
+// │ Management fee               │ ✅       │ ✅       │ ❌    │
+// │ Agent commission             │ ✅       │ ❌       │ ❌    │
+// │ Deposit refund (move-out)    │ ✅       │ ❌       │ ✅    │
+// │ Payout receipt (to landlord) │ ✅       │ ✅       │ ❌    │
+// │ Net to landlord              │ ✅       │ ✅       │ ❌    │
+// └──────────────────────────────┴──────────┴──────────┴───────┘
 //
 // Query params:
 //   from  — ISO date, start of period (default: first day of current month)
@@ -313,9 +314,9 @@ export async function GET(
     })
   }
 
-  // ── LANDLORD view — rent due + deductions + net payout only ──────────────
-  // Landlord sees: agreed rent, deductions, net.
-  // Hidden: actual tenant deposit, late fees, agent commission.
+  // ── LANDLORD view ─────────────────────────────────────────────────────────
+  // Shows: rent due, deductions, net payout, own payout receipts.
+  // Hidden: tenant payment receipts, actual deposit, late fees, agent commission.
   return NextResponse.json({
     unit: {
       unitNumber:   unitInfo.unitNumber,
@@ -340,23 +341,28 @@ export async function GET(
       totalPaidToLandlord,
       outstanding: totalNetToLandlord - totalPaidToLandlord,
     },
-    // Per-period breakdown — shows rent due and each deduction, net payout
+    // Per-period breakdown — no tenant receipt, no actual deposit amount
     statement: rentTransactions.map(t => ({
-      rentPeriod:    t.rentPeriod,
-      receiptNo:     t.payment.reference,
-      rentDue:       Number(t.grossRent),         // agreed rent, NOT actual deposit
-      serviceCharge: Number(t.serviceCharge),
-      managementFee: Number(t.managementFee),
-      repairs:       Number(t.maintenanceFees),
+      rentPeriod:      t.rentPeriod,
+      rentDue:         Number(t.grossRent),
+      serviceCharge:   Number(t.serviceCharge),
+      managementFee:   Number(t.managementFee),
+      repairs:         Number(t.maintenanceFees),
       otherDeductions: Number(t.otherDeductions),
       totalDeductions: Number(t.totalDeductions),
-      netPayout:     Number(t.netAmount),
-      payoutStatus:  t.payoutStatus,
-      payoutDate:    t.payoutDate,
-      dueDate:       t.dueDate,
+      netPayout:       Number(t.netAmount),
+      payoutStatus:    t.payoutStatus,
+      dueDate:         t.dueDate,
     })),
-    payouts,
-    // Charges visible to landlord — company income items filtered out
+    // Landlord's own payout receipts only
+    payouts: payouts.map(p => ({
+      reference:  p.reference,
+      amount:     p.amount,
+      period:     p.period,
+      method:     p.method,
+      status:     p.status,
+      paidDate:   p.paidDate,
+    })),
     charges: distributionItems
       .filter(d => !HIDDEN_FROM_LANDLORD.includes(d.type))
       .map(d => ({
