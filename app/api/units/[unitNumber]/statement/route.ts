@@ -16,7 +16,7 @@ import { prisma } from '@/lib/prisma'
 // │ Repairs & maintenance        │ ✅       │ ✅       │ ✅    │
 // │ Management fee               │ ✅       │ ✅       │ ❌    │
 // │ Agent commission             │ ✅       │ ❌       │ ❌    │
-// │ Deposit refund (move-out)    │ ✅       │ ❌       │ ✅    │
+// │ Deposit refund (move-out)    │ ✅       │ ✅       │ ✅    │
 // │ Payout receipt (to landlord) │ ✅       │ ✅       │ ❌    │
 // │ Net to landlord              │ ✅       │ ✅       │ ❌    │
 // └──────────────────────────────┴──────────┴──────────┴───────┘
@@ -354,6 +354,15 @@ export async function GET(
       payoutStatus:    t.payoutStatus,
       dueDate:         t.dueDate,
     })),
+    // Deposit refunds on move-out — landlord needs to see what was returned
+    depositRefunds: await prisma.payment.findMany({
+      where: {
+        lease: { unitId: unit.id },
+        OR: [{ status: 'REFUNDED' }, { type: 'OTHER', notes: { contains: 'refund' } }],
+      },
+      orderBy: { paidDate: 'desc' },
+      select: { reference: true, amount: true, status: true, paidDate: true, notes: true },
+    }),
     // Landlord's own payout receipts only
     payouts: payouts.map(p => ({
       reference:  p.reference,
