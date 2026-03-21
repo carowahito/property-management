@@ -858,12 +858,13 @@ enum PayoutStatus {
 enum DistributionType {
   GROSS_RENT
   SERVICE_CHARGE
-  MANAGEMENT_FEE
+  MANAGEMENT_FEE      // monthly recurring fee — shown to landlord
   MAINTENANCE_FEE
   REPAIR_COST
   INSURANCE
   PROPERTY_TAX
-  LATE_FEE
+  LATE_FEE            // company income — hidden from landlord
+  AGENT_COMMISSION    // one-off fee when new tenant placed — hidden from landlord
   OTHER_DEDUCTION
   NET_PAYOUT
 }

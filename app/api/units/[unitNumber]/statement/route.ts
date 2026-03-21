@@ -15,13 +15,14 @@ import { prisma } from '@/lib/prisma'
 //
 //   Landlord does NOT see:
 //     - Actual amount deposited by tenant (may include late fees — company income)
-//     - Late payment penalties
+//     - Late payment penalties (LATE_FEE)
+//     - Agent commission (AGENT_COMMISSION — one-off company income when tenant placed)
 //
 //   Admin / Manager sees everything including:
 //     - Actual tenant deposits
 //     - Late fees collected (company income)
-//     - Full deduction breakdown
-//     - Running balance
+//     - Agent commission
+//     - Full deduction breakdown and running balance
 //
 // Query params:
 //   from  — ISO date, start of period (default: first day of current month)
@@ -217,11 +218,16 @@ export async function GET(
       })),
       distributionItems,
       payouts,
+      agentCommissions: distributionItems.filter(d => d.type === 'AGENT_COMMISSION'),
     })
   }
 
+  // Types hidden from landlord — company income only
+  const HIDDEN_FROM_LANDLORD: string[] = ['LATE_FEE', 'AGENT_COMMISSION']
+
   // ── LANDLORD view — rent due + deductions + net payout only ──────────────
-  // Landlord sees: agreed rent, deductions, net — NOT actual deposit or late fees.
+  // Landlord sees: agreed rent, deductions, net.
+  // Hidden: actual tenant deposit, late fees, agent commission.
   return NextResponse.json({
     unit: {
       unitNumber:   unitInfo.unitNumber,
@@ -262,5 +268,16 @@ export async function GET(
       dueDate:       t.dueDate,
     })),
     payouts,
+    // Charges visible to landlord — company income items filtered out
+    charges: distributionItems
+      .filter(d => !HIDDEN_FROM_LANDLORD.includes(d.type))
+      .map(d => ({
+        reference:   d.reference,
+        type:        d.type,
+        description: d.description,
+        amount:      d.amount,
+        paid:        d.paid,
+        paidDate:    d.paidDate,
+      })),
   })
 }
