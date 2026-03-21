@@ -140,6 +140,31 @@ export default function PropertyDetailPage() {
     },
   })
 
+  const addUnitMutation = useMutation({
+    mutationFn: async (unitData: any) => {
+      const response = await fetch('/api/units', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(unitData),
+      })
+      const json = await response.json()
+      if (!response.ok) throw new Error(json.error || 'Failed to create unit')
+      return json
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['property', id] })
+      setShowAddUnitModal(false)
+      setNewUnit({
+        unitNumber: '', floor: '', bedrooms: '', bathrooms: '',
+        squareFootage: '', monthlyRent: '', unitType: 'apartment',
+        status: 'vacant', description: '', amenities: [], landlordId: '',
+      })
+    },
+    onError: (error: any) => {
+      alert(`Error creating unit: ${error.message}`)
+    },
+  })
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['property', id],
     queryFn: () => fetchProperty(id),
@@ -221,22 +246,17 @@ export default function PropertyDetailPage() {
   ]
 
   const handleAddUnit = () => {
-    // TODO: API call to create unit
-    console.log('Creating unit:', newUnit)
-    setShowAddUnitModal(false)
-    // Reset form
-    setNewUnit({
-      unitNumber: '',
-      floor: '',
-      bedrooms: '',
-      bathrooms: '',
-      squareFootage: '',
-      monthlyRent: '',
-      unitType: 'apartment',
-      status: 'vacant',
-      description: '',
-      amenities: [],
-      landlordId: '',
+    addUnitMutation.mutate({
+      unitNumber: newUnit.unitNumber,
+      propertyId: id,
+      landlordId: newUnit.landlordId,
+      floor: newUnit.floor || null,
+      bedrooms: newUnit.bedrooms || null,
+      bathrooms: newUnit.bathrooms || null,
+      sizeSqm: newUnit.squareFootage || null,
+      monthlyRent: newUnit.monthlyRent,
+      status: newUnit.status,
+      description: newUnit.description || null,
     })
   }
 
@@ -808,9 +828,9 @@ export default function PropertyDetailPage() {
               <Button
                 variant="primary"
                 onClick={handleAddUnit}
-                disabled={!newUnit.unitNumber || !newUnit.monthlyRent || !newUnit.landlordId}
+                disabled={!newUnit.unitNumber || !newUnit.monthlyRent || !newUnit.landlordId || addUnitMutation.isPending}
               >
-                Add Unit
+                {addUnitMutation.isPending ? 'Saving...' : 'Add Unit'}
               </Button>
             </div>
           </div>
