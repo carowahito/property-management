@@ -14,13 +14,13 @@ export default function AdminLayout({
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    'Administration': true,
-    'Main': true,
-    'Property Management': true,
+    'Administration': false,
+    'Main': false,
+    'Property Management': false,
     'Financial': false,
     'Operations': false,
-    'Team & HR': true,
-    'AI & Insights': true,
+    'Team & HR': false,
+    'AI & Insights': false,
     'Analytics & Reports': false,
     'Documentation': false,
   })
