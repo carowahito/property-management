@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-// import { getToken } from 'next-auth/jwt'
+import { getToken } from 'next-auth/jwt'
 
-// AUTHENTICATION DISABLED - Allow all routes
 // Routes that require authentication
-// const protectedRoutes = ['/admin', '/tenant', '/landlord', '/vendor']
+const protectedRoutes = ['/admin', '/tenant', '/landlord', '/vendor']
 
 // Public routes that should redirect to dashboard if already authenticated
-// const publicRoutes = ['/admin/login', '/admin/forgot-password']
+const publicRoutes = ['/admin/login', '/admin/forgot-password']
 
 export async function middleware(request: NextRequest) {
-  // Authentication is disabled - allow all requests
-  return NextResponse.next()
-  
-  /* COMMENTED OUT - AUTHENTICATION DISABLED
   const path = request.nextUrl.pathname
 
   // Check if route is protected
@@ -39,7 +34,6 @@ export async function middleware(request: NextRequest) {
   }
 
   return NextResponse.next()
-  */
 }
 
 export const config = {

@@ -1,20 +1,15 @@
 /**
  * Rent Distribution Processor
- * Handles rent collection, deduction calculations, and distribution to landlords
+ * Handles rent collection, deduction calculations, and distribution to landlords.
+ *
+ * Split configurations (service charge, management fee) are stored per Unit in the
+ * database — set during onboarding and applied automatically each month.
+ * All writes run inside a Prisma $transaction for atomicity.
  */
 
-import { PrismaClient, PaymentType, PayoutStatus, PaymentMethod, Prisma } from '@prisma/client';
+import { PrismaClient, FeeType, PaymentType, PayoutStatus, PaymentMethod, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
-export interface RentProcessingConfig {
-  // Default percentages/amounts for a property or landlord
-  serviceChargePercentage?: number; // e.g., 10% of rent
-  serviceChargeFixed?: number; // or fixed amount
-  managementFeePercentage?: number; // e.g., 8% of rent
-  managementFeeFixed?: number;
-  includeMaintenanceCosts?: boolean;
-}
 
 export interface ProcessRentResult {
   rentTransactionId: string;
@@ -34,25 +29,23 @@ export interface ProcessRentResult {
 
 export class RentProcessor {
   /**
-   * Process a rent payment and create rent distribution
+   * Process a rent payment atomically:
+   *  1. Validate payment
+   *  2. Read split config from Unit record
+   *  3. Calculate deductions
+   *  4. Create RentTransaction + RentDistributionItems + Payout — all in one transaction
    */
-  async processRentPayment(
-    paymentId: string,
-    config: RentProcessingConfig = {}
-  ): Promise<ProcessRentResult> {
+  async processRentPayment(paymentId: string): Promise<ProcessRentResult> {
     try {
-      // Get the payment with related data
+      // Read payment + related data (outside transaction — read-only)
       const payment = await prisma.payment.findUnique({
         where: { id: paymentId },
         include: {
           lease: {
             include: {
-              property: {
-                include: {
-                  landlord: true,
-                },
-              },
+              property: { include: { landlord: true } },
               tenant: true,
+              unitRef: true,
             },
           },
           tenant: true,
@@ -60,22 +53,28 @@ export class RentProcessor {
         },
       });
 
-      if (!payment) {
-        throw new Error('Payment not found');
-      }
-
-      if (payment.type !== PaymentType.RENT) {
-        throw new Error('Payment is not a rent payment');
-      }
-
-      if (payment.rentTransaction) {
-        throw new Error('Payment already processed');
-      }
+      if (!payment) throw new Error('Payment not found');
+      if (payment.type !== PaymentType.RENT) throw new Error('Payment is not a rent payment');
+      if (payment.rentTransaction) throw new Error('Payment already processed');
+      if (!payment.lease?.unitRef) throw new Error('Payment has no associated unit');
 
       const { lease } = payment;
+      const unit = lease.unitRef!;
       const grossRent = Number(payment.amount);
 
-      // Check for late fees on this payment
+      // Read split config from Unit record
+      const serviceCharge = this.calculateFee(
+        grossRent,
+        Number(unit.serviceCharge ?? 0),
+        unit.serviceChargeType
+      );
+      const managementFee = this.calculateFee(
+        grossRent,
+        Number(unit.managementFee ?? 0),
+        unit.managementFeeType
+      );
+
+      // Late fees (separate payment record on the same date)
       const lateFeePayment = await prisma.payment.findFirst({
         where: {
           tenantId: payment.tenantId,
@@ -84,73 +83,130 @@ export class RentProcessor {
           paidDate: payment.paidDate,
         },
       });
-
       const lateFees = lateFeePayment ? Number(lateFeePayment.amount) : 0;
 
-      // Calculate deductions
-      const serviceCharge = this.calculateServiceCharge(grossRent, config);
-      const managementFee = this.calculateManagementFee(grossRent, config);
-      const maintenanceFees = config.includeMaintenanceCosts
-        ? await this.calculateMaintenanceFees(lease.id, payment.dueDate)
-        : 0;
-      const otherDeductions = 0; // Can be extended for other agreed deductions
+      // Maintenance costs for the period
+      const maintenanceFees = await this.calculateMaintenanceFees(lease.id, payment.dueDate);
+      const otherDeductions = 0;
 
-      const totalDeductions =
-        serviceCharge + managementFee + maintenanceFees + otherDeductions;
+      const totalDeductions = serviceCharge + managementFee + maintenanceFees + otherDeductions;
       const netAmount = grossRent - totalDeductions;
 
-      // Create rent transaction
-      const rentTransaction = await prisma.rentTransaction.create({
-        data: {
-          paymentId: payment.id,
-          leaseId: lease.id,
-          landlordId: lease.property.landlordId!,
-          propertyId: lease.propertyId,
-          unitId: lease.unitId!,
-          tenantId: payment.tenantId,
+      const landlordId = lease.property.landlordId!;
+      const landlordName = lease.property.landlord?.name ?? '';
+      const unitId = unit.id;
+      const rentPeriod = this.formatRentPeriod(payment.dueDate);
 
-          grossRent,
-          rentPeriod: this.formatRentPeriod(payment.dueDate),
-          dueDate: payment.dueDate,
-          paidDate: payment.paidDate || new Date(),
+      // --- Atomic transaction: create RentTransaction + DistributionItems + Payout ---
+      const rentTransaction = await prisma.$transaction(async (tx) => {
+        // 1. Create rent transaction
+        const rt = await tx.rentTransaction.create({
+          data: {
+            paymentId: payment.id,
+            leaseId: lease.id,
+            landlordId,
+            propertyId: lease.propertyId,
+            unitId,
+            tenantId: payment.tenantId,
+            grossRent,
+            rentPeriod,
+            dueDate: payment.dueDate,
+            paidDate: payment.paidDate || new Date(),
+            serviceCharge,
+            managementFee,
+            maintenanceFees,
+            otherDeductions,
+            totalDeductions,
+            netAmount,
+            lateFees,
+            payoutStatus: PayoutStatus.PENDING,
+            processed: true,
+            processedAt: new Date(),
+          },
+        });
 
-          serviceCharge,
-          managementFee,
-          maintenanceFees,
-          otherDeductions,
-          totalDeductions,
-          netAmount,
-          lateFees,
+        // 2. Create distribution items (audit trail)
+        const items: Prisma.RentDistributionItemCreateManyInput[] = [
+          {
+            rentTransactionId: rt.id,
+            unitId,
+            type: 'GROSS_RENT',
+            description: 'Gross rent payment received from tenant',
+            amount: grossRent,
+            recipientType: 'LANDLORD',
+            recipientId: landlordId,
+            recipientName: landlordName,
+          },
+          {
+            rentTransactionId: rt.id,
+            unitId,
+            type: 'SERVICE_CHARGE',
+            description: `Service charge (${unit.serviceChargeType === 'PERCENTAGE' ? `${unit.serviceCharge}%` : `KES ${unit.serviceCharge}`})`,
+            amount: -serviceCharge,
+            recipientType: 'SERVICE_PROVIDER',
+            recipientName: 'Property Management Company',
+          },
+          {
+            rentTransactionId: rt.id,
+            unitId,
+            type: 'MANAGEMENT_FEE',
+            description: `Management fee (${unit.managementFeeType === 'PERCENTAGE' ? `${unit.managementFee}%` : `KES ${unit.managementFee}`})`,
+            amount: -managementFee,
+            recipientType: 'MANAGER',
+            recipientName: 'Property Manager',
+          },
+        ];
 
-          payoutStatus: PayoutStatus.PENDING,
-          processed: true,
-          processedAt: new Date(),
-        },
-      });
+        if (maintenanceFees > 0) {
+          items.push({
+            rentTransactionId: rt.id,
+            unitId,
+            type: 'MAINTENANCE_FEE',
+            description: 'Approved maintenance and repair costs',
+            amount: -maintenanceFees,
+            recipientType: 'SERVICE_PROVIDER',
+            recipientName: 'Maintenance Services',
+          });
+        }
 
-      // Create distribution items for transparency
-      await this.createDistributionItems(rentTransaction.id, {
-        grossRent,
-        serviceCharge,
-        managementFee,
-        maintenanceFees,
-        otherDeductions,
-        netAmount,
-        landlordId: lease.property.landlordId!,
-        landlordName: lease.property.landlord?.name ?? '',
-        unitId: lease.unitId!,
+        items.push({
+          rentTransactionId: rt.id,
+          unitId,
+          type: 'NET_PAYOUT',
+          description: 'Net amount to be paid to landlord',
+          amount: netAmount,
+          recipientType: 'LANDLORD',
+          recipientId: landlordId,
+          recipientName: landlordName,
+        });
+
+        await tx.rentDistributionItem.createMany({ data: items });
+
+        // 3. Create pending payout for landlord
+        const payout = await tx.payout.create({
+          data: {
+            landlordId,
+            unitId,
+            amount: netAmount,
+            period: rentPeriod,
+            status: PayoutStatus.PENDING,
+            method: PaymentMethod.BANK_TRANSFER,
+          },
+        });
+
+        // 4. Link payout to the rent transaction
+        await tx.rentTransaction.update({
+          where: { id: rt.id },
+          data: { payoutId: payout.id, payoutStatus: PayoutStatus.PROCESSING },
+        });
+
+        return rt;
       });
 
       return {
         rentTransactionId: rentTransaction.id,
         grossRent,
-        deductions: {
-          serviceCharge,
-          managementFee,
-          maintenanceFees,
-          otherDeductions,
-          total: totalDeductions,
-        },
+        deductions: { serviceCharge, managementFee, maintenanceFees, otherDeductions, total: totalDeductions },
         netAmount,
         lateFees,
         success: true,
@@ -161,13 +217,7 @@ export class RentProcessor {
       return {
         rentTransactionId: '',
         grossRent: 0,
-        deductions: {
-          serviceCharge: 0,
-          managementFee: 0,
-          maintenanceFees: 0,
-          otherDeductions: 0,
-          total: 0,
-        },
+        deductions: { serviceCharge: 0, managementFee: 0, maintenanceFees: 0, otherDeductions: 0, total: 0 },
         netAmount: 0,
         lateFees: 0,
         success: false,
@@ -179,311 +229,77 @@ export class RentProcessor {
   /**
    * Process multiple rent payments in batch
    */
-  async processBatchRentPayments(
-    paymentIds: string[],
-    config: RentProcessingConfig = {}
-  ): Promise<ProcessRentResult[]> {
+  async processBatchRentPayments(paymentIds: string[]): Promise<ProcessRentResult[]> {
     const results: ProcessRentResult[] = [];
-
     for (const paymentId of paymentIds) {
-      const result = await this.processRentPayment(paymentId, config);
-      results.push(result);
+      results.push(await this.processRentPayment(paymentId));
     }
-
     return results;
   }
 
   /**
-   * Create payout for landlord from processed rent transactions
+   * Mark payout as paid and update all related transactions (atomic)
    */
-  async createLandlordPayout(
-    landlordId: string,
-    transactionIds: string[],
-    paymentMethod: PaymentMethod,
-    reference?: string
-  ) {
-    try {
-      // Get all rent transactions
-      const transactions = await prisma.rentTransaction.findMany({
-        where: {
-          id: { in: transactionIds },
-          landlordId,
-          payoutStatus: PayoutStatus.PENDING,
-        },
-      });
-
-      if (transactions.length === 0) {
-        throw new Error('No pending transactions found');
-      }
-
-      const totalAmount = transactions.reduce(
-        (sum, t) => sum + Number(t.netAmount),
-        0
-      );
-
-      // Get rent period from first transaction
-      const period = transactions[0].rentPeriod;
-      const unitId = transactions[0].unitId;
-
-      // Create payout
-      const payout = await prisma.payout.create({
-        data: {
-          landlordId,
-          unitId,
-          amount: totalAmount,
-          period,
-          status: PayoutStatus.PENDING,
-          method: paymentMethod,
-          reference,
-        },
-      });
-
-      // Update rent transactions with payout ID
-      await prisma.rentTransaction.updateMany({
-        where: { id: { in: transactionIds } },
-        data: {
-          payoutId: payout.id,
-          payoutStatus: PayoutStatus.PROCESSING,
-        },
-      });
-
-      return {
-        success: true,
-        payoutId: payout.id,
-        amount: totalAmount,
-        transactionCount: transactions.length,
-      };
-    } catch (error) {
-      console.error('Error creating payout:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Mark payout as paid and update all related transactions
-   */
-  async markPayoutAsPaid(
-    payoutId: string,
-    paidDate: Date,
-    reference: string
-  ) {
-    try {
-      // Update payout
-      const payout = await prisma.payout.update({
+  async markPayoutAsPaid(payoutId: string, paidDate: Date, reference: string) {
+    return prisma.$transaction(async (tx) => {
+      const payout = await tx.payout.update({
         where: { id: payoutId },
-        data: {
-          status: PayoutStatus.PAID,
-          paidDate,
-          reference,
-        },
+        data: { status: PayoutStatus.PAID, paidDate, reference },
       });
 
-      // Update all related rent transactions
-      await prisma.rentTransaction.updateMany({
+      await tx.rentTransaction.updateMany({
         where: { payoutId },
-        data: {
-          payoutStatus: PayoutStatus.PAID,
-          payoutDate: paidDate,
-          payoutReference: reference,
-        },
+        data: { payoutStatus: PayoutStatus.PAID, payoutDate: paidDate, payoutReference: reference },
       });
 
       return { success: true, payout };
-    } catch (error) {
-      console.error('Error marking payout as paid:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Calculate service charge
+   * Calculate a fee based on its type (FIXED or PERCENTAGE)
    */
-  private calculateServiceCharge(
-    grossRent: number,
-    config: RentProcessingConfig
-  ): number {
-    if (config.serviceChargeFixed !== undefined) {
-      return config.serviceChargeFixed;
-    }
-
-    if (config.serviceChargePercentage !== undefined) {
-      return (grossRent * config.serviceChargePercentage) / 100;
-    }
-
-    // Default: 10% of rent
-    return (grossRent * 10) / 100;
+  private calculateFee(grossRent: number, value: number, type: FeeType): number {
+    if (value === 0) return 0;
+    return type === FeeType.PERCENTAGE ? (grossRent * value) / 100 : value;
   }
 
   /**
-   * Calculate management fee (commission)
+   * Calculate maintenance fees for the rent period
    */
-  private calculateManagementFee(
-    grossRent: number,
-    config: RentProcessingConfig
-  ): number {
-    if (config.managementFeeFixed !== undefined) {
-      return config.managementFeeFixed;
-    }
-
-    if (config.managementFeePercentage !== undefined) {
-      return (grossRent * config.managementFeePercentage) / 100;
-    }
-
-    // Default: 8% of rent
-    return (grossRent * 8) / 100;
-  }
-
-  /**
-   * Calculate maintenance fees for the period
-   */
-  private async calculateMaintenanceFees(
-    leaseId: string,
-    dueDate: Date
-  ): Promise<number> {
-    // Calculate start and end of the rent period
+  private async calculateMaintenanceFees(leaseId: string, dueDate: Date): Promise<number> {
     const startDate = new Date(dueDate);
     startDate.setMonth(startDate.getMonth() - 1);
 
     const workOrders = await prisma.workOrder.findMany({
       where: {
         lease: { id: leaseId },
-        completedDate: {
-          gte: startDate,
-          lte: dueDate,
-        },
+        completedDate: { gte: startDate, lte: dueDate },
         status: 'COMPLETED',
-        landlordApproved: true, // Only approved maintenance costs
+        landlordApproved: true,
       },
     });
 
     return workOrders.reduce((sum, wo) => sum + Number(wo.cost || 0), 0);
   }
 
-  /**
-   * Format rent period (e.g., "November 2025")
-   */
   private formatRentPeriod(date: Date): string {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
 
   /**
-   * Create detailed distribution items
-   */
-  private async createDistributionItems(
-    rentTransactionId: string,
-    data: {
-      grossRent: number;
-      serviceCharge: number;
-      managementFee: number;
-      maintenanceFees: number;
-      otherDeductions: number;
-      netAmount: number;
-      landlordId: string;
-      landlordName: string;
-      unitId: string;
-    }
-  ) {
-    const items: Prisma.RentDistributionItemCreateManyInput[] = [
-      {
-        rentTransactionId,
-        unitId: data.unitId,
-        type: 'GROSS_RENT' as const,
-        description: 'Gross rent payment received from tenant',
-        amount: data.grossRent,
-        recipientType: 'LANDLORD' as const,
-        recipientId: data.landlordId,
-        recipientName: data.landlordName,
-      },
-      {
-        rentTransactionId,
-        unitId: data.unitId,
-        type: 'SERVICE_CHARGE' as const,
-        description: 'Monthly service charge for property management company',
-        amount: -data.serviceCharge,
-        recipientType: 'SERVICE_PROVIDER' as const,
-        recipientName: 'Property Management Company',
-      },
-      {
-        rentTransactionId,
-        unitId: data.unitId,
-        type: 'MANAGEMENT_FEE' as const,
-        description: 'Property management commission',
-        amount: -data.managementFee,
-        recipientType: 'MANAGER' as const,
-        recipientName: 'Property Manager',
-      },
-    ];
-
-    if (data.maintenanceFees > 0) {
-      items.push({
-        rentTransactionId,
-        unitId: data.unitId,
-        type: 'MAINTENANCE_FEE' as const,
-        description: 'Approved maintenance and repair costs',
-        amount: -data.maintenanceFees,
-        recipientType: 'SERVICE_PROVIDER' as const,
-        recipientName: 'Maintenance Services',
-      });
-    }
-
-    if (data.otherDeductions > 0) {
-      items.push({
-        rentTransactionId,
-        unitId: data.unitId,
-        type: 'OTHER_DEDUCTION' as const,
-        description: 'Other agreed deductions',
-        amount: -data.otherDeductions,
-        recipientType: 'OTHER' as const,
-        recipientName: 'Various',
-      });
-    }
-
-    items.push({
-      rentTransactionId,
-      unitId: data.unitId,
-      type: 'NET_PAYOUT' as const,
-      description: 'Net amount to be paid to landlord',
-      amount: data.netAmount,
-      recipientType: 'LANDLORD' as const,
-      recipientId: data.landlordId,
-      recipientName: data.landlordName,
-    });
-
-    await prisma.rentDistributionItem.createMany({
-      data: items,
-    });
-  }
-
-  /**
    * Get rent transactions for a period
    */
-  async getRentTransactionsForPeriod(
-    landlordId: string,
-    startDate: Date,
-    endDate: Date
-  ) {
+  async getRentTransactionsForPeriod(landlordId: string, startDate: Date, endDate: Date) {
     return prisma.rentTransaction.findMany({
-      where: {
-        landlordId,
-        paidDate: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
+      where: { landlordId, paidDate: { gte: startDate, lte: endDate } },
       include: {
         payment: true,
-        lease: {
-          include: {
-            property: true,
-            tenant: true,
-          },
-        },
+        lease: { include: { property: true, tenant: true } },
         distributionItems: true,
         payout: true,
       },
-      orderBy: {
-        paidDate: 'asc',
-      },
+      orderBy: { paidDate: 'asc' },
     });
   }
 }

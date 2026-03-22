@@ -170,7 +170,7 @@ export default function PropertiesPage() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
         <p className="text-red-800">Failed to load properties. Please try again.</p>
       </div>
     )
@@ -499,28 +499,28 @@ export default function PropertiesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Properties</h1>
-          <p className="text-gray-600 mt-2">Manage and monitor all your properties</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Properties</h1>
+          <p className="text-neutral-600 mt-2">Manage and monitor all your properties</p>
         </div>
         <Button variant="primary" size="lg" onClick={() => setShowAddModal(true)}>+ Add Property</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white rounded-lg border border-gray-200 p-6">
-            <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-            <p className="text-xs text-gray-500 mt-2">{stat.change}</p>
+          <div key={idx} className="bg-surface rounded-lg border border-neutral-200 p-6">
+            <p className="text-sm text-neutral-600 font-medium">{stat.label}</p>
+            <p className="text-3xl font-bold text-neutral-900 mt-2">{stat.value}</p>
+            <p className="text-xs text-neutral-500 mt-2">{stat.change}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">All Properties</h2>
+      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">All Properties</h2>
 
         {properties.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No properties found</p>
+            <p className="text-neutral-500 mb-4">No properties found</p>
             <Button variant="primary">Add Your First Property</Button>
           </div>
         ) : (
@@ -531,29 +531,29 @@ export default function PropertiesPage() {
                 href={`/admin/properties/${property.id}`}
                 className="block"
               >
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition cursor-pointer">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <p className="font-medium text-gray-900">{property.name}</p>
+                      <p className="font-medium text-neutral-900">{property.name}</p>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        property.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                        property.status === 'INACTIVE' ? 'bg-gray-100 text-gray-800' :
+                        property.status === 'ACTIVE' ? 'bg-success-100 text-green-800' :
+                        property.status === 'INACTIVE' ? 'bg-neutral-100 text-neutral-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
                         {property.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{property.address}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-sm text-neutral-600 mt-1">{property.address}</p>
+                    <p className="text-xs text-neutral-500 mt-1">
                       Landlord: {property.landlord.name} • Type: {property.type}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{property.totalUnits} Units</p>
-                    <p className={`text-xs ${property._count.tenants === property.totalUnits ? 'text-green-600' : 'text-yellow-600'}`}>
+                    <p className="text-sm font-medium text-neutral-900">{property.totalUnits} Units</p>
+                    <p className={`text-xs ${property._count.tenants === property.totalUnits ? 'text-success-600' : 'text-yellow-600'}`}>
                       {property._count.tenants}/{property.totalUnits} Occupied
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-neutral-500 mt-1">
                       {property._count.leases} Leases
                     </p>
                   </div>
@@ -567,12 +567,12 @@ export default function PropertiesPage() {
       {/* Add Property Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Add New Property</h2>
+          <div className="bg-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-surface border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-neutral-900">Add New Property</h2>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-neutral-400 hover:text-neutral-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -583,85 +583,85 @@ export default function PropertiesPage() {
             <div className="p-6 space-y-6">
               {/* Basic Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Property Name *
                     </label>
                     <input
                       type="text"
                       value={newProperty.name}
                       onChange={(e) => setNewProperty({ ...newProperty, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., Sunset Apartments"
                       required
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Street Address *
                     </label>
                     <input
                       type="text"
                       value={newProperty.address}
                       onChange={(e) => setNewProperty({ ...newProperty, address: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., 123 Mombasa Road"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       City *
                     </label>
                     <input
                       type="text"
                       value={newProperty.city}
                       onChange={(e) => setNewProperty({ ...newProperty, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., Nairobi"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       State/County
                     </label>
                     <input
                       type="text"
                       value={newProperty.state}
                       onChange={(e) => setNewProperty({ ...newProperty, state: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., Nairobi County"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Zip/Postal Code
                     </label>
                     <input
                       type="text"
                       value={newProperty.zipCode}
                       onChange={(e) => setNewProperty({ ...newProperty, zipCode: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., 00100"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Country *
                     </label>
                     <input
                       type="text"
                       value={newProperty.country}
                       onChange={(e) => setNewProperty({ ...newProperty, country: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       required
                     />
                   </div>
@@ -670,16 +670,16 @@ export default function PropertiesPage() {
 
               {/* Property Type */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Property Classification</h3>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Property Classification</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Property Type *
                     </label>
                     <select
                       value={newProperty.propertyType}
                       onChange={(e) => setNewProperty({ ...newProperty, propertyType: e.target.value, propertySubtype: '' })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       required
                     >
                       <option value="">Select Property Type</option>
@@ -692,13 +692,13 @@ export default function PropertiesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Property Subtype *
                     </label>
                     <select
                       value={newProperty.propertySubtype}
                       onChange={(e) => setNewProperty({ ...newProperty, propertySubtype: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       disabled={!newProperty.propertyType}
                       required
                     >
@@ -714,13 +714,13 @@ export default function PropertiesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Management Type
                     </label>
                     <select
                       value={newProperty.managementType}
                       onChange={(e) => setNewProperty({ ...newProperty, managementType: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="full-service">Full-Service Management</option>
                       <option value="partial">Partial Management</option>
@@ -734,10 +734,10 @@ export default function PropertiesPage() {
 
               {/* Property Details */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Property Details</h3>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Property Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Total Units *
                     </label>
                     <input
@@ -747,28 +747,28 @@ export default function PropertiesPage() {
                         setNewProperty({ ...newProperty, totalUnits: e.target.value })
                         generateUnits(parseInt(e.target.value) || 0)
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., 50"
                       min="1"
                       max="100"
                       required
                     />
                     {parseInt(newProperty.totalUnits) > 1 && (
-                      <p className="text-xs text-blue-600 mt-1">
+                      <p className="text-xs text-primary-600 mt-1">
                         ℹ️ {newProperty.totalUnits} units will be created. Configure each unit below.
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Year Built
                     </label>
                     <input
                       type="number"
                       value={newProperty.yearBuilt}
                       onChange={(e) => setNewProperty({ ...newProperty, yearBuilt: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., 2020"
                       min="1800"
                       max={new Date().getFullYear()}
@@ -776,35 +776,35 @@ export default function PropertiesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Number of Floors
                     </label>
                     <input
                       type="number"
                       value={newProperty.floors}
                       onChange={(e) => setNewProperty({ ...newProperty, floors: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., 5"
                       min="1"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Square Footage
                     </label>
                     <input
                       type="number"
                       value={newProperty.squareFootage}
                       onChange={(e) => setNewProperty({ ...newProperty, squareFootage: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Total sq ft"
                       min="0"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Lot Size (acres)
                     </label>
                     <input
@@ -812,21 +812,21 @@ export default function PropertiesPage() {
                       step="0.01"
                       value={newProperty.lotSize}
                       onChange={(e) => setNewProperty({ ...newProperty, lotSize: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., 2.5"
                       min="0"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Parking Spaces
                     </label>
                     <input
                       type="number"
                       value={newProperty.parkingSpaces}
                       onChange={(e) => setNewProperty({ ...newProperty, parkingSpaces: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., 100"
                       min="0"
                     />
@@ -834,14 +834,14 @@ export default function PropertiesPage() {
 
                   <div className="md:col-span-3">
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-neutral-700">
                         Description
                       </label>
                       <button
                         type="button"
                         onClick={handleImproveWithAI}
                         disabled={!newProperty.description || isImprovingText}
-                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -852,7 +852,7 @@ export default function PropertiesPage() {
                     <textarea
                       value={newProperty.description}
                       onChange={(e) => setNewProperty({ ...newProperty, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       rows={3}
                       placeholder="Enter property description, features, or notes..."
                     />
@@ -862,48 +862,48 @@ export default function PropertiesPage() {
 
               {/* Contact Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Contact Information</h3>
-                <p className="text-sm text-gray-600 mb-4">Property caretaker and/or management company details</p>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Contact Information</h3>
+                <p className="text-sm text-neutral-600 mb-4">Property caretaker and/or management company details</p>
                 
                 {/* Caretaker Information */}
                 <div className="mb-6">
-                  <h4 className="text-md font-medium text-gray-900 mb-3">Property Caretaker</h4>
+                  <h4 className="text-md font-medium text-neutral-900 mb-3">Property Caretaker</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Caretaker Name
                       </label>
                       <input
                         type="text"
                         value={newProperty.caretakerName}
                         onChange={(e) => setNewProperty({ ...newProperty, caretakerName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., John Kamau"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Caretaker Phone
                       </label>
                       <input
                         type="tel"
                         value={newProperty.caretakerPhone}
                         onChange={(e) => setNewProperty({ ...newProperty, caretakerPhone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., +254 712 345 678"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Caretaker Email
                       </label>
                       <input
                         type="email"
                         value={newProperty.caretakerEmail}
                         onChange={(e) => setNewProperty({ ...newProperty, caretakerEmail: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., caretaker@example.com"
                       />
                     </div>
@@ -912,56 +912,56 @@ export default function PropertiesPage() {
 
                 {/* Management Company Information */}
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3">Management Company</h4>
+                  <h4 className="text-md font-medium text-neutral-900 mb-3">Management Company</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Company Name
                       </label>
                       <input
                         type="text"
                         value={newProperty.managementCompany}
                         onChange={(e) => setNewProperty({ ...newProperty, managementCompany: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., ABC Property Management Ltd"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Contact Person Name
                       </label>
                       <input
                         type="text"
                         value={newProperty.managementContactName}
                         onChange={(e) => setNewProperty({ ...newProperty, managementContactName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., Jane Doe"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Contact Phone
                       </label>
                       <input
                         type="tel"
                         value={newProperty.managementPhone}
                         onChange={(e) => setNewProperty({ ...newProperty, managementPhone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., +254 700 123 456"
                       />
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Contact Email
                       </label>
                       <input
                         type="email"
                         value={newProperty.managementEmail}
                         onChange={(e) => setNewProperty({ ...newProperty, managementEmail: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., contact@abcpropertymanagement.com"
                       />
                     </div>
@@ -971,23 +971,23 @@ export default function PropertiesPage() {
 
               {/* Photos & Videos */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Photos & Videos</h3>
-                <p className="text-sm text-gray-600 mb-4">Upload property photos and add video links</p>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Photos & Videos</h3>
+                <p className="text-sm text-neutral-600 mb-4">Upload property photos and add video links</p>
                 
                 {/* Photo Upload */}
                 <div className="mb-6">
-                  <h4 className="text-md font-medium text-gray-900 mb-3">Property Photos</h4>
+                  <h4 className="text-md font-medium text-neutral-900 mb-3">Property Photos</h4>
                   <div className="space-y-3">
                     <div>
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-neutral-300 border-dashed rounded-lg cursor-pointer bg-neutral-50 hover:bg-neutral-100">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-10 h-10 mb-3 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
-                          <p className="mb-2 text-sm text-gray-500">
+                          <p className="mb-2 text-sm text-neutral-500">
                             <span className="font-semibold">Click to upload</span> or drag and drop
                           </p>
-                          <p className="text-xs text-gray-500">PNG, JPG, JPEG, GIF (MAX. 10MB each)</p>
+                          <p className="text-xs text-neutral-500">PNG, JPG, JPEG, GIF (MAX. 10MB each)</p>
                         </div>
                         <input
                           type="file"
@@ -1001,7 +1001,7 @@ export default function PropertiesPage() {
 
                     {photoPreview.length > 0 && (
                       <div>
-                        <p className="text-sm font-medium text-gray-700 mb-2">
+                        <p className="text-sm font-medium text-neutral-700 mb-2">
                           {photoPreview.length} photo{photoPreview.length !== 1 ? 's' : ''} selected
                         </p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1010,12 +1010,12 @@ export default function PropertiesPage() {
                               <img
                                 src={preview}
                                 alt={`Preview ${index + 1}`}
-                                className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                                className="w-full h-32 object-cover rounded-lg border border-neutral-200"
                               />
                               <button
                                 type="button"
                                 onClick={() => removePhoto(index)}
-                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1 right-1 bg-danger-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1034,7 +1034,7 @@ export default function PropertiesPage() {
 
                 {/* Video URLs */}
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3">Property Videos</h4>
+                  <h4 className="text-md font-medium text-neutral-900 mb-3">Property Videos</h4>
                   <div className="space-y-3">
                     <div className="flex gap-2">
                       <input
@@ -1042,7 +1042,7 @@ export default function PropertiesPage() {
                         value={currentVideoUrl}
                         onChange={(e) => setCurrentVideoUrl(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVideoUrl())}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="Enter YouTube, Vimeo, or video URL"
                       />
                       <Button
@@ -1054,19 +1054,19 @@ export default function PropertiesPage() {
                         Add Video
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-neutral-500">
                       Supported: YouTube, Vimeo, or direct video links (.mp4, .webm, .ogg)
                     </p>
 
                     {newProperty.videoUrls.length > 0 && (
                       <div className="space-y-3 mt-4">
-                        <p className="text-sm font-medium text-gray-700">
+                        <p className="text-sm font-medium text-neutral-700">
                           {newProperty.videoUrls.length} video{newProperty.videoUrls.length !== 1 ? 's' : ''} added
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {newProperty.videoUrls.map((url, index) => (
-                            <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden">
-                              <div className="aspect-video bg-gray-100">
+                            <div key={index} className="relative group border border-neutral-200 rounded-lg overflow-hidden">
+                              <div className="aspect-video bg-neutral-100">
                                 {(url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com')) ? (
                                   <iframe
                                     src={getVideoEmbedUrl(url)}
@@ -1085,14 +1085,14 @@ export default function PropertiesPage() {
                               <button
                                 type="button"
                                 onClick={() => removeVideoUrl(index)}
-                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-2 right-2 bg-danger-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               </button>
-                              <div className="p-2 bg-gray-50">
-                                <p className="text-xs text-gray-600 truncate">{url}</p>
+                              <div className="p-2 bg-neutral-50">
+                                <p className="text-xs text-neutral-600 truncate">{url}</p>
                               </div>
                             </div>
                           ))}
@@ -1105,21 +1105,21 @@ export default function PropertiesPage() {
 
               {/* Amenities */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Property Amenities</h3>
-                <p className="text-sm text-gray-600 mb-4">Select all amenities available at this property</p>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Property Amenities</h3>
+                <p className="text-sm text-neutral-600 mb-4">Select all amenities available at this property</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {commonAmenities.map((amenity) => (
                     <label
                       key={amenity}
-                      className="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                      className="flex items-center gap-2 p-2 border border-neutral-200 rounded-lg hover:bg-neutral-50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         checked={newProperty.amenities.includes(amenity)}
                         onChange={() => toggleAmenity(amenity)}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
                       />
-                      <span className="text-sm text-gray-700">{amenity}</span>
+                      <span className="text-sm text-neutral-700">{amenity}</span>
                     </label>
                   ))}
                 </div>
@@ -1130,12 +1130,12 @@ export default function PropertiesPage() {
                 <div className="border-t pt-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Individual Unit Configuration</h3>
-                      <p className="text-sm text-gray-600">Configure details for each of the {units.length} units</p>
+                      <h3 className="text-lg font-semibold text-neutral-900">Individual Unit Configuration</h3>
+                      <p className="text-sm text-neutral-600">Configure details for each of the {units.length} units</p>
                     </div>
                     <div className="flex gap-2">
                       <select
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-lg"
+                        className="px-3 py-1 text-sm border border-neutral-300 rounded-lg"
                         onChange={(e) => {
                           if (e.target.value) applyToAllUnits('unitType', e.target.value)
                         }}
@@ -1147,7 +1147,7 @@ export default function PropertiesPage() {
                         ))}
                       </select>
                       <select
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-lg"
+                        className="px-3 py-1 text-sm border border-neutral-300 rounded-lg"
                         onChange={(e) => {
                           if (e.target.value) applyToAllUnits('landlordId', e.target.value)
                         }}
@@ -1163,12 +1163,12 @@ export default function PropertiesPage() {
 
                   <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                     {units.map((unit, index) => (
-                      <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div key={index} className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-semibold text-gray-800">Unit {index + 1}</h4>
+                          <h4 className="font-semibold text-neutral-800">Unit {index + 1}</h4>
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            unit.status === 'vacant' ? 'bg-green-100 text-green-700' :
-                            unit.status === 'occupied' ? 'bg-blue-100 text-blue-700' :
+                            unit.status === 'vacant' ? 'bg-success-100 text-success-700' :
+                            unit.status === 'occupied' ? 'bg-primary-100 text-primary-700' :
                             unit.status === 'maintenance' ? 'bg-yellow-100 text-yellow-700' :
                             'bg-purple-100 text-purple-700'
                           }`}>
@@ -1179,23 +1179,23 @@ export default function PropertiesPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                           {/* Unit Number */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit Number *</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Unit Number *</label>
                             <input
                               type="text"
                               value={unit.unitNumber}
                               onChange={(e) => updateUnit(index, 'unitNumber', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               placeholder="e.g., A1, 101"
                             />
                           </div>
 
                           {/* Unit Type */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit Type *</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Unit Type *</label>
                             <select
                               value={unit.unitType}
                               onChange={(e) => updateUnit(index, 'unitType', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                             >
                               <option value="">Select type...</option>
                               {unitTypes.map(type => (
@@ -1206,23 +1206,23 @@ export default function PropertiesPage() {
 
                           {/* Floor */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Floor</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Floor</label>
                             <input
                               type="text"
                               value={unit.floor}
                               onChange={(e) => updateUnit(index, 'floor', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               placeholder="e.g., 1, 2, G"
                             />
                           </div>
 
                           {/* Status */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Status</label>
                             <select
                               value={unit.status}
                               onChange={(e) => updateUnit(index, 'status', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                             >
                               {unitStatuses.map(status => (
                                 <option key={status.value} value={status.value}>{status.label}</option>
@@ -1232,12 +1232,12 @@ export default function PropertiesPage() {
 
                           {/* Bedrooms */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Bedrooms</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Bedrooms</label>
                             <input
                               type="number"
                               value={unit.bedrooms}
                               onChange={(e) => updateUnit(index, 'bedrooms', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               min="0"
                               placeholder="0"
                             />
@@ -1245,12 +1245,12 @@ export default function PropertiesPage() {
 
                           {/* Bathrooms */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Bathrooms</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Bathrooms</label>
                             <input
                               type="number"
                               value={unit.bathrooms}
                               onChange={(e) => updateUnit(index, 'bathrooms', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               min="0"
                               step="0.5"
                               placeholder="1"
@@ -1259,12 +1259,12 @@ export default function PropertiesPage() {
 
                           {/* Square Footage */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Size (sq ft)</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Size (sq ft)</label>
                             <input
                               type="number"
                               value={unit.squareFootage}
                               onChange={(e) => updateUnit(index, 'squareFootage', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               min="0"
                               placeholder="500"
                             />
@@ -1272,12 +1272,12 @@ export default function PropertiesPage() {
 
                           {/* Monthly Rent */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Monthly Rent (KES)</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Monthly Rent (KES)</label>
                             <input
                               type="number"
                               value={unit.monthlyRent}
                               onChange={(e) => updateUnit(index, 'monthlyRent', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               min="0"
                               placeholder="25000"
                             />
@@ -1285,12 +1285,12 @@ export default function PropertiesPage() {
 
                           {/* Security Deposit */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Security Deposit</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Security Deposit</label>
                             <input
                               type="number"
                               value={unit.securityDeposit}
                               onChange={(e) => updateUnit(index, 'securityDeposit', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               min="0"
                               placeholder="25000"
                             />
@@ -1298,16 +1298,16 @@ export default function PropertiesPage() {
 
                           {/* Landlord Assignment */}
                           <div className="md:col-span-2">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">
                               Assign Landlord
-                              <Link href="/admin/landlords" className="ml-2 text-blue-600 hover:underline text-xs">
+                              <Link href="/admin/landlords" className="ml-2 text-primary-600 hover:underline text-xs">
                                 + Add New
                               </Link>
                             </label>
                             <select
                               value={unit.landlordId}
                               onChange={(e) => updateUnit(index, 'landlordId', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                             >
                               <option value="">Select landlord...</option>
                               {landlords.map((ll: any) => (
@@ -1318,11 +1318,11 @@ export default function PropertiesPage() {
 
                           {/* Description */}
                           <div className="col-span-2 md:col-span-4">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit Description</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Unit Description</label>
                             <textarea
                               value={unit.description}
                               onChange={(e) => updateUnit(index, 'description', e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                               rows={2}
                               placeholder="Additional details about this unit..."
                             />
@@ -1330,7 +1330,7 @@ export default function PropertiesPage() {
 
                           {/* Unit Amenities */}
                           <div className="col-span-2 md:col-span-4">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Unit-Specific Amenities</label>
+                            <label className="block text-xs font-medium text-neutral-600 mb-1">Unit-Specific Amenities</label>
                             <div className="flex flex-wrap gap-2">
                               {unitAmenities.map(amenity => (
                                 <label key={amenity} className="flex items-center gap-1 text-xs">
@@ -1338,7 +1338,7 @@ export default function PropertiesPage() {
                                     type="checkbox"
                                     checked={unit.amenities.includes(amenity)}
                                     onChange={() => toggleUnitAmenity(index, amenity)}
-                                    className="w-3 h-3 text-blue-600 rounded"
+                                    className="w-3 h-3 text-primary-600 rounded"
                                   />
                                   {amenity}
                                 </label>
@@ -1351,23 +1351,23 @@ export default function PropertiesPage() {
                   </div>
 
                   {/* Summary */}
-                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <h5 className="font-medium text-blue-800 mb-2">Units Summary</h5>
+                  <div className="mt-4 bg-primary-50 border border-primary-200 rounded-lg p-3">
+                    <h5 className="font-medium text-primary-800 mb-2">Units Summary</h5>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
-                        <span className="text-blue-600">Total Units:</span>
+                        <span className="text-primary-600">Total Units:</span>
                         <span className="ml-1 font-semibold">{units.length}</span>
                       </div>
                       <div>
-                        <span className="text-blue-600">Vacant:</span>
+                        <span className="text-primary-600">Vacant:</span>
                         <span className="ml-1 font-semibold">{units.filter(u => u.status === 'vacant').length}</span>
                       </div>
                       <div>
-                        <span className="text-blue-600">Configured:</span>
+                        <span className="text-primary-600">Configured:</span>
                         <span className="ml-1 font-semibold">{units.filter(u => u.unitType && u.unitNumber).length}</span>
                       </div>
                       <div>
-                        <span className="text-blue-600">With Landlord:</span>
+                        <span className="text-primary-600">With Landlord:</span>
                         <span className="ml-1 font-semibold">{units.filter(u => u.landlordId).length}</span>
                       </div>
                     </div>
@@ -1376,7 +1376,7 @@ export default function PropertiesPage() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
               <Button
                 variant="outline"
                 onClick={() => setShowAddModal(false)}

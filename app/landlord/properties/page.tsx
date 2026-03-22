@@ -19,22 +19,22 @@ export default function LandlordPropertiesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map(property => (
-          <div key={property.id} className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="h-48 bg-gradient-to-br from-green-400 to-blue-500"></div>
+          <div key={property.id} className="bg-surface shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="h-48 bg-gradient-to-br from-success-500 to-primary-500"></div>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{property.name}</h3>
-              <p className="text-sm text-gray-600 mb-4">📍 {property.location}</p>
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">{property.name}</h3>
+              <p className="text-sm text-neutral-600 mb-4">📍 {property.location}</p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Units:</span>
+                  <span className="text-neutral-600">Units:</span>
                   <span className="font-medium">{property.units}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Occupied:</span>
-                  <span className="font-medium text-green-600">{property.occupied}/{property.units}</span>
+                  <span className="text-neutral-600">Occupied:</span>
+                  <span className="font-medium text-success-600">{property.occupied}/{property.units}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Monthly Revenue:</span>
+                  <span className="text-neutral-600">Monthly Revenue:</span>
                   <span className="font-medium">${property.monthlyRent.toLocaleString()}</span>
                 </div>
               </div>

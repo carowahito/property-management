@@ -54,36 +54,36 @@ export default function InspectionsPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Property Inspections</h1>
-          <p className='text-gray-600 mt-1'>Schedule and track property inspection activities</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Property Inspections</h1>
+          <p className='text-neutral-600 mt-1'>Schedule and track property inspection activities</p>
         </div>
         <Button variant="primary" size="lg">+ Schedule Inspection</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Scheduled</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.scheduled}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Scheduled</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.scheduled}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Completed</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.completed}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Completed</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.completed}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Issues Found</p>
-          <p className='text-3xl font-bold text-red-600'>{stats.totalIssues}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Issues Found</p>
+          <p className='text-3xl font-bold text-danger-600'>{stats.totalIssues}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>This Month</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>This Month</p>
           <p className='text-3xl font-bold text-purple-600'>{stats.thisMonth}</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
+          className='px-4 py-2 border border-neutral-300 rounded-lg'
         >
           <option value='all'>All Types</option>
           <option value='move-in'>Move-In</option>
@@ -93,59 +93,59 @@ export default function InspectionsPage() {
         </select>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Property/Unit
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Type
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Scheduled Date
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Inspector
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Issues Found
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredInspections.map((inspection) => (
-              <tr key={inspection.id} className='hover:bg-gray-50'>
+              <tr key={inspection.id} className='hover:bg-neutral-50'>
                 <td className='px-6 py-4'>
-                  <div className='text-sm font-medium text-gray-900'>{inspection.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {inspection.unitNumber}</div>
+                  <div className='text-sm font-medium text-neutral-900'>{inspection.propertyName}</div>
+                  <div className='text-sm text-neutral-500'>Unit {inspection.unitNumber}</div>
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900 capitalize'>
+                <td className='px-6 py-4 text-sm text-neutral-900 capitalize'>
                   {inspection.type.replace('-', ' ')}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{inspection.scheduledDate}</td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{inspection.inspector}</td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{inspection.scheduledDate}</td>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{inspection.inspector}</td>
+                <td className='px-6 py-4 text-sm text-neutral-900'>
                   {inspection.issuesFound !== undefined ? inspection.issuesFound : '—'}
                   {inspection.notes && (
-                    <div className='text-xs text-gray-500 mt-1'>{inspection.notes}</div>
+                    <div className='text-xs text-neutral-500 mt-1'>{inspection.notes}</div>
                   )}
                 </td>
                 <td className='px-6 py-4'>
                   <span
                     className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       inspection.status === 'scheduled'
-                        ? 'bg-blue-100 text-blue-800'
+                        ? 'bg-primary-100 text-primary-800'
                         : inspection.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-success-100 text-green-800'
+                          : 'bg-neutral-100 text-neutral-800'
                     }`}
                   >
                     {inspection.status}

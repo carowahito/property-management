@@ -96,8 +96,8 @@ export default function TemplatesPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Document Templates</h1>
-          <p className='text-gray-600 mt-1'>
+          <h1 className='text-3xl font-bold text-neutral-900'>Document Templates</h1>
+          <p className='text-neutral-600 mt-1'>
             Create and manage lease agreement and document templates
           </p>
         </div>
@@ -105,29 +105,29 @@ export default function TemplatesPage() {
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active Templates</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.totalActive}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Active Templates</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.totalActive}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Draft Templates</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Draft Templates</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.totalDraft}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Usage</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.totalUsage}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Usage</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalUsage}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>All Templates</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>All Templates</p>
           <p className='text-3xl font-bold text-purple-600'>{stats.totalTemplates}</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
+          className='px-4 py-2 border border-neutral-300 rounded-lg'
         >
           <option value='all'>All Categories</option>
           <option value='lease-agreement'>Lease Agreements</option>
@@ -138,53 +138,53 @@ export default function TemplatesPage() {
         </select>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Template Name
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Category
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Property Type
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Last Modified
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Usage Count
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredTemplates.map((template) => (
-              <tr key={template.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>{template.name}</td>
-                <td className='px-6 py-4 text-sm text-gray-900 capitalize'>
+              <tr key={template.id} className='hover:bg-neutral-50'>
+                <td className='px-6 py-4 text-sm font-medium text-neutral-900'>{template.name}</td>
+                <td className='px-6 py-4 text-sm text-neutral-900 capitalize'>
                   {template.category.replace('-', ' ')}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900 capitalize'>
+                <td className='px-6 py-4 text-sm text-neutral-900 capitalize'>
                   {template.propertyType}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{template.lastModified}</td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{template.usageCount} times</td>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{template.lastModified}</td>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{template.usageCount} times</td>
                 <td className='px-6 py-4'>
                   <span
                     className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       template.status === 'active'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-success-100 text-green-800'
                         : template.status === 'draft'
                           ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
+                          : 'bg-neutral-100 text-neutral-800'
                     }`}
                   >
                     {template.status}

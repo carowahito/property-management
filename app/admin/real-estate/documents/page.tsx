@@ -81,13 +81,13 @@ export default function DocumentsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-100 text-green-800';
       case 'expiring-soon':
         return 'bg-yellow-100 text-yellow-800';
       case 'expired':
-        return 'bg-red-100 text-red-800';
+        return 'bg-danger-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -110,48 +110,48 @@ export default function DocumentsPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Property Documents</h1>
-          <p className='text-gray-600 mt-1'>
+          <h1 className='text-3xl font-bold text-neutral-900'>Property Documents</h1>
+          <p className='text-neutral-600 mt-1'>
             Manage all property-related documents and certificates
           </p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Upload Document</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>+ Upload Document</button>
       </div>
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Documents</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalDocuments}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Documents</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalDocuments}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.activeDocuments}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Active</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.activeDocuments}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Expiring Soon</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Expiring Soon</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.expiringSoon}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Expired</p>
-          <p className='text-3xl font-bold text-red-600'>{stats.expired}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Expired</p>
+          <p className='text-3xl font-bold text-danger-600'>{stats.expired}</p>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <div className='flex gap-4'>
           <input
             type='text'
             placeholder='Search documents...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='flex-1 px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           />
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           >
             <option value='all'>All Types</option>
             <option value='Deed'>Deeds</option>
@@ -163,53 +163,53 @@ export default function DocumentsPage() {
       </div>
 
       {/* Documents List */}
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Document
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Type
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Property
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Upload Date
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Size
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredDocuments.map((doc) => (
-              <tr key={doc.id} className='hover:bg-gray-50'>
+              <tr key={doc.id} className='hover:bg-neutral-50'>
                 <td className='px-6 py-4'>
                   <div className='flex items-center'>
                     <span className='text-2xl mr-3'>{getDocumentIcon(doc.type)}</span>
                     <div>
-                      <div className='text-sm font-medium text-gray-900'>{doc.name}</div>
-                      <div className='text-xs text-gray-500'>by {doc.uploadedBy}</div>
+                      <div className='text-sm font-medium text-neutral-900'>{doc.name}</div>
+                      <div className='text-xs text-neutral-500'>by {doc.uploadedBy}</div>
                     </div>
                   </div>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>{doc.type}</td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>{doc.type}</td>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                   {doc.propertyName}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                   {doc.uploadedDate}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>{doc.size}</td>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>{doc.size}</td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(doc.status)}`}
@@ -217,10 +217,10 @@ export default function DocumentsPage() {
                     {doc.status.replace('-', ' ')}
                   </span>
                   {doc.expiryDate && (
-                    <div className='text-xs text-gray-500 mt-1'>Exp: {doc.expiryDate}</div>
+                    <div className='text-xs text-neutral-500 mt-1'>Exp: {doc.expiryDate}</div>
                   )}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-500 space-x-2'>
                   <button  >
                     View
                   </button>

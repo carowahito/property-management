@@ -121,11 +121,11 @@ export default function VendorQuotes() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Urgent': return 'bg-red-100 text-red-800'
-      case 'High': return 'bg-orange-100 text-orange-800'
+      case 'Urgent': return 'bg-danger-100 text-danger-800'
+      case 'High': return 'bg-warning-100 text-warning-800'
       case 'Medium': return 'bg-yellow-100 text-yellow-800'
-      case 'Low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Low': return 'bg-success-100 text-success-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -133,47 +133,47 @@ export default function VendorQuotes() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quote Requests</h1>
-          <p className="text-gray-600 mt-1">Review and submit quotes for maintenance requests</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Quote Requests</h1>
+          <p className="text-neutral-600 mt-1">Review and submit quotes for maintenance requests</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Pending Requests</p>
-          <p className="text-2xl font-bold text-gray-900">
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Pending Requests</p>
+          <p className="text-2xl font-bold text-neutral-900">
             {quoteRequests.filter(q => q.status === 'pending').length}
           </p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Quotes Submitted</p>
-          <p className="text-2xl font-bold text-blue-600">
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Quotes Submitted</p>
+          <p className="text-2xl font-bold text-primary-600">
             {quoteRequests.filter(q => q.status === 'submitted').length}
           </p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Quotes Accepted</p>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Quotes Accepted</p>
+          <p className="text-2xl font-bold text-success-600">
             {quoteRequests.filter(q => q.status === 'accepted').length}
           </p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Acceptance Rate</p>
-          <p className="text-2xl font-bold text-orange-600">75%</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Acceptance Rate</p>
+          <p className="text-2xl font-bold text-warning-600">75%</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="border-b border-gray-200">
+      <div className="bg-surface shadow rounded-lg">
+        <div className="border-b border-neutral-200">
           <div className="flex space-x-8 px-6">
             <button
               onClick={() => setActiveTab('pending')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'pending'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-warning-500 text-warning-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               Pending Requests ({quoteRequests.filter(q => q.status === 'pending').length})
@@ -182,8 +182,8 @@ export default function VendorQuotes() {
               onClick={() => setActiveTab('submitted')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'submitted'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-warning-500 text-warning-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               Submitted ({quoteRequests.filter(q => q.status === 'submitted').length})
@@ -192,8 +192,8 @@ export default function VendorQuotes() {
               onClick={() => setActiveTab('accepted')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'accepted'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-warning-500 text-warning-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               Accepted ({quoteRequests.filter(q => q.status === 'accepted').length})
@@ -204,36 +204,36 @@ export default function VendorQuotes() {
         <div className="p-6 space-y-4">
           {filteredRequests.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400 text-5xl mb-4">📋</div>
-              <p className="text-gray-500">No {activeTab} quote requests</p>
+              <div className="text-neutral-400 text-5xl mb-4">📋</div>
+              <p className="text-neutral-500">No {activeTab} quote requests</p>
             </div>
           ) : (
             filteredRequests.map((request) => (
-              <div key={request.id} className="border rounded-lg p-4 hover:bg-gray-50">
+              <div key={request.id} className="border rounded-lg p-4 hover:bg-neutral-50">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">{request.id}</h3>
+                      <h3 className="font-semibold text-neutral-900">{request.id}</h3>
                       <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(request.priority)}`}>
                         {request.priority}
                       </span>
-                      <span className="text-sm text-gray-600">Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
+                      <span className="text-sm text-neutral-600">Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm text-neutral-600 mb-2">
                       {request.property} - {request.unit}
                     </p>
-                    <p className="text-gray-900 mb-3">{request.description}</p>
+                    <p className="text-neutral-900 mb-3">{request.description}</p>
                     
                     {request.submittedQuote && (
-                      <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
+                      <div className="bg-primary-50 border border-primary-200 rounded p-3 mt-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-medium text-blue-900">Your Quote</p>
-                            <p className="text-lg font-bold text-blue-900">KES {request.submittedQuote.amount.toLocaleString()}</p>
-                            <p className="text-sm text-blue-700">Est. {request.submittedQuote.estimatedDays} days</p>
-                            <p className="text-sm text-gray-600 mt-1">{request.submittedQuote.notes}</p>
+                            <p className="text-sm font-medium text-primary-900">Your Quote</p>
+                            <p className="text-lg font-bold text-primary-900">KES {request.submittedQuote.amount.toLocaleString()}</p>
+                            <p className="text-sm text-primary-700">Est. {request.submittedQuote.estimatedDays} days</p>
+                            <p className="text-sm text-neutral-600 mt-1">{request.submittedQuote.notes}</p>
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-neutral-600">
                             Submitted: {new Date(request.submittedQuote.submittedDate).toLocaleDateString()}
                           </div>
                         </div>
@@ -248,13 +248,13 @@ export default function VendorQuotes() {
                           setSelectedRequest(request)
                           setShowQuoteForm(true)
                         }}
-                        className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+                        className="bg-warning-600 text-white px-4 py-2 rounded hover:bg-warning-700"
                       >
                         Submit Quote
                       </button>
                     )}
                     {request.status === 'accepted' && (
-                      <span className="text-green-600 font-medium">✓ Accepted</span>
+                      <span className="text-success-600 font-medium">✓ Accepted</span>
                     )}
                   </div>
                 </div>
@@ -267,16 +267,16 @@ export default function VendorQuotes() {
       {/* Quote Submission Form Modal */}
       {showQuoteForm && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Submit Quote</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">Submit Quote</h2>
                 <button
                   onClick={() => {
                     setShowQuoteForm(false)
                     setSelectedRequest(null)
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -284,22 +284,22 @@ export default function VendorQuotes() {
                 </button>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-2">{selectedRequest.id}</h3>
-                <p className="text-sm text-gray-600 mb-1">{selectedRequest.property} - {selectedRequest.unit}</p>
-                <p className="text-gray-900">{selectedRequest.description}</p>
+              <div className="bg-neutral-50 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-neutral-900 mb-2">{selectedRequest.id}</h3>
+                <p className="text-sm text-neutral-600 mb-1">{selectedRequest.property} - {selectedRequest.unit}</p>
+                <p className="text-neutral-900">{selectedRequest.description}</p>
               </div>
 
               <form onSubmit={handleSubmitQuote} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
                       Materials Cost (KES)
                     </label>
                     <input
                       type="number"
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                       placeholder="25000"
                       value={quoteForm.materials}
                       onChange={(e) => setQuoteForm({ ...quoteForm, materials: e.target.value })}
@@ -307,13 +307,13 @@ export default function VendorQuotes() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
                       Labor Cost (KES)
                     </label>
                     <input
                       type="number"
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                       placeholder="15000"
                       value={quoteForm.labor}
                       onChange={(e) => setQuoteForm({ ...quoteForm, labor: e.target.value })}
@@ -322,26 +322,26 @@ export default function VendorQuotes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Total Amount (KES)
                   </label>
                   <input
                     type="number"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-gray-50"
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500 bg-neutral-50"
                     value={(parseInt(quoteForm.materials || '0') + parseInt(quoteForm.labor || '0')).toString()}
                     readOnly
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Estimated Completion (Days)
                   </label>
                   <input
                     type="number"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                     placeholder="3"
                     value={quoteForm.estimatedDays}
                     onChange={(e) => setQuoteForm({ ...quoteForm, estimatedDays: e.target.value })}
@@ -349,13 +349,13 @@ export default function VendorQuotes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Notes & Details
                   </label>
                   <textarea
                     rows={4}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                     placeholder="Include warranty information, materials to be used, and any other relevant details..."
                     value={quoteForm.notes}
                     onChange={(e) => setQuoteForm({ ...quoteForm, notes: e.target.value })}
@@ -365,7 +365,7 @@ export default function VendorQuotes() {
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700"
+                    className="flex-1 bg-warning-600 text-white py-2 px-4 rounded-lg hover:bg-warning-700"
                   >
                     Submit Quote
                   </button>
@@ -375,7 +375,7 @@ export default function VendorQuotes() {
                       setShowQuoteForm(false)
                       setSelectedRequest(null)
                     }}
-                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-6 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50"
                   >
                     Cancel
                   </button>

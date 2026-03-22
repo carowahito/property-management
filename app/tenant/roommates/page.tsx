@@ -69,9 +69,9 @@ export default function RoommatesPage() {
     const colors: Record<string, string> = {
       spouse: 'bg-purple-100 text-purple-800',
       partner: 'bg-pink-100 text-pink-800',
-      roommate: 'bg-blue-100 text-blue-800',
-      family: 'bg-green-100 text-green-800',
-      other: 'bg-gray-100 text-gray-800',
+      roommate: 'bg-primary-100 text-primary-800',
+      family: 'bg-success-100 text-success-800',
+      other: 'bg-neutral-100 text-neutral-800',
     }
     return colors[type] || colors.other
   }
@@ -80,22 +80,22 @@ export default function RoommatesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Roommates & Occupants</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Roommates & Occupants</h1>
+        <p className="mt-2 text-neutral-600">
           Manage authorized occupants and roommate information
         </p>
       </div>
 
       {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-5 w-5 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
           </div>
           <div className="ml-3">
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-primary-800">
               <strong>Important:</strong> All occupants must be approved by property management. Unauthorized occupants may result in lease violations.
             </p>
           </div>
@@ -106,7 +106,7 @@ export default function RoommatesPage() {
       <div className="mb-6">
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+          className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
         >
           {showAddForm ? 'Cancel' : '+ Add Roommate/Occupant'}
         </button>
@@ -114,12 +114,12 @@ export default function RoommatesPage() {
 
       {/* Add Roommate Form */}
       {showAddForm && (
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Add New Occupant</h2>
+        <div className="bg-surface shadow rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Add New Occupant</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1">
                   Full Name *
                 </label>
                 <input
@@ -127,20 +127,20 @@ export default function RoommatesPage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="relationshipType" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="relationshipType" className="block text-sm font-medium text-neutral-700 mb-1">
                   Relationship *
                 </label>
                 <select
                   id="relationshipType"
                   value={formData.relationshipType}
                   onChange={(e) => setFormData({ ...formData, relationshipType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 >
                   <option value="roommate">Roommate</option>
@@ -152,7 +152,7 @@ export default function RoommatesPage() {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
                   Email Address *
                 </label>
                 <input
@@ -160,13 +160,13 @@ export default function RoommatesPage() {
                   id="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1">
                   Phone Number *
                 </label>
                 <input
@@ -174,7 +174,7 @@ export default function RoommatesPage() {
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 />
               </div>
@@ -186,9 +186,9 @@ export default function RoommatesPage() {
                 id="isEmergencyContact"
                 checked={formData.isEmergencyContact}
                 onChange={(e) => setFormData({ ...formData, isEmergencyContact: e.target.checked })}
-                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
               />
-              <label htmlFor="isEmergencyContact" className="ml-3 text-sm text-gray-700">
+              <label htmlFor="isEmergencyContact" className="ml-3 text-sm text-neutral-700">
                 Add as emergency contact
               </label>
             </div>
@@ -203,13 +203,13 @@ export default function RoommatesPage() {
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
               >
                 Submit for Approval
               </button>
@@ -219,20 +219,20 @@ export default function RoommatesPage() {
       )}
 
       {/* Current Roommates List */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Current Occupants</h2>
+      <div className="bg-surface shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-neutral-200">
+          <h2 className="text-lg font-semibold text-neutral-900">Current Occupants</h2>
         </div>
 
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-neutral-200">
           {roommates.map((roommate) => (
             <div key={roommate.id} className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4">
                   {/* Avatar */}
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-lg font-semibold text-blue-600">
+                    <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                      <span className="text-lg font-semibold text-primary-600">
                         {roommate.name.split(' ').map(n => n[0]).join('')}
                       </span>
                     </div>
@@ -241,9 +241,9 @@ export default function RoommatesPage() {
                   {/* Info */}
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-medium text-gray-900">{roommate.name}</h3>
+                      <h3 className="text-lg font-medium text-neutral-900">{roommate.name}</h3>
                       {roommate.leaseHolder && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                           Lease Holder
                         </span>
                       )}
@@ -251,15 +251,15 @@ export default function RoommatesPage() {
                         {roommate.relationshipType.charAt(0).toUpperCase() + roommate.relationshipType.slice(1)}
                       </span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        roommate.status === 'active' ? 'bg-green-100 text-green-800' :
+                        roommate.status === 'active' ? 'bg-success-100 text-success-800' :
                         roommate.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
+                        'bg-danger-100 text-danger-800'
                       }`}>
                         {roommate.status.charAt(0).toUpperCase() + roommate.status.slice(1)}
                       </span>
                     </div>
 
-                    <div className="space-y-1 text-sm text-gray-600">
+                    <div className="space-y-1 text-sm text-neutral-600">
                       <div className="flex items-center">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -279,7 +279,7 @@ export default function RoommatesPage() {
                         Moved in: {new Date(roommate.moveInDate).toLocaleDateString()}
                       </div>
                       {roommate.emergencyContact && (
-                        <div className="flex items-center text-blue-600">
+                        <div className="flex items-center text-primary-600">
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                           </svg>
@@ -293,7 +293,7 @@ export default function RoommatesPage() {
                 {/* Actions */}
                 {!roommate.leaseHolder && (
                   <div>
-                    <button className="text-sm text-red-600 hover:text-red-800 font-medium">
+                    <button className="text-sm text-danger-600 hover:text-danger-800 font-medium">
                       Remove
                     </button>
                   </div>
@@ -305,33 +305,33 @@ export default function RoommatesPage() {
       </div>
 
       {/* Bill Splitting Section */}
-      <div className="mt-6 bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Rent & Utility Split</h2>
+      <div className="mt-6 bg-surface shadow rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Rent & Utility Split</h2>
         <div className="space-y-3">
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between py-3 border-b border-neutral-100">
             <div>
-              <p className="text-sm font-medium text-gray-900">Monthly Rent Split</p>
-              <p className="text-xs text-gray-500">Total: KES 45,000</p>
+              <p className="text-sm font-medium text-neutral-900">Monthly Rent Split</p>
+              <p className="text-xs text-neutral-500">Total: KES 45,000</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">50% each (2 occupants)</p>
-              <p className="text-xs text-gray-500">KES 22,500 per person</p>
+              <p className="text-sm font-medium text-neutral-900">50% each (2 occupants)</p>
+              <p className="text-xs text-neutral-500">KES 22,500 per person</p>
             </div>
           </div>
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between py-3 border-b border-neutral-100">
             <div>
-              <p className="text-sm font-medium text-gray-900">Utilities Split</p>
-              <p className="text-xs text-gray-500">Average: KES 8,000/month</p>
+              <p className="text-sm font-medium text-neutral-900">Utilities Split</p>
+              <p className="text-xs text-neutral-500">Average: KES 8,000/month</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">50% each</p>
-              <p className="text-xs text-gray-500">KES 4,000 per person</p>
+              <p className="text-sm font-medium text-neutral-900">50% each</p>
+              <p className="text-xs text-neutral-500">KES 4,000 per person</p>
             </div>
           </div>
           <div className="pt-3">
             <Link
               href="/tenant/utilities"
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="text-sm text-primary-600 hover:text-primary-800 font-medium"
             >
               View Detailed Utility Breakdown →
             </Link>

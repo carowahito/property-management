@@ -141,27 +141,27 @@ export default function VirtualToursPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Virtual Tours</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Virtual Tours</h1>
+        <p className="mt-2 text-neutral-600">
           Explore your unit and property amenities with immersive 360° tours
         </p>
       </div>
 
       {/* Active Tour Viewer */}
       {selectedTour ? (
-        <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
+        <div className="bg-surface shadow rounded-lg overflow-hidden mb-8">
           {/* Tour Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+          <div className="bg-gradient-to-r from-primary-600 to-purple-600 text-white p-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold">{selectedTour.title}</h2>
-                <p className="text-sm text-blue-100">
+                <p className="text-sm text-primary-100">
                   Stop {currentStop + 1} of {tourStops.length}: {tourStops[currentStop].name}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedTour(null)}
-                className="text-white hover:bg-white hover:bg-opacity-20 rounded p-2 transition-colors"
+                className="text-white hover:bg-surface hover:bg-opacity-20 rounded p-2 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -171,16 +171,16 @@ export default function VirtualToursPage() {
           </div>
 
           {/* 360° Viewer (Simulated) */}
-          <div className="relative bg-gray-900 aspect-video">
+          <div className="relative bg-neutral-900 aspect-video">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center text-white">
                 <div className="text-8xl mb-4">🏠</div>
                 <h3 className="text-2xl font-bold mb-2">{tourStops[currentStop].name}</h3>
-                <p className="text-gray-300 max-w-md mx-auto px-4 mb-6">
+                <p className="text-neutral-300 max-w-md mx-auto px-4 mb-6">
                   {tourStops[currentStop].description}
                 </p>
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 inline-block">
-                  <p className="text-sm text-gray-300 mb-2">🎮 Interactive Tour Controls</p>
+                <div className="bg-surface bg-opacity-10 backdrop-blur-sm rounded-lg p-4 inline-block">
+                  <p className="text-sm text-neutral-300 mb-2">🎮 Interactive Tour Controls</p>
                   <div className="flex space-x-4 text-xs">
                     <span>← → Pan</span>
                     <span>↑ ↓ Tilt</span>
@@ -194,7 +194,7 @@ export default function VirtualToursPage() {
             {tourStops[currentStop].hotspots.map((hotspot, index) => (
               <button
                 key={index}
-                className="absolute w-8 h-8 bg-blue-500 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all hover:scale-110 animate-pulse"
+                className="absolute w-8 h-8 bg-primary-500 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all hover:scale-110 animate-pulse"
                 style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
                 title={hotspot.info}
               >
@@ -206,7 +206,7 @@ export default function VirtualToursPage() {
             {currentStop > 0 && (
               <button
                 onClick={() => setCurrentStop(currentStop - 1)}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-3 transition-all"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-surface bg-opacity-80 hover:bg-opacity-100 rounded-full p-3 transition-all"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -216,7 +216,7 @@ export default function VirtualToursPage() {
             {currentStop < tourStops.length - 1 && (
               <button
                 onClick={() => setCurrentStop(currentStop + 1)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-3 transition-all"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-surface bg-opacity-80 hover:bg-opacity-100 rounded-full p-3 transition-all"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -226,20 +226,20 @@ export default function VirtualToursPage() {
           </div>
 
           {/* Tour Controls */}
-          <div className="p-4 bg-gray-50 border-t border-gray-200">
+          <div className="p-4 bg-neutral-50 border-t border-neutral-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
-                <button className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors">
+                <button className="p-2 bg-surface border border-neutral-300 rounded-md hover:bg-neutral-100 transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                   </svg>
                 </button>
-                <button className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors">
+                <button className="p-2 bg-surface border border-neutral-300 rounded-md hover:bg-neutral-100 transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
                   </svg>
                 </button>
-                <button className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors">
+                <button className="p-2 bg-surface border border-neutral-300 rounded-md hover:bg-neutral-100 transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
@@ -247,7 +247,7 @@ export default function VirtualToursPage() {
               </div>
               <button
                 onClick={() => setShowScheduleForm(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
               >
                 📅 Schedule In-Person Tour
               </button>
@@ -261,8 +261,8 @@ export default function VirtualToursPage() {
                   onClick={() => setCurrentStop(index)}
                   className={`flex-shrink-0 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     currentStop === index
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-surface border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
                   }`}
                 >
                   {stop.name}
@@ -275,28 +275,28 @@ export default function VirtualToursPage() {
         <>
           {/* Featured Tours */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Featured Tours</h2>
+            <h2 className="text-xl font-semibold text-neutral-900 mb-4">Featured Tours</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tours.filter(tour => tour.featured).map((tour) => (
                 <div
                   key={tour.id}
-                  className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  className="bg-surface shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => setSelectedTour(tour)}
                 >
-                  <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <div className="aspect-video bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
                     <span className="text-8xl">{tour.thumbnail}</span>
                   </div>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">{tour.title}</h3>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <h3 className="font-semibold text-neutral-900">{tour.title}</h3>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                         {tour.duration}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-neutral-600 mb-3">
                       {tour.spaces.length} spaces • {tour.views} views
                     </p>
-                    <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
+                    <button className="w-full px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 transition-colors">
                       Start Virtual Tour →
                     </button>
                   </div>
@@ -306,30 +306,30 @@ export default function VirtualToursPage() {
           </div>
 
           {/* All Tours */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">All Virtual Tours</h2>
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">All Virtual Tours</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {tours.map((tour) => (
                 <div
                   key={tour.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer"
+                  className="border border-neutral-200 rounded-lg p-4 hover:border-primary-500 transition-colors cursor-pointer"
                   onClick={() => setSelectedTour(tour)}
                 >
                   <div className="flex items-start space-x-4">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-4xl flex-shrink-0">
+                    <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center text-4xl flex-shrink-0">
                       {tour.thumbnail}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">{tour.title}</h3>
-                      <p className="text-sm text-gray-600 mb-2">
+                      <h3 className="font-semibold text-neutral-900 mb-1">{tour.title}</h3>
+                      <p className="text-sm text-neutral-600 mb-2">
                         {tour.spaces.join(' • ')}
                       </p>
-                      <div className="flex items-center text-xs text-gray-500 space-x-3">
+                      <div className="flex items-center text-xs text-neutral-500 space-x-3">
                         <span>⏱️ {tour.duration}</span>
                         <span>👁️ {tour.views} views</span>
                       </div>
                     </div>
-                    <button className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+                    <button className="px-3 py-1 bg-primary-600 text-white rounded-md text-sm hover:bg-primary-700 transition-colors">
                       View
                     </button>
                   </div>
@@ -343,12 +343,12 @@ export default function VirtualToursPage() {
       {/* Schedule In-Person Tour Modal */}
       {showScheduleForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="bg-surface rounded-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Schedule In-Person Tour</h3>
+              <h3 className="text-lg font-semibold text-neutral-900">Schedule In-Person Tour</h3>
               <button
                 onClick={() => setShowScheduleForm(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-neutral-400 hover:text-neutral-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -358,23 +358,23 @@ export default function VirtualToursPage() {
 
             <form onSubmit={handleScheduleTour} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Preferred Date *
                 </label>
                 <input
                   type="date"
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Preferred Time *
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 >
                   <option value="">Select time</option>
@@ -390,37 +390,37 @@ export default function VirtualToursPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Areas to Tour
                 </label>
                 <div className="space-y-2">
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600" defaultChecked />
-                    <span className="ml-2 text-sm text-gray-700">Your Unit</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600" defaultChecked />
+                    <span className="ml-2 text-sm text-neutral-700">Your Unit</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600" />
-                    <span className="ml-2 text-sm text-gray-700">Fitness Center</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600" />
+                    <span className="ml-2 text-sm text-neutral-700">Fitness Center</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600" />
-                    <span className="ml-2 text-sm text-gray-700">Pool & Amenities</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600" />
+                    <span className="ml-2 text-sm text-neutral-700">Pool & Amenities</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600" />
-                    <span className="ml-2 text-sm text-gray-700">Property Grounds</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600" />
+                    <span className="ml-2 text-sm text-neutral-700">Property Grounds</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Additional Notes
                 </label>
                 <textarea
                   rows={3}
                   placeholder="Any specific areas or questions you'd like to discuss..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
 
@@ -428,13 +428,13 @@ export default function VirtualToursPage() {
                 <button
                   type="button"
                   onClick={() => setShowScheduleForm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
                 >
                   Schedule Tour
                 </button>
@@ -445,9 +445,9 @@ export default function VirtualToursPage() {
       )}
 
       {/* Info Section */}
-      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-sm font-semibold text-blue-900 mb-3">Virtual Tour Features</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+      <div className="mt-8 bg-primary-50 border border-primary-200 rounded-lg p-6">
+        <h3 className="text-sm font-semibold text-primary-900 mb-3">Virtual Tour Features</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-primary-800">
           <div className="flex items-start">
             <span className="text-xl mr-2">🎮</span>
             <div>

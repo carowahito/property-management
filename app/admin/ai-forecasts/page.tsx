@@ -64,42 +64,42 @@ export default function AIForecastsPage() {
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'HIGH':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-danger-100 text-red-800 border-danger-200';
       case 'MEDIUM':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'LOW':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success-100 text-green-800 border-green-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Generating forecasts...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-neutral-600">Generating forecasts...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 space-y-6">
+    <div className="min-h-screen bg-neutral-50 p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-neutral-900 flex items-center gap-2">
             <span className="text-3xl">📈</span> AI Predictive Analytics
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-neutral-600 mt-1">
             Revenue forecasts, occupancy predictions, and churn risk analysis
           </p>
         </div>
         <button
           onClick={fetchForecasts}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
         >
           Refresh Forecasts
         </button>
@@ -107,10 +107,10 @@ export default function AIForecastsPage() {
 
       {/* Revenue Forecast */}
       {revenueForecast && revenueForecast.forecasts && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-surface rounded-lg shadow p-6">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Revenue Forecast (Next 6 Months)</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-xl font-bold text-neutral-900 mb-2">Revenue Forecast (Next 6 Months)</h2>
+            <p className="text-sm text-neutral-600">
               Confidence Level: {revenueForecast.confidence}%
             </p>
           </div>
@@ -165,33 +165,33 @@ export default function AIForecastsPage() {
 
           {/* Forecast Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-neutral-200">
+              <thead className="bg-neutral-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Month
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Predicted Revenue
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Confidence Range
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Growth Rate
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-surface divide-y divide-neutral-200">
                 {revenueForecast.forecasts.map((forecast: RevenueForecast, idx: number) => (
-                  <tr key={idx} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  <tr key={idx} className="hover:bg-neutral-50">
+                    <td className="px-4 py-3 text-sm font-medium text-neutral-900">
                       {forecast.month}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-4 py-3 text-sm text-neutral-900">
                       KES {forecast.predicted.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-neutral-600">
                       KES {forecast.confidence.lower.toLocaleString()} -{' '}
                       {forecast.confidence.upper.toLocaleString()}
                     </td>
@@ -199,8 +199,8 @@ export default function AIForecastsPage() {
                       <span
                         className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
                           forecast.growthRate > 0
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-success-100 text-green-800'
+                            : 'bg-danger-100 text-red-800'
                         }`}
                       >
                         {forecast.growthRate > 0 ? '↑' : '↓'} {Math.abs(forecast.growthRate)}%
@@ -213,9 +213,9 @@ export default function AIForecastsPage() {
           </div>
 
           {/* AI Summary */}
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">AI Analysis</h3>
-            <p className="text-sm text-gray-700 whitespace-pre-line">
+          <div className="mt-6 bg-primary-50 border border-primary-200 rounded-lg p-4">
+            <h3 className="font-semibold text-neutral-900 mb-2">AI Analysis</h3>
+            <p className="text-sm text-neutral-700 whitespace-pre-line">
               {revenueForecast.summary}
             </p>
           </div>
@@ -224,31 +224,31 @@ export default function AIForecastsPage() {
 
       {/* Tenant Churn Risk */}
       {churnRisks.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Tenant Retention Risk Analysis</h2>
-          <p className="text-sm text-gray-600 mb-6">
+        <div className="bg-surface rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-neutral-900 mb-4">Tenant Retention Risk Analysis</h2>
+          <p className="text-sm text-neutral-600 mb-6">
             Tenants identified as requiring proactive retention efforts
           </p>
 
           {/* Risk Summary */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="text-2xl font-bold text-red-600">
+            <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-danger-600">
                 {churnRisks.filter((r) => r.riskScore === 'HIGH').length}
               </div>
-              <div className="text-sm text-gray-600">High Risk</div>
+              <div className="text-sm text-neutral-600">High Risk</div>
             </div>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="text-2xl font-bold text-yellow-600">
                 {churnRisks.filter((r) => r.riskScore === 'MEDIUM').length}
               </div>
-              <div className="text-sm text-gray-600">Medium Risk</div>
+              <div className="text-sm text-neutral-600">Medium Risk</div>
             </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-600">
+            <div className="bg-success-50 border border-green-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-success-600">
                 {churnRisks.filter((r) => r.riskScore === 'LOW').length}
               </div>
-              <div className="text-sm text-gray-600">Low Risk</div>
+              <div className="text-sm text-neutral-600">Low Risk</div>
             </div>
           </div>
 

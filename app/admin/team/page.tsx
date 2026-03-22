@@ -50,23 +50,23 @@ export default function TeamManagementPage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Admin': return 'bg-red-100 text-red-800'
+      case 'Admin': return 'bg-danger-100 text-red-800'
       case 'Manager': return 'bg-purple-100 text-purple-800'
-      case 'Sales': return 'bg-blue-100 text-blue-800'
-      case 'Customer Care': return 'bg-green-100 text-green-800'
-      case 'Caretaker': return 'bg-orange-100 text-orange-800'
+      case 'Sales': return 'bg-primary-100 text-primary-800'
+      case 'Customer Care': return 'bg-success-100 text-green-800'
+      case 'Caretaker': return 'bg-warning-100 text-orange-800'
       case 'Operations': return 'bg-indigo-100 text-indigo-800'
       case 'Finance': return 'bg-emerald-100 text-emerald-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800'
+      case 'Active': return 'bg-success-100 text-green-800'
       case 'On Leave': return 'bg-yellow-100 text-yellow-800'
-      case 'Inactive': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Inactive': return 'bg-neutral-100 text-neutral-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -93,8 +93,8 @@ export default function TeamManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-gray-600 mt-1">Manage team members, roles, and permissions</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Team Management</h1>
+          <p className="text-neutral-600 mt-1">Manage team members, roles, and permissions</p>
         </div>
         <Button variant="primary" onClick={() => setShowAddModal(true)}>
           + Add Team Member
@@ -103,39 +103,39 @@ export default function TeamManagementPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-surface rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Total Team</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-sm text-neutral-500 mb-1">Total Team</p>
+              <p className="text-3xl font-bold text-neutral-900">{stats.total}</p>
             </div>
-            <div className="bg-blue-100 p-4 rounded-xl">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-primary-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-surface rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Active Members</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.active}</p>
+              <p className="text-sm text-neutral-500 mb-1">Active Members</p>
+              <p className="text-3xl font-bold text-neutral-900">{stats.active}</p>
             </div>
-            <div className="bg-green-100 p-4 rounded-xl">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-success-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-surface rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">On Leave</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.onLeave}</p>
+              <p className="text-sm text-neutral-500 mb-1">On Leave</p>
+              <p className="text-3xl font-bold text-neutral-900">{stats.onLeave}</p>
             </div>
             <div className="bg-yellow-100 p-4 rounded-xl">
               <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,11 +145,11 @@ export default function TeamManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-surface rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Departments</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.departments}</p>
+              <p className="text-sm text-neutral-500 mb-1">Departments</p>
+              <p className="text-3xl font-bold text-neutral-900">{stats.departments}</p>
             </div>
             <div className="bg-purple-100 p-4 rounded-xl">
               <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,25 +161,25 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Search</label>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, email, phone..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Role</label>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">All Roles</option>
               <option value="Admin">Admin</option>
@@ -193,11 +193,11 @@ export default function TeamManagementPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Department</label>
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">All Departments</option>
               <option value="Management">Management</option>
@@ -209,11 +209,11 @@ export default function TeamManagementPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">All Statuses</option>
               <option value="Active">Active</option>
@@ -225,50 +225,50 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Team Members Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-surface rounded-lg border border-neutral-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-neutral-200">
+            <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Team Member
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Role & Department
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Properties
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Last Active
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-neutral-200">
               {filteredMembers.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50">
+                <tr key={member.id} className="hover:bg-neutral-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {member.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       <div className="ml-4">
                         <Link 
                           href={`/admin/team/${member.id}`}
-                          className="text-sm font-medium text-gray-900 hover:text-blue-600"
+                          className="text-sm font-medium text-neutral-900 hover:text-primary-600"
                         >
                           {member.name}
                         </Link>
-                        <p className="text-sm text-gray-500">{member.id}</p>
+                        <p className="text-sm text-neutral-500">{member.id}</p>
                       </div>
                     </div>
                   </td>
@@ -276,18 +276,18 @@ export default function TeamManagementPage() {
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(member.role)}`}>
                       {member.role}
                     </span>
-                    <p className="text-sm text-gray-500 mt-1">{member.department}</p>
+                    <p className="text-sm text-neutral-500 mt-1">{member.department}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{member.email}</div>
-                    <div className="text-sm text-gray-500">{member.phone}</div>
+                    <div className="text-sm text-neutral-900">{member.email}</div>
+                    <div className="text-sm text-neutral-500">{member.phone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-neutral-900">
                       {member.assignedProperties ? (
-                        <span className="font-medium text-blue-600">{member.assignedProperties} assigned</span>
+                        <span className="font-medium text-primary-600">{member.assignedProperties} assigned</span>
                       ) : (
-                        <span className="text-gray-400">None</span>
+                        <span className="text-neutral-400">None</span>
                       )}
                     </div>
                   </td>
@@ -296,7 +296,7 @@ export default function TeamManagementPage() {
                       {member.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                     {member.lastActive ? formatDateTime(member.lastActive) : 'Never'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -306,7 +306,7 @@ export default function TeamManagementPage() {
                           setSelectedMember(member)
                           setShowPermissionsModal(true)
                         }}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-primary-600 hover:text-primary-900"
                         title="Manage Permissions"
                       >
                         🔒
@@ -319,7 +319,7 @@ export default function TeamManagementPage() {
                         👁️
                       </Link>
                       <button
-                        className="text-green-600 hover:text-green-900"
+                        className="text-success-600 hover:text-success-900"
                         title="Edit Member"
                       >
                         ✏️
@@ -334,7 +334,7 @@ export default function TeamManagementPage() {
 
         {filteredMembers.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No team members found matching your criteria.</p>
+            <p className="text-neutral-500">No team members found matching your criteria.</p>
           </div>
         )}
       </div>
@@ -342,16 +342,16 @@ export default function TeamManagementPage() {
       {/* Add Team Member Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Add Team Member</h3>
+          <div className="bg-surface rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-neutral-900 mb-6">Add Team Member</h3>
             
             <div className="space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Full Name *</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter full name"
                 />
               </div>
@@ -359,18 +359,18 @@ export default function TeamManagementPage() {
               {/* Email & Phone */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">Email *</label>
                   <input
                     type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="email@company.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">Phone *</label>
                   <input
                     type="tel"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="+254 700 000 000"
                   />
                 </div>
@@ -379,8 +379,8 @@ export default function TeamManagementPage() {
               {/* Role & Department */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">Role *</label>
+                  <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                     <option value="">Select role...</option>
                     <option value="Admin">Admin</option>
                     <option value="Manager">Manager</option>
@@ -392,8 +392,8 @@ export default function TeamManagementPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">Department *</label>
+                  <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                     <option value="">Select department...</option>
                     <option value="Management">Management</option>
                     <option value="Sales">Sales</option>
@@ -406,70 +406,70 @@ export default function TeamManagementPage() {
 
               {/* Permissions */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Access Permissions</label>
-                <div className="border border-gray-300 rounded-lg p-4 space-y-2 max-h-48 overflow-y-auto">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Access Permissions</label>
+                <div className="border border-neutral-300 rounded-lg p-4 space-y-2 max-h-48 overflow-y-auto">
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Properties - View</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Properties - View</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Properties - Manage</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Properties - Manage</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Tenants - View</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Tenants - View</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Tenants - Manage</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Tenants - Manage</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Leads - View</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Leads - View</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Leads - Edit</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Leads - Edit</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Maintenance - View</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Maintenance - View</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Maintenance - Manage</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Maintenance - Manage</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Payments - View</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Payments - View</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Payments - Manage</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Payments - Manage</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Communications - Send</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Communications - Send</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="ml-2 text-sm text-gray-700">Reports - View</span>
+                    <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                    <span className="ml-2 text-sm text-neutral-700">Reports - View</span>
                   </label>
                 </div>
               </div>
 
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Status</label>
+                <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+            <div className="flex gap-3 mt-6 pt-6 border-t border-neutral-200">
               <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
                 Cancel
               </Button>
@@ -484,8 +484,8 @@ export default function TeamManagementPage() {
       {/* Permissions Modal */}
       {showPermissionsModal && selectedMember && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-4">
               Manage Permissions - {selectedMember.name}
             </h3>
             
@@ -493,54 +493,54 @@ export default function TeamManagementPage() {
               <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${getRoleColor(selectedMember.role)}`}>
                 {selectedMember.role}
               </span>
-              <span className="ml-2 text-sm text-gray-500">{selectedMember.department}</span>
+              <span className="ml-2 text-sm text-neutral-500">{selectedMember.department}</span>
             </div>
 
             <div className="space-y-3 max-h-96 overflow-y-auto mb-6">
-              <h4 className="font-semibold text-gray-900">Current Permissions:</h4>
-              <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-neutral-900">Current Permissions:</h4>
+              <div className="bg-neutral-50 rounded-lg p-4">
                 {selectedMember.permissions.includes('all') ? (
-                  <p className="text-sm text-gray-900 font-medium">✓ Full System Access (Administrator)</p>
+                  <p className="text-sm text-neutral-900 font-medium">✓ Full System Access (Administrator)</p>
                 ) : (
                   <div className="space-y-2">
                     {selectedMember.permissions.map((permission, index) => (
                       <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-neutral-700">
                           ✓ {permission.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' - ')}
                         </span>
-                        <button className="text-red-500 hover:text-red-700 text-xs">Remove</button>
+                        <button className="text-danger-500 hover:text-danger-700 text-xs">Remove</button>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              <h4 className="font-semibold text-gray-900 pt-4">Add Permissions:</h4>
-              <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+              <h4 className="font-semibold text-neutral-900 pt-4">Add Permissions:</h4>
+              <div className="border border-neutral-300 rounded-lg p-4 space-y-2">
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                  <span className="ml-2 text-sm text-gray-700">Properties - View</span>
+                  <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                  <span className="ml-2 text-sm text-neutral-700">Properties - View</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                  <span className="ml-2 text-sm text-gray-700">Properties - Manage</span>
+                  <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                  <span className="ml-2 text-sm text-neutral-700">Properties - Manage</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                  <span className="ml-2 text-sm text-gray-700">Vendors - Manage</span>
+                  <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                  <span className="ml-2 text-sm text-neutral-700">Vendors - Manage</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                  <span className="ml-2 text-sm text-gray-700">Financial Reports - View</span>
+                  <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                  <span className="ml-2 text-sm text-neutral-700">Financial Reports - View</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                  <span className="ml-2 text-sm text-gray-700">Team - Manage</span>
+                  <input type="checkbox" className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                  <span className="ml-2 text-sm text-neutral-700">Team - Manage</span>
                 </label>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <div className="flex gap-3 pt-4 border-t border-neutral-200">
               <Button variant="outline" onClick={() => setShowPermissionsModal(false)} className="flex-1">
                 Cancel
               </Button>

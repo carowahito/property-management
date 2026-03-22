@@ -83,36 +83,36 @@ export default function RenewalsPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Lease Renewals</h1>
-          <p className='text-gray-600 mt-1'>Track and manage upcoming lease renewals</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Lease Renewals</h1>
+          <p className='text-neutral-600 mt-1'>Track and manage upcoming lease renewals</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Send Renewal Notice</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>+ Send Renewal Notice</button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Pending</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Pending</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.pending}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Accepted</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.accepted}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Accepted</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.accepted}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Expiring Soon</p>
-          <p className='text-3xl font-bold text-red-600'>{stats.expiringSoon}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Expiring Soon</p>
+          <p className='text-3xl font-bold text-danger-600'>{stats.expiringSoon}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Renewals</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Renewals</p>
           <p className='text-3xl font-bold text-purple-600'>{stats.total}</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
+          className='px-4 py-2 border border-neutral-300 rounded-lg'
         >
           <option value='all'>All Status</option>
           <option value='pending'>Pending</option>
@@ -122,61 +122,61 @@ export default function RenewalsPage() {
         </select>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Tenant
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Property/Unit
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Lease End
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Time Remaining
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Current Rent
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Proposed Rent
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredRenewals.map((renewal) => (
-              <tr key={renewal.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>
+              <tr key={renewal.id} className='hover:bg-neutral-50'>
+                <td className='px-6 py-4 text-sm font-medium text-neutral-900'>
                   {renewal.tenantName}
                 </td>
                 <td className='px-6 py-4'>
-                  <div className='text-sm text-gray-900'>{renewal.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {renewal.unitNumber}</div>
+                  <div className='text-sm text-neutral-900'>{renewal.propertyName}</div>
+                  <div className='text-sm text-neutral-500'>Unit {renewal.unitNumber}</div>
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{renewal.currentLeaseEnd}</td>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{renewal.currentLeaseEnd}</td>
                 <td className='px-6 py-4'>
                   <span
-                    className={`text-sm font-semibold ${renewal.monthsRemaining <= 1 ? 'text-red-600' : 'text-gray-900'}`}
+                    className={`text-sm font-semibold ${renewal.monthsRemaining <= 1 ? 'text-danger-600' : 'text-neutral-900'}`}
                   >
                     {renewal.monthsRemaining} month{renewal.monthsRemaining !== 1 ? 's' : ''}
                   </span>
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>
                   KES {renewal.currentRent.toLocaleString()}
                 </td>
-                <td className='px-6 py-4 text-sm font-semibold text-gray-900'>
+                <td className='px-6 py-4 text-sm font-semibold text-neutral-900'>
                   KES {renewal.proposedRent.toLocaleString()}
                   {renewal.proposedRent > renewal.currentRent && (
-                    <span className='text-xs text-green-600 ml-2'>
+                    <span className='text-xs text-success-600 ml-2'>
                       +
                       {(
                         ((renewal.proposedRent - renewal.currentRent) / renewal.currentRent) *
@@ -186,7 +186,7 @@ export default function RenewalsPage() {
                     </span>
                   )}
                   {renewal.notes && (
-                    <div className='text-xs text-gray-500 mt-1'>{renewal.notes}</div>
+                    <div className='text-xs text-neutral-500 mt-1'>{renewal.notes}</div>
                   )}
                 </td>
                 <td className='px-6 py-4'>
@@ -195,10 +195,10 @@ export default function RenewalsPage() {
                       renewal.status === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
                         : renewal.status === 'negotiating'
-                          ? 'bg-blue-100 text-blue-800'
+                          ? 'bg-primary-100 text-primary-800'
                           : renewal.status === 'accepted'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-success-100 text-green-800'
+                            : 'bg-danger-100 text-red-800'
                     }`}
                   >
                     {renewal.status}

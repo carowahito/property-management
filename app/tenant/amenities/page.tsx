@@ -110,21 +110,21 @@ export default function AmenitiesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Amenities & Bookings</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Amenities & Bookings</h1>
+        <p className="mt-2 text-neutral-600">
           Book and manage community amenities
         </p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-neutral-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('book')}
             className={`${
               activeTab === 'book'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Book Amenities
@@ -133,8 +133,8 @@ export default function AmenitiesPage() {
             onClick={() => setActiveTab('mybookings')}
             className={`${
               activeTab === 'mybookings'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             My Bookings ({myBookings.length})
@@ -150,40 +150,40 @@ export default function AmenitiesPage() {
               {amenities.map((amenity) => (
                 <div
                   key={amenity.id}
-                  className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                  className="bg-surface shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   <div className="p-6">
                     <div className="text-5xl text-center mb-4">{amenity.icon}</div>
-                    <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                    <h3 className="text-lg font-semibold text-neutral-900 text-center mb-2">
                       {amenity.name}
                     </h3>
-                    <p className="text-sm text-gray-600 text-center mb-4">
+                    <p className="text-sm text-neutral-600 text-center mb-4">
                       {amenity.description}
                     </p>
 
                     {amenity.bookingWindow === 0 ? (
                       <div className="text-center">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success-100 text-success-800">
                           No Booking Required
                         </span>
                       </div>
                     ) : (
                       <button
                         onClick={() => setSelectedAmenity(amenity)}
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                        className="w-full px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
                       >
                         Book Now
                       </button>
                     )}
 
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-xs font-medium text-gray-700 mb-2">Rules:</p>
-                      <ul className="text-xs text-gray-600 space-y-1">
+                    <div className="mt-4 pt-4 border-t border-neutral-200">
+                      <p className="text-xs font-medium text-neutral-700 mb-2">Rules:</p>
+                      <ul className="text-xs text-neutral-600 space-y-1">
                         {amenity.rules.slice(0, 2).map((rule, index) => (
                           <li key={index}>• {rule}</li>
                         ))}
                         {amenity.rules.length > 2 && (
-                          <li className="text-blue-600">
+                          <li className="text-primary-600">
                             +{amenity.rules.length - 2} more rules
                           </li>
                         )}
@@ -198,42 +198,42 @@ export default function AmenitiesPage() {
             <div className="max-w-3xl mx-auto">
               <button
                 onClick={() => setSelectedAmenity(null)}
-                className="mb-6 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                className="mb-6 text-primary-600 hover:text-primary-800 text-sm font-medium flex items-center"
               >
                 ← Back to Amenities
               </button>
 
-              <div className="bg-white shadow rounded-lg p-6">
+              <div className="bg-surface shadow rounded-lg p-6">
                 <div className="text-center mb-6">
                   <div className="text-6xl mb-4">{selectedAmenity.icon}</div>
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedAmenity.name}</h2>
-                  <p className="text-gray-600">{selectedAmenity.description}</p>
+                  <h2 className="text-2xl font-bold text-neutral-900">{selectedAmenity.name}</h2>
+                  <p className="text-neutral-600">{selectedAmenity.description}</p>
                 </div>
 
                 <form className="space-y-6">
                   <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="date" className="block text-sm font-medium text-neutral-700 mb-1">
                       Select Date
                     </label>
                     <input
                       type="date"
                       id="date"
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-neutral-500">
                       Can book up to {selectedAmenity.bookingWindow} days in advance
                     </p>
                   </div>
 
                   <div>
-                    <label htmlFor="timeSlot" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="timeSlot" className="block text-sm font-medium text-neutral-700 mb-1">
                       Time Slot
                     </label>
                     <select
                       id="timeSlot"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     >
                       <option value="">Select a time slot</option>
@@ -249,7 +249,7 @@ export default function AmenitiesPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="guests" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="guests" className="block text-sm font-medium text-neutral-700 mb-1">
                       Number of Guests
                     </label>
                     <input
@@ -258,18 +258,18 @@ export default function AmenitiesPage() {
                       min="1"
                       max="10"
                       defaultValue="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="purpose" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="purpose" className="block text-sm font-medium text-neutral-700 mb-1">
                       Purpose (Optional)
                     </label>
                     <textarea
                       id="purpose"
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       placeholder="E.g., Birthday party, workout session, etc."
                     ></textarea>
                   </div>
@@ -291,26 +291,26 @@ export default function AmenitiesPage() {
                     <input
                       type="checkbox"
                       id="agreeRules"
-                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
                       required
                     />
-                    <label htmlFor="agreeRules" className="ml-3 text-sm text-gray-700">
+                    <label htmlFor="agreeRules" className="ml-3 text-sm text-neutral-700">
                       I agree to follow all rules and guidelines for this amenity
                     </label>
                   </div>
 
                   {/* Submit Buttons */}
-                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-neutral-200">
                     <button
                       type="button"
                       onClick={() => setSelectedAmenity(null)}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                      className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
                     >
                       Confirm Booking
                     </button>
@@ -326,15 +326,15 @@ export default function AmenitiesPage() {
       {activeTab === 'mybookings' && (
         <div>
           {myBookings.length === 0 ? (
-            <div className="bg-white shadow rounded-lg p-12 text-center">
+            <div className="bg-surface shadow rounded-lg p-12 text-center">
               <div className="text-6xl mb-4">📅</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Bookings Yet</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">No Bookings Yet</h3>
+              <p className="text-neutral-600 mb-6">
                 You haven't booked any amenities. Start by booking one!
               </p>
               <button
                 onClick={() => setActiveTab('book')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
               >
                 Browse Amenities
               </button>
@@ -342,12 +342,12 @@ export default function AmenitiesPage() {
           ) : (
             <div className="space-y-4">
               {myBookings.map((booking) => (
-                <div key={booking.id} className="bg-white shadow rounded-lg p-6">
+                <div key={booking.id} className="bg-surface shadow rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">{booking.amenity}</h3>
+                      <h3 className="text-lg font-semibold text-neutral-900">{booking.amenity}</h3>
                       <div className="mt-2 space-y-1">
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-neutral-600">
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
@@ -358,7 +358,7 @@ export default function AmenitiesPage() {
                             day: 'numeric',
                           })}
                         </div>
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-neutral-600">
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
@@ -370,16 +370,16 @@ export default function AmenitiesPage() {
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                           booking.status === 'confirmed'
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-success-100 text-success-800'
                             : booking.status === 'pending'
                             ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                            : 'bg-danger-100 text-danger-800'
                         }`}
                       >
                         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                       </span>
                       {booking.status !== 'cancelled' && (
-                        <button className="text-red-600 hover:text-red-800 text-sm font-medium">
+                        <button className="text-danger-600 hover:text-danger-800 text-sm font-medium">
                           Cancel
                         </button>
                       )}

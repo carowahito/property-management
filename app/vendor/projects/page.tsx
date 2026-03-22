@@ -91,11 +91,11 @@ export default function VendorProjects() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Planning': return 'bg-blue-100 text-blue-800'
-      case 'In Progress': return 'bg-orange-100 text-orange-800'
-      case 'Completed': return 'bg-green-100 text-green-800'
-      case 'On Hold': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Planning': return 'bg-primary-100 text-primary-800'
+      case 'In Progress': return 'bg-warning-100 text-warning-800'
+      case 'Completed': return 'bg-success-100 text-success-800'
+      case 'On Hold': return 'bg-neutral-100 text-neutral-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -103,9 +103,9 @@ export default function VendorProjects() {
     switch (type) {
       case 'Upgrade': return 'bg-purple-100 text-purple-800'
       case 'Renovation': return 'bg-yellow-100 text-yellow-800'
-      case 'Installation': return 'bg-blue-100 text-blue-800'
-      case 'Maintenance': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Installation': return 'bg-primary-100 text-primary-800'
+      case 'Maintenance': return 'bg-neutral-100 text-neutral-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -126,39 +126,39 @@ export default function VendorProjects() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Projects & Upgrades</h1>
-          <p className="text-gray-600 mt-1">Track major projects and property upgrades</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Projects & Upgrades</h1>
+          <p className="text-neutral-600 mt-1">Track major projects and property upgrades</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Projects</p>
-          <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Total Projects</p>
+          <p className="text-2xl font-bold text-neutral-900">{projects.length}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Active Projects</p>
-          <p className="text-2xl font-bold text-orange-600">{activeProjects}</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Active Projects</p>
+          <p className="text-2xl font-bold text-warning-600">{activeProjects}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Budget</p>
-          <p className="text-2xl font-bold text-gray-900">KES {(totalBudget / 1000).toFixed(0)}K</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Total Budget</p>
+          <p className="text-2xl font-bold text-neutral-900">KES {(totalBudget / 1000).toFixed(0)}K</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Spent</p>
-          <p className="text-2xl font-bold text-blue-600">KES {(totalSpent / 1000).toFixed(0)}K</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Total Spent</p>
+          <p className="text-2xl font-bold text-primary-600">KES {(totalSpent / 1000).toFixed(0)}K</p>
         </div>
       </div>
 
       {/* Projects Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {projects.map((project) => (
-          <div key={project.id} className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <div key={project.id} className="bg-surface shadow rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-semibold text-gray-900 text-lg">{project.name}</h3>
+                  <h3 className="font-semibold text-neutral-900 text-lg">{project.name}</h3>
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                   <span className={`text-xs px-2 py-1 rounded ${getStatusColor(project.status)}`}>
@@ -168,39 +168,39 @@ export default function VendorProjects() {
                     {project.type}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{project.property}</p>
-                <p className="text-sm text-gray-700 mb-4">{project.description}</p>
+                <p className="text-sm text-neutral-600 mb-2">{project.property}</p>
+                <p className="text-sm text-neutral-700 mb-4">{project.description}</p>
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-700">Progress</span>
-                <span className="text-sm font-medium text-gray-900">{project.progress}%</span>
+                <span className="text-sm font-medium text-neutral-700">Progress</span>
+                <span className="text-sm font-medium text-neutral-900">{project.progress}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-neutral-200 rounded-full h-2">
                 <div
-                  className="bg-orange-600 h-2 rounded-full transition-all"
+                  className="bg-warning-600 h-2 rounded-full transition-all"
                   style={{ width: `${project.progress}%` }}
                 />
               </div>
             </div>
 
             {/* Budget Info */}
-            <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 rounded">
+            <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-neutral-50 rounded">
               <div>
-                <p className="text-xs text-gray-600">Budget</p>
-                <p className="font-semibold text-gray-900">KES {project.budget.toLocaleString()}</p>
+                <p className="text-xs text-neutral-600">Budget</p>
+                <p className="font-semibold text-neutral-900">KES {project.budget.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600">Spent</p>
-                <p className="font-semibold text-blue-600">KES {project.spent.toLocaleString()}</p>
+                <p className="text-xs text-neutral-600">Spent</p>
+                <p className="font-semibold text-primary-600">KES {project.spent.toLocaleString()}</p>
               </div>
             </div>
 
             {/* Timeline */}
-            <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+            <div className="flex items-center gap-4 mb-4 text-sm text-neutral-600">
               <div>
                 <span className="font-medium">Start:</span> {new Date(project.startDate).toLocaleDateString()}
               </div>
@@ -211,19 +211,19 @@ export default function VendorProjects() {
 
             {/* Milestones Preview */}
             <div className="border-t pt-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Milestones ({project.milestones.filter(m => m.status === 'completed').length}/{project.milestones.length})</p>
+              <p className="text-sm font-medium text-neutral-700 mb-2">Milestones ({project.milestones.filter(m => m.status === 'completed').length}/{project.milestones.length})</p>
               <div className="space-y-1">
                 {project.milestones.slice(0, 3).map((milestone) => (
                   <div key={milestone.id} className="flex items-center gap-2 text-sm">
                     <span className={`${
-                      milestone.status === 'completed' ? 'text-green-600' :
-                      milestone.status === 'in-progress' ? 'text-orange-600' :
-                      'text-gray-400'
+                      milestone.status === 'completed' ? 'text-success-600' :
+                      milestone.status === 'in-progress' ? 'text-warning-600' :
+                      'text-neutral-400'
                     }`}>
                       {getMilestoneIcon(milestone.status)}
                     </span>
                     <span className={`${
-                      milestone.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-700'
+                      milestone.status === 'completed' ? 'text-neutral-500 line-through' : 'text-neutral-700'
                     }`}>
                       {milestone.name}
                     </span>
@@ -234,7 +234,7 @@ export default function VendorProjects() {
 
             <button
               onClick={() => setSelectedProject(project)}
-              className="mt-4 w-full bg-gray-100 text-gray-700 py-2 rounded hover:bg-gray-200 text-sm font-medium"
+              className="mt-4 w-full bg-neutral-100 text-neutral-700 py-2 rounded hover:bg-neutral-200 text-sm font-medium"
             >
               View Details
             </button>
@@ -245,13 +245,13 @@ export default function VendorProjects() {
       {/* Project Details Modal */}
       {selectedProject && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{selectedProject.name}</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">{selectedProject.name}</h2>
                 <button
                   onClick={() => setSelectedProject(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -261,26 +261,26 @@ export default function VendorProjects() {
 
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Project Information</h3>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <h3 className="font-semibold text-neutral-900 mb-2">Project Information</h3>
+                  <div className="bg-neutral-50 rounded-lg p-4 space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Property:</span>
+                      <span className="text-neutral-600">Property:</span>
                       <span className="font-medium">{selectedProject.property}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Type:</span>
+                      <span className="text-neutral-600">Type:</span>
                       <span className={`px-2 py-1 rounded text-xs ${getTypeColor(selectedProject.type)}`}>
                         {selectedProject.type}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Status:</span>
+                      <span className="text-neutral-600">Status:</span>
                       <span className={`px-2 py-1 rounded text-xs ${getStatusColor(selectedProject.status)}`}>
                         {selectedProject.status}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Duration:</span>
+                      <span className="text-neutral-600">Duration:</span>
                       <span className="font-medium">
                         {new Date(selectedProject.startDate).toLocaleDateString()} - {new Date(selectedProject.endDate).toLocaleDateString()}
                       </span>
@@ -289,30 +289,30 @@ export default function VendorProjects() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
-                  <p className="text-gray-700">{selectedProject.description}</p>
+                  <h3 className="font-semibold text-neutral-900 mb-2">Description</h3>
+                  <p className="text-neutral-700">{selectedProject.description}</p>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Budget & Spending</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-neutral-900 mb-2">Budget & Spending</h3>
+                  <div className="bg-neutral-50 rounded-lg p-4">
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div>
-                        <p className="text-sm text-gray-600">Total Budget</p>
+                        <p className="text-sm text-neutral-600">Total Budget</p>
                         <p className="text-lg font-bold">KES {selectedProject.budget.toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Spent</p>
-                        <p className="text-lg font-bold text-blue-600">KES {selectedProject.spent.toLocaleString()}</p>
+                        <p className="text-sm text-neutral-600">Spent</p>
+                        <p className="text-lg font-bold text-primary-600">KES {selectedProject.spent.toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Remaining</p>
-                        <p className="text-lg font-bold text-green-600">KES {(selectedProject.budget - selectedProject.spent).toLocaleString()}</p>
+                        <p className="text-sm text-neutral-600">Remaining</p>
+                        <p className="text-lg font-bold text-success-600">KES {(selectedProject.budget - selectedProject.spent).toLocaleString()}</p>
                       </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-neutral-200 rounded-full h-3">
                       <div
-                        className="bg-blue-600 h-3 rounded-full"
+                        className="bg-primary-600 h-3 rounded-full"
                         style={{ width: `${(selectedProject.spent / selectedProject.budget * 100)}%` }}
                       />
                     </div>
@@ -320,29 +320,29 @@ export default function VendorProjects() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Milestones</h3>
+                  <h3 className="font-semibold text-neutral-900 mb-3">Milestones</h3>
                   <div className="space-y-3">
                     {selectedProject.milestones.map((milestone) => (
-                      <div key={milestone.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div key={milestone.id} className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
                         <span className={`text-xl ${
-                          milestone.status === 'completed' ? 'text-green-600' :
-                          milestone.status === 'in-progress' ? 'text-orange-600' :
-                          'text-gray-400'
+                          milestone.status === 'completed' ? 'text-success-600' :
+                          milestone.status === 'in-progress' ? 'text-warning-600' :
+                          'text-neutral-400'
                         }`}>
                           {getMilestoneIcon(milestone.status)}
                         </span>
                         <div className="flex-1">
                           <p className={`font-medium ${
-                            milestone.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'
+                            milestone.status === 'completed' ? 'text-neutral-500 line-through' : 'text-neutral-900'
                           }`}>
                             {milestone.name}
                           </p>
-                          <p className="text-sm text-gray-600">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>
+                          <p className="text-sm text-neutral-600">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>
                         </div>
                         <span className={`text-xs px-2 py-1 rounded ${
-                          milestone.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          milestone.status === 'in-progress' ? 'bg-orange-100 text-orange-800' :
-                          'bg-gray-100 text-gray-800'
+                          milestone.status === 'completed' ? 'bg-success-100 text-success-800' :
+                          milestone.status === 'in-progress' ? 'bg-warning-100 text-warning-800' :
+                          'bg-neutral-100 text-neutral-800'
                         }`}>
                           {milestone.status}
                         </span>
@@ -354,13 +354,13 @@ export default function VendorProjects() {
                 <div className="flex gap-3 pt-4">
                   <Link
                     href={`/vendor/evidence?project=${selectedProject.id}`}
-                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 text-center"
+                    className="flex-1 bg-warning-600 text-white py-2 px-4 rounded-lg hover:bg-warning-700 text-center"
                   >
                     View Evidence
                   </Link>
                   <Link
                     href={`/vendor/receipts?project=${selectedProject.id}`}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 text-center"
+                    className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 text-center"
                   >
                     View Receipts
                   </Link>

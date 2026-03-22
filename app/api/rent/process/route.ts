@@ -4,17 +4,17 @@ import { rentProcessor } from '@/lib/services/rent-processor';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { paymentId, paymentIds, config } = body;
+    const { paymentId, paymentIds } = body;
 
     // Process single payment
     if (paymentId) {
-      const result = await rentProcessor.processRentPayment(paymentId, config);
+      const result = await rentProcessor.processRentPayment(paymentId);
       return NextResponse.json(result);
     }
 
     // Process multiple payments
     if (paymentIds && Array.isArray(paymentIds)) {
-      const results = await rentProcessor.processBatchRentPayments(paymentIds, config);
+      const results = await rentProcessor.processBatchRentPayments(paymentIds);
       return NextResponse.json({ results, success: true });
     }
 

@@ -50,49 +50,49 @@ export default function MessagesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Messages</h1>
+      <h1 className="text-2xl font-bold text-neutral-900 mb-6">Messages</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Message List */}
         <div className="lg:col-span-1">
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <button className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+          <div className="bg-surface shadow rounded-lg overflow-hidden">
+            <div className="p-4 bg-neutral-50 border-b border-neutral-200">
+              <button className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
                 + New Message
               </button>
             </div>
-            <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+            <div className="divide-y divide-neutral-200 max-h-[600px] overflow-y-auto">
               {messages.map((message) => (
                 <div
                   key={message.id}
                   onClick={() => setSelectedMessage(message.id)}
                   className={`p-4 cursor-pointer transition-colors ${
                     selectedMessage === message.id
-                      ? 'bg-blue-50 border-l-4 border-blue-600'
-                      : 'hover:bg-gray-50'
-                  } ${!message.read ? 'bg-blue-50/30' : ''}`}
+                      ? 'bg-primary-50 border-l-4 border-primary-600'
+                      : 'hover:bg-neutral-50'
+                  } ${!message.read ? 'bg-primary-50/30' : ''}`}
                 >
                   <div className="flex items-start justify-between mb-1">
                     <p
                       className={`text-sm ${
-                        !message.read ? 'font-bold text-gray-900' : 'font-medium text-gray-700'
+                        !message.read ? 'font-bold text-neutral-900' : 'font-medium text-neutral-700'
                       }`}
                     >
                       {message.from}
                     </p>
                     {!message.read && (
-                      <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
+                      <span className="inline-block w-2 h-2 bg-primary-600 rounded-full"></span>
                     )}
                   </div>
                   <p
                     className={`text-sm mb-1 ${
-                      !message.read ? 'font-semibold text-gray-900' : 'text-gray-700'
+                      !message.read ? 'font-semibold text-neutral-900' : 'text-neutral-700'
                     }`}
                   >
                     {message.subject}
                   </p>
-                  <p className="text-xs text-gray-500 truncate mb-1">{message.preview}</p>
-                  <p className="text-xs text-gray-400">{message.date}</p>
+                  <p className="text-xs text-neutral-500 truncate mb-1">{message.preview}</p>
+                  <p className="text-xs text-neutral-400">{message.date}</p>
                 </div>
               ))}
             </div>
@@ -102,54 +102,54 @@ export default function MessagesPage() {
         {/* Message Content */}
         <div className="lg:col-span-2">
           {currentMessage ? (
-            <div className="bg-white shadow rounded-lg">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-surface shadow rounded-lg">
+              <div className="p-6 border-b border-neutral-200">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
+                    <h2 className="text-xl font-semibold text-neutral-900">
                       {currentMessage.subject}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-neutral-500 mt-1">
                       From: {currentMessage.from}
                     </p>
                   </div>
-                  <span className="text-sm text-gray-500">{currentMessage.date}</span>
+                  <span className="text-sm text-neutral-500">{currentMessage.date}</span>
                 </div>
               </div>
               <div className="p-6">
                 <div className="prose max-w-none">
-                  <p className="whitespace-pre-wrap text-gray-700">{currentMessage.body}</p>
+                  <p className="whitespace-pre-wrap text-neutral-700">{currentMessage.body}</p>
                 </div>
               </div>
-              <div className="p-6 bg-gray-50 border-t border-gray-200">
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+              <div className="p-6 bg-neutral-50 border-t border-neutral-200">
+                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
                   Reply
                 </button>
               </div>
             </div>
           ) : (
-            <div className="bg-white shadow rounded-lg p-12 text-center">
+            <div className="bg-surface shadow rounded-lg p-12 text-center">
               <div className="text-6xl mb-4">💌</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No message selected</h3>
-              <p className="text-gray-500">Select a message from the list to read it</p>
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">No message selected</h3>
+              <p className="text-neutral-500">Select a message from the list to read it</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-2">Need to reach us?</h3>
+      <div className="mt-6 bg-primary-50 border border-primary-200 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-primary-900 mb-2">Need to reach us?</h3>
         <div className="flex gap-4">
           <a
             href="mailto:management@catalyst-properties.com"
-            className="text-sm text-blue-700 hover:text-blue-900 font-medium"
+            className="text-sm text-primary-700 hover:text-primary-900 font-medium"
           >
             📧 management@catalyst-properties.com
           </a>
           <a
             href="tel:+254700000000"
-            className="text-sm text-blue-700 hover:text-blue-900 font-medium"
+            className="text-sm text-primary-700 hover:text-primary-900 font-medium"
           >
             📞 +254 700 000 000
           </a>

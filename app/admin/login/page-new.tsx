@@ -49,19 +49,19 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-900 to-neutral-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div>
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center">
               <span className="text-3xl">🏢</span>
             </div>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Admin Portal
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
+          <p className="mt-2 text-center text-sm text-neutral-400">
             Property Management System
           </p>
         </div>
@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
         <div className="mt-8 bg-white rounded-lg shadow-2xl p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-700">
                 Email Address
               </label>
               <input
@@ -81,13 +81,13 @@ export default function AdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-neutral-300 placeholder-neutral-500 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
                 placeholder="admin@propmanage.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-700">
                 Password
               </label>
               <input
@@ -98,7 +98,7 @@ export default function AdminLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-neutral-300 placeholder-neutral-500 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
                 placeholder="••••••••"
               />
             </div>
@@ -109,9 +109,9 @@ export default function AdminLoginPage() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-900">
                   Remember me
                 </label>
               </div>
@@ -119,7 +119,7 @@ export default function AdminLoginPage() {
               <div className="text-sm">
                 <Link
                   href="/admin/forgot-password"
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  className="font-medium text-primary-600 hover:text-primary-500"
                 >
                   Forgot password?
                 </Link>
@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
               <button
                 type="button"
                 onClick={fillDemoCredentials}
-                className="w-full text-sm text-blue-600 hover:text-blue-500 underline"
+                className="w-full text-sm text-primary-600 hover:text-primary-500 underline"
               >
                 Use demo credentials
               </button>
@@ -150,15 +150,15 @@ export default function AdminLoginPage() {
 
           {/* Demo Credentials */}
           <div className="mt-6 border-t pt-6">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Demo Accounts:</h3>
-            <div className="space-y-2 text-xs text-gray-600">
-              <div className="bg-gray-50 p-2 rounded">
+            <h3 className="text-sm font-medium text-neutral-900 mb-3">Demo Accounts:</h3>
+            <div className="space-y-2 text-xs text-neutral-600">
+              <div className="bg-neutral-50 p-2 rounded">
                 <strong>Admin:</strong> admin@propmanage.com / admin123
               </div>
-              <div className="bg-gray-50 p-2 rounded">
+              <div className="bg-neutral-50 p-2 rounded">
                 <strong>Manager:</strong> alice@propmanage.com / password123
               </div>
-              <div className="bg-gray-50 p-2 rounded">
+              <div className="bg-neutral-50 p-2 rounded">
                 <strong>Agent:</strong> bob@propmanage.com / password123
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-neutral-400">
           © 2024 PropManage. All rights reserved.
         </p>
       </div>

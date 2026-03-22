@@ -39,6 +39,15 @@ export async function GET(request: NextRequest) {
               bankAccount: true,
             },
           },
+          unit: {
+            select: {
+              id: true,
+              unitNumber: true,
+              property: {
+                select: { id: true, name: true },
+              },
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,

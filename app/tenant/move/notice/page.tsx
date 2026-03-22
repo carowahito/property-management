@@ -46,21 +46,21 @@ export default function MoveOutNoticePage() {
       <nav className="mb-6 flex" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-2 text-sm">
           <li>
-            <Link href="/tenant/move" className="text-blue-600 hover:text-blue-800">
+            <Link href="/tenant/move" className="text-primary-600 hover:text-primary-800">
               Move Management
             </Link>
           </li>
           <li>
-            <span className="mx-2 text-gray-400">/</span>
+            <span className="mx-2 text-neutral-400">/</span>
           </li>
-          <li className="text-gray-500">Submit Move-Out Notice</li>
+          <li className="text-neutral-500">Submit Move-Out Notice</li>
         </ol>
       </nav>
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Submit Move-Out Notice</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Submit Move-Out Notice</h1>
+        <p className="mt-2 text-neutral-600">
           Provide at least 30 days notice before your intended move-out date
         </p>
       </div>
@@ -88,10 +88,10 @@ export default function MoveOutNoticePage() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-surface shadow rounded-lg p-6 space-y-6">
         {/* Move-Out Date */}
         <div>
-          <label htmlFor="moveOutDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="moveOutDate" className="block text-sm font-medium text-neutral-700 mb-1">
             Intended Move-Out Date *
           </label>
           <input
@@ -100,24 +100,24 @@ export default function MoveOutNoticePage() {
             value={formData.moveOutDate}
             onChange={(e) => setFormData({ ...formData, moveOutDate: e.target.value })}
             min={minDateString}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           />
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-neutral-500">
             Must be at least 30 days from today
           </p>
         </div>
 
         {/* Reason for Moving */}
         <div>
-          <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="reason" className="block text-sm font-medium text-neutral-700 mb-1">
             Reason for Moving (Optional)
           </label>
           <select
             id="reason"
             value={formData.reason}
             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">Select a reason</option>
             <option value="relocation">Job Relocation</option>
@@ -132,10 +132,10 @@ export default function MoveOutNoticePage() {
 
         {/* Forwarding Address */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Forwarding Address *</h3>
+          <h3 className="text-lg font-medium text-neutral-900 mb-4">Forwarding Address *</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="street" className="block text-sm font-medium text-neutral-700 mb-1">
                 Street Address
               </label>
               <input
@@ -146,13 +146,13 @@ export default function MoveOutNoticePage() {
                   ...formData,
                   forwardingAddress: { ...formData.forwardingAddress, street: e.target.value }
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="city" className="block text-sm font-medium text-neutral-700 mb-1">
                 City
               </label>
               <input
@@ -163,13 +163,13 @@ export default function MoveOutNoticePage() {
                   ...formData,
                   forwardingAddress: { ...formData.forwardingAddress, city: e.target.value }
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="state" className="block text-sm font-medium text-neutral-700 mb-1">
                 State/County
               </label>
               <input
@@ -180,13 +180,13 @@ export default function MoveOutNoticePage() {
                   ...formData,
                   forwardingAddress: { ...formData.forwardingAddress, state: e.target.value }
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="zip" className="block text-sm font-medium text-neutral-700 mb-1">
                 Postal Code
               </label>
               <input
@@ -197,13 +197,13 @@ export default function MoveOutNoticePage() {
                   ...formData,
                   forwardingAddress: { ...formData.forwardingAddress, zip: e.target.value }
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="country" className="block text-sm font-medium text-neutral-700 mb-1">
                 Country
               </label>
               <input
@@ -214,7 +214,7 @@ export default function MoveOutNoticePage() {
                   ...formData,
                   forwardingAddress: { ...formData.forwardingAddress, country: e.target.value }
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
               />
             </div>
@@ -224,7 +224,7 @@ export default function MoveOutNoticePage() {
         {/* Contact Information */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="forwardingPhone" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="forwardingPhone" className="block text-sm font-medium text-neutral-700 mb-1">
               Forwarding Phone *
             </label>
             <input
@@ -232,13 +232,13 @@ export default function MoveOutNoticePage() {
               id="forwardingPhone"
               value={formData.forwardingPhone}
               onChange={(e) => setFormData({ ...formData, forwardingPhone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="forwardingEmail" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="forwardingEmail" className="block text-sm font-medium text-neutral-700 mb-1">
               Forwarding Email *
             </label>
             <input
@@ -246,7 +246,7 @@ export default function MoveOutNoticePage() {
               id="forwardingEmail"
               value={formData.forwardingEmail}
               onChange={(e) => setFormData({ ...formData, forwardingEmail: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
             />
           </div>
@@ -254,7 +254,7 @@ export default function MoveOutNoticePage() {
 
         {/* Optional Services */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Optional Services</h3>
+          <h3 className="text-lg font-medium text-neutral-900 mb-4">Optional Services</h3>
           <div className="space-y-3">
             <div className="flex items-start">
               <input
@@ -262,13 +262,13 @@ export default function MoveOutNoticePage() {
                 id="cleaningService"
                 checked={formData.cleaningService}
                 onChange={(e) => setFormData({ ...formData, cleaningService: e.target.checked })}
-                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
               />
               <label htmlFor="cleaningService" className="ml-3">
-                <span className="block text-sm font-medium text-gray-700">
+                <span className="block text-sm font-medium text-neutral-700">
                   Request Professional Cleaning Service
                 </span>
-                <span className="block text-sm text-gray-500">
+                <span className="block text-sm text-neutral-500">
                   We can arrange professional cleaning at competitive rates (cost will be deducted from deposit)
                 </span>
               </label>
@@ -280,13 +280,13 @@ export default function MoveOutNoticePage() {
                 id="earlyTermination"
                 checked={formData.earlyTermination}
                 onChange={(e) => setFormData({ ...formData, earlyTermination: e.target.checked })}
-                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
               />
               <label htmlFor="earlyTermination" className="ml-3">
-                <span className="block text-sm font-medium text-gray-700">
+                <span className="block text-sm font-medium text-neutral-700">
                   Early Lease Termination
                 </span>
-                <span className="block text-sm text-gray-500">
+                <span className="block text-sm text-neutral-500">
                   Moving out before lease end date (may incur penalties per lease agreement)
                 </span>
               </label>
@@ -296,7 +296,7 @@ export default function MoveOutNoticePage() {
 
         {/* Additional Comments */}
         <div>
-          <label htmlFor="comments" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="comments" className="block text-sm font-medium text-neutral-700 mb-1">
             Additional Comments or Special Requests
           </label>
           <textarea
@@ -304,23 +304,23 @@ export default function MoveOutNoticePage() {
             value={formData.comments}
             onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="Any additional information you'd like to provide..."
           ></textarea>
         </div>
 
         {/* Submit Buttons */}
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-neutral-200">
           <Link
             href="/tenant/move"
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <span className="flex items-center">
@@ -335,9 +335,9 @@ export default function MoveOutNoticePage() {
       </form>
 
       {/* Next Steps */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">What Happens Next?</h3>
-        <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
+      <div className="mt-6 bg-primary-50 border border-primary-200 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-primary-900 mb-2">What Happens Next?</h3>
+        <ol className="list-decimal list-inside space-y-1 text-sm text-primary-800">
           <li>We'll review your notice and confirm receipt within 24 hours</li>
           <li>A property manager will contact you to schedule the final inspection</li>
           <li>You'll receive a move-out checklist and instructions</li>

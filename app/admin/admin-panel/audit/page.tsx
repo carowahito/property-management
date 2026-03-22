@@ -50,66 +50,66 @@ export default function AuditLogsPage() {
 
   const getModuleColor = (module: string) => {
     const colors: Record<string, string> = {
-      'Leads': 'bg-blue-100 text-blue-800',
+      'Leads': 'bg-primary-100 text-primary-800',
       'Enquiries': 'bg-purple-100 text-purple-800',
-      'Team': 'bg-green-100 text-green-800',
-      'Properties': 'bg-orange-100 text-orange-800',
-      'Settings': 'bg-red-100 text-red-800',
+      'Team': 'bg-success-100 text-success-800',
+      'Properties': 'bg-warning-100 text-warning-800',
+      'Settings': 'bg-danger-100 text-danger-800',
       'Reports': 'bg-indigo-100 text-indigo-800',
       'Communications': 'bg-cyan-100 text-cyan-800',
       'Work Orders': 'bg-yellow-100 text-yellow-800',
       'Payments': 'bg-emerald-100 text-emerald-800',
     }
-    return colors[module] || 'bg-gray-100 text-gray-800'
+    return colors[module] || 'bg-neutral-100 text-neutral-800'
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="text-gray-600 mt-1">Track all system activity and user actions</p>
+        <h1 className="text-3xl font-bold text-neutral-900">Audit Logs</h1>
+        <p className="text-neutral-600 mt-1">Track all system activity and user actions</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <p className="text-sm text-gray-500 mb-1">Today</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.today}</p>
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
+          <p className="text-sm text-neutral-500 mb-1">Today</p>
+          <p className="text-3xl font-bold text-neutral-900">{stats.today}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <p className="text-sm text-gray-500 mb-1">This Week</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.week.toLocaleString()}</p>
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
+          <p className="text-sm text-neutral-500 mb-1">This Week</p>
+          <p className="text-3xl font-bold text-neutral-900">{stats.week.toLocaleString()}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <p className="text-sm text-gray-500 mb-1">This Month</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.month.toLocaleString()}</p>
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
+          <p className="text-sm text-neutral-500 mb-1">This Month</p>
+          <p className="text-3xl font-bold text-neutral-900">{stats.month.toLocaleString()}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-          <p className="text-sm text-gray-500 mb-1">Active Users</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.users}</p>
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
+          <p className="text-sm text-neutral-500 mb-1">Active Users</p>
+          <p className="text-3xl font-bold text-neutral-900">{stats.users}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-neutral-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Search</label>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search actions or details..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Module</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Module</label>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">All Modules</option>
               <option value="Leads">Leads</option>
@@ -124,11 +124,11 @@ export default function AuditLogsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">User</label>
             <select
               value={filterUser}
               onChange={(e) => setFilterUser(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">All Users</option>
               <option value="Alice Johnson">Alice Johnson</option>
@@ -144,43 +144,43 @@ export default function AuditLogsPage() {
       </div>
 
       {/* Audit Log Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-neutral-200">
+            <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Timestamp
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Module
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Action
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Details
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   IP Address
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-neutral-200">
               {filteredLogs.map(log => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <tr key={log.id} className="hover:bg-neutral-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     {formatDateTime(log.date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 mr-3">
+                      <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-xs font-bold text-primary-600 mr-3">
                         {log.user.split(' ').map(n => n[0]).join('')}
                       </div>
-                      <span className="text-sm font-medium text-gray-900">{log.user}</span>
+                      <span className="text-sm font-medium text-neutral-900">{log.user}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -188,13 +188,13 @@ export default function AuditLogsPage() {
                       {log.module}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
                     {log.action}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 max-w-md">
+                  <td className="px-6 py-4 text-sm text-neutral-600 max-w-md">
                     {log.details}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-neutral-500">
                     {log.ip}
                   </td>
                 </tr>
@@ -205,20 +205,20 @@ export default function AuditLogsPage() {
 
         {filteredLogs.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No audit logs found matching your criteria.</p>
+            <p className="text-neutral-500">No audit logs found matching your criteria.</p>
           </div>
         )}
       </div>
 
       {/* Export Options */}
       <div className="flex gap-3">
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700">
+        <button className="px-4 py-2 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 text-sm font-medium text-neutral-700">
           📥 Export to CSV
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700">
+        <button className="px-4 py-2 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 text-sm font-medium text-neutral-700">
           📄 Export to PDF
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700">
+        <button className="px-4 py-2 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 text-sm font-medium text-neutral-700">
           📊 Generate Report
         </button>
       </div>

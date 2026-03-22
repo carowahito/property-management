@@ -8,48 +8,48 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-        <p className="text-gray-600">Manage system notifications and reminders</p>
+        <h1 className="text-3xl font-bold text-neutral-900">Notifications</h1>
+        <p className="text-neutral-600">Manage system notifications and reminders</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600">Total Notifications</div>
-          <div className="text-3xl font-bold text-gray-900">0</div>
+        <div className="bg-white p-4 rounded-lg border border-neutral-200">
+          <div className="text-sm text-neutral-600">Total Notifications</div>
+          <div className="text-3xl font-bold text-neutral-900">0</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600">Unread</div>
-          <div className="text-3xl font-bold text-blue-600">{unreadCount}</div>
+        <div className="bg-white p-4 rounded-lg border border-neutral-200">
+          <div className="text-sm text-neutral-600">Unread</div>
+          <div className="text-3xl font-bold text-primary-600">{unreadCount}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600">This Week</div>
-          <div className="text-3xl font-bold text-gray-900">{recentNotifications.length}</div>
+        <div className="bg-white p-4 rounded-lg border border-neutral-200">
+          <div className="text-sm text-neutral-600">This Week</div>
+          <div className="text-3xl font-bold text-neutral-900">{recentNotifications.length}</div>
         </div>
       </div>
 
       {/* Notification Channels */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Channels</h2>
+      <div className="bg-white rounded-lg border border-neutral-200 p-6">
+        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Notification Channels</h2>
         <div className="space-y-4">
           <label className="flex items-center gap-3">
             <input type="checkbox" defaultChecked className="w-4 h-4" />
-            <span className="text-gray-700">Email Notifications</span>
+            <span className="text-neutral-700">Email Notifications</span>
           </label>
           <label className="flex items-center gap-3">
             <input type="checkbox" className="w-4 h-4" />
-            <span className="text-gray-700">SMS Notifications</span>
+            <span className="text-neutral-700">SMS Notifications</span>
           </label>
           <label className="flex items-center gap-3">
             <input type="checkbox" className="w-4 h-4" />
-            <span className="text-gray-700">Push Notifications</span>
+            <span className="text-neutral-700">Push Notifications</span>
           </label>
         </div>
       </div>
 
       {/* Notification Types */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Active Notification Types</h2>
+      <div className="bg-white rounded-lg border border-neutral-200 p-6">
+        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Active Notification Types</h2>
         <div className="space-y-3">
           {[
             { type: 'Payment Reminders', count: 0 },
@@ -57,38 +57,38 @@ export default function NotificationsPage() {
             { type: 'Lease Renewals', count: 0 },
             { type: 'Vendor Services', count: 0 },
           ].map(item => (
-            <div key={item.type} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-              <span className="text-gray-700">{item.type}</span>
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{item.count}</span>
+            <div key={item.type} className="flex justify-between items-center p-3 bg-neutral-50 rounded">
+              <span className="text-neutral-700">{item.type}</span>
+              <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">{item.count}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Recent Notifications */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Notifications</h2>
+      <div className="bg-white rounded-lg border border-neutral-200">
+        <div className="p-6 border-b border-neutral-200">
+          <h2 className="text-xl font-semibold text-neutral-900">Recent Notifications</h2>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-neutral-200">
           {recentNotifications.map(notification => (
             <div 
               key={notification.id} 
-              className={`p-4 flex gap-4 ${notification.read ? 'bg-gray-50' : 'bg-blue-50'}`}
+              className={`p-4 flex gap-4 ${notification.read ? 'bg-neutral-50' : 'bg-primary-50'}`}
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-gray-900">{notification.title}</span>
+                  <span className="font-semibold text-neutral-900">{notification.title}</span>
                   {!notification.read && (
-                    <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                    <span className="w-2 h-2 bg-primary-600 rounded-full"></span>
                   )}
                 </div>
-                <p className="text-sm text-gray-600">{notification.message}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-sm text-neutral-600">{notification.message}</p>
+                <p className="text-xs text-neutral-500 mt-1">
                   {new Date(notification.date).toLocaleDateString()} at {new Date(notification.date).toLocaleTimeString()}
                 </p>
               </div>
-              <span className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-full capitalize">
+              <span className="px-3 py-1 bg-neutral-200 text-neutral-700 text-xs rounded-full capitalize">
                 {notification.type}
               </span>
             </div>
@@ -97,30 +97,30 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notification Settings */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Settings</h2>
+      <div className="bg-white rounded-lg border border-neutral-200 p-6">
+        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Notification Settings</h2>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-gray-700">Send payment reminders 7 days before due</span>
+            <span className="text-neutral-700">Send payment reminders 7 days before due</span>
             <input type="checkbox" defaultChecked className="w-4 h-4" />
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-700">Send lease renewal reminders 30 days before expiry</span>
+            <span className="text-neutral-700">Send lease renewal reminders 30 days before expiry</span>
             <input type="checkbox" defaultChecked className="w-4 h-4" />
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-700">Send maintenance completion notifications</span>
+            <span className="text-neutral-700">Send maintenance completion notifications</span>
             <input type="checkbox" defaultChecked className="w-4 h-4" />
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-700">Send daily digest summaries</span>
+            <span className="text-neutral-700">Send daily digest summaries</span>
             <input type="checkbox" className="w-4 h-4" />
           </div>
         </div>
       </div>
 
       {/* Save Button */}
-      <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition">
+      <button className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-primary-700 transition">
         Save Settings
       </button>
     </div>

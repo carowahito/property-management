@@ -68,28 +68,28 @@ export default function MaintenanceDetailPage() {
       case 'Open':
         return 'bg-yellow-100 text-yellow-800'
       case 'In Progress':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-primary-100 text-primary-800'
       case 'Completed':
-        return 'bg-green-100 text-green-800'
+        return 'bg-success-100 text-success-800'
       case 'Cancelled':
-        return 'bg-red-100 text-red-800'
+        return 'bg-danger-100 text-danger-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-neutral-100 text-neutral-800'
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'Urgent':
-        return 'text-red-600'
+        return 'text-danger-600'
       case 'High':
-        return 'text-orange-600'
+        return 'text-warning-600'
       case 'Medium':
         return 'text-yellow-600'
       case 'Low':
-        return 'text-green-600'
+        return 'text-success-600'
       default:
-        return 'text-gray-600'
+        return 'text-neutral-600'
     }
   }
 
@@ -99,14 +99,14 @@ export default function MaintenanceDetailPage() {
       <nav className="mb-6 flex" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-2 text-sm">
           <li>
-            <Link href="/tenant/maintenance" className="text-blue-600 hover:text-blue-800">
+            <Link href="/tenant/maintenance" className="text-primary-600 hover:text-primary-800">
               Maintenance
             </Link>
           </li>
           <li>
-            <span className="mx-2 text-gray-400">/</span>
+            <span className="mx-2 text-neutral-400">/</span>
           </li>
-          <li className="text-gray-500">Request #{requestId}</li>
+          <li className="text-neutral-500">Request #{requestId}</li>
         </ol>
       </nav>
 
@@ -114,8 +114,8 @@ export default function MaintenanceDetailPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{request.title}</h1>
-            <p className="mt-2 text-gray-600">Request #{requestId}</p>
+            <h1 className="text-3xl font-bold text-neutral-900">{request.title}</h1>
+            <p className="mt-2 text-neutral-600">Request #{requestId}</p>
           </div>
           <span
             className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
@@ -131,59 +131,59 @@ export default function MaintenanceDetailPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Request Details */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Request Details</h2>
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Request Details</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <p className="text-sm text-gray-600">Category</p>
-                <p className="font-medium text-gray-900">{request.category}</p>
+                <p className="text-sm text-neutral-600">Category</p>
+                <p className="font-medium text-neutral-900">{request.category}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Priority</p>
+                <p className="text-sm text-neutral-600">Priority</p>
                 <p className={`font-medium ${getPriorityColor(request.priority)}`}>
                   {request.priority}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Submitted Date</p>
-                <p className="font-medium text-gray-900">{request.submittedDate}</p>
+                <p className="text-sm text-neutral-600">Submitted Date</p>
+                <p className="font-medium text-neutral-900">{request.submittedDate}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Last Updated</p>
-                <p className="font-medium text-gray-900">{request.updatedDate}</p>
+                <p className="text-sm text-neutral-600">Last Updated</p>
+                <p className="font-medium text-neutral-900">{request.updatedDate}</p>
               </div>
               {request.scheduledDate && (
                 <div>
-                  <p className="text-sm text-gray-600">Scheduled Date</p>
-                  <p className="font-medium text-gray-900">{request.scheduledDate}</p>
+                  <p className="text-sm text-neutral-600">Scheduled Date</p>
+                  <p className="font-medium text-neutral-900">{request.scheduledDate}</p>
                 </div>
               )}
               {request.estimatedCompletion && (
                 <div>
-                  <p className="text-sm text-gray-600">Estimated Completion</p>
-                  <p className="font-medium text-gray-900">{request.estimatedCompletion}</p>
+                  <p className="text-sm text-neutral-600">Estimated Completion</p>
+                  <p className="font-medium text-neutral-900">{request.estimatedCompletion}</p>
                 </div>
               )}
             </div>
 
             <div>
-              <p className="text-sm text-gray-600 mb-2">Description</p>
-              <p className="text-gray-900">{request.description}</p>
+              <p className="text-sm text-neutral-600 mb-2">Description</p>
+              <p className="text-neutral-900">{request.description}</p>
             </div>
           </div>
 
           {/* Photos */}
           {request.photos && request.photos.length > 0 && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Photos</h2>
+            <div className="bg-surface shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Photos</h2>
               <div className="grid grid-cols-2 gap-4">
                 {request.photos.map((photo, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={photo}
                       alt={`Maintenance photo ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                      className="w-full h-48 object-cover rounded-lg border border-neutral-200"
                     />
                     <button className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
                       <span className="text-white opacity-0 group-hover:opacity-100 font-medium">
@@ -197,8 +197,8 @@ export default function MaintenanceDetailPage() {
           )}
 
           {/* Activity Timeline */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity Timeline</h2>
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Activity Timeline</h2>
             <div className="space-y-4">
               {request.updates.map((update, index) => (
                 <div key={index} className="flex">
@@ -206,10 +206,10 @@ export default function MaintenanceDetailPage() {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         update.type === 'status'
-                          ? 'bg-blue-100'
+                          ? 'bg-primary-100'
                           : update.type === 'vendor'
-                          ? 'bg-green-100'
-                          : 'bg-gray-100'
+                          ? 'bg-success-100'
+                          : 'bg-neutral-100'
                       }`}
                     >
                       {update.type === 'status' ? '📋' : update.type === 'vendor' ? '🔧' : '💬'}
@@ -217,10 +217,10 @@ export default function MaintenanceDetailPage() {
                   </div>
                   <div className="ml-4 flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900">{update.author}</p>
-                      <p className="text-xs text-gray-500">{update.date}</p>
+                      <p className="text-sm font-medium text-neutral-900">{update.author}</p>
+                      <p className="text-xs text-neutral-500">{update.date}</p>
                     </div>
-                    <p className="mt-1 text-sm text-gray-600">{update.message}</p>
+                    <p className="mt-1 text-sm text-neutral-600">{update.message}</p>
                   </div>
                 </div>
               ))}
@@ -228,20 +228,20 @@ export default function MaintenanceDetailPage() {
           </div>
 
           {/* Add Comment */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a Comment</h2>
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Add a Comment</h2>
             <form onSubmit={handleSendMessage}>
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="Add any additional information or questions about this request..."
               ></textarea>
               <div className="mt-3 flex justify-end">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
                 >
                   Send Message
                 </button>
@@ -254,50 +254,50 @@ export default function MaintenanceDetailPage() {
         <div className="lg:col-span-1 space-y-6">
           {/* Vendor Information */}
           {request.vendor && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Assigned Vendor</h2>
+            <div className="bg-surface shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Assigned Vendor</h2>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-600">Company</p>
-                  <p className="font-medium text-gray-900">{request.vendor.name}</p>
+                  <p className="text-sm text-neutral-600">Company</p>
+                  <p className="font-medium text-neutral-900">{request.vendor.name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Phone</p>
+                  <p className="text-sm text-neutral-600">Phone</p>
                   <a
                     href={`tel:${request.vendor.phone}`}
-                    className="font-medium text-blue-600 hover:text-blue-800"
+                    className="font-medium text-primary-600 hover:text-primary-800"
                   >
                     {request.vendor.phone}
                   </a>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Assigned Date</p>
-                  <p className="font-medium text-gray-900">{request.vendor.assignedDate}</p>
+                  <p className="text-sm text-neutral-600">Assigned Date</p>
+                  <p className="font-medium text-neutral-900">{request.vendor.assignedDate}</p>
                 </div>
               </div>
             </div>
           )}
 
           {/* Property Information */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Property</h2>
-            <p className="text-sm text-gray-900">{request.propertyAddress}</p>
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Property</h2>
+            <p className="text-sm text-neutral-900">{request.propertyAddress}</p>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+              <button className="w-full px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700">
                 Contact Support
               </button>
               {request.status !== 'Completed' && request.status !== 'Cancelled' && (
-                <button className="w-full px-4 py-2 bg-white border border-red-300 text-red-600 rounded-md text-sm font-medium hover:bg-red-50">
+                <button className="w-full px-4 py-2 bg-surface border border-danger-300 text-danger-600 rounded-md text-sm font-medium hover:bg-danger-50">
                   Cancel Request
                 </button>
               )}
               {request.status === 'Completed' && (
-                <button className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50">
+                <button className="w-full px-4 py-2 bg-surface border border-neutral-300 text-neutral-700 rounded-md text-sm font-medium hover:bg-neutral-50">
                   Rate Service
                 </button>
               )}
@@ -305,18 +305,18 @@ export default function MaintenanceDetailPage() {
           </div>
 
           {/* Need Help */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">Need Immediate Help?</h3>
-            <p className="text-sm text-blue-800 mb-3">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-primary-900 mb-2">Need Immediate Help?</h3>
+            <p className="text-sm text-primary-800 mb-3">
               For urgent maintenance issues, call our emergency line:
             </p>
             <a
               href="tel:+254711111111"
-              className="block text-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+              className="block text-center px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
             >
               📞 +254 711 111 111
             </a>
-            <p className="mt-2 text-xs text-blue-700">Available 24/7 for emergencies</p>
+            <p className="mt-2 text-xs text-primary-700">Available 24/7 for emergencies</p>
           </div>
         </div>
       </div>

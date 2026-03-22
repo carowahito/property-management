@@ -120,6 +120,10 @@ model Property {
   messages    Message[]
   rentTransactions RentTransaction[]
   statements  LandlordStatement[]
+  ownerStatements OwnerStatement[]
+  deposits    Deposit[]
+  applications TenantApplication[]
+  arrearsEscalations ArrearsEscalation[]
 
   @@index([landlordId])
   @@index([status])
@@ -140,8 +144,10 @@ model Unit {
   sizeSqm       Float?
   status        UnitStatus @default(VACANT)
   monthlyRent   Decimal?   @db.Decimal(10, 2)
-  serviceCharge Decimal?   @db.Decimal(10, 2)
-  managementFee Decimal?   @db.Decimal(10, 2)
+  serviceCharge     Decimal?   @db.Decimal(10, 2)
+  serviceChargeType FeeType    @default(FIXED)
+  managementFee     Decimal?   @db.Decimal(10, 2)
+  managementFeeType FeeType    @default(PERCENTAGE)
   description   String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
@@ -154,6 +160,7 @@ model Unit {
   rentTransactions      RentTransaction[]
   payouts               Payout[]
   distributionItems     RentDistributionItem[]
+  applications          TenantApplication[]
 
   @@index([propertyId])
   @@index([landlordId])
@@ -182,6 +189,7 @@ model Landlord {
   messages    Message[]
   rentTransactions RentTransaction[]
   statements  LandlordStatement[]
+  ownerStatements OwnerStatement[]
 
   @@index([email])
   @@index([status])
@@ -213,6 +221,8 @@ model Tenant {
   maintenanceRequests MaintenanceRequest[]
   messages        Message[]
   rentTransactions RentTransaction[]
+  deposits        Deposit[]
+  arrearsEscalations ArrearsEscalation[]
 
   @@index([email])
   @@index([propertyId])
@@ -303,6 +313,29 @@ model Enquiry {
 // Financial
 // ============================================
 
+model LeaseTemplate {
+  id              String   @id @default(cuid())
+  name            String
+  type            LeaseTemplateType
+  content         String   @db.Text  // HTML with {{placeholders}}
+  clauses         Json?    // JSON array of clause objects: { id, title, text, required, enabled }
+  isDefault       Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  leases          Lease[]
+
+  @@map("lease_templates")
+}
+
+enum LeaseTemplateType {
+  RESIDENTIAL_STANDARD
+  RESIDENTIAL_SHORT_TERM
+  COMMERCIAL
+}
+
 model Lease {
   id              String   @id @default(cuid())
   tenantId        String
@@ -315,6 +348,23 @@ model Lease {
   securityDeposit Decimal  @db.Decimal(10, 2)
   status          LeaseStatus @default(ACTIVE)
   terms           String?
+
+  // Template & Document
+  templateId      String?
+  documentHtml    String?  @db.Text  // Rendered HTML document
+  noticePeriod    Int      @default(1) // months
+  rentEscalation  Decimal? @db.Decimal(5, 2) // annual % increase
+  petPolicy       String?
+  specialConditions String? @db.Text
+
+  // Signing
+  sentForSigning  Boolean  @default(false)
+  sentAt          DateTime?
+  tenantSignedAt  DateTime?
+  landlordSignedAt DateTime?
+  tenantSignature String?  // base64 or "DIGITALLY_SIGNED"
+  landlordSignature String?
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -322,13 +372,17 @@ model Lease {
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   unitRef         Unit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  template        LeaseTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   payments        Payment[]
   rentTransactions RentTransaction[]
   workOrders      WorkOrder[]
+  deposits        Deposit[]
+  arrearsEscalations ArrearsEscalation[]
 
   @@index([tenantId])
   @@index([propertyId])
   @@index([unitId])
+  @@index([templateId])
   @@index([status])
   @@map("leases")
 }
@@ -540,6 +594,99 @@ model LandlordStatement {
   @@map("landlord_statements")
 }
 
+model OwnerStatement {
+  id              String   @id @default(cuid())
+  landlordId      String
+  propertyId      String?  // null = consolidated portfolio statement
+
+  month           Int      // 1-12
+  year            Int
+
+  // Revenue
+  rentDue         Decimal  @db.Decimal(10, 2)
+  rentReceived    Decimal  @db.Decimal(10, 2)
+
+  // Deductions
+  managementFee   Decimal  @db.Decimal(10, 2)
+  managementFeeRate Decimal @db.Decimal(5, 2) // percentage
+  maintenanceCosts Decimal @db.Decimal(10, 2) @default(0)
+  otherDeductions Decimal  @db.Decimal(10, 2) @default(0)
+
+  // Result
+  netDisbursement Decimal  @db.Decimal(10, 2)
+  depositsHeld    Decimal  @db.Decimal(10, 2) @default(0)
+
+  // Line items detail
+  lineItems       Json?    // Array: [{description, amount, type: 'income'|'deduction'}]
+
+  // Status
+  status          StatementStatus @default(DRAFT)
+  generatedAt     DateTime @default(now())
+  sentAt          DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  landlord        Landlord @relation(fields: [landlordId], references: [id])
+  property        Property? @relation(fields: [propertyId], references: [id])
+
+  @@unique([landlordId, propertyId, month, year])
+  @@index([landlordId])
+  @@index([propertyId])
+  @@index([month, year])
+  @@map("owner_statements")
+}
+
+enum StatementStatus {
+  DRAFT
+  FINALIZED
+  SENT
+}
+
+// ============================================
+// Deposits
+// ============================================
+
+model Deposit {
+  id              String   @id @default(cuid())
+  tenantId        String
+  leaseId         String
+  propertyId      String
+  amount          Decimal  @db.Decimal(10, 2)
+  paymentDate     DateTime
+  paymentMethod   PaymentMethod @default(MPESA)
+  paymentReference String?
+  status          DepositStatus @default(HELD)
+
+  // Settlement
+  deductions      Json?    // Array: [{description, amount, evidenceUrl}]
+  refundAmount    Decimal? @db.Decimal(10, 2)
+  refundDate      DateTime?
+  refundReference String?
+  settlementNotes String?  @db.Text
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  lease           Lease    @relation(fields: [leaseId], references: [id])
+  property        Property @relation(fields: [propertyId], references: [id])
+
+  @@index([tenantId])
+  @@index([leaseId])
+  @@index([propertyId])
+  @@index([status])
+  @@map("deposits")
+}
+
+enum DepositStatus {
+  HELD
+  UNDER_REVIEW
+  PARTIALLY_REFUNDED
+  REFUNDED
+  FORFEITED
+}
+
 // ============================================
 // Operations
 // ============================================
@@ -740,6 +887,76 @@ model Note {
 }
 
 // ============================================
+// Tenant Applications & Screening
+// ============================================
+
+model TenantApplication {
+  id                String   @id @default(cuid())
+  propertyId        String
+  unitId            String?
+
+  // Applicant Info
+  fullName          String
+  email             String
+  phone             String
+  idNumber          String
+  currentAddress    String?
+
+  // Employment
+  employer          String?
+  jobTitle          String?
+  monthlyIncome     Decimal? @db.Decimal(10, 2)
+  employmentDuration String? // e.g., "2 years"
+
+  // References
+  previousLandlord  String?
+  previousLandlordPhone String?
+  personalReference String?
+  personalReferencePhone String?
+
+  // Screening Results
+  status            ApplicationStatus @default(SUBMITTED)
+  incomeCheckPassed Boolean?   // income >= 3x rent
+  crbCheckStatus    String?    // PASS / REFER / FAIL
+  crbCheckDate      DateTime?
+  employerVerified  Boolean?
+  employerVerifyNotes String?
+  landlordRefChecked Boolean?
+  landlordRefNotes   String?
+
+  // Decision
+  screeningNotes    String?  @db.Text
+  decidedBy         String?
+  decidedAt         DateTime?
+  landlordApproved  Boolean?
+  landlordApprovalDate DateTime?
+
+  // If approved, link to created tenant
+  convertedTenantId String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  property          Property @relation(fields: [propertyId], references: [id])
+  unit              Unit?    @relation(fields: [unitId], references: [id])
+
+  @@index([propertyId])
+  @@index([status])
+  @@map("tenant_applications")
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  DOCUMENTS_PENDING
+  SCREENING
+  APPROVED
+  REJECTED
+  LANDLORD_REVIEW
+  CONVERTED
+  WITHDRAWN
+}
+
+// ============================================
 // Enums
 // ============================================
 
@@ -867,6 +1084,11 @@ enum DistributionType {
   AGENT_COMMISSION    // one-off fee when new tenant placed — hidden from landlord
   OTHER_DEDUCTION
   NET_PAYOUT
+}
+
+enum FeeType {
+  FIXED       // Fixed KES amount (e.g. KES 5,000)
+  PERCENTAGE  // Percentage of monthly rent (e.g. 10%)
 }
 
 enum RecipientType {
@@ -1135,4 +1357,59 @@ enum LeaveStatus {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+// ============================================
+// Arrears Escalation & Management
+// ============================================
+
+model ArrearsEscalation {
+  id              String   @id @default(cuid())
+  leaseId         String
+  tenantId        String
+  propertyId      String
+
+  rentAmount      Decimal  @db.Decimal(10, 2)
+  amountOwed      Decimal  @db.Decimal(10, 2)
+  daysOverdue     Int      @default(0)
+
+  // Escalation steps
+  currentStep     ArrearsStep @default(REMINDER_SENT)
+  reminderSentAt  DateTime?   // Day 1
+  notice1SentAt   DateTime?   // Day 6
+  phoneCallAt     DateTime?   // Day 10
+  phoneCallNotes  String?
+  notice2SentAt   DateTime?   // Day 14
+  landlordNotifiedAt DateTime? // Day 14
+  formalNoticeAt  DateTime?   // Day 21
+  legalReferralAt DateTime?   // Day 35+
+
+  // Resolution
+  resolvedAt      DateTime?
+  resolution      String?  // PAID / PAYMENT_PLAN / EVICTION / VACATED
+  notes           String?  @db.Text
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lease           Lease    @relation(fields: [leaseId], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  property        Property @relation(fields: [propertyId], references: [id])
+
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([currentStep])
+  @@map("arrears_escalations")
+}
+
+enum ArrearsStep {
+  REMINDER_SENT
+  OVERDUE_NOTICE_1
+  PHONE_CALL
+  OVERDUE_NOTICE_2
+  FORMAL_NOTICE
+  LEGAL_REFERRAL
+  RESOLVED
 }

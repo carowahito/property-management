@@ -1,194 +1,168 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-interface FinancialReport {
-  id: string;
-  reportType: 'income-statement' | 'cash-flow' | 'balance-sheet' | 'profit-loss';
-  period: string;
-  propertyName?: string;
-  totalRevenue: number;
-  totalExpenses: number;
-  netIncome: number;
-  generatedDate: string;
+interface PaymentSummary {
+  totalCollected: number;
+  totalPending: number;
+  totalOverdue: number;
+  count: number;
+}
+
+interface PayoutSummary {
+  totalPaid: number;
+  totalPending: number;
+  count: number;
 }
 
 export default function FinancialReportsPage() {
-  const [reports] = useState<FinancialReport[]>([
-    {
-      id: '1',
-      reportType: 'income-statement',
-      period: 'Feb 2024',
-      totalRevenue: 5770000,
-      totalExpenses: 1850000,
-      netIncome: 3920000,
-      generatedDate: '2024-03-01',
-    },
-    {
-      id: '2',
-      reportType: 'cash-flow',
-      period: 'Feb 2024',
-      totalRevenue: 5770000,
-      totalExpenses: 2100000,
-      netIncome: 3670000,
-      generatedDate: '2024-03-01',
-    },
-    {
-      id: '3',
-      reportType: 'profit-loss',
-      period: 'Jan 2024',
-      totalRevenue: 5450000,
-      totalExpenses: 1750000,
-      netIncome: 3700000,
-      generatedDate: '2024-02-01',
-    },
-    {
-      id: '4',
-      reportType: 'income-statement',
-      period: 'Jan 2024',
-      propertyName: 'Vista Plaza',
-      totalRevenue: 2160000,
-      totalExpenses: 580000,
-      netIncome: 1580000,
-      generatedDate: '2024-02-01',
-    },
-  ]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<string>('current');
 
-  const [filterType, setFilterType] = useState<string>('all');
-  const filteredReports = reports.filter(
-    (r) => filterType === 'all' || r.reportType === filterType
-  );
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/payments?type=RENT&limit=500').then(r => r.json()),
+      fetch('/api/payouts?limit=500').then(r => r.json()),
+    ])
+      .then(([paymentData, payoutData]) => {
+        setPayments(paymentData.payments || []);
+        setPayouts(payoutData.payouts || []);
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
+  }, []);
 
-  const stats = {
-    totalRevenue:
-      reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.totalRevenue, 0) /
-      2,
-    totalExpenses:
-      reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.totalExpenses, 0) /
-      2,
-    netIncome:
-      reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.netIncome, 0) / 2,
-    profitMargin: (
-      (reports.filter((r) => r.period === 'Feb 2024').reduce((sum, r) => sum + r.netIncome, 0) /
-        2 /
-        (reports
-          .filter((r) => r.period === 'Feb 2024')
-          .reduce((sum, r) => sum + r.totalRevenue, 0) /
-          2)) *
-      100
-    ).toFixed(1),
+  // Filter by time period
+  const getDateRange = () => {
+    const now = new Date();
+    switch (timePeriod) {
+      case 'current': {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return { start, end, label: now.toLocaleString('en-US', { month: 'long', year: 'numeric' }) };
+      }
+      case 'last': {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { start, end, label: start.toLocaleString('en-US', { month: 'long', year: 'numeric' }) };
+      }
+      case 'quarter': {
+        const start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        return { start, end: now, label: 'Last 3 Months' };
+      }
+      default: return { start: new Date(0), end: now, label: 'All Time' };
+    }
   };
+
+  const dateRange = getDateRange();
+
+  const filteredPayments = payments.filter(p => {
+    const due = new Date(p.dueDate);
+    return due >= dateRange.start && due <= dateRange.end;
+  });
+
+  const filteredPayouts = payouts.filter(p => {
+    const created = new Date(p.createdAt);
+    return created >= dateRange.start && created <= dateRange.end;
+  });
+
+  const paymentStats: PaymentSummary = {
+    totalCollected: filteredPayments.filter(p => p.status === 'PAID').reduce((sum: number, p: any) => sum + Number(p.amount), 0),
+    totalPending: filteredPayments.filter(p => p.status === 'PENDING').reduce((sum: number, p: any) => sum + Number(p.amount), 0),
+    totalOverdue: filteredPayments.filter(p => p.status === 'OVERDUE').reduce((sum: number, p: any) => sum + Number(p.amount), 0),
+    count: filteredPayments.length,
+  };
+
+  const payoutStats: PayoutSummary = {
+    totalPaid: filteredPayouts.filter((p: any) => p.status === 'PAID').reduce((sum: number, p: any) => sum + Number(p.amount), 0),
+    totalPending: filteredPayouts.filter((p: any) => p.status === 'PENDING' || p.status === 'PROCESSING').reduce((sum: number, p: any) => sum + Number(p.amount), 0),
+    count: filteredPayouts.length,
+  };
+
+  const totalRevenue = paymentStats.totalCollected;
+  const totalExpenses = payoutStats.totalPaid; // landlord payouts = expenses from management perspective
+  const netIncome = totalRevenue - totalExpenses; // retained fees (service charge + management fee)
+  const profitMargin = totalRevenue > 0 ? ((netIncome / totalRevenue) * 100).toFixed(1) : '0.0';
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    </div>;
+  }
 
   return (
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Financial Reports</h1>
-          <p className='text-gray-600 mt-1'>Generate and analyze comprehensive financial reports</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Financial Reports</h1>
+          <p className='text-neutral-600 mt-1'>Revenue and expense overview computed from real transactions</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Generate Report</button>
+      </div>
+
+      <div className='bg-surface shadow rounded-lg p-4'>
+        <select
+          value={timePeriod}
+          onChange={(e) => setTimePeriod(e.target.value)}
+          className='px-4 py-2 border border-neutral-300 rounded-lg'
+        >
+          <option value='current'>Current Month</option>
+          <option value='last'>Last Month</option>
+          <option value='quarter'>Last 3 Months</option>
+          <option value='all'>All Time</option>
+        </select>
+        <span className='ml-3 text-sm text-neutral-500'>{dateRange.label}</span>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Revenue (Feb)</p>
-          <p className='text-3xl font-bold text-green-600'>
-            KES {stats.totalRevenue.toLocaleString()}
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Rent Collected</p>
+          <p className='text-3xl font-bold text-success-600'>
+            KES {totalRevenue.toLocaleString()}
           </p>
+          <p className='text-xs text-neutral-500 mt-1'>{paymentStats.count} payments</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Expenses (Feb)</p>
-          <p className='text-3xl font-bold text-red-600'>
-            KES {stats.totalExpenses.toLocaleString()}
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Landlord Payouts</p>
+          <p className='text-3xl font-bold text-danger-600'>
+            KES {totalExpenses.toLocaleString()}
           </p>
+          <p className='text-xs text-neutral-500 mt-1'>{payoutStats.count} payouts</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Net Income (Feb)</p>
-          <p className='text-3xl font-bold text-blue-600'>KES {stats.netIncome.toLocaleString()}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Retained (Fees)</p>
+          <p className='text-3xl font-bold text-primary-600'>KES {netIncome.toLocaleString()}</p>
+          <p className='text-xs text-neutral-500 mt-1'>Service + management fees</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Profit Margin</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.profitMargin}%</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Fee Margin</p>
+          <p className='text-3xl font-bold text-purple-600'>{profitMargin}%</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
-        >
-          <option value='all'>All Report Types</option>
-          <option value='income-statement'>Income Statement</option>
-          <option value='cash-flow'>Cash Flow</option>
-          <option value='balance-sheet'>Balance Sheet</option>
-          <option value='profit-loss'>Profit & Loss</option>
-        </select>
+      {/* Pending / Overdue */}
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Pending Rent</p>
+          <p className='text-2xl font-bold text-yellow-600'>KES {paymentStats.totalPending.toLocaleString()}</p>
+        </div>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Overdue Rent</p>
+          <p className='text-2xl font-bold text-danger-600'>KES {paymentStats.totalOverdue.toLocaleString()}</p>
+        </div>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Pending Payouts</p>
+          <p className='text-2xl font-bold text-yellow-600'>KES {payoutStats.totalPending.toLocaleString()}</p>
+        </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
-            <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Report Type
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Period
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Property
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Total Revenue
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Total Expenses
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Net Income
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Generated
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
-            {filteredReports.map((report) => (
-              <tr key={report.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900 capitalize'>
-                  {report.reportType.replace('-', ' ')}
-                </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{report.period}</td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
-                  {report.propertyName || 'All Properties'}
-                </td>
-                <td className='px-6 py-4 text-sm text-green-600 font-semibold'>
-                  KES {report.totalRevenue.toLocaleString()}
-                </td>
-                <td className='px-6 py-4 text-sm text-red-600 font-semibold'>
-                  KES {report.totalExpenses.toLocaleString()}
-                </td>
-                <td className='px-6 py-4 text-sm font-semibold text-gray-900'>
-                  KES {report.netIncome.toLocaleString()}
-                </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{report.generatedDate}</td>
-                <td className='px-6 py-4 text-sm space-x-2'>
-                  <button  >
-                    View
-                  </button>
-                  <button  >
-                    Download
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {filteredPayments.length === 0 && filteredPayouts.length === 0 && (
+        <div className='bg-surface shadow rounded-lg p-12 text-center'>
+          <p className='text-neutral-500'>No financial transactions found for this period.</p>
+          <p className='text-sm text-neutral-400 mt-2'>Process rent payments to generate financial data.</p>
+        </div>
+      )}
     </div>
   );
 }

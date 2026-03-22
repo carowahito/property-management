@@ -82,46 +82,46 @@ export default function RentersPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Tenants & Renters</h1>
-          <p className='text-gray-600 mt-1'>Manage tenant information and lease agreements</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Tenants & Renters</h1>
+          <p className='text-neutral-600 mt-1'>Manage tenant information and lease agreements</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Add New Tenant</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>+ Add New Tenant</button>
       </div>
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Tenants</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalTenants}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Tenants</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalTenants}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active Leases</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.activeTenants}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Active Leases</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.activeTenants}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Current Payments</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.currentPayments}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Current Payments</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.currentPayments}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Late Payments</p>
-          <p className='text-3xl font-bold text-red-600'>{stats.latePayments}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Late Payments</p>
+          <p className='text-3xl font-bold text-danger-600'>{stats.latePayments}</p>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <div className='flex gap-4'>
           <input
             type='text'
             placeholder='Search by name, email, or property...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='flex-1 px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           >
             <option value='all'>All Status</option>
             <option value='active'>Active</option>
@@ -132,40 +132,40 @@ export default function RentersPage() {
       </div>
 
       {/* Tenants Table */}
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Tenant
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Contact
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Property
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Lease Period
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Rent
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredTenants.map((tenant) => (
-              <tr key={tenant.id} className='hover:bg-gray-50'>
+              <tr key={tenant.id} className='hover:bg-neutral-50'>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <div className='flex items-center'>
-                    <div className='h-10 w-10 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center'>
-                      <span className='text-blue-600 font-semibold'>
+                    <div className='h-10 w-10 flex-shrink-0 bg-primary-100 rounded-full flex items-center justify-center'>
+                      <span className='text-primary-600 font-semibold'>
                         {tenant.name
                           .split(' ')
                           .map((n) => n[0])
@@ -173,39 +173,39 @@ export default function RentersPage() {
                       </span>
                     </div>
                     <div className='ml-4'>
-                      <div className='text-sm font-medium text-gray-900'>{tenant.name}</div>
+                      <div className='text-sm font-medium text-neutral-900'>{tenant.name}</div>
                     </div>
                   </div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{tenant.email}</div>
-                  <div className='text-sm text-gray-500'>{tenant.phone}</div>
+                  <div className='text-sm text-neutral-900'>{tenant.email}</div>
+                  <div className='text-sm text-neutral-500'>{tenant.phone}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{tenant.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {tenant.unitNumber}</div>
+                  <div className='text-sm text-neutral-900'>{tenant.propertyName}</div>
+                  <div className='text-sm text-neutral-500'>Unit {tenant.unitNumber}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{tenant.leaseStart}</div>
-                  <div className='text-sm text-gray-500'>to {tenant.leaseEnd}</div>
+                  <div className='text-sm text-neutral-900'>{tenant.leaseStart}</div>
+                  <div className='text-sm text-neutral-500'>to {tenant.leaseEnd}</div>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                   KES {tenant.rentAmount.toLocaleString()}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       tenant.paymentStatus === 'current'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-success-100 text-green-800'
                         : tenant.paymentStatus === 'late'
                           ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
+                          : 'bg-danger-100 text-red-800'
                     }`}
                   >
                     {tenant.paymentStatus}
                   </span>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-500'>
                   <button   className='mr-2'>
                     View
                   </button>

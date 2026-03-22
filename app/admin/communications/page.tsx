@@ -110,11 +110,11 @@ export default function CommunicationsPage() {
 
   const getStatusColor = (status: Message['status']) => {
     switch (status) {
-      case 'sent': return 'bg-blue-100 text-blue-800'
-      case 'delivered': return 'bg-green-100 text-green-800'
-      case 'read': return 'bg-gray-100 text-gray-800'
-      case 'failed': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'sent': return 'bg-primary-100 text-primary-800'
+      case 'delivered': return 'bg-success-100 text-green-800'
+      case 'read': return 'bg-neutral-100 text-neutral-800'
+      case 'failed': return 'bg-danger-100 text-red-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -130,13 +130,13 @@ export default function CommunicationsPage() {
 
   const getCategoryColor = (category: Message['category']) => {
     switch (category) {
-      case 'rent-reminder': return 'bg-orange-100 text-orange-800'
-      case 'maintenance': return 'bg-blue-100 text-blue-800'
+      case 'rent-reminder': return 'bg-warning-100 text-orange-800'
+      case 'maintenance': return 'bg-primary-100 text-primary-800'
       case 'lease': return 'bg-purple-100 text-purple-800'
-      case 'payment': return 'bg-green-100 text-green-800'
+      case 'payment': return 'bg-success-100 text-green-800'
       case 'announcement': return 'bg-yellow-100 text-yellow-800'
       case 'support': return 'bg-indigo-100 text-indigo-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -144,8 +144,8 @@ export default function CommunicationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Communications</h1>
-          <p className="text-gray-600 mt-2">View and manage all communications with tenants, landlords, and vendors</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Communications</h1>
+          <p className="text-neutral-600 mt-2">View and manage all communications with tenants, landlords, and vendors</p>
         </div>
         <Button variant="primary" onClick={() => setShowCompose(true)}>
           + Compose Message
@@ -154,33 +154,33 @@ export default function CommunicationsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Total Messages</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Total Messages</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.total}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Sent</p>
-          <p className="text-3xl font-bold text-blue-600 mt-2">{stats.sent}</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Sent</p>
+          <p className="text-3xl font-bold text-primary-600 mt-2">{stats.sent}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Received</p>
-          <p className="text-3xl font-bold text-green-600 mt-2">{stats.received}</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Received</p>
+          <p className="text-3xl font-bold text-success-600 mt-2">{stats.received}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Unread</p>
-          <p className="text-3xl font-bold text-orange-600 mt-2">{stats.unread}</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Unread</p>
+          <p className="text-3xl font-bold text-warning-600 mt-2">{stats.unread}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-4">
         <div className="space-y-4">
           {/* Search */}
           <div>
             <input
               type="text"
               placeholder="Search messages, stakeholders, or properties..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -190,15 +190,15 @@ export default function CommunicationsPage() {
           <div className="flex flex-wrap gap-2">
             {/* Type Filter */}
             <div className="flex gap-2">
-              <span className="text-sm font-medium text-gray-700 flex items-center">Type:</span>
+              <span className="text-sm font-medium text-neutral-700 flex items-center">Type:</span>
               {(['all', 'email', 'sms', 'in-app', 'system'] as const).map(type => (
                 <button
                   key={type}
                   onClick={() => setTypeFilter(type)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
                     typeFilter === type
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
                   {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -206,19 +206,19 @@ export default function CommunicationsPage() {
               ))}
             </div>
 
-            <div className="w-px bg-gray-300"></div>
+            <div className="w-px bg-neutral-300"></div>
 
             {/* Stakeholder Filter */}
             <div className="flex gap-2">
-              <span className="text-sm font-medium text-gray-700 flex items-center">To/From:</span>
+              <span className="text-sm font-medium text-neutral-700 flex items-center">To/From:</span>
               {(['all', 'tenant', 'landlord', 'vendor'] as const).map(stakeholder => (
                 <button
                   key={stakeholder}
                   onClick={() => setStakeholderFilter(stakeholder)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
                     stakeholderFilter === stakeholder
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-success-600 text-white'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
                   {stakeholder.charAt(0).toUpperCase() + stakeholder.slice(1)}
@@ -226,11 +226,11 @@ export default function CommunicationsPage() {
               ))}
             </div>
 
-            <div className="w-px bg-gray-300"></div>
+            <div className="w-px bg-neutral-300"></div>
 
             {/* Category Filter */}
             <div className="flex gap-2">
-              <span className="text-sm font-medium text-gray-700 flex items-center">Category:</span>
+              <span className="text-sm font-medium text-neutral-700 flex items-center">Category:</span>
               {(['all', 'rent-reminder', 'maintenance', 'lease', 'payment', 'announcement', 'support'] as const).map(category => (
                 <button
                   key={category}
@@ -238,7 +238,7 @@ export default function CommunicationsPage() {
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
                     categoryFilter === category
                       ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
                   {category === 'all' ? 'All' : category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -250,11 +250,11 @@ export default function CommunicationsPage() {
       </div>
 
       {/* Messages List */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="divide-y divide-gray-200">
+      <div className="bg-surface rounded-lg border border-neutral-200">
+        <div className="divide-y divide-neutral-200">
           {filteredMessages.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-12 text-center text-neutral-500">
+              <svg className="mx-auto h-12 w-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
               <p className="mt-2 text-sm">No messages found</p>
@@ -264,8 +264,8 @@ export default function CommunicationsPage() {
               <div
                 key={message.id}
                 onClick={() => setSelectedMessage(message)}
-                className={`p-4 hover:bg-gray-50 cursor-pointer transition ${
-                  message.direction === 'received' && message.status !== 'read' ? 'bg-blue-50' : ''
+                className={`p-4 hover:bg-neutral-50 cursor-pointer transition ${
+                  message.direction === 'received' && message.status !== 'read' ? 'bg-primary-50' : ''
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -274,46 +274,46 @@ export default function CommunicationsPage() {
                       <span className="text-2xl">{getTypeIcon(message.type)}</span>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-gray-900">{message.subject}</h3>
+                          <h3 className="font-semibold text-neutral-900">{message.subject}</h3>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(message.category)}`}>
                             {message.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                           </span>
                           {message.direction === 'received' && message.status !== 'read' && (
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-orange-800">
                               New
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-4 text-sm text-neutral-600">
                           <span className="font-medium">
                             {message.direction === 'sent' ? '→' : '←'} {message.stakeholderName}
                           </span>
-                          <span className="text-gray-400">•</span>
+                          <span className="text-neutral-400">•</span>
                           <span>{formatDate(message.sentDate)}</span>
                           {message.propertyName && (
                             <>
-                              <span className="text-gray-400">•</span>
+                              <span className="text-neutral-400">•</span>
                               <span>{message.propertyName}</span>
                             </>
                           )}
                           {message.relatedTo && (
                             <>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-blue-600">{message.relatedTo}</span>
+                              <span className="text-neutral-400">•</span>
+                              <span className="text-primary-600">{message.relatedTo}</span>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 line-clamp-2 ml-11">
+                    <p className="text-sm text-neutral-700 line-clamp-2 ml-11">
                       {message.message}
                     </p>
                     {message.attachments && message.attachments.length > 0 && (
                       <div className="flex items-center gap-2 mt-2 ml-11">
-                        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-4 w-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
-                        <span className="text-xs text-gray-500">{message.attachments.length} attachment(s)</span>
+                        <span className="text-xs text-neutral-500">{message.attachments.length} attachment(s)</span>
                       </div>
                     )}
                   </div>
@@ -332,14 +332,14 @@ export default function CommunicationsPage() {
       {/* Message Detail Modal */}
       {selectedMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-3xl">{getTypeIcon(selectedMessage.type)}</span>
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">{selectedMessage.subject}</h2>
+                      <h2 className="text-2xl font-bold text-neutral-900">{selectedMessage.subject}</h2>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(selectedMessage.category)}`}>
                           {selectedMessage.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -353,7 +353,7 @@ export default function CommunicationsPage() {
                 </div>
                 <button
                   onClick={() => setSelectedMessage(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -362,76 +362,76 @@ export default function CommunicationsPage() {
               </div>
 
               {/* Message Metadata */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="bg-neutral-50 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Direction</p>
-                    <p className="font-semibold text-gray-900">
+                    <p className="text-sm text-neutral-600">Direction</p>
+                    <p className="font-semibold text-neutral-900">
                       {selectedMessage.direction === 'sent' ? '→ Sent' : '← Received'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Type</p>
-                    <p className="font-semibold text-gray-900 capitalize">{selectedMessage.type}</p>
+                    <p className="text-sm text-neutral-600">Type</p>
+                    <p className="font-semibold text-neutral-900 capitalize">{selectedMessage.type}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-neutral-600">
                       {selectedMessage.direction === 'sent' ? 'To' : 'From'}
                     </p>
-                    <p className="font-semibold text-gray-900">{selectedMessage.stakeholderName}</p>
-                    <p className="text-xs text-gray-500 capitalize">{selectedMessage.stakeholderType}</p>
+                    <p className="font-semibold text-neutral-900">{selectedMessage.stakeholderName}</p>
+                    <p className="text-xs text-neutral-500 capitalize">{selectedMessage.stakeholderType}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Date & Time</p>
-                    <p className="font-semibold text-gray-900">{formatDate(selectedMessage.sentDate)}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-neutral-600">Date & Time</p>
+                    <p className="font-semibold text-neutral-900">{formatDate(selectedMessage.sentDate)}</p>
+                    <p className="text-xs text-neutral-500">
                       {new Date(selectedMessage.sentDate).toLocaleTimeString()}
                     </p>
                   </div>
                   {selectedMessage.propertyName && (
                     <div>
-                      <p className="text-sm text-gray-600">Property</p>
-                      <p className="font-semibold text-gray-900">{selectedMessage.propertyName}</p>
+                      <p className="text-sm text-neutral-600">Property</p>
+                      <p className="font-semibold text-neutral-900">{selectedMessage.propertyName}</p>
                     </div>
                   )}
                   {selectedMessage.relatedTo && (
                     <div>
-                      <p className="text-sm text-gray-600">Related To</p>
-                      <p className="font-semibold text-blue-600">{selectedMessage.relatedTo}</p>
+                      <p className="text-sm text-neutral-600">Related To</p>
+                      <p className="font-semibold text-primary-600">{selectedMessage.relatedTo}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-sm text-gray-600">Sent By</p>
-                    <p className="font-semibold text-gray-900">{selectedMessage.sentBy}</p>
+                    <p className="text-sm text-neutral-600">Sent By</p>
+                    <p className="font-semibold text-neutral-900">{selectedMessage.sentBy}</p>
                   </div>
                 </div>
               </div>
 
               {/* Message Content */}
-              <div className="border-t border-gray-200 pt-6 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Message</h3>
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedMessage.message}</p>
+              <div className="border-t border-neutral-200 pt-6 mb-6">
+                <h3 className="font-semibold text-neutral-900 mb-3">Message</h3>
+                <div className="bg-surface border border-neutral-200 rounded-lg p-4">
+                  <p className="text-neutral-700 whitespace-pre-wrap">{selectedMessage.message}</p>
                 </div>
               </div>
 
               {/* Attachments */}
               {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                <div className="border-t border-gray-200 pt-6 mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-3">Attachments</h3>
+                <div className="border-t border-neutral-200 pt-6 mb-6">
+                  <h3 className="font-semibold text-neutral-900 mb-3">Attachments</h3>
                   <div className="space-y-2">
                     {selectedMessage.attachments.map((attachment, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                      <div key={idx} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg hover:bg-neutral-100 cursor-pointer">
                         <div className="flex items-center">
-                          <svg className="h-8 w-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="h-8 w-8 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           </svg>
                           <div>
-                            <p className="font-medium text-gray-900">{attachment}</p>
-                            <p className="text-xs text-gray-500">PDF Document</p>
+                            <p className="font-medium text-neutral-900">{attachment}</p>
+                            <p className="text-xs text-neutral-500">PDF Document</p>
                           </div>
                         </div>
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-5 w-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                       </div>
@@ -441,7 +441,7 @@ export default function CommunicationsPage() {
               )}
 
               {/* Actions */}
-              <div className="border-t border-gray-200 pt-6 flex gap-3">
+              <div className="border-t border-neutral-200 pt-6 flex gap-3">
                 <Button variant="outline" onClick={() => setSelectedMessage(null)} className="flex-1">
                   Close
                 </Button>
@@ -462,13 +462,13 @@ export default function CommunicationsPage() {
       {/* Compose Modal */}
       {showCompose && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Compose Message</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">Compose Message</h2>
                 <button
                   onClick={() => setShowCompose(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -479,16 +479,16 @@ export default function CommunicationsPage() {
               <form className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Message Type</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Message Type</label>
+                    <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                       <option value="email">Email</option>
                       <option value="sms">SMS</option>
                       <option value="in-app">In-App Notification</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Category</label>
+                    <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                       <option value="rent-reminder">Rent Reminder</option>
                       <option value="maintenance">Maintenance</option>
                       <option value="lease">Lease</option>
@@ -502,7 +502,7 @@ export default function CommunicationsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Recipient Type</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Recipient Type</label>
                     <select 
                       value={composeRecipientType}
                       onChange={(e) => {
@@ -510,7 +510,7 @@ export default function CommunicationsPage() {
                         setComposeRecipient('') // Reset recipient when type changes
                         setComposeProperty('all') // Reset property filter
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="tenant">Tenant</option>
                       <option value="landlord">Landlord</option>
@@ -520,11 +520,11 @@ export default function CommunicationsPage() {
                   </div>
                   {composeRecipientType !== 'all' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Recipient</label>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Recipient</label>
                       <select 
                         value={composeRecipient}
                         onChange={(e) => setComposeRecipient(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
                         <option value="">Select recipient...</option>
                         <option value="all">All {composeRecipientType}s</option>
@@ -541,14 +541,14 @@ export default function CommunicationsPage() {
                 {/* Property Filter for Tenants and Landlords */}
                 {(composeRecipientType === 'tenant' || composeRecipientType === 'landlord') && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Property</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Filter by Property</label>
                     <select 
                       value={composeProperty}
                       onChange={(e) => {
                         setComposeProperty(e.target.value)
                         setComposeRecipient('') // Reset recipient when property changes
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="all">All Properties</option>
                       {properties.map((property: any) => (
@@ -562,12 +562,12 @@ export default function CommunicationsPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Subject</label>
+                    <label className="block text-sm font-medium text-neutral-700">Subject</label>
                     <button
                       type="button"
                       onClick={() => handleImproveWithAI('subject')}
                       disabled={!composeSubject || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -579,19 +579,19 @@ export default function CommunicationsPage() {
                     type="text"
                     value={composeSubject}
                     onChange={(e) => setComposeSubject(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Enter message subject..."
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Message</label>
+                    <label className="block text-sm font-medium text-neutral-700">Message</label>
                     <button
                       type="button"
                       onClick={() => handleImproveWithAI('message')}
                       disabled={!composeMessage || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -603,19 +603,19 @@ export default function CommunicationsPage() {
                     rows={8}
                     value={composeMessage}
                     onChange={(e) => setComposeMessage(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Type your message here..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 cursor-pointer">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">Attachments</label>
+                  <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary-500 cursor-pointer">
+                    <svg className="mx-auto h-12 w-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p className="mt-2 text-sm text-gray-600">Click to upload files or drag and drop</p>
-                    <p className="text-xs text-gray-500">PDF, DOC, JPG, PNG up to 10MB</p>
+                    <p className="mt-2 text-sm text-neutral-600">Click to upload files or drag and drop</p>
+                    <p className="text-xs text-neutral-500">PDF, DOC, JPG, PNG up to 10MB</p>
                   </div>
                 </div>
 

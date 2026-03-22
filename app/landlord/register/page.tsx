@@ -48,28 +48,28 @@ export default function LandlordRegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-neutral-900">
             Register as a Landlord
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-neutral-600">
             Create your account to manage your properties
           </p>
         </div>
 
-        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 bg-surface p-8 rounded-lg shadow-md" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4 border border-red-200">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="rounded-md bg-danger-50 p-4 border border-danger-200">
+              <div className="text-sm text-danger-800">{error}</div>
             </div>
           )}
 
           {/* Account Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Account Type <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Account Type <span className="text-danger-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-4">
               <button
@@ -77,26 +77,26 @@ export default function LandlordRegisterPage() {
                 onClick={() => setFormData({ ...formData, accountType: 'individual' })}
                 className={`p-4 border-2 rounded-lg text-center transition ${
                   formData.accountType === 'individual'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-primary-600 bg-primary-50'
+                    : 'border-neutral-300 hover:border-neutral-400'
                 }`}
               >
                 <div className="text-2xl mb-2">👤</div>
                 <div className="font-medium">Individual</div>
-                <div className="text-xs text-gray-500">Personal property owner</div>
+                <div className="text-xs text-neutral-500">Personal property owner</div>
               </button>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, accountType: 'company' })}
                 className={`p-4 border-2 rounded-lg text-center transition ${
                   formData.accountType === 'company'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-primary-600 bg-primary-50'
+                    : 'border-neutral-300 hover:border-neutral-400'
                 }`}
               >
                 <div className="text-2xl mb-2">🏢</div>
                 <div className="font-medium">Company</div>
-                <div className="text-xs text-gray-500">Property management company</div>
+                <div className="text-xs text-neutral-500">Property management company</div>
               </button>
             </div>
           </div>
@@ -105,8 +105,8 @@ export default function LandlordRegisterPage() {
             {/* Business/Company Name (if company) */}
             {formData.accountType === 'company' && (
               <div>
-                <label htmlFor="business-name" className="block text-sm font-medium text-gray-700">
-                  Company/Business Name <span className="text-red-500">*</span>
+                <label htmlFor="business-name" className="block text-sm font-medium text-neutral-700">
+                  Company/Business Name <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="business-name"
@@ -115,7 +115,7 @@ export default function LandlordRegisterPage() {
                   required={formData.accountType === 'company'}
                   value={formData.businessName}
                   onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                   placeholder="ABC Property Management"
                 />
               </div>
@@ -124,8 +124,8 @@ export default function LandlordRegisterPage() {
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="first-name" className="block text-sm font-medium text-gray-700">
-                  First Name <span className="text-red-500">*</span>
+                <label htmlFor="first-name" className="block text-sm font-medium text-neutral-700">
+                  First Name <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="first-name"
@@ -134,12 +134,12 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
               <div>
-                <label htmlFor="last-name" className="block text-sm font-medium text-gray-700">
-                  Last Name <span className="text-red-500">*</span>
+                <label htmlFor="last-name" className="block text-sm font-medium text-neutral-700">
+                  Last Name <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="last-name"
@@ -148,7 +148,7 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -156,8 +156,8 @@ export default function LandlordRegisterPage() {
             {/* Email & Phone */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email Address <span className="text-red-500">*</span>
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-700">
+                  Email Address <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="email"
@@ -167,12 +167,12 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Phone Number <span className="text-red-500">*</span>
+                <label htmlFor="phone" className="block text-sm font-medium text-neutral-700">
+                  Phone Number <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="phone"
@@ -182,15 +182,15 @@ export default function LandlordRegisterPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+254 700 000 000"
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
             </div>
 
             {/* Address */}
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                Street Address <span className="text-red-500">*</span>
+              <label htmlFor="address" className="block text-sm font-medium text-neutral-700">
+                Street Address <span className="text-danger-500">*</span>
               </label>
               <input
                 id="address"
@@ -199,15 +199,15 @@ export default function LandlordRegisterPage() {
                 required
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
             </div>
 
             {/* City, State, ZIP */}
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-1">
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                  City <span className="text-red-500">*</span>
+                <label htmlFor="city" className="block text-sm font-medium text-neutral-700">
+                  City <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="city"
@@ -216,12 +216,12 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
               <div className="col-span-1">
-                <label htmlFor="state" className="block text-sm font-medium text-gray-700">
-                  State/County <span className="text-red-500">*</span>
+                <label htmlFor="state" className="block text-sm font-medium text-neutral-700">
+                  State/County <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="state"
@@ -230,12 +230,12 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
               <div className="col-span-1">
-                <label htmlFor="zip" className="block text-sm font-medium text-gray-700">
-                  ZIP/Postal <span className="text-red-500">*</span>
+                <label htmlFor="zip" className="block text-sm font-medium text-neutral-700">
+                  ZIP/Postal <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="zip"
@@ -244,15 +244,15 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.zip}
                   onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
             </div>
 
             {/* Tax ID */}
             <div>
-              <label htmlFor="tax-id" className="block text-sm font-medium text-gray-700">
-                Tax ID/PIN Number <span className="text-red-500">*</span>
+              <label htmlFor="tax-id" className="block text-sm font-medium text-neutral-700">
+                Tax ID/PIN Number <span className="text-danger-500">*</span>
               </label>
               <input
                 id="tax-id"
@@ -262,9 +262,9 @@ export default function LandlordRegisterPage() {
                 value={formData.taxId}
                 onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
                 placeholder="P051234567A"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-neutral-500">
                 Required for tax reporting and compliance
               </p>
             </div>
@@ -272,8 +272,8 @@ export default function LandlordRegisterPage() {
             {/* Password Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password <span className="text-red-500">*</span>
+                <label htmlFor="password" className="block text-sm font-medium text-neutral-700">
+                  Password <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="password"
@@ -282,15 +282,15 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-neutral-500">
                   At least 8 characters
                 </p>
               </div>
               <div>
-                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
-                  Confirm Password <span className="text-red-500">*</span>
+                <label htmlFor="confirm-password" className="block text-sm font-medium text-neutral-700">
+                  Confirm Password <span className="text-danger-500">*</span>
                 </label>
                 <input
                   id="confirm-password"
@@ -299,7 +299,7 @@ export default function LandlordRegisterPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -312,15 +312,15 @@ export default function LandlordRegisterPage() {
               name="terms"
               type="checkbox"
               required
-              className="h-4 w-4 mt-1 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 mt-1 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
             />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
+            <label htmlFor="terms" className="ml-2 block text-sm text-neutral-900">
               I agree to the{' '}
-              <Link href="/terms" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/terms" className="font-medium text-primary-600 hover:text-primary-500">
                 Terms of Service
               </Link>
               {' '}and{' '}
-              <Link href="/privacy" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/privacy" className="font-medium text-primary-600 hover:text-primary-500">
                 Privacy Policy
               </Link>
               {', and I confirm that all information provided is accurate.'}
@@ -337,11 +337,11 @@ export default function LandlordRegisterPage() {
           </Button>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-neutral-600">
               Already have an account?{' '}
               <Link
                 href="/landlord/login"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium text-primary-600 hover:text-primary-500"
               >
                 Sign in here
               </Link>

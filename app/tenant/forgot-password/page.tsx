@@ -21,12 +21,12 @@ export default function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div>
-            <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-full bg-green-100">
+            <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-full bg-success-100">
               <svg
-                className="h-12 w-12 text-green-600"
+                className="h-12 w-12 text-success-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -39,22 +39,22 @@ export default function ForgotPasswordPage() {
                 />
               </svg>
             </div>
-            <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
+            <h2 className="mt-6 text-center text-3xl font-bold text-neutral-900">
               Check your email
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            <p className="mt-2 text-center text-sm text-neutral-600">
               We've sent password reset instructions to
             </p>
-            <p className="text-center text-sm font-medium text-gray-900">
+            <p className="text-center text-sm font-medium text-neutral-900">
               {email}
             </p>
           </div>
 
-          <div className="rounded-md bg-blue-50 p-4">
+          <div className="rounded-md bg-primary-50 p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg
-                  className="h-5 w-5 text-blue-400"
+                  className="h-5 w-5 text-primary-400"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -66,10 +66,10 @@ export default function ForgotPasswordPage() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">
+                <h3 className="text-sm font-medium text-primary-800">
                   What to do next?
                 </h3>
-                <div className="mt-2 text-sm text-blue-700">
+                <div className="mt-2 text-sm text-primary-700">
                   <ul className="list-disc list-inside space-y-1">
                     <li>Check your email inbox (and spam folder)</li>
                     <li>Click the reset link in the email</li>
@@ -83,13 +83,13 @@ export default function ForgotPasswordPage() {
 
           <div className="text-center space-y-4">
             <div className="text-sm">
-              <span className="text-gray-600">Didn't receive the email? </span>
+              <span className="text-neutral-600">Didn't receive the email? </span>
               <button
                 onClick={() => {
                   setIsSubmitted(false)
                   setEmail('')
                 }}
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium text-primary-600 hover:text-primary-500"
               >
                 Try again
               </button>
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
             <div className="text-sm">
               <Link
                 href="/tenant/login"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium text-primary-600 hover:text-primary-500"
               >
                 ← Back to login
               </Link>
@@ -110,23 +110,23 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <Link href="/tenant/login" className="flex justify-center">
-            <div className="text-4xl font-bold text-blue-600">🏠</div>
+            <div className="text-4xl font-bold text-primary-600">🏠</div>
           </Link>
-          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold text-neutral-900">
             Reset your password
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-neutral-600">
             Enter your email address and we'll send you instructions to reset your password.
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
               Email address
             </label>
             <input
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              className="appearance-none relative block w-full px-3 py-2 border border-neutral-300 placeholder-neutral-500 text-neutral-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
               placeholder="you@example.com"
             />
           </div>
@@ -146,7 +146,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-primary-400 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -164,7 +164,7 @@ export default function ForgotPasswordPage() {
           <div className="text-center text-sm">
             <Link
               href="/tenant/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-primary-600 hover:text-primary-500"
             >
               ← Back to login
             </Link>
@@ -174,20 +174,20 @@ export default function ForgotPasswordPage() {
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-neutral-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">Need help?</span>
+              <span className="px-2 bg-neutral-50 text-neutral-500">Need help?</span>
             </div>
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-neutral-600">
               Contact support if you're having trouble accessing your account
             </p>
             <Link
               href="/tenant/support"
-              className="mt-2 inline-block text-sm font-medium text-blue-600 hover:text-blue-500"
+              className="mt-2 inline-block text-sm font-medium text-primary-600 hover:text-primary-500"
             >
               Contact Support →
             </Link>

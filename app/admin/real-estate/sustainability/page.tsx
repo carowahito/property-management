@@ -71,107 +71,107 @@ export default function SustainabilityPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Sustainability Metrics</h1>
-          <p className='text-gray-600 mt-1'>Track environmental impact and green initiatives</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Sustainability Metrics</h1>
+          <p className='text-neutral-600 mt-1'>Track environmental impact and green initiatives</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>Download Report</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>Download Report</button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Energy Usage</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Energy Usage</p>
           <p className='text-3xl font-bold text-yellow-600'>
             {stats.totalEnergy.toLocaleString()} kWh
           </p>
           {stats.totalSolar > 0 && (
-            <p className='text-xs text-green-600 mt-1'>
+            <p className='text-xs text-success-600 mt-1'>
               Solar: {stats.totalSolar.toLocaleString()} kWh generated
             </p>
           )}
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Water Usage</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.totalWater.toLocaleString()} L</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Water Usage</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalWater.toLocaleString()} L</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Waste Recycled</p>
-          <p className='text-3xl font-bold text-green-600'>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Waste Recycled</p>
+          <p className='text-3xl font-bold text-success-600'>
             {stats.totalWaste.toLocaleString()} kg
           </p>
         </div>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Carbon Footprint</p>
-          <p className='text-3xl font-bold text-red-600'>{stats.totalCarbon.toFixed(1)} tons CO₂</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Carbon Footprint</p>
+          <p className='text-3xl font-bold text-danger-600'>{stats.totalCarbon.toFixed(1)} tons CO₂</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Green Certified Properties</p>
-          <p className='text-3xl font-bold text-green-600'>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Green Certified Properties</p>
+          <p className='text-3xl font-bold text-success-600'>
             {stats.certifiedProperties} / {metrics.length}
           </p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Property
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Energy (kWh)
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Water (L)
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Waste Recycled (kg)
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Carbon (tons CO₂)
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Solar Generation
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Certification
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {metrics.map((metric) => (
-              <tr key={metric.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>
+              <tr key={metric.id} className='hover:bg-neutral-50'>
+                <td className='px-6 py-4 text-sm font-medium text-neutral-900'>
                   {metric.propertyName}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>
                   {metric.energyUsage.toLocaleString()}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>
                   {metric.waterUsage.toLocaleString()}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>
                   {metric.wasteRecycled.toLocaleString()}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>
                   {metric.carbonFootprint.toFixed(1)}
                 </td>
-                <td className='px-6 py-4 text-sm text-green-600 font-semibold'>
+                <td className='px-6 py-4 text-sm text-success-600 font-semibold'>
                   {metric.solarGeneration ? `${metric.solarGeneration.toLocaleString()} kWh` : '—'}
                 </td>
                 <td className='px-6 py-4'>
                   {metric.greenCertification ? (
-                    <span className='px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'>
+                    <span className='px-2 py-1 text-xs font-semibold rounded-full bg-success-100 text-green-800'>
                       {metric.greenCertification}
                     </span>
                   ) : (
-                    <span className='text-xs text-gray-500'>None</span>
+                    <span className='text-xs text-neutral-500'>None</span>
                   )}
                 </td>
                 <td className='px-6 py-4 text-sm'>

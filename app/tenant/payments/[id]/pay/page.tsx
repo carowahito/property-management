@@ -49,28 +49,28 @@ export default function PaySpecificPaymentPage() {
       <nav className="mb-6 flex" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-2 text-sm">
           <li>
-            <Link href="/tenant/payments" className="text-blue-600 hover:text-blue-800">
+            <Link href="/tenant/payments" className="text-primary-600 hover:text-primary-800">
               Payments
             </Link>
           </li>
           <li>
-            <span className="mx-2 text-gray-400">/</span>
+            <span className="mx-2 text-neutral-400">/</span>
           </li>
-          <li className="text-gray-500">Pay Invoice #{paymentId}</li>
+          <li className="text-neutral-500">Pay Invoice #{paymentId}</li>
         </ol>
       </nav>
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Pay Invoice #{paymentId}</h1>
-        <p className="mt-2 text-gray-600">Complete your payment securely</p>
+        <h1 className="text-3xl font-bold text-neutral-900">Pay Invoice #{paymentId}</h1>
+        <p className="mt-2 text-neutral-600">Complete your payment securely</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Payment Form */}
         <div className="lg:col-span-2">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Payment Method</h2>
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-6">Payment Method</h2>
 
             {/* Payment Method Selection */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
@@ -79,8 +79,8 @@ export default function PaySpecificPaymentPage() {
                 onClick={() => setPaymentMethod('mpesa')}
                 className={`p-4 border-2 rounded-lg text-center transition-all ${
                   paymentMethod === 'mpesa'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary-600 bg-primary-50'
+                    : 'border-neutral-200 hover:border-neutral-300'
                 }`}
               >
                 <div className="text-2xl mb-2">📱</div>
@@ -92,8 +92,8 @@ export default function PaySpecificPaymentPage() {
                 onClick={() => setPaymentMethod('card')}
                 className={`p-4 border-2 rounded-lg text-center transition-all ${
                   paymentMethod === 'card'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary-600 bg-primary-50'
+                    : 'border-neutral-200 hover:border-neutral-300'
                 }`}
               >
                 <div className="text-2xl mb-2">💳</div>
@@ -105,8 +105,8 @@ export default function PaySpecificPaymentPage() {
                 onClick={() => setPaymentMethod('bank')}
                 className={`p-4 border-2 rounded-lg text-center transition-all ${
                   paymentMethod === 'bank'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary-600 bg-primary-50'
+                    : 'border-neutral-200 hover:border-neutral-300'
                 }`}
               >
                 <div className="text-2xl mb-2">🏦</div>
@@ -119,7 +119,7 @@ export default function PaySpecificPaymentPage() {
               {paymentMethod === 'mpesa' && (
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="mpesaPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="mpesaPhone" className="block text-sm font-medium text-neutral-700 mb-1">
                       M-Pesa Phone Number
                     </label>
                     <input
@@ -128,10 +128,10 @@ export default function PaySpecificPaymentPage() {
                       value={mpesaPhone}
                       onChange={(e) => setMpesaPhone(e.target.value)}
                       placeholder="254700000000"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-neutral-500">
                       You will receive an STK push notification on your phone
                     </p>
                   </div>
@@ -142,7 +142,7 @@ export default function PaySpecificPaymentPage() {
               {paymentMethod === 'card' && (
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="cardName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="cardName" className="block text-sm font-medium text-neutral-700 mb-1">
                       Cardholder Name
                     </label>
                     <input
@@ -151,13 +151,13 @@ export default function PaySpecificPaymentPage() {
                       value={cardDetails.name}
                       onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value })}
                       placeholder="John Doe"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="cardNumber" className="block text-sm font-medium text-neutral-700 mb-1">
                       Card Number
                     </label>
                     <input
@@ -167,14 +167,14 @@ export default function PaySpecificPaymentPage() {
                       onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value })}
                       placeholder="1234 5678 9012 3456"
                       maxLength={19}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="expiry" className="block text-sm font-medium text-neutral-700 mb-1">
                         Expiry Date
                       </label>
                       <input
@@ -184,13 +184,13 @@ export default function PaySpecificPaymentPage() {
                         onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })}
                         placeholder="MM/YY"
                         maxLength={5}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         required
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="cvc" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="cvc" className="block text-sm font-medium text-neutral-700 mb-1">
                         CVC
                       </label>
                       <input
@@ -200,7 +200,7 @@ export default function PaySpecificPaymentPage() {
                         onChange={(e) => setCardDetails({ ...cardDetails, cvc: e.target.value })}
                         placeholder="123"
                         maxLength={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         required
                       />
                     </div>
@@ -210,27 +210,27 @@ export default function PaySpecificPaymentPage() {
 
               {/* Bank Transfer */}
               {paymentMethod === 'bank' && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-900 mb-3">Bank Transfer Details</h3>
+                <div className="bg-neutral-50 rounded-lg p-4">
+                  <h3 className="font-medium text-neutral-900 mb-3">Bank Transfer Details</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Bank Name:</span>
-                      <span className="font-medium text-gray-900">Catalyst Bank Ltd</span>
+                      <span className="text-neutral-600">Bank Name:</span>
+                      <span className="font-medium text-neutral-900">Catalyst Bank Ltd</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Account Name:</span>
-                      <span className="font-medium text-gray-900">Catalyst Property Management</span>
+                      <span className="text-neutral-600">Account Name:</span>
+                      <span className="font-medium text-neutral-900">Catalyst Property Management</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Account Number:</span>
-                      <span className="font-medium text-gray-900">1234567890</span>
+                      <span className="text-neutral-600">Account Number:</span>
+                      <span className="font-medium text-neutral-900">1234567890</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Reference:</span>
-                      <span className="font-medium text-gray-900">RENT-{paymentId}</span>
+                      <span className="text-neutral-600">Reference:</span>
+                      <span className="font-medium text-neutral-900">RENT-{paymentId}</span>
                     </div>
                   </div>
-                  <p className="mt-4 text-xs text-gray-600">
+                  <p className="mt-4 text-xs text-neutral-600">
                     Please use the reference number when making your transfer. Payment confirmation
                     may take 1-2 business days.
                   </p>
@@ -242,7 +242,7 @@ export default function PaySpecificPaymentPage() {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+                  className="w-full py-3 px-4 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 disabled:bg-primary-400 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? (
                     <span className="flex items-center justify-center">
@@ -256,7 +256,7 @@ export default function PaySpecificPaymentPage() {
               </div>
 
               {/* Security Notice */}
-              <div className="mt-4 flex items-center justify-center text-xs text-gray-500">
+              <div className="mt-4 flex items-center justify-center text-xs text-neutral-500">
                 <svg
                   className="w-4 h-4 mr-1"
                   fill="none"
@@ -278,59 +278,59 @@ export default function PaySpecificPaymentPage() {
 
         {/* Payment Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-white shadow rounded-lg p-6 sticky top-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Summary</h2>
+          <div className="bg-surface shadow rounded-lg p-6 sticky top-4">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Payment Summary</h2>
 
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600">Invoice ID</p>
-                <p className="font-medium text-gray-900">#{paymentId}</p>
+                <p className="text-sm text-neutral-600">Invoice ID</p>
+                <p className="font-medium text-neutral-900">#{paymentId}</p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">Property</p>
-                <p className="font-medium text-gray-900 text-sm">{payment.propertyAddress}</p>
+                <p className="text-sm text-neutral-600">Property</p>
+                <p className="font-medium text-neutral-900 text-sm">{payment.propertyAddress}</p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">Payment Type</p>
-                <p className="font-medium text-gray-900">{payment.type}</p>
+                <p className="text-sm text-neutral-600">Payment Type</p>
+                <p className="font-medium text-neutral-900">{payment.type}</p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600">Due Date</p>
-                <p className="font-medium text-gray-900">{payment.dueDate}</p>
+                <p className="text-sm text-neutral-600">Due Date</p>
+                <p className="font-medium text-neutral-900">{payment.dueDate}</p>
               </div>
 
-              <div className="pt-3 border-t border-gray-200">
+              <div className="pt-3 border-t border-neutral-200">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Rent Amount</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-neutral-600">Rent Amount</span>
+                  <span className="font-medium text-neutral-900">
                     KES {payment.amount.toLocaleString()}
                   </span>
                 </div>
                 {payment.lateFee > 0 && (
                   <div className="flex justify-between text-sm mt-2">
-                    <span className="text-gray-600">Late Fee</span>
-                    <span className="font-medium text-red-600">
+                    <span className="text-neutral-600">Late Fee</span>
+                    <span className="font-medium text-danger-600">
                       KES {payment.lateFee.toLocaleString()}
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="pt-3 border-t border-gray-200">
+              <div className="pt-3 border-t border-neutral-200">
                 <div className="flex justify-between">
-                  <span className="font-semibold text-gray-900">Total Amount</span>
-                  <span className="font-bold text-xl text-gray-900">
+                  <span className="font-semibold text-neutral-900">Total Amount</span>
+                  <span className="font-bold text-xl text-neutral-900">
                     KES {payment.total.toLocaleString()}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 bg-blue-50 rounded-lg p-4">
-              <p className="text-xs text-blue-800">
+            <div className="mt-6 bg-primary-50 rounded-lg p-4">
+              <p className="text-xs text-primary-800">
                 💡 <strong>Tip:</strong> Pay before {payment.dueDate} to avoid late fees
               </p>
             </div>

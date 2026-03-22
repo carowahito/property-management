@@ -37,8 +37,8 @@ export default function PropertiesPage() {
     <div className="space-y-6">
             <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Property Listings</h1>
-          <p className="text-gray-600 mt-1">Real Estate Hub - Manage property listings</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Property Listings</h1>
+          <p className="text-neutral-600 mt-1">Real Estate Hub - Manage property listings</p>
         </div>
         <Button variant="primary" size="lg">
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,30 +50,30 @@ export default function PropertiesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map((property) => (
-          <div key={property.id} className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition">
+          <div key={property.id} className="bg-surface shadow rounded-lg p-6 hover:shadow-lg transition">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{property.name}</h3>
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+              <h3 className="text-lg font-semibold text-neutral-900">{property.name}</h3>
+              <span className="px-2 py-1 bg-success-100 text-green-800 text-xs font-medium rounded">
                 {property.status}
               </span>
             </div>
-            <p className="text-sm text-gray-600 mb-4">{property.address}</p>
+            <p className="text-sm text-neutral-600 mb-4">{property.address}</p>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Units:</span>
-                <span className="font-medium text-gray-900">{property.units}</span>
+                <span className="text-neutral-600">Units:</span>
+                <span className="font-medium text-neutral-900">{property.units}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Occupied:</span>
-                <span className="font-medium text-gray-900">{property.occupied}</span>
+                <span className="text-neutral-600">Occupied:</span>
+                <span className="font-medium text-neutral-900">{property.occupied}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Monthly Revenue:</span>
-                <span className="font-medium text-gray-900">{property.revenue}</span>
+                <span className="text-neutral-600">Monthly Revenue:</span>
+                <span className="font-medium text-neutral-900">{property.revenue}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Occupancy:</span>
-                <span className="font-medium text-green-600">
+                <span className="text-neutral-600">Occupancy:</span>
+                <span className="font-medium text-success-600">
                   {((property.occupied / property.units) * 100).toFixed(1)}%
                 </span>
               </div>

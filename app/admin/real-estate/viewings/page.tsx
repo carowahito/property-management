@@ -97,36 +97,36 @@ export default function ViewingsPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Property Viewings</h1>
-          <p className='text-gray-600 mt-1'>Schedule and manage property viewing appointments</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Property Viewings</h1>
+          <p className='text-neutral-600 mt-1'>Schedule and manage property viewing appointments</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Schedule Viewing</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>+ Schedule Viewing</button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Scheduled</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.scheduled}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Scheduled</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.scheduled}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Completed</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.completed}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Completed</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.completed}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>High Interest</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>High Interest</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.highInterest}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Viewings</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Viewings</p>
           <p className='text-3xl font-bold text-purple-600'>{stats.total}</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
+          className='px-4 py-2 border border-neutral-300 rounded-lg'
         >
           <option value='all'>All Status</option>
           <option value='scheduled'>Scheduled</option>
@@ -136,79 +136,79 @@ export default function ViewingsPage() {
         </select>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Property/Unit
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Prospect
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Contact
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Scheduled
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Interest Level
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredViewings.map((viewing) => (
-              <tr key={viewing.id} className='hover:bg-gray-50'>
+              <tr key={viewing.id} className='hover:bg-neutral-50'>
                 <td className='px-6 py-4'>
-                  <div className='text-sm font-medium text-gray-900'>{viewing.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {viewing.unitNumber}</div>
+                  <div className='text-sm font-medium text-neutral-900'>{viewing.propertyName}</div>
+                  <div className='text-sm text-neutral-500'>Unit {viewing.unitNumber}</div>
                 </td>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>
+                <td className='px-6 py-4 text-sm font-medium text-neutral-900'>
                   {viewing.prospectName}
                 </td>
                 <td className='px-6 py-4'>
-                  <div className='text-sm text-gray-900'>{viewing.phone}</div>
-                  <div className='text-sm text-gray-500'>{viewing.email}</div>
+                  <div className='text-sm text-neutral-900'>{viewing.phone}</div>
+                  <div className='text-sm text-neutral-500'>{viewing.email}</div>
                 </td>
                 <td className='px-6 py-4'>
-                  <div className='text-sm text-gray-900'>{viewing.scheduledDate}</div>
-                  <div className='text-sm text-gray-500'>{viewing.scheduledTime}</div>
+                  <div className='text-sm text-neutral-900'>{viewing.scheduledDate}</div>
+                  <div className='text-sm text-neutral-500'>{viewing.scheduledTime}</div>
                 </td>
                 <td className='px-6 py-4'>
                   <span
                     className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       viewing.interest === 'high'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-success-100 text-green-800'
                         : viewing.interest === 'medium'
                           ? 'bg-yellow-100 text-yellow-800'
                           : viewing.interest === 'low'
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-warning-100 text-orange-800'
+                            : 'bg-neutral-100 text-neutral-800'
                     }`}
                   >
                     {viewing.interest}
                   </span>
                   {viewing.feedback && (
-                    <div className='text-xs text-gray-500 mt-1'>{viewing.feedback}</div>
+                    <div className='text-xs text-neutral-500 mt-1'>{viewing.feedback}</div>
                   )}
                 </td>
                 <td className='px-6 py-4'>
                   <span
                     className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       viewing.status === 'scheduled'
-                        ? 'bg-blue-100 text-blue-800'
+                        ? 'bg-primary-100 text-primary-800'
                         : viewing.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-success-100 text-green-800'
                           : viewing.status === 'cancelled'
-                            ? 'bg-gray-100 text-gray-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-neutral-100 text-neutral-800'
+                            : 'bg-danger-100 text-red-800'
                     }`}
                   >
                     {viewing.status.replace('-', ' ')}

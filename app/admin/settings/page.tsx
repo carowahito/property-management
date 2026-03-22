@@ -84,23 +84,23 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-2">Manage API keys and integrations for your property management system</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Settings</h1>
+          <p className="text-neutral-600 mt-2">Manage API keys and integrations for your property management system</p>
         </div>
 
         <div className="bg-white rounded-lg shadow">
           {/* Tabs */}
-          <div className="border-b border-gray-200">
+          <div className="border-b border-neutral-200">
             <nav className="flex -mb-px">
               <button
                 onClick={() => setActiveTab('whatsapp')}
                 className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
                   activeTab === 'whatsapp'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 📱 WhatsApp
@@ -109,8 +109,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('sms')}
                 className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
                   activeTab === 'sms'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 💬 SMS
@@ -119,8 +119,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('email')}
                 className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
                   activeTab === 'email'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 📧 Email
@@ -129,8 +129,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('crm')}
                 className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
                   activeTab === 'crm'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 🔗 CRM Integration
@@ -139,8 +139,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('llm')}
                 className={`px-6 py-4 text-sm font-medium border-b-2 transition ${
                   activeTab === 'llm'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
                 }`}
               >
                 🤖 AI / LLM
@@ -155,8 +155,8 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">WhatsApp Business API</h2>
-                    <p className="text-sm text-gray-600 mt-1">Configure WhatsApp Business API for tenant communications</p>
+                    <h2 className="text-xl font-bold text-neutral-900">WhatsApp Business API</h2>
+                    <p className="text-sm text-neutral-600 mt-1">Configure WhatsApp Business API for tenant communications</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -165,21 +165,21 @@ export default function SettingsPage() {
                       onChange={(e) => setWhatsappSettings({ ...whatsappSettings, enabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900">
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    <span className="ms-3 text-sm font-medium text-neutral-900">
                       {whatsappSettings.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </label>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                   <div className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-primary-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-900">Setup Instructions</p>
-                      <ol className="text-xs text-blue-700 mt-2 list-decimal list-inside space-y-1">
+                      <p className="text-sm font-medium text-primary-900">Setup Instructions</p>
+                      <ol className="text-xs text-primary-700 mt-2 list-decimal list-inside space-y-1">
                         <li>Create a WhatsApp Business Account at business.facebook.com</li>
                         <li>Set up a Meta Business App and get your API credentials</li>
                         <li>Add a phone number and verify it with WhatsApp</li>
@@ -191,56 +191,56 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       API Key / Access Token *
                     </label>
                     <input
                       type="password"
                       value={whatsappSettings.apiKey}
                       onChange={(e) => setWhatsappSettings({ ...whatsappSettings, apiKey: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your WhatsApp API access token"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Business Account ID *
                     </label>
                     <input
                       type="text"
                       value={whatsappSettings.businessId}
                       onChange={(e) => setWhatsappSettings({ ...whatsappSettings, businessId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your WhatsApp Business Account ID"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Phone Number ID *
                     </label>
                     <input
                       type="text"
                       value={whatsappSettings.phoneNumberId}
                       onChange={(e) => setWhatsappSettings({ ...whatsappSettings, phoneNumberId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your Phone Number ID"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Webhook URL
                     </label>
                     <input
                       type="text"
                       value={whatsappSettings.webhookUrl}
                       onChange={(e) => setWhatsappSettings({ ...whatsappSettings, webhookUrl: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="https://your-domain.com/api/webhooks/whatsapp"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-neutral-500 mt-1">
                       URL to receive WhatsApp message delivery updates and responses
                     </p>
                   </div>
@@ -270,8 +270,8 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">SMS Gateway</h2>
-                    <p className="text-sm text-gray-600 mt-1">Configure SMS provider for tenant notifications</p>
+                    <h2 className="text-xl font-bold text-neutral-900">SMS Gateway</h2>
+                    <p className="text-sm text-neutral-600 mt-1">Configure SMS provider for tenant notifications</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -280,21 +280,21 @@ export default function SettingsPage() {
                       onChange={(e) => setSmsSettings({ ...smsSettings, enabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900">
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    <span className="ms-3 text-sm font-medium text-neutral-900">
                       {smsSettings.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </label>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
                     SMS Provider *
                   </label>
                   <select
                     value={smsSettings.provider}
                     onChange={(e) => setSmsSettings({ ...smsSettings, provider: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="twilio">Twilio</option>
                     <option value="messagebird">MessageBird</option>
@@ -307,14 +307,14 @@ export default function SettingsPage() {
                 {/* Custom Provider Name */}
                 {smsSettings.provider === 'custom' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Provider Name *
                     </label>
                     <input
                       type="text"
                       value={smsSettings.customProviderName}
                       onChange={(e) => setSmsSettings({ ...smsSettings, customProviderName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your custom SMS provider name"
                     />
                   </div>
@@ -322,61 +322,61 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       {smsSettings.provider === 'custom' ? 'API Key / Account ID' : 'Account SID'} *
                     </label>
                     <input
                       type="text"
                       value={smsSettings.accountSid}
                       onChange={(e) => setSmsSettings({ ...smsSettings, accountSid: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder={smsSettings.provider === 'custom' ? 'Enter your API key or account ID' : 'Enter your account SID'}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       {smsSettings.provider === 'custom' ? 'API Secret / Auth Token' : 'Auth Token'} *
                     </label>
                     <input
                       type="password"
                       value={smsSettings.authToken}
                       onChange={(e) => setSmsSettings({ ...smsSettings, authToken: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder={smsSettings.provider === 'custom' ? 'Enter your API secret or auth token' : 'Enter your auth token'}
                     />
                   </div>
 
                   {smsSettings.provider === 'custom' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         API Endpoint *
                       </label>
                       <input
                         type="text"
                         value={smsSettings.apiEndpoint}
                         onChange={(e) => setSmsSettings({ ...smsSettings, apiEndpoint: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="https://api.yourprovider.com/v1/sms"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         The API endpoint URL for sending SMS messages
                       </p>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       From Phone Number *
                     </label>
                     <input
                       type="text"
                       value={smsSettings.fromNumber}
                       onChange={(e) => setSmsSettings({ ...smsSettings, fromNumber: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="+1234567890"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-neutral-500 mt-1">
                       Your SMS-enabled phone number (include country code)
                     </p>
                   </div>
@@ -406,8 +406,8 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Email Configuration</h2>
-                    <p className="text-sm text-gray-600 mt-1">Configure email provider for communications</p>
+                    <h2 className="text-xl font-bold text-neutral-900">Email Configuration</h2>
+                    <p className="text-sm text-neutral-600 mt-1">Configure email provider for communications</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -416,21 +416,21 @@ export default function SettingsPage() {
                       onChange={(e) => setEmailSettings({ ...emailSettings, enabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900">
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    <span className="ms-3 text-sm font-medium text-neutral-900">
                       {emailSettings.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </label>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
                     Email Provider *
                   </label>
                   <select
                     value={emailSettings.provider}
                     onChange={(e) => setEmailSettings({ ...emailSettings, provider: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="smtp">SMTP (Standard)</option>
                     <option value="sendgrid">SendGrid</option>
@@ -444,14 +444,14 @@ export default function SettingsPage() {
                 {/* Custom Provider Name */}
                 {emailSettings.provider === 'custom' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Provider Name *
                     </label>
                     <input
                       type="text"
                       value={emailSettings.customProviderName}
                       onChange={(e) => setEmailSettings({ ...emailSettings, customProviderName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your custom email provider name"
                     />
                   </div>
@@ -461,53 +461,53 @@ export default function SettingsPage() {
                 {emailSettings.provider === 'smtp' && (
                   <div className="grid grid-cols-2 gap-6">
                     <div className="col-span-2 sm:col-span-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         SMTP Host *
                       </label>
                       <input
                         type="text"
                         value={emailSettings.smtpHost}
                         onChange={(e) => setEmailSettings({ ...emailSettings, smtpHost: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="smtp.gmail.com"
                       />
                     </div>
 
                     <div className="col-span-2 sm:col-span-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         SMTP Port *
                       </label>
                       <input
                         type="text"
                         value={emailSettings.smtpPort}
                         onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="587"
                       />
                     </div>
 
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         SMTP Username *
                       </label>
                       <input
                         type="text"
                         value={emailSettings.smtpUser}
                         onChange={(e) => setEmailSettings({ ...emailSettings, smtpUser: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="your-email@example.com"
                       />
                     </div>
 
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         SMTP Password *
                       </label>
                       <input
                         type="password"
                         value={emailSettings.smtpPassword}
                         onChange={(e) => setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="Enter your SMTP password"
                       />
                     </div>
@@ -520,31 +520,31 @@ export default function SettingsPage() {
                   emailSettings.provider === 'custom') && (
                   <div className="grid grid-cols-1 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         API Key *
                       </label>
                       <input
                         type="password"
                         value={emailSettings.apiKey}
                         onChange={(e) => setEmailSettings({ ...emailSettings, apiKey: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="Enter your API key"
                       />
                     </div>
 
                     {emailSettings.provider === 'custom' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">
                           API Endpoint *
                         </label>
                         <input
                           type="text"
                           value={emailSettings.apiEndpoint}
                           onChange={(e) => setEmailSettings({ ...emailSettings, apiEndpoint: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                           placeholder="https://api.yourprovider.com/v1/send"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-neutral-500 mt-1">
                           The API endpoint URL for sending emails
                         </p>
                       </div>
@@ -555,27 +555,27 @@ export default function SettingsPage() {
                 {/* Common Email Settings */}
                 <div className="grid grid-cols-2 gap-6">
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       From Email *
                     </label>
                     <input
                       type="email"
                       value={emailSettings.fromEmail}
                       onChange={(e) => setEmailSettings({ ...emailSettings, fromEmail: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="noreply@yourcompany.com"
                     />
                   </div>
 
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       From Name *
                     </label>
                     <input
                       type="text"
                       value={emailSettings.fromName}
                       onChange={(e) => setEmailSettings({ ...emailSettings, fromName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Your Company Name"
                     />
                   </div>
@@ -605,8 +605,8 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">CRM Integration</h2>
-                    <p className="text-sm text-gray-600 mt-1">Connect with external CRM systems</p>
+                    <h2 className="text-xl font-bold text-neutral-900">CRM Integration</h2>
+                    <p className="text-sm text-neutral-600 mt-1">Connect with external CRM systems</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -615,21 +615,21 @@ export default function SettingsPage() {
                       onChange={(e) => setCrmSettings({ ...crmSettings, enabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900">
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    <span className="ms-3 text-sm font-medium text-neutral-900">
                       {crmSettings.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </label>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
                     CRM Provider *
                   </label>
                   <select
                     value={crmSettings.provider}
                     onChange={(e) => setCrmSettings({ ...crmSettings, provider: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="salesforce">Salesforce</option>
                     <option value="hubspot">HubSpot</option>
@@ -642,14 +642,14 @@ export default function SettingsPage() {
                 {/* Custom Provider Name */}
                 {crmSettings.provider === 'custom' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       CRM Name *
                     </label>
                     <input
                       type="text"
                       value={crmSettings.customProviderName}
                       onChange={(e) => setCrmSettings({ ...crmSettings, customProviderName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your custom CRM name"
                     />
                   </div>
@@ -657,43 +657,43 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       API Key *
                     </label>
                     <input
                       type="password"
                       value={crmSettings.apiKey}
                       onChange={(e) => setCrmSettings({ ...crmSettings, apiKey: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your CRM API key"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       API Secret {crmSettings.provider === 'custom' ? '' : '(Optional)'}
                     </label>
                     <input
                       type="password"
                       value={crmSettings.apiSecret}
                       onChange={(e) => setCrmSettings({ ...crmSettings, apiSecret: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your CRM API secret (if required)"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Instance URL / API Endpoint {crmSettings.provider === 'custom' ? '*' : ''}
                     </label>
                     <input
                       type="text"
                       value={crmSettings.instanceUrl}
                       onChange={(e) => setCrmSettings({ ...crmSettings, instanceUrl: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder={crmSettings.provider === 'custom' ? 'https://api.yourcrm.com/v1' : 'https://yourcompany.salesforce.com'}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-neutral-500 mt-1">
                       {crmSettings.provider === 'custom' 
                         ? 'The API endpoint URL for your CRM system' 
                         : 'Your CRM instance URL (if applicable)'}
@@ -702,17 +702,17 @@ export default function SettingsPage() {
 
                   {crmSettings.provider === 'custom' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Webhook URL
                       </label>
                       <input
                         type="text"
                         value={crmSettings.webhookUrl}
                         onChange={(e) => setCrmSettings({ ...crmSettings, webhookUrl: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder="https://your-domain.com/api/webhooks/crm"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         URL to receive webhook notifications from your CRM
                       </p>
                     </div>
@@ -743,8 +743,8 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">AI / Large Language Model</h2>
-                    <p className="text-sm text-gray-600 mt-1">Configure AI models for intelligent features and automation</p>
+                    <h2 className="text-xl font-bold text-neutral-900">AI / Large Language Model</h2>
+                    <p className="text-sm text-neutral-600 mt-1">Configure AI models for intelligent features and automation</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -753,21 +753,21 @@ export default function SettingsPage() {
                       onChange={(e) => setLlmSettings({ ...llmSettings, enabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900">
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    <span className="ms-3 text-sm font-medium text-neutral-900">
                       {llmSettings.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </label>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                   <div className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-primary-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-900">AI-Powered Features</p>
-                      <p className="text-xs text-blue-700 mt-1">
+                      <p className="text-sm font-medium text-primary-900">AI-Powered Features</p>
+                      <p className="text-xs text-primary-700 mt-1">
                         Enable intelligent features like automated responses, document analysis, sentiment analysis, and smart recommendations powered by AI.
                       </p>
                     </div>
@@ -775,13 +775,13 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
                     LLM Provider *
                   </label>
                   <select
                     value={llmSettings.provider}
                     onChange={(e) => setLlmSettings({ ...llmSettings, provider: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="openai">OpenAI (GPT-4, GPT-3.5)</option>
                     <option value="anthropic">Anthropic (Claude)</option>
@@ -796,14 +796,14 @@ export default function SettingsPage() {
                 {/* Custom Provider Name */}
                 {llmSettings.provider === 'custom' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Provider Name *
                     </label>
                     <input
                       type="text"
                       value={llmSettings.customProviderName}
                       onChange={(e) => setLlmSettings({ ...llmSettings, customProviderName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your custom LLM provider name"
                     />
                   </div>
@@ -811,36 +811,36 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       API Key *
                     </label>
                     <input
                       type="password"
                       value={llmSettings.apiKey}
                       onChange={(e) => setLlmSettings({ ...llmSettings, apiKey: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Enter your LLM API key"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-neutral-500 mt-1">
                       Get your API key from your LLM provider's dashboard
                     </p>
                   </div>
 
                   {(llmSettings.provider === 'custom' || llmSettings.provider === 'azure') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         API Endpoint *
                       </label>
                       <input
                         type="text"
                         value={llmSettings.apiEndpoint}
                         onChange={(e) => setLlmSettings({ ...llmSettings, apiEndpoint: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         placeholder={llmSettings.provider === 'azure' 
                           ? 'https://your-resource.openai.azure.com/' 
                           : 'https://api.yourprovider.com/v1'}
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         {llmSettings.provider === 'azure' 
                           ? 'Your Azure OpenAI resource endpoint' 
                           : 'The API endpoint URL for your LLM provider'}
@@ -849,13 +849,13 @@ export default function SettingsPage() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Model *
                     </label>
                     <select
                       value={llmSettings.model}
                       onChange={(e) => setLlmSettings({ ...llmSettings, model: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       {llmSettings.provider === 'openai' && (
                         <>
@@ -888,7 +888,7 @@ export default function SettingsPage() {
                         type="text"
                         value={llmSettings.model}
                         onChange={(e) => setLlmSettings({ ...llmSettings, model: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mt-2"
                         placeholder="Enter model name or deployment ID"
                       />
                     )}
@@ -896,7 +896,7 @@ export default function SettingsPage() {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Temperature
                       </label>
                       <input
@@ -906,15 +906,15 @@ export default function SettingsPage() {
                         step="0.1"
                         value={llmSettings.temperature}
                         onChange={(e) => setLlmSettings({ ...llmSettings, temperature: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         0 = Deterministic, 2 = Creative (Default: 0.7)
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
                         Max Tokens
                       </label>
                       <input
@@ -924,18 +924,18 @@ export default function SettingsPage() {
                         step="100"
                         value={llmSettings.maxTokens}
                         onChange={(e) => setLlmSettings({ ...llmSettings, maxTokens: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-neutral-500 mt-1">
                         Maximum response length (Default: 2000)
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">AI Features Available:</h3>
-                  <ul className="text-xs text-gray-700 space-y-1">
+                <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-2">AI Features Available:</h3>
+                  <ul className="text-xs text-neutral-700 space-y-1">
                     <li>• Smart message composition and reply suggestions</li>
                     <li>• Automated document analysis and summarization</li>
                     <li>• Sentiment analysis for tenant communications</li>

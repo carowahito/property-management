@@ -160,22 +160,22 @@ export default function LandlordQuotes() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Urgent': return 'bg-red-100 text-red-800'
-      case 'High': return 'bg-orange-100 text-orange-800'
+      case 'Urgent': return 'bg-danger-100 text-danger-800'
+      case 'High': return 'bg-warning-100 text-warning-800'
       case 'Medium': return 'bg-yellow-100 text-yellow-800'
-      case 'Low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Low': return 'bg-success-100 text-success-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-800'
-      case 'submitted': return 'bg-blue-100 text-blue-800'
-      case 'accepted': return 'bg-green-100 text-green-800'
-      case 'rejected': return 'bg-red-100 text-red-800'
+      case 'pending': return 'bg-neutral-100 text-neutral-800'
+      case 'submitted': return 'bg-primary-100 text-primary-800'
+      case 'accepted': return 'bg-success-100 text-success-800'
+      case 'rejected': return 'bg-danger-100 text-danger-800'
       case 'completed': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -188,41 +188,41 @@ export default function LandlordQuotes() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Repair Quotes</h1>
-          <p className="text-gray-600 mt-1">Review quotes from vendors for your properties</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Repair Quotes</h1>
+          <p className="text-neutral-600 mt-1">Review quotes from vendors for your properties</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Quotes</p>
-          <p className="text-2xl font-bold text-gray-900">{quotes.length}</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Total Quotes</p>
+          <p className="text-2xl font-bold text-neutral-900">{quotes.length}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Pending Review</p>
-          <p className="text-2xl font-bold text-blue-600">{pendingQuotes.length}</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Pending Review</p>
+          <p className="text-2xl font-bold text-primary-600">{pendingQuotes.length}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Quote Value</p>
-          <p className="text-2xl font-bold text-gray-900">KES {(totalQuoteAmount / 1000).toFixed(0)}K</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Total Quote Value</p>
+          <p className="text-2xl font-bold text-neutral-900">KES {(totalQuoteAmount / 1000).toFixed(0)}K</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Completed Value</p>
-          <p className="text-2xl font-bold text-green-600">KES {(completedAmount / 1000).toFixed(0)}K</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Completed Value</p>
+          <p className="text-2xl font-bold text-success-600">KES {(completedAmount / 1000).toFixed(0)}K</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="border-b border-gray-200">
+      <div className="bg-surface shadow rounded-lg">
+        <div className="border-b border-neutral-200">
           <div className="flex space-x-8 px-6">
             <button
               onClick={() => setActiveTab('pending')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'pending'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-success-500 text-success-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               Pending Review ({pendingQuotes.length})
@@ -231,8 +231,8 @@ export default function LandlordQuotes() {
               onClick={() => setActiveTab('accepted')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'accepted'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-success-500 text-success-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               Accepted/Completed ({acceptedQuotes.length})
@@ -241,8 +241,8 @@ export default function LandlordQuotes() {
               onClick={() => setActiveTab('all')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'all'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-success-500 text-success-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
               All Quotes ({quotes.length})
@@ -253,16 +253,16 @@ export default function LandlordQuotes() {
         <div className="p-6 space-y-4">
           {filteredQuotes.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400 text-5xl mb-4">📋</div>
-              <p className="text-gray-500">No quotes in this category</p>
+              <div className="text-neutral-400 text-5xl mb-4">📋</div>
+              <p className="text-neutral-500">No quotes in this category</p>
             </div>
           ) : (
             filteredQuotes.map((quote) => (
-              <div key={quote.id} className="border rounded-lg p-4 hover:bg-gray-50">
+              <div key={quote.id} className="border rounded-lg p-4 hover:bg-neutral-50">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">{quote.id}</h3>
+                      <h3 className="font-semibold text-neutral-900">{quote.id}</h3>
                       <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(quote.priority)}`}>
                         {quote.priority}
                       </span>
@@ -271,13 +271,13 @@ export default function LandlordQuotes() {
                       </span>
                     </div>
                     
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm text-neutral-600 mb-2">
                       {quote.property} - {quote.unit}
                     </p>
                     
-                    <p className="text-gray-900 mb-3">{quote.issue}</p>
+                    <p className="text-neutral-900 mb-3">{quote.issue}</p>
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                    <div className="flex items-center gap-4 text-sm text-neutral-600 mb-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Vendor:</span>
                         <span>{quote.vendor}</span>
@@ -289,34 +289,34 @@ export default function LandlordQuotes() {
                     </div>
 
                     {quote.quote && (
-                      <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
+                      <div className="bg-primary-50 border border-primary-200 rounded p-3 mb-3">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
                           <div>
-                            <p className="text-xs text-blue-700">Materials</p>
-                            <p className="font-semibold text-blue-900">KES {quote.quote.materialsAmount.toLocaleString()}</p>
+                            <p className="text-xs text-primary-700">Materials</p>
+                            <p className="font-semibold text-primary-900">KES {quote.quote.materialsAmount.toLocaleString()}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-blue-700">Labor</p>
-                            <p className="font-semibold text-blue-900">KES {quote.quote.laborAmount.toLocaleString()}</p>
+                            <p className="text-xs text-primary-700">Labor</p>
+                            <p className="font-semibold text-primary-900">KES {quote.quote.laborAmount.toLocaleString()}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-blue-700">Total</p>
-                            <p className="text-lg font-bold text-blue-900">KES {quote.quote.totalAmount.toLocaleString()}</p>
+                            <p className="text-xs text-primary-700">Total</p>
+                            <p className="text-lg font-bold text-primary-900">KES {quote.quote.totalAmount.toLocaleString()}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-blue-700">Duration</p>
-                            <p className="font-semibold text-blue-900">{quote.quote.estimatedDays} day(s)</p>
+                            <p className="text-xs text-primary-700">Duration</p>
+                            <p className="font-semibold text-primary-900">{quote.quote.estimatedDays} day(s)</p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-700">{quote.quote.notes}</p>
-                        <p className="text-xs text-gray-600 mt-1">Submitted: {new Date(quote.quote.submittedDate).toLocaleDateString()}</p>
+                        <p className="text-sm text-neutral-700">{quote.quote.notes}</p>
+                        <p className="text-xs text-neutral-600 mt-1">Submitted: {new Date(quote.quote.submittedDate).toLocaleDateString()}</p>
                       </div>
                     )}
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-4 text-sm text-neutral-600">
                       <span>Requested: {new Date(quote.requestDate).toLocaleDateString()}</span>
                       {quote.acceptedDate && (
-                        <span className="text-green-600">Accepted: {new Date(quote.acceptedDate).toLocaleDateString()}</span>
+                        <span className="text-success-600">Accepted: {new Date(quote.acceptedDate).toLocaleDateString()}</span>
                       )}
                       {quote.completedDate && (
                         <span className="text-purple-600">Completed: {new Date(quote.completedDate).toLocaleDateString()}</span>
@@ -327,7 +327,7 @@ export default function LandlordQuotes() {
                   <div className="ml-4">
                     {quote.quote && (
                       <div className="text-right mb-3">
-                        <p className="text-2xl font-bold text-gray-900">KES {quote.quote.totalAmount.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-neutral-900">KES {quote.quote.totalAmount.toLocaleString()}</p>
                       </div>
                     )}
                     <Button
@@ -367,13 +367,13 @@ export default function LandlordQuotes() {
       {/* Quote Details Modal */}
       {selectedQuote && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Quote Details - {selectedQuote.id}</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">Quote Details - {selectedQuote.id}</h2>
                 <button
                   onClick={() => setSelectedQuote(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -382,53 +382,53 @@ export default function LandlordQuotes() {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Property & Issue</h3>
-                  <p className="text-sm text-gray-600 mb-1">{selectedQuote.property} - {selectedQuote.unit}</p>
-                  <p className="text-gray-900">{selectedQuote.issue}</p>
+                <div className="bg-neutral-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-neutral-900 mb-2">Property & Issue</h3>
+                  <p className="text-sm text-neutral-600 mb-1">{selectedQuote.property} - {selectedQuote.unit}</p>
+                  <p className="text-neutral-900">{selectedQuote.issue}</p>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Vendor Information</h3>
+                <div className="bg-neutral-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-neutral-900 mb-2">Vendor Information</h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <span className="text-gray-600">Name:</span>
+                      <span className="text-neutral-600">Name:</span>
                       <span className="ml-2 font-medium">{selectedQuote.vendor}</span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Category:</span>
+                      <span className="text-neutral-600">Category:</span>
                       <span className="ml-2 font-medium">{selectedQuote.vendorCategory}</span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Rating:</span>
+                      <span className="text-neutral-600">Rating:</span>
                       <span className="ml-2 font-medium">{selectedQuote.vendorRating} ⭐</span>
                     </div>
                   </div>
                 </div>
 
                 {selectedQuote.quote && (
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-900 mb-3">Quote Breakdown</h3>
+                  <div className="bg-primary-50 rounded-lg p-4">
+                    <h3 className="font-semibold text-primary-900 mb-3">Quote Breakdown</h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-gray-700">Materials:</span>
+                        <span className="text-neutral-700">Materials:</span>
                         <span className="font-semibold">KES {selectedQuote.quote.materialsAmount.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-700">Labor:</span>
+                        <span className="text-neutral-700">Labor:</span>
                         <span className="font-semibold">KES {selectedQuote.quote.laborAmount.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between pt-2 border-t border-blue-200">
-                        <span className="font-semibold text-gray-900">Total:</span>
-                        <span className="text-xl font-bold text-blue-900">KES {selectedQuote.quote.totalAmount.toLocaleString()}</span>
+                      <div className="flex justify-between pt-2 border-t border-primary-200">
+                        <span className="font-semibold text-neutral-900">Total:</span>
+                        <span className="text-xl font-bold text-primary-900">KES {selectedQuote.quote.totalAmount.toLocaleString()}</span>
                       </div>
                       <div className="pt-2">
-                        <span className="text-gray-700">Estimated Duration:</span>
+                        <span className="text-neutral-700">Estimated Duration:</span>
                         <span className="ml-2 font-semibold">{selectedQuote.quote.estimatedDays} day(s)</span>
                       </div>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-blue-200">
-                      <p className="text-sm text-gray-700"><strong>Notes:</strong> {selectedQuote.quote.notes}</p>
+                    <div className="mt-3 pt-3 border-t border-primary-200">
+                      <p className="text-sm text-neutral-700"><strong>Notes:</strong> {selectedQuote.quote.notes}</p>
                     </div>
                   </div>
                 )}

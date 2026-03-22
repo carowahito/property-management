@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
     const {
       unitNumber, propertyId, landlordId,
       floor, bedrooms, bathrooms, sizeSqm,
-      monthlyRent, serviceCharge, managementFee,
+      monthlyRent, serviceCharge, serviceChargeType,
+      managementFee, managementFeeType,
       status, description,
     } = body
 
@@ -79,7 +80,9 @@ export async function POST(request: NextRequest) {
         sizeSqm: sizeSqm ? parseFloat(sizeSqm) : null,
         monthlyRent: parseFloat(monthlyRent),
         serviceCharge: serviceCharge ? parseFloat(serviceCharge) : null,
+        serviceChargeType: serviceChargeType === 'PERCENTAGE' ? 'PERCENTAGE' : 'FIXED',
         managementFee: managementFee ? parseFloat(managementFee) : null,
+        managementFeeType: managementFeeType === 'FIXED' ? 'FIXED' : 'PERCENTAGE',
         status: (statusMap[status] ?? 'VACANT') as any,
         description: description?.trim() || null,
       },

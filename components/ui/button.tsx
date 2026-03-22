@@ -7,16 +7,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 shadow-sm hover:shadow-md",
-        primary: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 shadow-sm hover:shadow-md",
-        secondary: "bg-gray-600 text-white hover:bg-gray-700 focus-visible:ring-gray-500 shadow-sm hover:shadow-md",
-        success: "bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-500 shadow-sm hover:shadow-md",
-        danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-sm hover:shadow-md",
-        warning: "bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500 shadow-sm hover:shadow-md",
-        destructive: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-sm hover:shadow-md",
-        outline: "border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus-visible:ring-gray-500",
-        ghost: "hover:bg-gray-100 text-gray-700",
-        link: "text-blue-600 underline-offset-4 hover:underline",
+        default: "bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500 shadow-sm hover:shadow-md",
+        primary: "bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500 shadow-sm hover:shadow-md",
+        secondary: "bg-neutral-600 text-white hover:bg-neutral-700 focus-visible:ring-neutral-500 shadow-sm hover:shadow-md",
+        success: "bg-success-600 text-white hover:bg-success-700 focus-visible:ring-success-500 shadow-sm hover:shadow-md",
+        danger: "bg-danger-600 text-white hover:bg-danger-700 focus-visible:ring-danger-500 shadow-sm hover:shadow-md",
+        warning: "bg-warning-600 text-white hover:bg-warning-700 focus-visible:ring-warning-500 shadow-sm hover:shadow-md",
+        destructive: "bg-danger-600 text-white hover:bg-danger-700 focus-visible:ring-danger-500 shadow-sm hover:shadow-md",
+        outline: "border-2 border-neutral-300 bg-surface text-neutral-700 hover:bg-neutral-50 focus-visible:ring-neutral-500",
+        ghost: "hover:bg-neutral-100 text-neutral-700",
+        link: "text-primary-600 underline-offset-4 hover:underline",
       },
       size: {
         default: "px-4 py-2 text-sm rounded-md",

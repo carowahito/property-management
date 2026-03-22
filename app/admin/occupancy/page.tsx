@@ -57,88 +57,88 @@ export default function OccupancyPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Occupancy Analytics</h1>
-          <p className='text-gray-600 mt-1'>Track occupancy rates and vacancy trends</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Occupancy Analytics</h1>
+          <p className='text-neutral-600 mt-1'>Track occupancy rates and vacancy trends</p>
         </div>
         <Button variant="primary" size="lg">Download Report</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Units</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalUnits}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Units</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalUnits}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Occupied Units</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.totalOccupied}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Occupied Units</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.totalOccupied}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Vacant Units</p>
-          <p className='text-3xl font-bold text-red-600'>{stats.totalVacant}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Vacant Units</p>
+          <p className='text-3xl font-bold text-danger-600'>{stats.totalVacant}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Avg Occupancy Rate</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.avgOccupancyRate}%</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Avg Occupancy Rate</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.avgOccupancyRate}%</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-6'>
-        <h2 className='text-xl font-semibold text-gray-900 mb-4'>6-Month Occupancy Trend</h2>
+      <div className='bg-surface shadow rounded-lg p-6'>
+        <h2 className='text-xl font-semibold text-neutral-900 mb-4'>6-Month Occupancy Trend</h2>
         <div className='flex items-end space-x-4 h-48'>
           {monthlyTrend.map((item) => (
             <div key={item.month} className='flex-1 flex flex-col items-center'>
               <div
-                className='w-full bg-blue-500 rounded-t'
+                className='w-full bg-primary-500 rounded-t'
                 style={{ height: `${item.rate}%` }}
               ></div>
-              <p className='text-xs text-gray-600 mt-2'>{item.month}</p>
-              <p className='text-xs font-semibold text-gray-900'>{item.rate}%</p>
+              <p className='text-xs text-neutral-600 mt-2'>{item.month}</p>
+              <p className='text-xs font-semibold text-neutral-900'>{item.rate}%</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Property
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Total Units
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Occupied
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Vacant
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Occupancy Rate
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Avg Vacancy Days
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Monthly Revenue
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {properties.map((property) => (
-              <tr key={property.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>
+              <tr key={property.id} className='hover:bg-neutral-50'>
+                <td className='px-6 py-4 text-sm font-medium text-neutral-900'>
                   {property.propertyName}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{property.totalUnits}</td>
-                <td className='px-6 py-4 text-sm text-green-600 font-semibold'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{property.totalUnits}</td>
+                <td className='px-6 py-4 text-sm text-success-600 font-semibold'>
                   {property.occupiedUnits}
                 </td>
-                <td className='px-6 py-4 text-sm text-red-600 font-semibold'>
+                <td className='px-6 py-4 text-sm text-danger-600 font-semibold'>
                   {property.vacantUnits}
                 </td>
                 <td className='px-6 py-4'>
@@ -146,18 +146,18 @@ export default function OccupancyPage() {
                     <span
                       className={`text-sm font-semibold ${
                         property.occupancyRate >= 95
-                          ? 'text-green-600'
+                          ? 'text-success-600'
                           : property.occupancyRate >= 85
                             ? 'text-yellow-600'
-                            : 'text-red-600'
+                            : 'text-danger-600'
                       }`}
                     >
                       {property.occupancyRate.toFixed(1)}%
                     </span>
                   </div>
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{property.avgVacancyDays} days</td>
-                <td className='px-6 py-4 text-sm font-semibold text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{property.avgVacancyDays} days</td>
+                <td className='px-6 py-4 text-sm font-semibold text-neutral-900'>
                   KES {property.monthlyRevenue.toLocaleString()}
                 </td>
                 <td className='px-6 py-4 text-sm'>

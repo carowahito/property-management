@@ -12,58 +12,58 @@ export default function LandlordLeasesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Lease Management</h1>
+        <h1 className="text-3xl font-bold text-neutral-900">Lease Management</h1>
         <Button variant="success" size="lg">+ Create Lease</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">📄</span>
-          <p className="text-sm text-gray-600">Active Leases</p>
-          <p className="text-3xl font-bold text-green-600">42</p>
+          <p className="text-sm text-neutral-600">Active Leases</p>
+          <p className="text-3xl font-bold text-success-600">42</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">⏰</span>
-          <p className="text-sm text-gray-600">Expiring Soon</p>
+          <p className="text-sm text-neutral-600">Expiring Soon</p>
           <p className="text-3xl font-bold text-yellow-600">5</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">✍️</span>
-          <p className="text-sm text-gray-600">Pending Renewal</p>
-          <p className="text-3xl font-bold text-blue-600">3</p>
+          <p className="text-sm text-neutral-600">Pending Renewal</p>
+          <p className="text-3xl font-bold text-primary-600">3</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">📊</span>
-          <p className="text-sm text-gray-600">Renewal Rate</p>
+          <p className="text-sm text-neutral-600">Renewal Rate</p>
           <p className="text-3xl font-bold text-purple-600">87%</p>
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="bg-surface shadow rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-neutral-200">
+          <thead className="bg-neutral-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rent</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Tenant</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Unit</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Property</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Start Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">End Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Rent</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-neutral-200">
             {leases.map(lease => (
-              <tr key={lease.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lease.tenant}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{lease.unit}</td>
-                <td className="px-6 py-4 text-sm text-gray-600">{lease.property}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{lease.start}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{lease.end}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${lease.rent}</td>
+              <tr key={lease.id} className="hover:bg-neutral-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{lease.tenant}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">{lease.unit}</td>
+                <td className="px-6 py-4 text-sm text-neutral-600">{lease.property}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">{lease.start}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">{lease.end}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">${lease.rent}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-success-100 text-success-800">
                     {lease.status}
                   </span>
                 </td>

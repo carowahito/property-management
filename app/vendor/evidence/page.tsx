@@ -125,12 +125,12 @@ export default function VendorEvidence() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'Before': return 'bg-red-100 text-red-800'
-      case 'During': return 'bg-blue-100 text-blue-800'
-      case 'After': return 'bg-green-100 text-green-800'
-      case 'Issue': return 'bg-orange-100 text-orange-800'
+      case 'Before': return 'bg-danger-100 text-danger-800'
+      case 'During': return 'bg-primary-100 text-primary-800'
+      case 'After': return 'bg-success-100 text-success-800'
+      case 'Issue': return 'bg-warning-100 text-warning-800'
       case 'Completion': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -142,12 +142,12 @@ export default function VendorEvidence() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Visual Evidence</h1>
-          <p className="text-gray-600 mt-1">Upload photos and videos of your work</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Visual Evidence</h1>
+          <p className="text-neutral-600 mt-1">Upload photos and videos of your work</p>
         </div>
         <button
           onClick={() => setShowUploadForm(true)}
-          className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2"
+          className="bg-warning-600 text-white px-6 py-2 rounded-lg hover:bg-warning-700 flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -158,35 +158,35 @@ export default function VendorEvidence() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Uploads</p>
-          <p className="text-2xl font-bold text-gray-900">{evidences.length}</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Total Uploads</p>
+          <p className="text-2xl font-bold text-neutral-900">{evidences.length}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Total Files</p>
-          <p className="text-2xl font-bold text-gray-900">{totalFiles}</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Total Files</p>
+          <p className="text-2xl font-bold text-neutral-900">{totalFiles}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Photos</p>
-          <p className="text-2xl font-bold text-blue-600">{totalImages}</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Photos</p>
+          <p className="text-2xl font-bold text-primary-600">{totalImages}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <p className="text-sm text-gray-600">Videos</p>
+        <div className="bg-surface shadow rounded-lg p-4">
+          <p className="text-sm text-neutral-600">Videos</p>
           <p className="text-2xl font-bold text-purple-600">{totalVideos}</p>
         </div>
       </div>
 
       {/* Filter */}
-      <div className="bg-white shadow rounded-lg p-4">
+      <div className="bg-surface shadow rounded-lg p-4">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700">Filter by type:</span>
+          <span className="text-sm font-medium text-neutral-700">Filter by type:</span>
           <div className="flex gap-2">
             <button
               onClick={() => setFilterType('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
                 filterType === 'all'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-warning-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               All ({evidences.length})
@@ -195,8 +195,8 @@ export default function VendorEvidence() {
               onClick={() => setFilterType('Before')}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
                 filterType === 'Before'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-warning-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               Before ({evidences.filter(e => e.type === 'Before').length})
@@ -205,8 +205,8 @@ export default function VendorEvidence() {
               onClick={() => setFilterType('During')}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
                 filterType === 'During'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-warning-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               During ({evidences.filter(e => e.type === 'During').length})
@@ -215,8 +215,8 @@ export default function VendorEvidence() {
               onClick={() => setFilterType('After')}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
                 filterType === 'After'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-warning-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               After ({evidences.filter(e => e.type === 'After').length})
@@ -225,8 +225,8 @@ export default function VendorEvidence() {
               onClick={() => setFilterType('Completion')}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
                 filterType === 'Completion'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-warning-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               Completion ({evidences.filter(e => e.type === 'Completion').length})
@@ -238,26 +238,26 @@ export default function VendorEvidence() {
       {/* Evidence Gallery */}
       <div className="space-y-6">
         {filteredEvidences.map((evidence) => (
-          <div key={evidence.id} className="bg-white shadow rounded-lg p-6">
+          <div key={evidence.id} className="bg-surface shadow rounded-lg p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="font-semibold text-gray-900">{evidence.id}</h3>
+                  <h3 className="font-semibold text-neutral-900">{evidence.id}</h3>
                   <span className={`text-xs px-2 py-1 rounded ${getTypeColor(evidence.type)}`}>
                     {evidence.type}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Job: {evidence.jobId} - {evidence.jobDescription}</p>
-                <p className="text-sm text-gray-600 mb-2">Property: {evidence.property}</p>
-                <p className="text-gray-900 mb-3">{evidence.description}</p>
+                <p className="text-sm text-neutral-600 mb-1">Job: {evidence.jobId} - {evidence.jobDescription}</p>
+                <p className="text-sm text-neutral-600 mb-2">Property: {evidence.property}</p>
+                <p className="text-neutral-900 mb-3">{evidence.description}</p>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {evidence.tags.map((tag, idx) => (
-                    <span key={idx} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                    <span key={idx} className="text-xs bg-neutral-100 text-neutral-700 px-2 py-1 rounded">
                       #{tag}
                     </span>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-neutral-500">
                   Uploaded: {new Date(evidence.uploadDate).toLocaleString()}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export default function VendorEvidence() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {evidence.files.map((file, idx) => (
                 <div key={idx} className="relative group cursor-pointer" onClick={() => setSelectedEvidence(evidence)}>
-                  <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+                  <div className="aspect-video bg-neutral-200 rounded-lg overflow-hidden">
                     {file.type === 'image' ? (
                       <img
                         src={file.thumbnail}
@@ -275,7 +275,7 @@ export default function VendorEvidence() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                      <div className="w-full h-full flex items-center justify-center bg-neutral-800">
                         <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
                         </svg>
@@ -288,7 +288,7 @@ export default function VendorEvidence() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 truncate">{file.name}</p>
+                  <p className="text-xs text-neutral-600 mt-1 truncate">{file.name}</p>
                 </div>
               ))}
             </div>
@@ -299,13 +299,13 @@ export default function VendorEvidence() {
       {/* Upload Form Modal */}
       {showUploadForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Upload Visual Evidence</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">Upload Visual Evidence</h2>
                 <button
                   onClick={() => setShowUploadForm(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -315,12 +315,12 @@ export default function VendorEvidence() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Job ID
                   </label>
                   <select
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                     value={uploadForm.jobId}
                     onChange={(e) => setUploadForm({ ...uploadForm, jobId: e.target.value })}
                   >
@@ -332,12 +332,12 @@ export default function VendorEvidence() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Evidence Type
                   </label>
                   <select
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                     value={uploadForm.type}
                     onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
                   >
@@ -350,10 +350,10 @@ export default function VendorEvidence() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Upload Photos/Videos
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <div className="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center">
                     <input
                       type="file"
                       multiple
@@ -363,20 +363,20 @@ export default function VendorEvidence() {
                       id="evidence-upload"
                     />
                     <label htmlFor="evidence-upload" className="cursor-pointer">
-                      <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="mx-auto h-16 w-16 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <p className="mt-4 text-sm text-gray-600">
+                      <p className="mt-4 text-sm text-neutral-600">
                         Click to upload photos or videos
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">Support for images and videos up to 50MB each</p>
+                      <p className="text-xs text-neutral-500 mt-1">Support for images and videos up to 50MB each</p>
                     </label>
                     {uploadForm.files.length > 0 && (
                       <div className="mt-4 text-left">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Selected files:</p>
+                        <p className="text-sm font-medium text-neutral-700 mb-2">Selected files:</p>
                         {uploadForm.files.map((file, idx) => (
-                          <p key={idx} className="text-sm text-gray-600">• {file.name}</p>
+                          <p key={idx} className="text-sm text-neutral-600">• {file.name}</p>
                         ))}
                       </div>
                     )}
@@ -384,13 +384,13 @@ export default function VendorEvidence() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Description
                   </label>
                   <textarea
                     rows={3}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                     placeholder="Describe what the photos/videos show..."
                     value={uploadForm.description}
                     onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
@@ -398,12 +398,12 @@ export default function VendorEvidence() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Tags (comma-separated)
                   </label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500"
                     placeholder="leak, repair, plumbing"
                     value={uploadForm.tags}
                     onChange={(e) => setUploadForm({ ...uploadForm, tags: e.target.value })}
@@ -413,14 +413,14 @@ export default function VendorEvidence() {
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700"
+                    className="flex-1 bg-warning-600 text-white py-2 px-4 rounded-lg hover:bg-warning-700"
                   >
                     Upload Evidence
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowUploadForm(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-6 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50"
                   >
                     Cancel
                   </button>

@@ -114,9 +114,9 @@ export default function SecuritySettingsPage() {
 
   const getSeverityBadge = (severity: string) => {
     const badges: Record<string, string> = {
-      low: 'bg-green-100 text-green-800',
+      low: 'bg-success-100 text-success-800',
       medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-red-100 text-red-800',
+      high: 'bg-danger-100 text-danger-800',
     }
     return badges[severity] || badges.low
   }
@@ -125,51 +125,51 @@ export default function SecuritySettingsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Security Settings</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Security Settings</h1>
+        <p className="mt-2 text-neutral-600">
           Manage your account security and privacy settings
         </p>
       </div>
 
       {/* Security Overview */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Security Status</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Security Status</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className={`p-4 border-2 rounded-lg ${twoFactorEnabled ? 'border-green-500 bg-green-50' : 'border-yellow-500 bg-yellow-50'}`}>
+          <div className={`p-4 border-2 rounded-lg ${twoFactorEnabled ? 'border-success-500 bg-success-50' : 'border-yellow-500 bg-yellow-50'}`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-2xl">{twoFactorEnabled ? '✅' : '⚠️'}</span>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${twoFactorEnabled ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${twoFactorEnabled ? 'bg-success-100 text-success-800' : 'bg-yellow-100 text-yellow-800'}`}>
                 {twoFactorEnabled ? 'Enabled' : 'Disabled'}
               </span>
             </div>
-            <p className="font-medium text-gray-900">Two-Factor Authentication</p>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="font-medium text-neutral-900">Two-Factor Authentication</p>
+            <p className="text-sm text-neutral-600 mt-1">
               {twoFactorEnabled ? 'Your account is protected' : 'Enable for better security'}
             </p>
           </div>
 
-          <div className="p-4 border-2 border-green-500 bg-green-50 rounded-lg">
+          <div className="p-4 border-2 border-success-500 bg-success-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-2xl">✅</span>
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-800">
+              <span className="text-xs font-medium px-2 py-1 rounded-full bg-success-100 text-success-800">
                 Active
               </span>
             </div>
-            <p className="font-medium text-gray-900">Strong Password</p>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="font-medium text-neutral-900">Strong Password</p>
+            <p className="text-sm text-neutral-600 mt-1">
               Last changed 45 days ago
             </p>
           </div>
 
-          <div className={`p-4 border-2 rounded-lg ${loginNotifications ? 'border-green-500 bg-green-50' : 'border-gray-300 bg-gray-50'}`}>
+          <div className={`p-4 border-2 rounded-lg ${loginNotifications ? 'border-success-500 bg-success-50' : 'border-neutral-300 bg-neutral-50'}`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-2xl">{loginNotifications ? '✅' : '🔕'}</span>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${loginNotifications ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${loginNotifications ? 'bg-success-100 text-success-800' : 'bg-neutral-100 text-neutral-800'}`}>
                 {loginNotifications ? 'On' : 'Off'}
               </span>
             </div>
-            <p className="font-medium text-gray-900">Login Alerts</p>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="font-medium text-neutral-900">Login Alerts</p>
+            <p className="text-sm text-neutral-600 mt-1">
               Get notified of new logins
             </p>
           </div>
@@ -177,11 +177,11 @@ export default function SecuritySettingsPage() {
       </div>
 
       {/* Two-Factor Authentication */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
+      <div className="bg-surface shadow rounded-lg p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Two-Factor Authentication (2FA)</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-lg font-semibold text-neutral-900">Two-Factor Authentication (2FA)</h2>
+            <p className="text-sm text-neutral-600 mt-1">
               Add an extra layer of security to your account
             </p>
           </div>
@@ -198,46 +198,46 @@ export default function SecuritySettingsPage() {
               }}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
           </label>
         </div>
 
         {twoFactorEnabled ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-sm text-green-800">
+          <div className="bg-success-50 border border-success-200 rounded-lg p-4">
+            <p className="text-sm text-success-800">
               ✓ Two-factor authentication is active. You'll need to enter a verification code from your authenticator app when logging in.
             </p>
             <div className="mt-3 flex space-x-3">
-              <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              <button className="text-sm text-primary-600 hover:text-primary-800 font-medium">
                 View Backup Codes
               </button>
-              <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              <button className="text-sm text-primary-600 hover:text-primary-800 font-medium">
                 Regenerate Codes
               </button>
             </div>
           </div>
         ) : showQRCode ? (
-          <div className="border border-gray-200 rounded-lg p-6">
-            <h3 className="font-medium text-gray-900 mb-4">Set Up Two-Factor Authentication</h3>
+          <div className="border border-neutral-200 rounded-lg p-6">
+            <h3 className="font-medium text-neutral-900 mb-4">Set Up Two-Factor Authentication</h3>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-700 mb-3">
+                <p className="text-sm text-neutral-700 mb-3">
                   1. Install an authenticator app on your phone (Google Authenticator, Authy, or Microsoft Authenticator)
                 </p>
-                <p className="text-sm text-gray-700 mb-3">
+                <p className="text-sm text-neutral-700 mb-3">
                   2. Scan this QR code with your authenticator app:
                 </p>
                 <div className="flex justify-center my-4">
-                  <div className="w-48 h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400">QR Code Here</span>
+                  <div className="w-48 h-48 bg-neutral-100 border-2 border-dashed border-neutral-300 rounded-lg flex items-center justify-center">
+                    <span className="text-neutral-400">QR Code Here</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 text-center mb-4">
-                  Or enter this code manually: <code className="bg-gray-100 px-2 py-1 rounded">ABCD EFGH IJKL MNOP</code>
+                <p className="text-sm text-neutral-600 text-center mb-4">
+                  Or enter this code manually: <code className="bg-neutral-100 px-2 py-1 rounded">ABCD EFGH IJKL MNOP</code>
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-700 mb-2">
+                <p className="text-sm text-neutral-700 mb-2">
                   3. Enter the 6-digit verification code from your app:
                 </p>
                 <input
@@ -246,7 +246,7 @@ export default function SecuritySettingsPage() {
                   onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="000000"
                   maxLength={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-center text-2xl tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md text-center text-2xl tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div className="flex justify-end space-x-3">
@@ -255,14 +255,14 @@ export default function SecuritySettingsPage() {
                     setShowQRCode(false)
                     setVerificationCode('')
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleVerify2FA}
                   disabled={verificationCode.length !== 6}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed"
                 >
                   Verify & Enable
                 </button>
@@ -279,18 +279,18 @@ export default function SecuritySettingsPage() {
       </div>
 
       {/* Password Management */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Password</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Password</h2>
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-gray-600 mb-2">Last changed: November 1, 2025</p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-neutral-600 mb-2">Last changed: November 1, 2025</p>
+            <p className="text-sm text-neutral-600">
               We recommend changing your password every 90 days
             </p>
           </div>
           <button
             onClick={handleChangePassword}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+            className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
           >
             Change Password
           </button>
@@ -298,13 +298,13 @@ export default function SecuritySettingsPage() {
       </div>
 
       {/* Notification Preferences */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Security Notifications</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Security Notifications</h2>
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between py-3 border-b border-neutral-100">
             <div>
-              <p className="font-medium text-gray-900">Login Notifications</p>
-              <p className="text-sm text-gray-600">Get notified when someone logs into your account</p>
+              <p className="font-medium text-neutral-900">Login Notifications</p>
+              <p className="text-sm text-neutral-600">Get notified when someone logs into your account</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -313,14 +313,14 @@ export default function SecuritySettingsPage() {
                 onChange={(e) => setLoginNotifications(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
           </div>
 
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between py-3 border-b border-neutral-100">
             <div>
-              <p className="font-medium text-gray-900">Security Alerts</p>
-              <p className="text-sm text-gray-600">Receive alerts about suspicious activity</p>
+              <p className="font-medium text-neutral-900">Security Alerts</p>
+              <p className="text-sm text-neutral-600">Receive alerts about suspicious activity</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -329,57 +329,57 @@ export default function SecuritySettingsPage() {
                 onChange={(e) => setSecurityAlerts(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
           </div>
         </div>
       </div>
 
       {/* Login History */}
-      <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Login Activity</h2>
+      <div className="bg-surface shadow rounded-lg overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-neutral-200">
+          <h2 className="text-lg font-semibold text-neutral-900">Recent Login Activity</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-neutral-200">
+            <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Date & Time
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Device
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Location
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   IP Address
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-neutral-200">
               {loginHistory.map((log) => (
                 <tr key={log.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     <div>{log.device}</div>
-                    <div className="text-xs text-gray-500">{log.browser}</div>
+                    <div className="text-xs text-neutral-500">{log.browser}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
                     {log.location}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
                     {log.ipAddress}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      log.status === 'success' ? 'bg-success-100 text-success-800' : 'bg-danger-100 text-danger-800'
                     }`}>
                       {log.status === 'success' ? 'Success' : 'Failed'}
                     </span>
@@ -392,24 +392,24 @@ export default function SecuritySettingsPage() {
       </div>
 
       {/* Security Alerts */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Security Alerts</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Security Alerts</h2>
         {alerts.length === 0 ? (
-          <p className="text-sm text-gray-600">No security alerts</p>
+          <p className="text-sm text-neutral-600">No security alerts</p>
         ) : (
           <div className="space-y-3">
             {alerts.map((alert) => (
               <div key={alert.id} className={`p-4 rounded-lg border ${
-                alert.severity === 'high' ? 'bg-red-50 border-red-200' :
+                alert.severity === 'high' ? 'bg-danger-50 border-danger-200' :
                 alert.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
-                'bg-blue-50 border-blue-200'
+                'bg-primary-50 border-primary-200'
               }`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
                     <span className="text-2xl">{getAlertIcon(alert.type)}</span>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{alert.message}</p>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-sm font-medium text-neutral-900">{alert.message}</p>
+                      <p className="text-xs text-neutral-600 mt-1">
                         {new Date(alert.timestamp).toLocaleString()}
                       </p>
                     </div>
@@ -425,38 +425,38 @@ export default function SecuritySettingsPage() {
       </div>
 
       {/* Privacy & Data */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Privacy & Data</h2>
+      <div className="bg-surface shadow rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Privacy & Data</h2>
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between py-3 border-b border-neutral-100">
             <div>
-              <p className="font-medium text-gray-900">Download Your Data</p>
-              <p className="text-sm text-gray-600">Get a copy of all your account data (GDPR compliant)</p>
+              <p className="font-medium text-neutral-900">Download Your Data</p>
+              <p className="text-sm text-neutral-600">Get a copy of all your account data (GDPR compliant)</p>
             </div>
             <button
               onClick={handleExportData}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
             >
               Export Data
             </button>
           </div>
 
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between py-3 border-b border-neutral-100">
             <div>
-              <p className="font-medium text-gray-900">Active Sessions</p>
-              <p className="text-sm text-gray-600">You're currently logged in on 3 devices</p>
+              <p className="font-medium text-neutral-900">Active Sessions</p>
+              <p className="text-sm text-neutral-600">You're currently logged in on 3 devices</p>
             </div>
-            <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50">
               Manage Sessions
             </button>
           </div>
 
           <div className="flex items-center justify-between py-3">
             <div>
-              <p className="font-medium text-gray-900">Delete Account</p>
-              <p className="text-sm text-gray-600">Permanently delete your account and all data</p>
+              <p className="font-medium text-neutral-900">Delete Account</p>
+              <p className="text-sm text-neutral-600">Permanently delete your account and all data</p>
             </div>
-            <button className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700">
+            <button className="px-4 py-2 bg-danger-600 text-white rounded-md text-sm font-medium hover:bg-danger-700">
               Delete Account
             </button>
           </div>

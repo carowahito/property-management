@@ -75,21 +75,21 @@ export default function ParkingManagementPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Parking Management</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Parking Management</h1>
+        <p className="mt-2 text-neutral-600">
           Manage your parking spaces, guest passes, and violations
         </p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-neutral-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('myspaces')}
             className={`${
               activeTab === 'myspaces'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             My Spaces
@@ -98,8 +98,8 @@ export default function ParkingManagementPage() {
             onClick={() => setActiveTab('guestpasses')}
             className={`${
               activeTab === 'guestpasses'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Guest Passes ({guestPasses.filter(p => p.status === 'active').length})
@@ -108,8 +108,8 @@ export default function ParkingManagementPage() {
             onClick={() => setActiveTab('violations')}
             className={`${
               activeTab === 'violations'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Violations
@@ -134,42 +134,42 @@ export default function ParkingManagementPage() {
 
           {/* Assigned Spaces */}
           {mySpaces.map((space) => (
-            <div key={space.id} className="bg-white shadow rounded-lg p-6">
+            <div key={space.id} className="bg-surface shadow rounded-lg p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Space {space.spaceNumber}</h2>
-                  <p className="text-sm text-gray-600">{space.location} • {space.floor}</p>
+                  <h2 className="text-2xl font-bold text-neutral-900">Space {space.spaceNumber}</h2>
+                  <p className="text-sm text-neutral-600">{space.location} • {space.floor}</p>
                 </div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success-100 text-success-800">
                   {space.type === 'assigned' ? 'Assigned' : 'Visitor'}
                 </span>
               </div>
 
               {space.vehicle ? (
-                <div className="border-t border-gray-200 pt-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Registered Vehicle</h3>
-                  <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="text-sm font-semibold text-neutral-900 mb-3">Registered Vehicle</h3>
+                  <div className="flex items-center justify-between bg-neutral-50 rounded-lg p-4">
                     <div className="flex items-center space-x-4">
                       <div className="text-4xl">🚗</div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-neutral-900">
                           {space.vehicle.make} {space.vehicle.model}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-neutral-600">
                           {space.vehicle.color} • {space.vehicle.licensePlate}
                         </p>
                       </div>
                     </div>
-                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <button className="text-sm text-primary-600 hover:text-primary-800 font-medium">
                       Update Vehicle
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="border-t border-gray-200 pt-4">
+                <div className="border-t border-neutral-200 pt-4">
                   <button
                     onClick={() => setShowAddVehicle(true)}
-                    className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700"
+                    className="w-full px-4 py-3 border-2 border-dashed border-neutral-300 rounded-lg text-neutral-600 hover:border-neutral-400 hover:text-neutral-700"
                   >
                     + Register Vehicle
                   </button>
@@ -177,13 +177,13 @@ export default function ParkingManagementPage() {
               )}
 
               {/* Parking Permit */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-neutral-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Parking Permit</p>
-                    <p className="text-xs text-gray-500">Display this on your dashboard</p>
+                    <p className="text-sm font-medium text-neutral-900">Parking Permit</p>
+                    <p className="text-xs text-neutral-500">Display this on your dashboard</p>
                   </div>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+                  <button className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700">
                     Download Permit
                   </button>
                 </div>
@@ -192,12 +192,12 @@ export default function ParkingManagementPage() {
           ))}
 
           {/* Request Additional Space */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Need Another Space?</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-surface shadow rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-2">Need Another Space?</h3>
+            <p className="text-sm text-neutral-600 mb-4">
               Request an additional parking space (subject to availability and additional fees)
             </p>
-            <button className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button className="px-4 py-2 bg-surface border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50">
               Request Additional Space
             </button>
           </div>
@@ -211,7 +211,7 @@ export default function ParkingManagementPage() {
           <div>
             <button
               onClick={() => setShowRequestPass(!showRequestPass)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+              className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
             >
               {showRequestPass ? 'Cancel' : '+ Request Guest Pass'}
             </button>
@@ -219,56 +219,56 @@ export default function ParkingManagementPage() {
 
           {/* Request Form */}
           {showRequestPass && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Request Guest Parking Pass</h2>
+            <div className="bg-surface shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Request Guest Parking Pass</h2>
               <form className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Guest Name *
                     </label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       License Plate *
                     </label>
                     <input
                       type="text"
                       placeholder="e.g., KCA 123X"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       Start Date *
                     </label>
                     <input
                       type="date"
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
                       End Date *
                     </label>
                     <input
                       type="date"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                  <p className="text-sm text-primary-800">
                     <strong>Guest Parking Policy:</strong> Maximum 48 hours. Guests must park in designated visitor spaces only.
                   </p>
                 </div>
@@ -277,13 +277,13 @@ export default function ParkingManagementPage() {
                   <button
                     type="button"
                     onClick={() => setShowRequestPass(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
                   >
                     Request Pass
                   </button>
@@ -293,29 +293,29 @@ export default function ParkingManagementPage() {
           )}
 
           {/* Active Guest Passes */}
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Active Guest Passes</h2>
+          <div className="bg-surface shadow rounded-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-neutral-200">
+              <h2 className="text-lg font-semibold text-neutral-900">Active Guest Passes</h2>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-neutral-200">
               {guestPasses.filter(p => p.status === 'active').length === 0 ? (
                 <div className="p-12 text-center">
                   <div className="text-6xl mb-4">🚗</div>
-                  <p className="text-gray-600">No active guest passes</p>
+                  <p className="text-neutral-600">No active guest passes</p>
                 </div>
               ) : (
                 guestPasses.filter(p => p.status === 'active').map((pass) => (
                   <div key={pass.id} className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">{pass.guestName}</h3>
-                        <div className="mt-2 space-y-1 text-sm text-gray-600">
+                        <h3 className="text-lg font-medium text-neutral-900">{pass.guestName}</h3>
+                        <div className="mt-2 space-y-1 text-sm text-neutral-600">
                           <p>License: {pass.guestLicense}</p>
                           <p>Space: {pass.spaceNumber}</p>
                           <p>Valid: {new Date(pass.startDate).toLocaleDateString()} - {new Date(pass.endDate).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <button className="text-sm text-red-600 hover:text-red-800 font-medium">
+                      <button className="text-sm text-danger-600 hover:text-danger-800 font-medium">
                         Cancel Pass
                       </button>
                     </div>
@@ -331,57 +331,57 @@ export default function ParkingManagementPage() {
       {activeTab === 'violations' && (
         <div className="space-y-6">
           {violations.length === 0 ? (
-            <div className="bg-white shadow rounded-lg p-12 text-center">
+            <div className="bg-surface shadow rounded-lg p-12 text-center">
               <div className="text-6xl mb-4">✅</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Violations</h3>
-              <p className="text-gray-600">You have a clean parking record!</p>
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">No Violations</h3>
+              <p className="text-neutral-600">You have a clean parking record!</p>
             </div>
           ) : (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-surface shadow rounded-lg overflow-hidden">
+              <table className="min-w-full divide-y divide-neutral-200">
+                <thead className="bg-neutral-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Violation
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Fine
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-surface divide-y divide-neutral-200">
                   {violations.map((violation) => (
                     <tr key={violation.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                         {new Date(violation.date).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-neutral-900">
                         {violation.violation}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                         KES {violation.fine.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          violation.status === 'paid' ? 'bg-green-100 text-green-800' :
+                          violation.status === 'paid' ? 'bg-success-100 text-success-800' :
                           violation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                          'bg-danger-100 text-danger-800'
                         }`}>
                           {violation.status.charAt(0).toUpperCase() + violation.status.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {violation.status !== 'paid' && (
-                          <button className="text-blue-600 hover:text-blue-800 font-medium">
+                          <button className="text-primary-600 hover:text-primary-800 font-medium">
                             Pay Fine
                           </button>
                         )}
@@ -394,18 +394,18 @@ export default function ParkingManagementPage() {
           )}
 
           {/* Towing Information */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-red-900 mb-2">Towing Policy</h3>
-            <p className="text-sm text-red-800 mb-2">
+          <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-danger-900 mb-2">Towing Policy</h3>
+            <p className="text-sm text-danger-800 mb-2">
               Vehicles may be towed at owner's expense for:
             </p>
-            <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
+            <ul className="text-sm text-danger-800 space-y-1 list-disc list-inside">
               <li>Parking in fire lanes or handicapped spaces</li>
               <li>Blocking driveways or emergency access</li>
               <li>Unpaid parking violations (3 or more)</li>
               <li>Abandoned vehicles (7+ days without movement)</li>
             </ul>
-            <p className="text-sm text-red-800 mt-3">
+            <p className="text-sm text-danger-800 mt-3">
               <strong>Towing Company:</strong> Quick Tow Services - +254 722 000 000
             </p>
           </div>

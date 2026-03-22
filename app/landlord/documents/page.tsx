@@ -12,19 +12,19 @@ export default function LandlordDocumentsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
+        <h1 className="text-3xl font-bold text-neutral-900">Documents</h1>
         <Button variant="success" size="lg">+ Upload Document</Button>
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-surface shadow rounded-lg p-6">
         <div className="space-y-4">
           {documents.map(doc => (
-            <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-green-500 transition-colors">
+            <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:border-success-500 transition-colors">
               <div className="flex items-center space-x-4">
                 <div className="text-4xl">📄</div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{doc.name}</p>
-                  <p className="text-xs text-gray-600">{doc.type} • {doc.date} • {doc.size}</p>
+                  <p className="text-sm font-medium text-neutral-900">{doc.name}</p>
+                  <p className="text-xs text-neutral-600">{doc.type} • {doc.date} • {doc.size}</p>
                 </div>
               </div>
               <div className="flex space-x-3">

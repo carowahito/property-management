@@ -14,6 +14,12 @@ export const createLeaseSchema = z.object({
   securityDeposit: z.number().min(0, 'Security deposit cannot be negative'),
   status: z.enum(['ACTIVE', 'EXPIRED', 'TERMINATED', 'PENDING']).default('ACTIVE'),
   terms: z.string().optional(),
+  templateId: z.string().optional(),
+  noticePeriod: z.number().int().positive().default(1),
+  rentEscalation: z.number().min(0).max(100).optional(),
+  petPolicy: z.string().optional(),
+  specialConditions: z.string().optional(),
+  unitId: z.string().optional(),
 }).refine((data) => new Date(data.endDate) > new Date(data.startDate), {
   message: 'End date must be after start date',
   path: ['endDate'],
@@ -29,6 +35,15 @@ export const updateLeaseSchema = z.object({
   securityDeposit: z.number().min(0).optional(),
   status: z.enum(['ACTIVE', 'EXPIRED', 'TERMINATED', 'PENDING']).optional(),
   terms: z.string().optional(),
+  templateId: z.string().optional(),
+  noticePeriod: z.number().int().positive().optional(),
+  rentEscalation: z.number().min(0).max(100).optional(),
+  petPolicy: z.string().optional(),
+  specialConditions: z.string().optional(),
+  unitId: z.string().optional(),
+  sentForSigning: z.boolean().optional(),
+  tenantSignedAt: z.string().optional(),
+  landlordSignedAt: z.string().optional(),
 })
 
 export type CreateLeaseInput = z.infer<typeof createLeaseSchema>

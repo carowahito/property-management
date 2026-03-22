@@ -167,15 +167,15 @@ export default function TenantQuotesPage() {
   return (
     <div className="py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Repair Quotes</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Repair Quotes</h1>
+        <p className="mt-2 text-neutral-600">
           Review and approve quotes for repairs you&apos;re responsible for
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-surface rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0 bg-yellow-100 rounded-md p-3">
               <svg className="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,51 +183,51 @@ export default function TenantQuotesPage() {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Pending Approval</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.pendingApproval}</p>
+              <p className="text-sm font-medium text-neutral-600">Pending Approval</p>
+              <p className="text-2xl font-semibold text-neutral-900">{stats.pendingApproval}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-surface rounded-lg shadow p-6">
           <div className="flex items-center">
-            <div className="flex-shrink-0 bg-orange-100 rounded-md p-3">
-              <svg className="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex-shrink-0 bg-warning-100 rounded-md p-3">
+              <svg className="h-6 w-6 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Pending Value</p>
-              <p className="text-2xl font-semibold text-gray-900">KES {stats.totalValue.toLocaleString()}</p>
+              <p className="text-sm font-medium text-neutral-600">Pending Value</p>
+              <p className="text-2xl font-semibold text-neutral-900">KES {stats.totalValue.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-surface rounded-lg shadow p-6">
           <div className="flex items-center">
-            <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-              <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex-shrink-0 bg-success-100 rounded-md p-3">
+              <svg className="h-6 w-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Approved Value</p>
-              <p className="text-2xl font-semibold text-gray-900">KES {stats.approvedValue.toLocaleString()}</p>
+              <p className="text-sm font-medium text-neutral-600">Approved Value</p>
+              <p className="text-2xl font-semibold text-neutral-900">KES {stats.approvedValue.toLocaleString()}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="border-b border-gray-200">
+      <div className="bg-surface rounded-lg shadow">
+        <div className="border-b border-neutral-200">
           <nav className="flex -mb-px">
             <button
               onClick={() => setActiveTab('pending')}
               className={`py-4 px-6 text-sm font-medium ${
                 activeTab === 'pending'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-primary-500 text-primary-600'
+                  : 'text-neutral-500 hover:text-neutral-700'
               }`}
             >
               Pending Approval ({quotes.filter(q => q.status === 'pending-approval').length})
@@ -236,8 +236,8 @@ export default function TenantQuotesPage() {
               onClick={() => setActiveTab('approved')}
               className={`py-4 px-6 text-sm font-medium ${
                 activeTab === 'approved'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-primary-500 text-primary-600'
+                  : 'text-neutral-500 hover:text-neutral-700'
               }`}
             >
               Approved
@@ -246,8 +246,8 @@ export default function TenantQuotesPage() {
               onClick={() => setActiveTab('all')}
               className={`py-4 px-6 text-sm font-medium ${
                 activeTab === 'all'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-primary-500 text-primary-600'
+                  : 'text-neutral-500 hover:text-neutral-700'
               }`}
             >
               All Quotes
@@ -259,35 +259,35 @@ export default function TenantQuotesPage() {
         <div className="p-6">
           {filteredQuotes.length === 0 ? (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="mx-auto h-12 w-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No quotes</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <h3 className="mt-2 text-sm font-medium text-neutral-900">No quotes</h3>
+              <p className="mt-1 text-sm text-neutral-500">
                 {activeTab === 'pending' ? 'No quotes pending your approval' : 'No quotes found'}
               </p>
             </div>
           ) : (
             <div className="space-y-6">
               {filteredQuotes.map((quote) => (
-                <div key={quote.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                <div key={quote.id} className="border border-neutral-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{quote.issue}</h3>
+                        <h3 className="text-lg font-semibold text-neutral-900">{quote.issue}</h3>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           quote.status === 'pending-approval' ? 'bg-yellow-100 text-yellow-800' :
-                          quote.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          quote.status === 'declined' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
+                          quote.status === 'approved' ? 'bg-success-100 text-success-800' :
+                          quote.status === 'declined' ? 'bg-danger-100 text-danger-800' :
+                          'bg-neutral-100 text-neutral-800'
                         }`}>
                           {quote.status === 'pending-approval' ? 'Awaiting Your Approval' :
                            quote.status === 'approved' ? 'Approved' :
                            quote.status === 'declined' ? 'Declined' : 'Completed'}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{quote.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <p className="text-sm text-neutral-600 mb-2">{quote.description}</p>
+                      <div className="flex items-center gap-4 text-xs text-neutral-500">
                         <span>Quote ID: {quote.id}</span>
                         <span>•</span>
                         <span>Request: {quote.maintenanceRequestId}</span>
@@ -296,35 +296,35 @@ export default function TenantQuotesPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-900">KES {quote.totalAmount.toLocaleString()}</p>
-                      <p className="text-sm text-gray-500">{quote.estimatedDays} day{quote.estimatedDays > 1 ? 's' : ''}</p>
+                      <p className="text-2xl font-bold text-neutral-900">KES {quote.totalAmount.toLocaleString()}</p>
+                      <p className="text-sm text-neutral-500">{quote.estimatedDays} day{quote.estimatedDays > 1 ? 's' : ''}</p>
                     </div>
                   </div>
 
                   {/* Responsibility Notice */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 mb-4">
                     <div className="flex items-start">
-                      <svg className="h-5 w-5 text-blue-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 w-5 text-primary-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
-                        <p className="text-sm font-medium text-blue-900">You are responsible for this repair</p>
-                        <p className="text-xs text-blue-700 mt-1">{quote.reason}</p>
+                        <p className="text-sm font-medium text-primary-900">You are responsible for this repair</p>
+                        <p className="text-xs text-primary-700 mt-1">{quote.reason}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Vendor Info */}
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-neutral-200">
                     <div className="flex items-center">
-                      <div className="bg-orange-100 rounded-full p-2 mr-3">
-                        <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="bg-warning-100 rounded-full p-2 mr-3">
+                        <svg className="h-5 w-5 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{quote.vendor.name}</p>
-                        <div className="flex items-center text-sm text-gray-600">
+                        <p className="font-medium text-neutral-900">{quote.vendor.name}</p>
+                        <div className="flex items-center text-sm text-neutral-600">
                           <span className="text-yellow-500 mr-1">★</span>
                           <span>{quote.vendor.rating}/5.0</span>
                           <span className="mx-2">•</span>
@@ -337,17 +337,17 @@ export default function TenantQuotesPage() {
                   {/* Cost Breakdown */}
                   <div className="grid grid-cols-2 gap-6 mb-4">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Materials</h4>
+                      <h4 className="text-sm font-medium text-neutral-700 mb-2">Materials</h4>
                       <div className="space-y-1">
                         {quote.materials.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-sm">
-                            <span className="text-gray-600">
+                            <span className="text-neutral-600">
                               {item.item} (x{item.quantity})
                             </span>
-                            <span className="text-gray-900">KES {item.total.toLocaleString()}</span>
+                            <span className="text-neutral-900">KES {item.total.toLocaleString()}</span>
                           </div>
                         ))}
-                        <div className="flex justify-between text-sm font-medium border-t border-gray-200 pt-1 mt-1">
+                        <div className="flex justify-between text-sm font-medium border-t border-neutral-200 pt-1 mt-1">
                           <span>Subtotal</span>
                           <span>KES {quote.materialsTotal.toLocaleString()}</span>
                         </div>
@@ -355,17 +355,17 @@ export default function TenantQuotesPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Labor</h4>
+                      <h4 className="text-sm font-medium text-neutral-700 mb-2">Labor</h4>
                       <div className="space-y-1">
                         {quote.labor.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-sm">
-                            <span className="text-gray-600">
+                            <span className="text-neutral-600">
                               {item.description} ({item.hours}h)
                             </span>
-                            <span className="text-gray-900">KES {item.total.toLocaleString()}</span>
+                            <span className="text-neutral-900">KES {item.total.toLocaleString()}</span>
                           </div>
                         ))}
-                        <div className="flex justify-between text-sm font-medium border-t border-gray-200 pt-1 mt-1">
+                        <div className="flex justify-between text-sm font-medium border-t border-neutral-200 pt-1 mt-1">
                           <span>Subtotal</span>
                           <span>KES {quote.laborTotal.toLocaleString()}</span>
                         </div>
@@ -375,8 +375,8 @@ export default function TenantQuotesPage() {
 
                   {/* Actions */}
                   {quote.status === 'pending-approval' && (
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-500">
+                    <div className="flex items-center justify-between pt-4 border-t border-neutral-200">
+                      <p className="text-sm text-neutral-500">
                         Valid until: {new Date(quote.validUntil).toLocaleDateString()}
                       </p>
                       <div className="flex gap-3">
@@ -399,9 +399,9 @@ export default function TenantQuotesPage() {
                   )}
 
                   {quote.status === 'approved' && quote.paymentMethod && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <p className="text-sm text-green-800">
+                    <div className="pt-4 border-t border-neutral-200">
+                      <div className="bg-success-50 border border-success-200 rounded-lg p-3">
+                        <p className="text-sm text-success-800">
                           <span className="font-medium">Payment Method:</span>{' '}
                           {quote.paymentMethod === 'deposit-deduction' ? 'Deducted from Security Deposit' : 'Direct Payment Required'}
                         </p>
@@ -418,13 +418,13 @@ export default function TenantQuotesPage() {
       {/* Approval Modal */}
       {showDetailModal && selectedQuote && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">Approve Quote</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">Approve Quote</h2>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -433,26 +433,26 @@ export default function TenantQuotesPage() {
               </div>
 
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedQuote.issue}</h3>
-                <p className="text-gray-600 mb-4">{selectedQuote.description}</p>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">{selectedQuote.issue}</h3>
+                <p className="text-neutral-600 mb-4">{selectedQuote.description}</p>
                 
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="bg-neutral-50 rounded-lg p-4 mb-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600">Quote Amount</p>
-                      <p className="text-2xl font-bold text-gray-900">KES {selectedQuote.totalAmount.toLocaleString()}</p>
+                      <p className="text-neutral-600">Quote Amount</p>
+                      <p className="text-2xl font-bold text-neutral-900">KES {selectedQuote.totalAmount.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Estimated Duration</p>
-                      <p className="text-lg font-semibold text-gray-900">{selectedQuote.estimatedDays} day(s)</p>
+                      <p className="text-neutral-600">Estimated Duration</p>
+                      <p className="text-lg font-semibold text-neutral-900">{selectedQuote.estimatedDays} day(s)</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <h4 className="font-medium text-blue-900 mb-2">Choose Payment Method</h4>
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
+                  <h4 className="font-medium text-primary-900 mb-2">Choose Payment Method</h4>
                   <div className="space-y-3">
-                    <label className="flex items-start p-3 bg-white rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-500">
+                    <label className="flex items-start p-3 bg-surface rounded-lg border-2 border-neutral-200 cursor-pointer hover:border-primary-500">
                       <input
                         type="radio"
                         checked={paymentMethod === 'deposit-deduction'}
@@ -460,15 +460,15 @@ export default function TenantQuotesPage() {
                         className="mt-1 mr-3"
                       />
                       <div>
-                        <p className="font-medium text-gray-900">Deduct from Security Deposit</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium text-neutral-900">Deduct from Security Deposit</p>
+                        <p className="text-sm text-neutral-600">
                           KES {selectedQuote.totalAmount.toLocaleString()} will be deducted from your security deposit.
                           You&apos;ll need to replenish the deposit to maintain full coverage.
                         </p>
                       </div>
                     </label>
 
-                    <label className="flex items-start p-3 bg-white rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-500">
+                    <label className="flex items-start p-3 bg-surface rounded-lg border-2 border-neutral-200 cursor-pointer hover:border-primary-500">
                       <input
                         type="radio"
                         checked={paymentMethod === 'direct-payment'}
@@ -476,8 +476,8 @@ export default function TenantQuotesPage() {
                         className="mt-1 mr-3"
                       />
                       <div>
-                        <p className="font-medium text-gray-900">Direct Payment</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium text-neutral-900">Direct Payment</p>
+                        <p className="text-sm text-neutral-600">
                           Pay KES {selectedQuote.totalAmount.toLocaleString()} directly via M-Pesa or bank transfer.
                           Your security deposit remains intact.
                         </p>

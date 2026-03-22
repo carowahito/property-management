@@ -29,19 +29,19 @@ export default function LandlordForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 bg-surface p-8 rounded-lg shadow-md">
           <div className="text-center">
-            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-green-100 mb-4">
-              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-success-100 mb-4">
+              <svg className="h-8 w-8 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h2>
-            <p className="text-gray-600 mb-6">
-              We've sent password reset instructions to <strong className="text-gray-900">{email}</strong>
+            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Check Your Email</h2>
+            <p className="text-neutral-600 mb-6">
+              We've sent password reset instructions to <strong className="text-neutral-900">{email}</strong>
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-neutral-500 mb-6">
               Please check your inbox and follow the link to reset your password. The link will expire in 1 hour.
             </p>
             <Link href="/landlord/login">
@@ -56,26 +56,26 @@ export default function LandlordForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-neutral-900">
             Reset Your Password
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-neutral-600">
             Enter your email address and we'll send you instructions to reset your password
           </p>
         </div>
 
-        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 bg-surface p-8 rounded-lg shadow-md" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4 border border-red-200">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="rounded-md bg-danger-50 p-4 border border-danger-200">
+              <div className="text-sm text-danger-800">{error}</div>
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
               Email Address
             </label>
             <input
@@ -84,7 +84,7 @@ export default function LandlordForgotPasswordPage() {
               type="email"
               autoComplete="email"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-md placeholder-neutral-400 text-neutral-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               placeholder="landlord@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -101,7 +101,7 @@ export default function LandlordForgotPasswordPage() {
           </Button>
 
           <div className="text-center">
-            <Link href="/landlord/login" className="text-sm text-blue-600 hover:text-blue-500">
+            <Link href="/landlord/login" className="text-sm text-primary-600 hover:text-primary-500">
               ← Back to Login
             </Link>
           </div>

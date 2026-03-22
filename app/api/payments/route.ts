@@ -49,6 +49,12 @@ export async function GET(request: NextRequest) {
                   address: true,
                 },
               },
+              unitRef: {
+                select: {
+                  id: true,
+                  unitNumber: true,
+                },
+              },
             },
           },
         },

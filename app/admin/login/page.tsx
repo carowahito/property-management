@@ -41,29 +41,29 @@ function AdminLoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-900 to-neutral-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Admin Portal
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
+          <p className="mt-2 text-center text-sm text-neutral-400">
             Property management system administration
           </p>
         </div>
 
         {/* Login Form */}
-        <form className="mt-8 space-y-6 bg-slate-800 p-8 rounded-lg shadow-xl border border-slate-700" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 bg-neutral-800 p-8 rounded-lg shadow-xl border border-neutral-700" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-900/50 p-4 border border-red-700">
-              <div className="text-sm text-red-200">{error}</div>
+            <div className="rounded-md bg-danger-900/50 p-4 border border-danger-700">
+              <div className="text-sm text-danger-200">{error}</div>
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email-address" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="email-address" className="block text-sm font-medium text-neutral-300 mb-1">
                 Email address
               </label>
               <input
@@ -72,14 +72,14 @@ function AdminLoginForm() {
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md placeholder-gray-500 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-md placeholder-neutral-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-1">
                 Password
               </label>
               <input
@@ -88,7 +88,7 @@ function AdminLoginForm() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md placeholder-gray-500 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-md placeholder-neutral-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -102,9 +102,9 @@ function AdminLoginForm() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 bg-slate-700 border-slate-600 rounded cursor-pointer"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 bg-neutral-700 border-neutral-600 rounded cursor-pointer"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400 cursor-pointer">
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-400 cursor-pointer">
                 Remember me
               </label>
             </div>
@@ -112,7 +112,7 @@ function AdminLoginForm() {
             <div className="text-sm">
               <Link
                 href="/admin/forgot-password"
-                className="font-medium text-blue-400 hover:text-blue-300"
+                className="font-medium text-primary-400 hover:text-primary-300"
               >
                 Forgot password?
               </Link>
@@ -122,17 +122,17 @@ function AdminLoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
 
           <div className="text-center">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-neutral-400">
               Admin access only.{' '}
               <Link
                 href="/"
-                className="font-medium text-blue-400 hover:text-blue-300"
+                className="font-medium text-primary-400 hover:text-primary-300"
               >
                 Back to portal selection
               </Link>
@@ -141,20 +141,20 @@ function AdminLoginForm() {
         </form>
 
         {/* Demo Credentials */}
-        <div className="bg-slate-800 rounded-lg shadow-xl p-6 border border-slate-700">
+        <div className="bg-neutral-800 rounded-lg shadow-xl p-6 border border-neutral-700">
           <h3 className="text-sm font-semibold text-white mb-3">Demo Account</h3>
-          <div className="text-xs bg-slate-700 p-3 rounded border border-slate-600">
-            <div className="text-gray-300 mb-1">Email: <span className="text-white font-mono">admin@propmanage.com</span></div>
-            <div className="text-gray-300">Password: <span className="text-white font-mono">admin123</span></div>
+          <div className="text-xs bg-neutral-700 p-3 rounded border border-neutral-600">
+            <div className="text-neutral-300 mb-1">Email: <span className="text-white font-mono">admin@propmanage.com</span></div>
+            <div className="text-neutral-300">Password: <span className="text-white font-mono">admin123</span></div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-neutral-400 mt-2">
             Use the above credentials for testing. Change password after first login.
           </p>
         </div>
 
         {/* Back to Home */}
         <div className="text-center">
-          <Link href="/" className="text-sm text-blue-400 hover:text-blue-300 font-medium">
+          <Link href="/" className="text-sm text-primary-400 hover:text-primary-300 font-medium">
             ← Back to Home
           </Link>
         </div>
@@ -165,7 +165,7 @@ function AdminLoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800" />}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-900 to-neutral-800" />}>
       <AdminLoginForm />
     </Suspense>
   )

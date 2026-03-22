@@ -80,71 +80,71 @@ export default function EnergyTrackingPage() {
   ]
 
   const recyclingSchedule = [
-    { day: 'Monday', type: 'General Waste', color: 'bg-gray-500' },
-    { day: 'Wednesday', type: 'Recyclables', color: 'bg-blue-500' },
-    { day: 'Friday', type: 'Organic Waste', color: 'bg-green-500' },
+    { day: 'Monday', type: 'General Waste', color: 'bg-neutral-500' },
+    { day: 'Wednesday', type: 'Recyclables', color: 'bg-primary-500' },
+    { day: 'Friday', type: 'Organic Waste', color: 'bg-success-500' },
   ]
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Energy & Sustainability</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-neutral-900">Energy & Sustainability</h1>
+        <p className="mt-2 text-neutral-600">
           Track your energy usage, reduce your carbon footprint, and earn rewards
         </p>
       </div>
 
       {/* Energy Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">⚡</span>
             <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-              energyData.currentMonth.comparedToLastMonth < 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              energyData.currentMonth.comparedToLastMonth < 0 ? 'bg-success-100 text-success-800' : 'bg-danger-100 text-danger-800'
             }`}>
               {energyData.currentMonth.comparedToLastMonth > 0 ? '+' : ''}{energyData.currentMonth.comparedToLastMonth}%
             </span>
           </div>
-          <p className="text-sm text-gray-600">This Month</p>
-          <p className="text-3xl font-bold text-gray-900">{energyData.currentMonth.total} kWh</p>
+          <p className="text-sm text-neutral-600">This Month</p>
+          <p className="text-3xl font-bold text-neutral-900">{energyData.currentMonth.total} kWh</p>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-2xl mb-2 block">💰</span>
-          <p className="text-sm text-gray-600">Estimated Cost</p>
-          <p className="text-3xl font-bold text-gray-900">KES {energyData.currentMonth.cost.toLocaleString()}</p>
+          <p className="text-sm text-neutral-600">Estimated Cost</p>
+          <p className="text-3xl font-bold text-neutral-900">KES {energyData.currentMonth.cost.toLocaleString()}</p>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-2xl mb-2 block">📊</span>
-          <p className="text-sm text-gray-600">Daily Average</p>
-          <p className="text-3xl font-bold text-gray-900">{energyData.currentMonth.average} kWh</p>
+          <p className="text-sm text-neutral-600">Daily Average</p>
+          <p className="text-3xl font-bold text-neutral-900">{energyData.currentMonth.average} kWh</p>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-2xl">🌍</span>
             <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-              carbonFootprint.comparedToAverage < 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              carbonFootprint.comparedToAverage < 0 ? 'bg-success-100 text-success-800' : 'bg-danger-100 text-danger-800'
             }`}>
               {carbonFootprint.comparedToAverage}%
             </span>
           </div>
-          <p className="text-sm text-gray-600">Carbon Footprint</p>
-          <p className="text-3xl font-bold text-gray-900">{carbonFootprint.monthly} kg</p>
+          <p className="text-sm text-neutral-600">Carbon Footprint</p>
+          <p className="text-3xl font-bold text-neutral-900">{carbonFootprint.monthly} kg</p>
         </div>
       </div>
 
       {/* Energy Usage Chart */}
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
+      <div className="bg-surface shadow rounded-lg p-6 mb-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Energy Usage Trend</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">Energy Usage Trend</h2>
           <div className="flex space-x-2">
             <button
               onClick={() => setSelectedPeriod('week')}
               className={`px-3 py-1 text-sm rounded-md ${
-                selectedPeriod === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+                selectedPeriod === 'week' ? 'bg-primary-600 text-white' : 'bg-neutral-100 text-neutral-700'
               }`}
             >
               Week
@@ -152,7 +152,7 @@ export default function EnergyTrackingPage() {
             <button
               onClick={() => setSelectedPeriod('month')}
               className={`px-3 py-1 text-sm rounded-md ${
-                selectedPeriod === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+                selectedPeriod === 'month' ? 'bg-primary-600 text-white' : 'bg-neutral-100 text-neutral-700'
               }`}
             >
               Month
@@ -160,7 +160,7 @@ export default function EnergyTrackingPage() {
             <button
               onClick={() => setSelectedPeriod('year')}
               className={`px-3 py-1 text-sm rounded-md ${
-                selectedPeriod === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+                selectedPeriod === 'year' ? 'bg-primary-600 text-white' : 'bg-neutral-100 text-neutral-700'
               }`}
             >
               Year
@@ -172,13 +172,13 @@ export default function EnergyTrackingPage() {
         <div className="flex items-end justify-between h-64 space-x-2">
           {energyData.dailyUsage.map((day, index) => (
             <div key={index} className="flex-1 flex flex-col items-center">
-              <div className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-colors cursor-pointer relative group"
+              <div className="w-full bg-primary-500 rounded-t hover:bg-primary-600 transition-colors cursor-pointer relative group"
                    style={{ height: `${(day.usage / 12) * 100}%` }}>
-                <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-neutral-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                   {day.usage} kWh
                 </span>
               </div>
-              <span className="text-xs text-gray-600 mt-2">{day.date}</span>
+              <span className="text-xs text-neutral-600 mt-2">{day.date}</span>
             </div>
           ))}
         </div>
@@ -186,18 +186,18 @@ export default function EnergyTrackingPage() {
 
       {/* Usage Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Usage Breakdown</h2>
+        <div className="bg-surface shadow rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Usage Breakdown</h2>
           <div className="space-y-4">
             {Object.entries(energyData.breakdown).map(([category, percentage]) => (
               <div key={category}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 capitalize">{category}</span>
-                  <span className="text-sm font-semibold text-gray-900">{percentage}%</span>
+                  <span className="text-sm font-medium text-neutral-700 capitalize">{category}</span>
+                  <span className="text-sm font-semibold text-neutral-900">{percentage}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-neutral-200 rounded-full h-2">
                   <div
-                    className="bg-blue-600 h-2 rounded-full transition-all"
+                    className="bg-primary-600 h-2 rounded-full transition-all"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -207,32 +207,32 @@ export default function EnergyTrackingPage() {
         </div>
 
         {/* Carbon Footprint */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Carbon Footprint</h2>
+        <div className="bg-surface shadow rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Carbon Footprint</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-success-50 rounded-lg">
               <div>
-                <p className="text-sm text-gray-600">Monthly CO2 Emissions</p>
-                <p className="text-2xl font-bold text-gray-900">{carbonFootprint.monthly} kg</p>
+                <p className="text-sm text-neutral-600">Monthly CO2 Emissions</p>
+                <p className="text-2xl font-bold text-neutral-900">{carbonFootprint.monthly} kg</p>
               </div>
               <span className="text-4xl">🌱</span>
             </div>
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-primary-50 rounded-lg">
               <div>
-                <p className="text-sm text-gray-600">Yearly CO2 Emissions</p>
-                <p className="text-2xl font-bold text-gray-900">{carbonFootprint.yearly} kg</p>
+                <p className="text-sm text-neutral-600">Yearly CO2 Emissions</p>
+                <p className="text-2xl font-bold text-neutral-900">{carbonFootprint.yearly} kg</p>
               </div>
               <span className="text-4xl">🌍</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
               <div>
-                <p className="text-sm text-gray-600">Trees to Offset</p>
-                <p className="text-2xl font-bold text-gray-900">{carbonFootprint.treesEquivalent} trees</p>
+                <p className="text-sm text-neutral-600">Trees to Offset</p>
+                <p className="text-2xl font-bold text-neutral-900">{carbonFootprint.treesEquivalent} trees</p>
               </div>
               <span className="text-4xl">🌳</span>
             </div>
-            <div className="bg-green-100 border border-green-200 rounded-lg p-3">
-              <p className="text-sm text-green-800 text-center">
+            <div className="bg-success-100 border border-success-200 rounded-lg p-3">
+              <p className="text-sm text-success-800 text-center">
                 ✓ You're {Math.abs(carbonFootprint.comparedToAverage)}% below the average tenant!
               </p>
             </div>
@@ -241,26 +241,26 @@ export default function EnergyTrackingPage() {
       </div>
 
       {/* Energy Saving Tips */}
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Energy Saving Tips</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-8">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Energy Saving Tips</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {savingsTips.map((tip) => (
-            <div key={tip.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors">
+            <div key={tip.id} className="border border-neutral-200 rounded-lg p-4 hover:border-primary-500 transition-colors">
               <div className="flex items-start space-x-3">
                 <span className="text-3xl">{tip.icon}</span>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">{tip.title}</h3>
-                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <h3 className="font-semibold text-neutral-900">{tip.title}</h3>
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary-100 text-primary-800">
                       {tip.difficulty}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{tip.description}</p>
+                  <p className="text-sm text-neutral-600 mb-3">{tip.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-green-600">
+                    <span className="text-sm font-medium text-success-600">
                       Save ~KES {tip.potentialSavings.toLocaleString()}/month
                     </span>
-                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <button className="text-sm text-primary-600 hover:text-primary-800 font-medium">
                       Learn More →
                     </button>
                   </div>
@@ -272,8 +272,8 @@ export default function EnergyTrackingPage() {
       </div>
 
       {/* Achievements */}
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Sustainability Achievements</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-8">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Sustainability Achievements</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {achievements.map((achievement) => (
             <div
@@ -281,12 +281,12 @@ export default function EnergyTrackingPage() {
               className={`p-4 rounded-lg border-2 text-center ${
                 achievement.unlocked
                   ? 'border-yellow-400 bg-yellow-50'
-                  : 'border-gray-200 bg-gray-50 opacity-60'
+                  : 'border-neutral-200 bg-neutral-50 opacity-60'
               }`}
             >
               <div className="text-4xl mb-2">{achievement.icon}</div>
-              <h3 className="font-semibold text-gray-900 mb-1">{achievement.title}</h3>
-              <p className="text-xs text-gray-600">{achievement.description}</p>
+              <h3 className="font-semibold text-neutral-900 mb-1">{achievement.title}</h3>
+              <p className="text-xs text-neutral-600">{achievement.description}</p>
               {achievement.unlocked && (
                 <span className="inline-block mt-2 text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
                   Unlocked!
@@ -298,22 +298,22 @@ export default function EnergyTrackingPage() {
       </div>
 
       {/* Recycling Schedule */}
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recycling & Waste Schedule</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-8">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Recycling & Waste Schedule</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {recyclingSchedule.map((schedule, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-4">
+            <div key={index} className="border border-neutral-200 rounded-lg p-4">
               <div className={`w-12 h-12 ${schedule.color} rounded-full flex items-center justify-center mb-3`}>
                 <span className="text-2xl">♻️</span>
               </div>
-              <p className="font-semibold text-gray-900 mb-1">{schedule.day}</p>
-              <p className="text-sm text-gray-600">{schedule.type}</p>
+              <p className="font-semibold text-neutral-900 mb-1">{schedule.day}</p>
+              <p className="text-sm text-neutral-600">{schedule.type}</p>
             </div>
           ))}
         </div>
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">Recycling Guidelines</h3>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+        <div className="mt-4 bg-primary-50 border border-primary-200 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-primary-900 mb-2">Recycling Guidelines</h3>
+          <ul className="text-sm text-primary-800 space-y-1 list-disc list-inside">
             <li>Rinse containers before recycling</li>
             <li>Flatten cardboard boxes to save space</li>
             <li>Remove caps and lids from bottles</li>
@@ -324,27 +324,27 @@ export default function EnergyTrackingPage() {
       </div>
 
       {/* Green Rewards Program */}
-      <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg p-8">
+      <div className="bg-gradient-to-r from-success-500 to-primary-600 text-white rounded-lg p-8">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-3">Green Rewards Program</h2>
-          <p className="text-green-100 mb-6 max-w-2xl mx-auto">
+          <p className="text-success-100 mb-6 max-w-2xl mx-auto">
             Earn points for reducing energy usage, recycling, and sustainable practices. Redeem points for rent discounts, gift cards, and more!
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white bg-opacity-20 rounded-lg p-4">
-              <p className="text-green-100 text-sm mb-1">Your Points</p>
+            <div className="bg-surface bg-opacity-20 rounded-lg p-4">
+              <p className="text-success-100 text-sm mb-1">Your Points</p>
               <p className="text-4xl font-bold">1,250</p>
             </div>
-            <div className="bg-white bg-opacity-20 rounded-lg p-4">
-              <p className="text-green-100 text-sm mb-1">This Month</p>
+            <div className="bg-surface bg-opacity-20 rounded-lg p-4">
+              <p className="text-success-100 text-sm mb-1">This Month</p>
               <p className="text-4xl font-bold">+180</p>
             </div>
-            <div className="bg-white bg-opacity-20 rounded-lg p-4">
-              <p className="text-green-100 text-sm mb-1">Redeemable</p>
+            <div className="bg-surface bg-opacity-20 rounded-lg p-4">
+              <p className="text-success-100 text-sm mb-1">Redeemable</p>
               <p className="text-4xl font-bold">KES 625</p>
             </div>
           </div>
-          <button className="px-6 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-green-50 transition-colors">
+          <button className="px-6 py-3 bg-surface text-success-600 rounded-lg font-semibold hover:bg-success-50 transition-colors">
             Redeem Rewards
           </button>
         </div>

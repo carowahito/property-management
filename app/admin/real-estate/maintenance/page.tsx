@@ -77,15 +77,15 @@ export default function MaintenancePage() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'low':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
       case 'medium':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary-100 text-primary-800';
       case 'high':
         return 'bg-yellow-100 text-yellow-800';
       case 'urgent':
-        return 'bg-red-100 text-red-800';
+        return 'bg-danger-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -94,13 +94,13 @@ export default function MaintenancePage() {
       case 'open':
         return 'bg-yellow-100 text-yellow-800';
       case 'in-progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary-100 text-primary-800';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-100 text-green-800';
       case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -108,39 +108,39 @@ export default function MaintenancePage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Maintenance Requests</h1>
-          <p className='text-gray-600 mt-1'>Track and manage property maintenance requests</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Maintenance Requests</h1>
+          <p className='text-neutral-600 mt-1'>Track and manage property maintenance requests</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ New Request</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>+ New Request</button>
       </div>
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Requests</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalRequests}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Requests</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalRequests}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Open</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Open</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.openRequests}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>In Progress</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.inProgress}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>In Progress</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.inProgress}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Urgent</p>
-          <p className='text-3xl font-bold text-red-600'>{stats.urgent}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Urgent</p>
+          <p className='text-3xl font-bold text-danger-600'>{stats.urgent}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <div className='flex gap-4'>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           >
             <option value='all'>All Status</option>
             <option value='open'>Open</option>
@@ -151,7 +151,7 @@ export default function MaintenancePage() {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           >
             <option value='all'>All Priority</option>
             <option value='low'>Low</option>
@@ -163,46 +163,46 @@ export default function MaintenancePage() {
       </div>
 
       {/* Requests List */}
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Request Details
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Property/Unit
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Issue Type
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Priority
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Assigned To
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredRequests.map((request) => (
-              <tr key={request.id} className='hover:bg-gray-50'>
+              <tr key={request.id} className='hover:bg-neutral-50'>
                 <td className='px-6 py-4'>
-                  <div className='text-sm font-medium text-gray-900'>{request.description}</div>
-                  <div className='text-sm text-gray-500'>by {request.tenantName}</div>
-                  <div className='text-xs text-gray-400'>{request.createdDate}</div>
+                  <div className='text-sm font-medium text-neutral-900'>{request.description}</div>
+                  <div className='text-sm text-neutral-500'>by {request.tenantName}</div>
+                  <div className='text-xs text-neutral-400'>{request.createdDate}</div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{request.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {request.unitNumber}</div>
+                  <div className='text-sm text-neutral-900'>{request.propertyName}</div>
+                  <div className='text-sm text-neutral-500'>Unit {request.unitNumber}</div>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                   {request.issueType}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
@@ -219,10 +219,10 @@ export default function MaintenancePage() {
                     {request.status}
                   </span>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {request.assignedTo || <span className='text-gray-400'>Unassigned</span>}
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
+                  {request.assignedTo || <span className='text-neutral-400'>Unassigned</span>}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-500 space-x-2'>
                   <button  >
                     View
                   </button>

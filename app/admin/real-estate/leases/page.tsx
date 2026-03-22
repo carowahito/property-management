@@ -1,205 +1,203 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { formatDate } from '@/lib/utils';
 
 interface Lease {
   id: string;
-  tenantName: string;
-  propertyName: string;
-  unitNumber: string;
   startDate: string;
   endDate: string;
-  rentAmount: number;
-  securityDeposit: number;
-  status: 'active' | 'expiring-soon' | 'expired' | 'pending';
-  renewalOption: boolean;
+  monthlyRent: string;
+  securityDeposit: string;
+  status: string;
+  tenant: { id: string; name: string };
+  property: { id: string; name: string };
+  unitRef?: { id: string; unitNumber: string } | null;
+  unit?: string | null;
 }
 
 export default function LeasesPage() {
-  const [leases] = useState<Lease[]>([
-    {
-      id: '1',
-      tenantName: 'John Mwangi',
-      propertyName: 'Sunset Apartments',
-      unitNumber: '5A',
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
-      rentAmount: 45000,
-      securityDeposit: 90000,
-      status: 'expiring-soon',
-      renewalOption: true,
-    },
-    {
-      id: '2',
-      tenantName: 'Jane Achieng',
-      propertyName: 'Highland House',
-      unitNumber: '12',
-      startDate: '2024-03-15',
-      endDate: '2025-03-14',
-      rentAmount: 75000,
-      securityDeposit: 150000,
-      status: 'active',
-      renewalOption: true,
-    },
-    {
-      id: '3',
-      tenantName: 'Peter Omondi',
-      propertyName: 'Vista Plaza Office',
-      unitNumber: '8B',
-      startDate: '2024-02-01',
-      endDate: '2025-01-31',
-      rentAmount: 120000,
-      securityDeposit: 240000,
-      status: 'active',
-      renewalOption: false,
-    },
-  ]);
-
+  const [leases, setLeases] = useState<Lease[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+
+  useEffect(() => {
+    fetch('/api/leases?limit=200')
+      .then((r) => r.json())
+      .then((data) => {
+        setLeases(data.leases || []);
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
+  }, []);
 
   const filteredLeases = leases.filter(
     (lease) => filterStatus === 'all' || lease.status === filterStatus
   );
 
+  const now = new Date();
+  const sixMonthsFromNow = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate());
+
   const stats = {
     totalLeases: leases.length,
-    activeLeases: leases.filter((l) => l.status === 'active').length,
-    expiringSoon: leases.filter((l) => l.status === 'expiring-soon').length,
-    totalRevenue: leases.reduce((sum, l) => sum + l.rentAmount, 0),
+    activeLeases: leases.filter((l) => l.status === 'ACTIVE').length,
+    expiringSoon: leases.filter((l) => {
+      const end = new Date(l.endDate);
+      return l.status === 'ACTIVE' && end <= sixMonthsFromNow && end >= now;
+    }).length,
+    totalRevenue: leases
+      .filter((l) => l.status === 'ACTIVE')
+      .reduce((sum, l) => sum + Number(l.monthlyRent), 0),
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'expiring-soon':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'expired':
-        return 'bg-red-100 text-red-800';
-      case 'pending':
-        return 'bg-blue-100 text-blue-800';
+      case 'ACTIVE':
+        return 'bg-success-100 text-green-800';
+      case 'EXPIRED':
+        return 'bg-danger-100 text-red-800';
+      case 'PENDING':
+        return 'bg-primary-100 text-primary-800';
+      case 'TERMINATED':
+        return 'bg-neutral-100 text-neutral-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center h-64'>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600'></div>
+      </div>
+    );
+  }
 
   return (
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Lease Management</h1>
-          <p className='text-gray-600 mt-1'>View and manage all lease agreements</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Lease Management</h1>
+          <p className='text-neutral-600 mt-1'>View and manage all lease agreements</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Create New Lease</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>+ Create New Lease</button>
       </div>
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Leases</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalLeases}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Leases</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalLeases}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active Leases</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.activeLeases}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Active Leases</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.activeLeases}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Expiring Soon</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Expiring Soon</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.expiringSoon}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Monthly Revenue</p>
-          <p className='text-3xl font-bold text-blue-600'>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Monthly Revenue</p>
+          <p className='text-3xl font-bold text-primary-600'>
             KES {stats.totalRevenue.toLocaleString()}
           </p>
         </div>
       </div>
 
       {/* Filter */}
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+          className='px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
         >
           <option value='all'>All Leases</option>
-          <option value='active'>Active</option>
-          <option value='expiring-soon'>Expiring Soon</option>
-          <option value='expired'>Expired</option>
-          <option value='pending'>Pending</option>
+          <option value='ACTIVE'>Active</option>
+          <option value='EXPIRED'>Expired</option>
+          <option value='PENDING'>Pending</option>
+          <option value='TERMINATED'>Terminated</option>
         </select>
       </div>
 
       {/* Leases Table */}
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
-            <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Tenant
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Property/Unit
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Lease Period
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Rent Amount
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Security Deposit
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Status
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
-            {filteredLeases.map((lease) => (
-              <tr key={lease.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm font-medium text-gray-900'>{lease.tenantName}</div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{lease.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {lease.unitNumber}</div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{lease.startDate}</div>
-                  <div className='text-sm text-gray-500'>to {lease.endDate}</div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  KES {lease.rentAmount.toLocaleString()}/mo
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  KES {lease.securityDeposit.toLocaleString()}
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(lease.status)}`}
-                  >
-                    {lease.status.replace('-', ' ')}
-                  </span>
-                  {lease.renewalOption && (
-                    <span className='ml-2 text-xs text-blue-600'>🔄 Renewable</span>
-                  )}
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2'>
-                  <button  >
-                    View
-                  </button>
-                  <button  >
-                    Renew
-                  </button>
-                </td>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        {filteredLeases.length === 0 ? (
+          <div className='p-12 text-center'>
+            <p className='text-neutral-500'>No leases found.</p>
+            <p className='text-sm text-neutral-400 mt-2'>Create a new lease to get started.</p>
+          </div>
+        ) : (
+          <table className='min-w-full divide-y divide-neutral-200'>
+            <thead className='bg-neutral-50'>
+              <tr>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                  Tenant
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                  Property/Unit
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                  Lease Period
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                  Rent Amount
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                  Security Deposit
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                  Status
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className='bg-surface divide-y divide-neutral-200'>
+              {filteredLeases.map((lease) => (
+                <tr key={lease.id} className='hover:bg-neutral-50'>
+                  <td className='px-6 py-4 whitespace-nowrap'>
+                    <div className='text-sm font-medium text-neutral-900'>
+                      {lease.tenant?.name || '\u2014'}
+                    </div>
+                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap'>
+                    <div className='text-sm text-neutral-900'>{lease.property?.name || '\u2014'}</div>
+                    <div className='text-sm text-neutral-500'>
+                      {lease.unitRef?.unitNumber
+                        ? `Unit ${lease.unitRef.unitNumber}`
+                        : lease.unit
+                          ? `Unit ${lease.unit}`
+                          : ''}
+                    </div>
+                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap'>
+                    <div className='text-sm text-neutral-900'>{formatDate(lease.startDate)}</div>
+                    <div className='text-sm text-neutral-500'>to {formatDate(lease.endDate)}</div>
+                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
+                    KES {Number(lease.monthlyRent).toLocaleString()}/mo
+                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
+                    KES {Number(lease.securityDeposit).toLocaleString()}
+                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap'>
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(lease.status)}`}
+                    >
+                      {lease.status}
+                    </span>
+                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-500 space-x-2'>
+                    <button>View</button>
+                    <button>Renew</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

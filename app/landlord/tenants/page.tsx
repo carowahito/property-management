@@ -16,29 +16,29 @@ export default function LandlordTenantsPage() {
         <Button variant="success" size="lg">+ Add Tenant</Button>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="bg-surface shadow rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-neutral-200">
+          <thead className="bg-neutral-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rent</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Move-in Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Tenant</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Unit</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Property</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Rent</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Move-in Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-neutral-200">
             {tenants.map(tenant => (
-              <tr key={tenant.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tenant.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{tenant.unit}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{tenant.property}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${tenant.rent}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{tenant.moveIn}</td>
+              <tr key={tenant.id} className="hover:bg-neutral-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{tenant.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">{tenant.unit}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">{tenant.property}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">${tenant.rent}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">{tenant.moveIn}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-success-100 text-success-800">
                     {tenant.status}
                   </span>
                 </td>

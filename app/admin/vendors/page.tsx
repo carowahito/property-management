@@ -62,44 +62,44 @@ export default function AdminVendorsPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Vendors CRM</h1>
-          <p className='text-gray-600 mt-1'>Manage vendor relationships and performance</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Vendors CRM</h1>
+          <p className='text-neutral-600 mt-1'>Manage vendor relationships and performance</p>
         </div>
         <Button variant="primary" size="lg">+ Add Vendor</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Vendors</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.totalVendors}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Vendors</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalVendors}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active Vendors</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.activeVendors}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Active Vendors</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.activeVendors}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Completed Jobs</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Completed Jobs</p>
           <p className='text-3xl font-bold text-purple-600'>{stats.totalCompletedJobs}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Average Rating</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Average Rating</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.avgRating} ⭐</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-6'>
+      <div className='bg-surface shadow rounded-lg p-6'>
         <div className='mb-4 flex gap-4'>
           <input
             type='text'
             placeholder='Search vendors by name or category...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='flex-1 px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           />
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className='px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+            className='px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500'
           >
             <option value='all'>All Categories</option>
             <option value='Plumbing'>Plumbing</option>
@@ -111,68 +111,68 @@ export default function AdminVendorsPage() {
         </div>
 
         <div className='overflow-x-auto'>
-          <table className='min-w-full divide-y divide-gray-200'>
-            <thead className='bg-gray-50'>
+          <table className='min-w-full divide-y divide-neutral-200'>
+            <thead className='bg-neutral-50'>
               <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Vendor
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Category
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Contact
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Type
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Rating
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Jobs
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Status
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className='bg-white divide-y divide-gray-200'>
+            <tbody className='bg-surface divide-y divide-neutral-200'>
               {filteredVendors.map((vendor) => (
-                <tr key={vendor.id} className='hover:bg-gray-50 cursor-pointer' onClick={() => window.location.href = `/admin/vendors/${vendor.id}`}>
+                <tr key={vendor.id} className='hover:bg-neutral-50 cursor-pointer' onClick={() => window.location.href = `/admin/vendors/${vendor.id}`}>
                   <td className='px-6 py-4'>
                     <div className='flex items-center'>
-                      <div className='h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center'>
-                        <span className='text-orange-600 font-semibold text-lg'>
+                      <div className='h-10 w-10 rounded-full bg-warning-100 flex items-center justify-center'>
+                        <span className='text-warning-600 font-semibold text-lg'>
                           {vendor.name.charAt(0)}
                         </span>
                       </div>
                       <div className='ml-4'>
-                        <Link href={`/admin/vendors/${vendor.id}`} className='text-sm font-medium text-blue-600 hover:text-blue-800'>
+                        <Link href={`/admin/vendors/${vendor.id}`} className='text-sm font-medium text-primary-600 hover:text-primary-800'>
                           {vendor.name}
                         </Link>
-                        <p className='text-sm text-gray-500'>ID: {vendor.id}</p>
+                        <p className='text-sm text-neutral-500'>ID: {vendor.id}</p>
                       </div>
                     </div>
                   </td>
                   <td className='px-6 py-4'>
-                    <span className='px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800'>
+                    <span className='px-2 py-1 text-xs font-semibold rounded-full bg-primary-100 text-primary-800'>
                       {vendor.category}
                     </span>
                   </td>
                   <td className='px-6 py-4'>
-                    <p className='text-sm text-gray-900'>{vendor.email}</p>
-                    <p className='text-sm text-gray-500'>{vendor.phone}</p>
+                    <p className='text-sm text-neutral-900'>{vendor.email}</p>
+                    <p className='text-sm text-neutral-500'>{vendor.phone}</p>
                   </td>
                   <td className='px-6 py-4'>
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         vendor.vendorType === 'company'
                           ? 'bg-purple-100 text-purple-800'
-                          : 'bg-gray-100 text-gray-800'
+                          : 'bg-neutral-100 text-neutral-800'
                       }`}
                     >
                       {vendor.vendorType}
@@ -181,25 +181,25 @@ export default function AdminVendorsPage() {
                   <td className='px-6 py-4'>
                     <div className='flex items-center'>
                       <span className='text-yellow-500 mr-1'>⭐</span>
-                      <span className='text-sm font-semibold text-gray-900'>{vendor.rating}</span>
+                      <span className='text-sm font-semibold text-neutral-900'>{vendor.rating}</span>
                     </div>
                   </td>
                   <td className='px-6 py-4'>
-                    <p className='text-sm text-gray-900'>
-                      <span className='font-semibold text-green-600'>{vendor.completedJobs}</span> completed
+                    <p className='text-sm text-neutral-900'>
+                      <span className='font-semibold text-success-600'>{vendor.completedJobs}</span> completed
                     </p>
-                    <p className='text-sm text-gray-500'>
-                      <span className='font-semibold text-blue-600'>{vendor.activeJobs}</span> active
+                    <p className='text-sm text-neutral-500'>
+                      <span className='font-semibold text-primary-600'>{vendor.activeJobs}</span> active
                     </p>
                   </td>
                   <td className='px-6 py-4'>
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         vendor.status === 'active'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-success-100 text-green-800'
                           : vendor.status === 'suspended'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-danger-100 text-red-800'
+                            : 'bg-neutral-100 text-neutral-800'
                       }`}
                     >
                       {vendor.status}
@@ -227,13 +227,13 @@ export default function AdminVendorsPage() {
       {/* Vendor Details Modal */}
       {selectedVendor && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
-          <div className='bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
+          <div className='bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
             <div className='p-6'>
               <div className='flex items-center justify-between mb-6'>
-                <h2 className='text-2xl font-bold text-gray-900'>Vendor Details</h2>
+                <h2 className='text-2xl font-bold text-neutral-900'>Vendor Details</h2>
                 <button
                   onClick={() => setSelectedVendor(null)}
-                  className='text-gray-400 hover:text-gray-600'
+                  className='text-neutral-400 hover:text-neutral-600'
                 >
                   <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path
@@ -247,23 +247,23 @@ export default function AdminVendorsPage() {
               </div>
 
               <div className='space-y-4'>
-                <div className='bg-gray-50 rounded-lg p-4'>
-                  <h3 className='font-semibold text-gray-900 mb-2'>Contact Information</h3>
-                  <p className='text-sm text-gray-600'>Name: {selectedVendor.name}</p>
-                  <p className='text-sm text-gray-600'>Category: {selectedVendor.category}</p>
-                  <p className='text-sm text-gray-600'>Type: {selectedVendor.vendorType}</p>
-                  <p className='text-sm text-gray-600'>Email: {selectedVendor.email}</p>
-                  <p className='text-sm text-gray-600'>Phone: {selectedVendor.phone}</p>
+                <div className='bg-neutral-50 rounded-lg p-4'>
+                  <h3 className='font-semibold text-neutral-900 mb-2'>Contact Information</h3>
+                  <p className='text-sm text-neutral-600'>Name: {selectedVendor.name}</p>
+                  <p className='text-sm text-neutral-600'>Category: {selectedVendor.category}</p>
+                  <p className='text-sm text-neutral-600'>Type: {selectedVendor.vendorType}</p>
+                  <p className='text-sm text-neutral-600'>Email: {selectedVendor.email}</p>
+                  <p className='text-sm text-neutral-600'>Phone: {selectedVendor.phone}</p>
                 </div>
 
-                <div className='bg-gray-50 rounded-lg p-4'>
-                  <h3 className='font-semibold text-gray-900 mb-2'>Performance</h3>
-                  <p className='text-sm text-gray-600'>Rating: {selectedVendor.rating} ⭐</p>
-                  <p className='text-sm text-gray-600'>
+                <div className='bg-neutral-50 rounded-lg p-4'>
+                  <h3 className='font-semibold text-neutral-900 mb-2'>Performance</h3>
+                  <p className='text-sm text-neutral-600'>Rating: {selectedVendor.rating} ⭐</p>
+                  <p className='text-sm text-neutral-600'>
                     Completed Jobs: {selectedVendor.completedJobs}
                   </p>
-                  <p className='text-sm text-gray-600'>Active Jobs: {selectedVendor.activeJobs}</p>
-                  <p className='text-sm text-gray-600'>Status: {selectedVendor.status}</p>
+                  <p className='text-sm text-neutral-600'>Active Jobs: {selectedVendor.activeJobs}</p>
+                  <p className='text-sm text-neutral-600'>Status: {selectedVendor.status}</p>
                 </div>
 
                 <div className='flex gap-3 pt-4'>

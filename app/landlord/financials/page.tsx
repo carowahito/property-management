@@ -25,18 +25,18 @@ export default function LandlordFinancials() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Financial Overview</h1>
+        <h1 className="text-3xl font-bold text-neutral-900">Financial Overview</h1>
         <div className="flex gap-3">
           <Link
             href="/landlord/financials/statements"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition"
           >
             📊 View Statements
           </Link>
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md"
+            className="px-4 py-2 border border-neutral-300 rounded-md"
           >
             <option value="this-month">This Month</option>
             <option value="last-month">Last Month</option>
@@ -47,59 +47,59 @@ export default function LandlordFinancials() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">💰</span>
-          <p className="text-sm text-gray-600">Total Revenue</p>
-          <p className="text-3xl font-bold text-green-600">${financialSummary.totalRevenue.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-1">${financialSummary.collectedRent.toLocaleString()} collected</p>
+          <p className="text-sm text-neutral-600">Total Revenue</p>
+          <p className="text-3xl font-bold text-success-600">${financialSummary.totalRevenue.toLocaleString()}</p>
+          <p className="text-xs text-neutral-500 mt-1">${financialSummary.collectedRent.toLocaleString()} collected</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">📤</span>
-          <p className="text-sm text-gray-600">Total Expenses</p>
-          <p className="text-3xl font-bold text-red-600">${financialSummary.expenses.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-1">22% of revenue</p>
+          <p className="text-sm text-neutral-600">Total Expenses</p>
+          <p className="text-3xl font-bold text-danger-600">${financialSummary.expenses.toLocaleString()}</p>
+          <p className="text-xs text-neutral-500 mt-1">22% of revenue</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">📊</span>
-          <p className="text-sm text-gray-600">Net Income</p>
-          <p className="text-3xl font-bold text-blue-600">${financialSummary.netIncome.toLocaleString()}</p>
-          <p className="text-xs text-green-500 mt-1">+{financialSummary.profitMargin}% margin</p>
+          <p className="text-sm text-neutral-600">Net Income</p>
+          <p className="text-3xl font-bold text-primary-600">${financialSummary.netIncome.toLocaleString()}</p>
+          <p className="text-xs text-success-500 mt-1">+{financialSummary.profitMargin}% margin</p>
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-surface shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-neutral-200">
           <h2 className="text-lg font-semibold">Recent Transactions</h2>
         </div>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-neutral-200">
+          <thead className="bg-neutral-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Description</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Amount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-neutral-200">
             {transactions.map(tx => (
-              <tr key={tx.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{tx.date}</td>
-                <td className="px-6 py-4 text-sm text-gray-900">
+              <tr key={tx.id} className="hover:bg-neutral-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">{tx.date}</td>
+                <td className="px-6 py-4 text-sm text-neutral-900">
                   {tx.tenant || tx.vendor} {tx.unit ? `- Unit ${tx.unit}` : ''}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-800">
                     {tx.type}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <span className={tx.amount > 0 ? 'text-green-600' : 'text-red-600'}>
+                  <span className={tx.amount > 0 ? 'text-success-600' : 'text-danger-600'}>
                     ${Math.abs(tx.amount)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-success-100 text-success-800">
                     {tx.status}
                   </span>
                 </td>

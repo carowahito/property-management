@@ -84,43 +84,43 @@ export default function LateFeesPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Late Fees Management</h1>
-          <p className='text-gray-600 mt-1'>Track and manage late payment fees</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Late Fees Management</h1>
+          <p className='text-neutral-600 mt-1'>Track and manage late payment fees</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>Configure Policies</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>Configure Policies</button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Pending Fees</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Pending Fees</p>
           <p className='text-3xl font-bold text-yellow-600'>
             KES {stats.totalPending.toLocaleString()}
           </p>
-          <p className='text-xs text-gray-500 mt-1'>{stats.count} outstanding</p>
+          <p className='text-xs text-neutral-500 mt-1'>{stats.count} outstanding</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Collected Fees</p>
-          <p className='text-3xl font-bold text-green-600'>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Collected Fees</p>
+          <p className='text-3xl font-bold text-success-600'>
             KES {stats.totalCollected.toLocaleString()}
           </p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Waived Fees</p>
-          <p className='text-3xl font-bold text-blue-600'>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Waived Fees</p>
+          <p className='text-3xl font-bold text-primary-600'>
             KES {stats.totalWaived.toLocaleString()}
           </p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>All Late Fees</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>All Late Fees</p>
           <p className='text-3xl font-bold text-purple-600'>{lateFees.length}</p>
         </div>
       </div>
 
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className='px-4 py-2 border border-gray-300 rounded-lg'
+          className='px-4 py-2 border border-neutral-300 rounded-lg'
         >
           <option value='all'>All Status</option>
           <option value='pending'>Pending</option>
@@ -129,64 +129,64 @@ export default function LateFeesPage() {
         </select>
       </div>
 
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Tenant
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Property/Unit
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Rent Amount
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Due Date
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Days Late
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Fee Amount
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredFees.map((fee) => (
-              <tr key={fee.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 text-sm font-medium text-gray-900'>{fee.tenantName}</td>
+              <tr key={fee.id} className='hover:bg-neutral-50'>
+                <td className='px-6 py-4 text-sm font-medium text-neutral-900'>{fee.tenantName}</td>
                 <td className='px-6 py-4'>
-                  <div className='text-sm text-gray-900'>{fee.propertyName}</div>
-                  <div className='text-sm text-gray-500'>Unit {fee.unitNumber}</div>
+                  <div className='text-sm text-neutral-900'>{fee.propertyName}</div>
+                  <div className='text-sm text-neutral-500'>Unit {fee.unitNumber}</div>
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>
+                <td className='px-6 py-4 text-sm text-neutral-900'>
                   KES {fee.rentAmount.toLocaleString()}
                 </td>
-                <td className='px-6 py-4 text-sm text-gray-900'>{fee.dueDate}</td>
+                <td className='px-6 py-4 text-sm text-neutral-900'>{fee.dueDate}</td>
                 <td className='px-6 py-4'>
                   <span
                     className={`text-sm font-semibold ${
                       fee.daysLate > 10
-                        ? 'text-red-600'
+                        ? 'text-danger-600'
                         : fee.daysLate > 5
-                          ? 'text-orange-600'
+                          ? 'text-warning-600'
                           : 'text-yellow-600'
                     }`}
                   >
                     {fee.daysLate} days
                   </span>
                 </td>
-                <td className='px-6 py-4 text-sm font-semibold text-gray-900'>
+                <td className='px-6 py-4 text-sm font-semibold text-neutral-900'>
                   KES {fee.feeAmount.toLocaleString()}
-                  {fee.notes && <div className='text-xs text-gray-500 mt-1'>{fee.notes}</div>}
+                  {fee.notes && <div className='text-xs text-neutral-500 mt-1'>{fee.notes}</div>}
                 </td>
                 <td className='px-6 py-4'>
                   <span
@@ -194,8 +194,8 @@ export default function LateFeesPage() {
                       fee.status === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
                         : fee.status === 'collected'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
+                          ? 'bg-success-100 text-green-800'
+                          : 'bg-primary-100 text-primary-800'
                     }`}
                   >
                     {fee.status}

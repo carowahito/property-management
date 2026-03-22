@@ -519,12 +519,12 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
   };
 
   // Consistent input styling for all fields
-  const inputClass = "w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent";
-  const selectClass = "w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white";
-  const textareaClass = "w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent";
-  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
-  const smallLabelClass = "block text-xs font-medium text-gray-600 mb-1";
-  const checkboxClass = "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded";
+  const inputClass = "w-full h-10 px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent";
+  const selectClass = "w-full h-10 px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white";
+  const textareaClass = "w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent";
+  const labelClass = "block text-sm font-medium text-neutral-700 mb-1";
+  const smallLabelClass = "block text-xs font-medium text-neutral-600 mb-1";
+  const checkboxClass = "h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded";
 
   const getSelectedProperty = () => properties.find((p: any) => p.id === formData.selectedPropertyId);
 
@@ -534,7 +534,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         return (
           <div className="space-y-6">
             {/* Property Type Toggle */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
               <label className={labelClass}>Property Type *</label>
               <div className="flex gap-4 mt-2">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -544,7 +544,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     value="residential"
                     checked={formData.propertyType === 'residential'}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600"
+                    className="h-4 w-4 text-primary-600"
                   />
                   <span className="text-sm font-medium">Residential Property</span>
                 </label>
@@ -555,7 +555,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     value="commercial"
                     checked={formData.propertyType === 'commercial'}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600"
+                    className="h-4 w-4 text-primary-600"
                   />
                   <span className="text-sm font-medium">Commercial Property</span>
                 </label>
@@ -564,7 +564,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
             {/* Section A: Landlord Details */}
             <div>
-              <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Section A: Landlord Details</h4>
+              <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2">Section A: Landlord Details</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>First Name *</label>
@@ -665,11 +665,11 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         return (
           <div className="space-y-6">
             {/* Section B: Ownership Details */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Section B: Ownership Details</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2">Section B: Ownership Details</h4>
             
             <div className="space-y-4">
               {/* Legal Owner Question */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-neutral-50 rounded-lg p-4">
                 <label className={labelClass}>
                   Is {formData.firstName || 'the named person'} {formData.lastName || ''} the legal owner of the property? *
                 </label>
@@ -680,7 +680,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       name="isNamedPersonLegalOwner"
                       checked={formData.isNamedPersonLegalOwner === true}
                       onChange={() => setFormData(prev => ({ ...prev, isNamedPersonLegalOwner: true }))}
-                      className="h-4 w-4 text-blue-600"
+                      className="h-4 w-4 text-primary-600"
                     />
                     <span className="font-medium">Yes</span>
                   </label>
@@ -690,7 +690,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       name="isNamedPersonLegalOwner"
                       checked={formData.isNamedPersonLegalOwner === false}
                       onChange={() => setFormData(prev => ({ ...prev, isNamedPersonLegalOwner: false }))}
-                      className="h-4 w-4 text-blue-600"
+                      className="h-4 w-4 text-primary-600"
                     />
                     <span className="font-medium">No</span>
                   </label>
@@ -699,12 +699,12 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
               {/* Authority Letter Upload - Required if NOT legal owner */}
               {!formData.isNamedPersonLegalOwner && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
                   <label className={labelClass}>
                     Authority Letter / Power of Attorney *
-                    <span className="text-red-500 ml-1">(Required)</span>
+                    <span className="text-danger-500 ml-1">(Required)</span>
                   </label>
-                  <p className="text-sm text-amber-700 mb-3">
+                  <p className="text-sm text-warning-700 mb-3">
                     Since {formData.firstName || 'the named person'} is not the legal owner, please attach the authority letter or power of attorney.
                   </p>
                   <input
@@ -717,11 +717,11 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                   <button
                     type="button"
                     onClick={() => fileRefs.authorityLetter.current?.click()}
-                    className={`${inputClass} text-left ${formData.authorityLetter ? 'text-gray-900 bg-green-50 border-green-300' : 'text-gray-400'}`}
+                    className={`${inputClass} text-left ${formData.authorityLetter ? 'text-neutral-900 bg-success-50 border-success-300' : 'text-neutral-400'}`}
                   >
                     {formData.authorityLetter ? (
                       <span className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         {formData.authorityLetter.name}
@@ -746,8 +746,8 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       key={option.value}
                       className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition ${
                         formData.ownershipType === option.value 
-                          ? 'border-blue-500 bg-blue-50' 
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-primary-500 bg-primary-50' 
+                          : 'border-neutral-200 hover:border-neutral-300'
                       }`}
                     >
                       <input
@@ -756,7 +756,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                         value={option.value}
                         checked={formData.ownershipType === option.value}
                         onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600"
+                        className="h-4 w-4 text-primary-600"
                       />
                       <span className="text-xl">{option.icon}</span>
                       <span className="font-medium">{option.label}</span>
@@ -767,8 +767,8 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
               {/* Company Details - Show if Company selected */}
               {formData.ownershipType === 'company' && (
-                <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                  <h5 className="font-medium text-gray-700">Company Details</h5>
+                <div className="bg-neutral-50 rounded-lg p-4 space-y-4">
+                  <h5 className="font-medium text-neutral-700">Company Details</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Company Name *</label>
@@ -831,28 +831,28 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
               {/* Joint Ownership - Additional Owners */}
               {formData.ownershipType === 'joint' && (
-                <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                <div className="bg-neutral-50 rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h5 className="font-medium text-gray-700">Additional Named Owners</h5>
+                    <h5 className="font-medium text-neutral-700">Additional Named Owners</h5>
                     <Button type="button" variant="outline" size="sm" onClick={addAdditionalOwner}>
                       + Add Owner
                     </Button>
                   </div>
                   
                   {formData.additionalOwners.length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-4">
+                    <p className="text-sm text-neutral-500 text-center py-4">
                       Click &quot;Add Owner&quot; to include additional owners for joint ownership
                     </p>
                   )}
                   
                   {formData.additionalOwners.map((owner, index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div key={index} className="bg-white border border-neutral-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h6 className="font-medium text-gray-700">Owner {index + 2}</h6>
+                        <h6 className="font-medium text-neutral-700">Owner {index + 2}</h6>
                         <button
                           type="button"
                           onClick={() => removeAdditionalOwner(index)}
-                          className="text-red-500 hover:text-red-700 text-sm"
+                          className="text-danger-500 hover:text-danger-700 text-sm"
                         >
                           Remove
                         </button>
@@ -917,7 +917,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         return (
           <div className="space-y-6">
             {/* Section C: Property Details */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Section C: Property Details</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2">Section C: Property Details</h4>
             
             {/* Property Selection Dropdown */}
             <div>
@@ -935,11 +935,11 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     {property.name} - {property.address} (ID: {property.id})
                   </option>
                 ))}
-                <option value="add_new" className="text-blue-600 font-medium">
+                <option value="add_new" className="text-primary-600 font-medium">
                   ➕ Add New Property
                 </option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-neutral-500 mt-1">
                 Showing {formData.propertyType} properties only. Select an existing property or add a new one.
               </p>
             </div>
@@ -947,18 +947,18 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             {/* Selected Property Info */}
             {formData.selectedPropertyId && formData.selectedPropertyId !== 'add_new' && (
               <>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h5 className="font-medium text-blue-800 mb-2">Selected Property</h5>
-                  <p className="text-sm text-blue-700">{getSelectedProperty()?.name}</p>
-                  <p className="text-xs text-blue-600">{getSelectedProperty()?.address}</p>
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                  <h5 className="font-medium text-primary-800 mb-2">Selected Property</h5>
+                  <p className="text-sm text-primary-700">{getSelectedProperty()?.name}</p>
+                  <p className="text-xs text-primary-600">{getSelectedProperty()?.address}</p>
                 </div>
 
                 {/* Unit Selection */}
                 <div className="border-t pt-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h5 className="font-medium text-gray-800">Landlord&apos;s Units</h5>
-                      <p className="text-sm text-gray-500">Select existing units or add new units owned by this landlord</p>
+                      <h5 className="font-medium text-neutral-800">Landlord&apos;s Units</h5>
+                      <p className="text-sm text-neutral-500">Select existing units or add new units owned by this landlord</p>
                     </div>
                   </div>
 
@@ -977,8 +977,8 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                               disabled={isSelected}
                               className={`px-3 py-2 rounded-lg text-sm border transition ${
                                 isSelected 
-                                  ? 'bg-blue-100 border-blue-300 text-blue-700 cursor-not-allowed' 
-                                  : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                                  ? 'bg-primary-100 border-primary-300 text-primary-700 cursor-not-allowed' 
+                                  : 'bg-white border-neutral-200 hover:border-primary-300 hover:bg-primary-50'
                               }`}
                             >
                               Unit {unit.name} ({unit.type}) {isSelected && '✓'}
@@ -1003,15 +1003,15 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                   {formData.landlordUnits.length > 0 && (
                     <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                       {formData.landlordUnits.map((unit, index) => (
-                        <div key={unit.unitId} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div key={unit.unitId} className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
-                            <h6 className="font-semibold text-gray-800">
+                            <h6 className="font-semibold text-neutral-800">
                               Unit {index + 1}: {unit.unitNumber || 'New Unit'}
                             </h6>
                             <button
                               type="button"
                               onClick={() => removeLandlordUnit(index)}
-                              className="text-red-500 hover:text-red-700 text-sm"
+                              className="text-danger-500 hover:text-danger-700 text-sm"
                             >
                               Remove
                             </button>
@@ -1068,7 +1068,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
                           {/* Row 2: Tenant Assignment (only if Occupied) */}
                           {unit.status === 'occupied' && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                            <div className="bg-warning-50 border border-warning-200 rounded-lg p-3 mb-3">
                               <label className={smallLabelClass}>Assign Tenant *</label>
                               <select
                                 value={unit.tenantId}
@@ -1083,11 +1083,11 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                               >
                                 <option value="">-- Select Tenant --</option>
                                 {/* TODO: Fetch real tenants from API */}
-                                <option value="add_new" className="text-blue-600">
+                                <option value="add_new" className="text-primary-600">
                                   ➕ Add New Tenant
                                 </option>
                               </select>
-                              <p className="text-xs text-amber-600 mt-1">
+                              <p className="text-xs text-warning-600 mt-1">
                                 Unit is marked as occupied - please assign a tenant
                               </p>
                             </div>
@@ -1103,13 +1103,13 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                                     type="number"
                                     value={unit.bedrooms}
                                     onChange={(e) => updateLandlordUnit(index, 'bedrooms', e.target.value)}
-                                    className={`${inputClass} ${getBedroomsFromType(unit.unitType) ? 'bg-gray-100' : ''}`}
+                                    className={`${inputClass} ${getBedroomsFromType(unit.unitType) ? 'bg-neutral-100' : ''}`}
                                     min="0"
                                     placeholder="0"
                                     readOnly={!!getBedroomsFromType(unit.unitType)}
                                   />
                                   {getBedroomsFromType(unit.unitType) && (
-                                    <p className="text-xs text-gray-500 mt-1">Auto-set from type</p>
+                                    <p className="text-xs text-neutral-500 mt-1">Auto-set from type</p>
                                   )}
                                 </div>
                                 <div>
@@ -1250,7 +1250,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                                     type="checkbox"
                                     checked={unit.amenities.includes(amenity)}
                                     onChange={() => toggleUnitAmenity(index, amenity)}
-                                    className="w-3 h-3 text-blue-600 rounded"
+                                    className="w-3 h-3 text-primary-600 rounded"
                                   />
                                   {amenity}
                                 </label>
@@ -1283,7 +1283,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         return (
           <div className="space-y-6">
             {/* Section D: Management Services */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Section D: Management Services</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2">Section D: Management Services</h4>
             
             <div>
               <label className={labelClass}>Services Required *</label>
@@ -1299,7 +1299,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                   { value: 'inspections', label: 'Property Inspections' },
                   { value: 'legal_compliance', label: 'Legal Compliance & Notices' },
                 ].map(service => (
-                  <label key={service.value} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <label key={service.value} className="flex items-center gap-2 p-2 bg-neutral-50 rounded">
                     <input
                       type="checkbox"
                       checked={formData.servicesRequired.includes(service.value)}
@@ -1326,7 +1326,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             </div>
 
             {/* Section E: Financial & Access Details */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Section E: Financial & Access Details</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2 mt-8">Section E: Financial & Access Details</h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1359,8 +1359,8 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
             {/* M-Pesa Details - Show when M-Pesa or Mixed selected */}
             {(formData.rentCollectionMethod === 'mpesa' || formData.rentCollectionMethod === 'mixed') && (
-              <div className="border border-green-200 bg-green-50 rounded-lg p-4 space-y-4">
-                <h5 className="font-medium text-green-800 flex items-center gap-2">
+              <div className="border border-success-200 bg-success-50 rounded-lg p-4 space-y-4">
+                <h5 className="font-medium text-success-800 flex items-center gap-2">
                   <span className="text-xl">📱</span> M-Pesa Deposit Details
                 </h5>
                 
@@ -1374,7 +1374,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                         value="mobile"
                         checked={formData.mpesaDepositType === 'mobile'}
                         onChange={handleInputChange}
-                        className="h-4 w-4 text-green-600"
+                        className="h-4 w-4 text-success-600"
                       />
                       <span className="text-sm font-medium">Mobile Number</span>
                     </label>
@@ -1385,7 +1385,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                         value="paybill"
                         checked={formData.mpesaDepositType === 'paybill'}
                         onChange={handleInputChange}
-                        className="h-4 w-4 text-green-600"
+                        className="h-4 w-4 text-success-600"
                       />
                       <span className="text-sm font-medium">Paybill Number</span>
                     </label>
@@ -1403,7 +1403,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       placeholder="+254 7XX XXX XXX"
                       className={inputClass}
                     />
-                    <p className="text-xs text-gray-500 mt-1">This number will receive rent payments via M-Pesa</p>
+                    <p className="text-xs text-neutral-500 mt-1">This number will receive rent payments via M-Pesa</p>
                   </div>
                 )}
 
@@ -1438,8 +1438,8 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
             {/* Bank Details - Show when Bank or Mixed selected */}
             {(formData.rentCollectionMethod === 'bank' || formData.rentCollectionMethod === 'mixed') && (
-              <div className="border border-blue-200 bg-blue-50 rounded-lg p-4 space-y-4">
-                <h5 className="font-medium text-blue-800 flex items-center gap-2">
+              <div className="border border-primary-200 bg-primary-50 rounded-lg p-4 space-y-4">
+                <h5 className="font-medium text-primary-800 flex items-center gap-2">
                   <span className="text-xl">🏦</span> Bank Details (for Payouts)
                 </h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1490,7 +1490,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             )}
 
             {/* Pricing & Commission Section */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">Pricing & Commission</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2 mt-8">Pricing & Commission</h4>
             
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
               <h5 className="font-medium text-purple-800">
@@ -1512,7 +1512,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       step="0.5"
                       placeholder="e.g., 10"
                     />
-                    <span className="text-sm text-gray-600 whitespace-nowrap">% of monthly rent collected</span>
+                    <span className="text-sm text-neutral-600 whitespace-nowrap">% of monthly rent collected</span>
                   </div>
                 </div>
                 
@@ -1520,7 +1520,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                   <div>
                     <label className={labelClass}>Tenant Placement Fee *</label>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Equivalent to</span>
+                      <span className="text-sm text-neutral-600">Equivalent to</span>
                       <input
                         type="number"
                         name="tenantPlacementFeeMonths"
@@ -1531,7 +1531,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                         step="0.5"
                         placeholder="1"
                       />
-                      <span className="text-sm text-gray-600 whitespace-nowrap">month&apos;s rent (one-time, per new tenant)</span>
+                      <span className="text-sm text-neutral-600 whitespace-nowrap">month&apos;s rent (one-time, per new tenant)</span>
                     </div>
                   </div>
                 ) : (
@@ -1576,7 +1576,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                             step="0.5"
                             placeholder="e.g., 15"
                           />
-                          <span className="text-sm text-gray-600">% of annual rent</span>
+                          <span className="text-sm text-neutral-600">% of annual rent</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -1590,7 +1590,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                             step="0.5"
                             placeholder="e.g., 1"
                           />
-                          <span className="text-sm text-gray-600">month(s) rent</span>
+                          <span className="text-sm text-neutral-600">month(s) rent</span>
                         </div>
                       )}
                     </div>
@@ -1600,8 +1600,8 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             </div>
 
             {/* Payment & Disbursement */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
-              <h5 className="font-medium text-gray-800">💰 Payment & Disbursement</h5>
+            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-4">
+              <h5 className="font-medium text-neutral-800">💰 Payment & Disbursement</h5>
               
               <div>
                 <label className={labelClass}>Rent will be remitted to the landlord *</label>
@@ -1613,7 +1613,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       value="working_days"
                       checked={formData.rentRemittanceType === 'working_days'}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-blue-600"
+                      className="h-4 w-4 text-primary-600"
                     />
                     <span className="text-sm">Within working days</span>
                   </label>
@@ -1624,7 +1624,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       value="specific_date"
                       checked={formData.rentRemittanceType === 'specific_date'}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-blue-600"
+                      className="h-4 w-4 text-primary-600"
                     />
                     <span className="text-sm">By specific date</span>
                   </label>
@@ -1633,7 +1633,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
               {formData.rentRemittanceType === 'working_days' ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Within</span>
+                  <span className="text-sm text-neutral-600">Within</span>
                   <input
                     type="number"
                     name="rentRemittanceDays"
@@ -1644,11 +1644,11 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     max="30"
                     placeholder="5"
                   />
-                  <span className="text-sm text-gray-600">working days of rent collection</span>
+                  <span className="text-sm text-neutral-600">working days of rent collection</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">By the</span>
+                  <span className="text-sm text-neutral-600">By the</span>
                   <input
                     type="number"
                     name="rentRemittanceDate"
@@ -1659,7 +1659,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     max="28"
                     placeholder="5"
                   />
-                  <span className="text-sm text-gray-600">of every month</span>
+                  <span className="text-sm text-neutral-600">of every month</span>
                 </div>
               )}
             </div>
@@ -1670,7 +1670,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         return (
           <div className="space-y-6">
             {/* Property Condition & Maintenance */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Property Condition & Maintenance</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2">Property Condition & Maintenance</h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1689,7 +1689,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                         value={option.value}
                         checked={formData.propertyCondition === option.value}
                         onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600"
+                        className="h-4 w-4 text-primary-600"
                       />
                       <span className="text-sm">{option.label}</span>
                     </label>
@@ -1722,9 +1722,9 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             {/* Preferred Maintenance Vendors */}
             <div>
               <label className={labelClass}>Preferred Maintenance Vendors</label>
-              <p className="text-xs text-gray-500 mb-2">Select vendors from our system or add new ones. You can select multiple vendors.</p>
+              <p className="text-xs text-neutral-500 mb-2">Select vendors from our system or add new ones. You can select multiple vendors.</p>
               
-              <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="border border-neutral-200 rounded-lg p-4 space-y-3">
                 {/* Selected Vendors Display */}
                 {formData.preferredVendorIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 pb-3 border-b">
@@ -1733,13 +1733,13 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                       return (
                         <span 
                           key={vendorId} 
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
                         >
                           {vendorId}
                           <button
                             type="button"
                             onClick={() => handleArrayToggle('preferredVendorIds', vendorId)}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
+                            className="ml-1 text-primary-600 hover:text-primary-800"
                           >
                             ×
                           </button>
@@ -1752,14 +1752,14 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 {/* Vendor Selection Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                   {/* TODO: Fetch real vendors from API */}
-                  <p className="text-sm text-gray-500">No vendors available. Please configure vendors in settings.</p>
+                  <p className="text-sm text-neutral-500">No vendors available. Please configure vendors in settings.</p>
                 </div>
                 
                 {/* Add New Vendor Option */}
                 <button
                   type="button"
                   onClick={() => window.location.href = '/admin/vendors'}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium mt-2"
+                  className="flex items-center gap-2 text-primary-600 hover:text-primary-800 text-sm font-medium mt-2"
                 >
                   <span>➕</span> Add New Vendor
                 </button>
@@ -1772,7 +1772,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         return (
           <div className="space-y-6">
             {/* Insurance & Compliance */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Insurance & Compliance</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2">Insurance & Compliance</h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1841,7 +1841,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             </div>
 
             {/* Special Instructions - Tailored by property type */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 mt-8">
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2 mt-8">
               Special Instructions ({formData.propertyType === 'residential' ? 'Residential' : 'Commercial'})
             </h4>
             
@@ -1899,7 +1899,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         return (
           <div className="space-y-6">
             {/* Document Uploads */}
-            <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Document Uploads</h4>
+            <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2">Document Uploads</h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* ID Copy */}
@@ -1915,17 +1915,17 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 <button
                   type="button"
                   onClick={() => fileRefs.idCopy.current?.click()}
-                  className={`${inputClass} text-left h-auto py-3 ${formData.idCopy ? 'bg-green-50 border-green-300' : ''}`}
+                  className={`${inputClass} text-left h-auto py-3 ${formData.idCopy ? 'bg-success-50 border-success-300' : ''}`}
                 >
                   {formData.idCopy ? (
-                    <span className="flex items-center gap-2 text-green-700">
+                    <span className="flex items-center gap-2 text-success-700">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       {formData.idCopy.name}
                     </span>
                   ) : (
-                    <span className="text-gray-400">Click to upload...</span>
+                    <span className="text-neutral-400">Click to upload...</span>
                   )}
                 </button>
               </div>
@@ -1943,17 +1943,17 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 <button
                   type="button"
                   onClick={() => fileRefs.kraPin.current?.click()}
-                  className={`${inputClass} text-left h-auto py-3 ${formData.kraPin ? 'bg-green-50 border-green-300' : ''}`}
+                  className={`${inputClass} text-left h-auto py-3 ${formData.kraPin ? 'bg-success-50 border-success-300' : ''}`}
                 >
                   {formData.kraPin ? (
-                    <span className="flex items-center gap-2 text-green-700">
+                    <span className="flex items-center gap-2 text-success-700">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       {formData.kraPin.name}
                     </span>
                   ) : (
-                    <span className="text-gray-400">Click to upload...</span>
+                    <span className="text-neutral-400">Click to upload...</span>
                   )}
                 </button>
               </div>
@@ -1971,17 +1971,17 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 <button
                   type="button"
                   onClick={() => fileRefs.titleCopy.current?.click()}
-                  className={`${inputClass} text-left h-auto py-3 ${formData.titleCopy ? 'bg-green-50 border-green-300' : ''}`}
+                  className={`${inputClass} text-left h-auto py-3 ${formData.titleCopy ? 'bg-success-50 border-success-300' : ''}`}
                 >
                   {formData.titleCopy ? (
-                    <span className="flex items-center gap-2 text-green-700">
+                    <span className="flex items-center gap-2 text-success-700">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       {formData.titleCopy.name}
                     </span>
                   ) : (
-                    <span className="text-gray-400">Click to upload...</span>
+                    <span className="text-neutral-400">Click to upload...</span>
                   )}
                 </button>
               </div>
@@ -2001,17 +2001,17 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     <button
                       type="button"
                       onClick={() => fileRefs.companyCR12.current?.click()}
-                      className={`${inputClass} text-left h-auto py-3 ${formData.companyCR12 ? 'bg-green-50 border-green-300' : ''}`}
+                      className={`${inputClass} text-left h-auto py-3 ${formData.companyCR12 ? 'bg-success-50 border-success-300' : ''}`}
                     >
                       {formData.companyCR12 ? (
-                        <span className="flex items-center gap-2 text-green-700">
+                        <span className="flex items-center gap-2 text-success-700">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           {formData.companyCR12.name}
                         </span>
                       ) : (
-                        <span className="text-gray-400">Click to upload...</span>
+                        <span className="text-neutral-400">Click to upload...</span>
                       )}
                     </button>
                   </div>
@@ -2028,17 +2028,17 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                     <button
                       type="button"
                       onClick={() => fileRefs.companyIncorporation.current?.click()}
-                      className={`${inputClass} text-left h-auto py-3 ${formData.companyIncorporation ? 'bg-green-50 border-green-300' : ''}`}
+                      className={`${inputClass} text-left h-auto py-3 ${formData.companyIncorporation ? 'bg-success-50 border-success-300' : ''}`}
                     >
                       {formData.companyIncorporation ? (
-                        <span className="flex items-center gap-2 text-green-700">
+                        <span className="flex items-center gap-2 text-success-700">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           {formData.companyIncorporation.name}
                         </span>
                       ) : (
-                        <span className="text-gray-400">Click to upload...</span>
+                        <span className="text-neutral-400">Click to upload...</span>
                       )}
                     </button>
                   </div>
@@ -2080,14 +2080,14 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
               {formData.otherDocuments.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {formData.otherDocuments.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <div key={index} className="flex items-center justify-between bg-neutral-50 p-2 rounded">
                       <span className="text-sm">
                         <strong>{doc.description}:</strong> {doc.file.name}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeOtherDocument(index)}
-                        className="text-red-500 hover:text-red-700 text-sm"
+                        className="text-danger-500 hover:text-danger-700 text-sm"
                       >
                         Remove
                       </button>
@@ -2099,7 +2099,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
 
             {/* Management Agreement - Clickable Button */}
             <div className="border-t pt-4">
-              <h5 className="font-medium text-gray-800 mb-3">Management Agreement</h5>
+              <h5 className="font-medium text-neutral-800 mb-3">Management Agreement</h5>
               
               {!formData.generateManagementAgreement ? (
                 <Button
@@ -2114,14 +2114,14 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                   Generate Management Agreement
                 </Button>
               ) : (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="bg-success-50 border border-success-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-success-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                      <p className="font-medium text-green-800">Management Agreement will be generated</p>
-                      <p className="text-sm text-green-700 mt-1">
+                      <p className="font-medium text-success-800">Management Agreement will be generated</p>
+                      <p className="text-sm text-success-700 mt-1">
                         A draft property management agreement document will be prepared based on the details provided. 
                         This draft will be reviewed and approved by the admin before being issued to the landlord for signing.
                       </p>
@@ -2131,7 +2131,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                           setFormData(prev => ({ ...prev, generateManagementAgreement: false }));
                           setShowAgreementNote(false);
                         }}
-                        className="text-sm text-green-600 hover:text-green-800 mt-2 underline"
+                        className="text-sm text-success-600 hover:text-success-800 mt-2 underline"
                       >
                         Cancel agreement generation
                       </button>
@@ -2141,8 +2141,8 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
               )}
               
               {showAgreementNote && formData.generateManagementAgreement && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 mt-3">
+                  <p className="text-sm text-primary-800">
                     <strong>Note:</strong> The management agreement will include all the terms, fees, and conditions specified in this form. 
                     Ensure all pricing and commission details in Step 4 are accurate before submission.
                   </p>
@@ -2185,7 +2185,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Add New Landlord</h2>
             <button onClick={onClose} className="text-white/80 hover:text-white">
@@ -2201,15 +2201,15 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
               <div key={index} className="flex items-center">
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
                   currentStep > index + 1 
-                    ? 'bg-green-500 text-white' 
+                    ? 'bg-success-500 text-white' 
                     : currentStep === index + 1 
-                      ? 'bg-white text-blue-600' 
-                      : 'bg-blue-500/50 text-white/70'
+                      ? 'bg-white text-primary-600' 
+                      : 'bg-primary-500/50 text-white/70'
                 }`}>
                   {currentStep > index + 1 ? '✓' : index + 1}
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-8 h-0.5 mx-1 ${currentStep > index + 1 ? 'bg-green-500' : 'bg-blue-500/50'}`} />
+                  <div className={`w-8 h-0.5 mx-1 ${currentStep > index + 1 ? 'bg-success-500' : 'bg-primary-500/50'}`} />
                 )}
               </div>
             ))}
@@ -2229,7 +2229,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
         </div>
 
         {/* Footer */}
-        <div className="border-t p-4 bg-gray-50 flex justify-between">
+        <div className="border-t p-4 bg-neutral-50 flex justify-between">
           <Button
             type="button"
             variant="outline"

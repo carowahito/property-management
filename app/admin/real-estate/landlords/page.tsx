@@ -74,28 +74,28 @@ export default function LandlordsPage() {
     <div className='p-6 space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Landlords</h1>
-          <p className='text-gray-600 mt-1'>Manage property owners and relationships</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Landlords</h1>
+          <p className='text-neutral-600 mt-1'>Manage property owners and relationships</p>
         </div>
-        <button className='bg-blue-600 hover:bg-blue-700'>+ Add Landlord</button>
+        <button className='bg-primary-600 hover:bg-primary-700'>+ Add Landlord</button>
       </div>
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Landlords</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalLandlords}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Landlords</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalLandlords}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.activeLandlords}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Active</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.activeLandlords}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Properties</p>
-          <p className='text-3xl font-bold text-blue-600'>{stats.totalProperties}</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Total Properties</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalProperties}</p>
         </div>
-        <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Monthly Revenue</p>
+        <div className='bg-surface shadow rounded-lg p-6'>
+          <p className='text-sm text-neutral-600'>Monthly Revenue</p>
           <p className='text-3xl font-bold text-purple-600'>
             KES {stats.totalRevenue.toLocaleString()}
           </p>
@@ -103,50 +103,50 @@ export default function LandlordsPage() {
       </div>
 
       {/* Search */}
-      <div className='bg-white shadow rounded-lg p-4'>
+      <div className='bg-surface shadow rounded-lg p-4'>
         <input
           type='text'
           placeholder='Search by name or email...'
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+          className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
         />
       </div>
 
       {/* Landlords Table */}
-      <div className='bg-white shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
+      <div className='bg-surface shadow rounded-lg overflow-hidden'>
+        <table className='min-w-full divide-y divide-neutral-200'>
+          <thead className='bg-neutral-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Landlord
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Contact
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Properties
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Total Units
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Monthly Revenue
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Payout Schedule
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Status
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-surface divide-y divide-neutral-200'>
             {filteredLandlords.map((landlord) => (
-              <tr key={landlord.id} className='hover:bg-gray-50'>
+              <tr key={landlord.id} className='hover:bg-neutral-50'>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <div className='flex items-center'>
                     <div className='h-10 w-10 flex-shrink-0 bg-purple-100 rounded-full flex items-center justify-center'>
@@ -158,39 +158,39 @@ export default function LandlordsPage() {
                       </span>
                     </div>
                     <div className='ml-4'>
-                      <div className='text-sm font-medium text-gray-900'>{landlord.name}</div>
-                      <div className='text-xs text-gray-500'>Joined {landlord.joinedDate}</div>
+                      <div className='text-sm font-medium text-neutral-900'>{landlord.name}</div>
+                      <div className='text-xs text-neutral-500'>Joined {landlord.joinedDate}</div>
                     </div>
                   </div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900'>{landlord.email}</div>
-                  <div className='text-sm text-gray-500'>{landlord.phone}</div>
+                  <div className='text-sm text-neutral-900'>{landlord.email}</div>
+                  <div className='text-sm text-neutral-500'>{landlord.phone}</div>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                   {landlord.propertiesOwned}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                   {landlord.totalUnits}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900'>
                   KES {landlord.monthlyRevenue.toLocaleString()}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                   {landlord.payoutSchedule}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       landlord.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-success-100 text-green-800'
+                        : 'bg-neutral-100 text-neutral-800'
                     }`}
                   >
                     {landlord.status}
                   </span>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2'>
+                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-500 space-x-2'>
                   <button  >
                     View
                   </button>

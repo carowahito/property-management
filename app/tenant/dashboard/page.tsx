@@ -1,43 +1,94 @@
 'use client'
 
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { formatDate } from '@/lib/utils'
 
 export default function TenantDashboardPage() {
-  // Mock data - will be replaced with actual API calls
-  const tenant = {
-    name: 'John Doe',
-    propertyAddress: '123 Main Street, Apt 4B, Nairobi',
-    leaseStart: '2024-01-01',
-    leaseEnd: '2024-12-31',
-    monthlyRent: 45000,
-    outstandingBalance: 45000,
-    nextPaymentDue: '2025-11-05',
+  const { data: leasesData, isLoading: isLoadingLeases } = useQuery({
+    queryKey: ['tenant-lease'],
+    queryFn: () => fetch('/api/leases?status=ACTIVE&limit=1').then(r => r.json()),
+  })
+
+  const { data: paymentsData, isLoading: isLoadingPayments } = useQuery({
+    queryKey: ['tenant-recent-payments'],
+    queryFn: () => fetch('/api/payments?limit=5').then(r => r.json()),
+  })
+
+  const { data: maintenanceData, isLoading: isLoadingMaintenance } = useQuery({
+    queryKey: ['tenant-pending-maintenance'],
+    queryFn: () => fetch('/api/maintenance-requests?status=PENDING').then(r => r.json()),
+  })
+
+  const isLoading = isLoadingLeases || isLoadingPayments || isLoadingMaintenance
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-neutral-600">Loading dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
-  const recentPayments = [
-    { id: 1, date: '2025-10-05', amount: 45000, status: 'Paid', method: 'M-Pesa' },
-    { id: 2, date: '2025-09-05', amount: 45000, status: 'Paid', method: 'M-Pesa' },
-    { id: 3, date: '2025-08-05', amount: 45000, status: 'Paid', method: 'Bank Transfer' },
-  ]
+  const activeLease = leasesData?.leases?.[0] || null
+  const recentPayments = paymentsData?.payments || []
+  const pendingMaintenance = maintenanceData?.maintenanceRequests || []
 
-  const maintenanceRequests = [
-    { id: 1, title: 'Leaking Faucet', status: 'In Progress', date: '2025-10-20' },
-    { id: 2, title: 'AC Not Cooling', status: 'Completed', date: '2025-09-15' },
-  ]
+  const monthlyRent = activeLease ? Number(activeLease.monthlyRent) : 0
+  const tenantName = activeLease?.tenant?.name || 'Tenant'
+  const propertyAddress = activeLease
+    ? `${activeLease.property?.name || ''}, ${activeLease.property?.address || ''}`
+    : 'No active lease'
+
+  // Calculate outstanding balance from pending payments
+  const outstandingBalance = recentPayments
+    .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+
+  // Find next payment due date
+  const nextPayment = recentPayments.find((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
+
+  const getPaymentStatusStyle = (status: string) => {
+    switch (status) {
+      case 'PAID':
+        return 'bg-success-100 text-success-800'
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'OVERDUE':
+        return 'bg-danger-100 text-danger-800'
+      default:
+        return 'bg-neutral-100 text-neutral-800'
+    }
+  }
+
+  const formatMethod = (method: string) => {
+    switch (method) {
+      case 'MPESA': return 'M-Pesa'
+      case 'BANK_TRANSFER': return 'Bank Transfer'
+      case 'CASH': return 'Cash'
+      case 'CARD': return 'Card'
+      case 'CHEQUE': return 'Cheque'
+      default: return method
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {tenant.name}!
+        <h1 className="text-3xl font-bold text-neutral-900">
+          Welcome back, {tenantName}!
         </h1>
-        <p className="mt-2 text-gray-600">{tenant.propertyAddress}</p>
+        <p className="mt-2 text-neutral-600">{propertyAddress}</p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -45,11 +96,11 @@ export default function TenantDashboardPage() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-sm font-medium text-neutral-500 truncate">
                     Monthly Rent
                   </dt>
-                  <dd className="text-lg font-semibold text-gray-900">
-                    KES {tenant.monthlyRent.toLocaleString()}
+                  <dd className="text-lg font-semibold text-neutral-900">
+                    KES {monthlyRent.toLocaleString()}
                   </dd>
                 </dl>
               </div>
@@ -57,7 +108,7 @@ export default function TenantDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -65,11 +116,11 @@ export default function TenantDashboardPage() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-sm font-medium text-neutral-500 truncate">
                     Outstanding Balance
                   </dt>
-                  <dd className="text-lg font-semibold text-red-600">
-                    KES {tenant.outstandingBalance.toLocaleString()}
+                  <dd className={`text-lg font-semibold ${outstandingBalance > 0 ? 'text-danger-600' : 'text-success-600'}`}>
+                    KES {outstandingBalance.toLocaleString()}
                   </dd>
                 </dl>
               </div>
@@ -77,7 +128,7 @@ export default function TenantDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -85,11 +136,11 @@ export default function TenantDashboardPage() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
+                  <dt className="text-sm font-medium text-neutral-500 truncate">
                     Next Payment Due
                   </dt>
-                  <dd className="text-lg font-semibold text-gray-900">
-                    {tenant.nextPaymentDue}
+                  <dd className="text-lg font-semibold text-neutral-900">
+                    {nextPayment ? formatDate(nextPayment.dueDate) : 'N/A'}
                   </dd>
                 </dl>
               </div>
@@ -97,7 +148,7 @@ export default function TenantDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -105,11 +156,11 @@ export default function TenantDashboardPage() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Open Requests
+                  <dt className="text-sm font-medium text-neutral-500 truncate">
+                    Pending Requests
                   </dt>
-                  <dd className="text-lg font-semibold text-gray-900">
-                    {maintenanceRequests.filter(r => r.status !== 'Completed').length}
+                  <dd className="text-lg font-semibold text-neutral-900">
+                    {pendingMaintenance.length}
                   </dd>
                 </dl>
               </div>
@@ -119,26 +170,26 @@ export default function TenantDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+      <div className="bg-surface shadow rounded-lg p-6 mb-8">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Link
             href="/tenant/payments/new"
-            className="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
           >
             Pay Rent
           </Link>
           <Link
             href="/tenant/maintenance/new"
-            className="inline-flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center justify-center px-4 py-3 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-surface hover:bg-neutral-50"
           >
             Submit Maintenance Request
           </Link>
           <Link
-            href="/tenant/messages"
-            className="inline-flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            href="/tenant/documents"
+            className="inline-flex items-center justify-center px-4 py-3 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-surface hover:bg-neutral-50"
           >
-            Contact Management
+            View Lease
           </Link>
         </div>
       </div>
@@ -146,106 +197,112 @@ export default function TenantDashboardPage() {
       {/* Content Grid */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Recent Payments */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-surface shadow rounded-lg overflow-hidden">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Payments</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Recent Payments</h2>
               <Link
                 href="/tenant/payments"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                className="text-sm font-medium text-primary-600 hover:text-primary-500"
               >
                 View all
               </Link>
             </div>
             <div className="space-y-3">
-              {recentPayments.map((payment) => (
-                <div
-                  key={payment.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      KES {payment.amount.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {payment.date} · {payment.method}
-                    </p>
+              {recentPayments.length === 0 ? (
+                <p className="text-sm text-neutral-500 text-center py-4">No payments found.</p>
+              ) : (
+                recentPayments.map((payment: any) => (
+                  <div
+                    key={payment.id}
+                    className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-neutral-900">
+                        KES {Number(payment.amount).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        {formatDate(payment.dueDate)} · {formatMethod(payment.method)}
+                      </p>
+                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentStatusStyle(payment.status)}`}>
+                      {payment.status}
+                    </span>
                   </div>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {payment.status}
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* Maintenance Requests */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-surface shadow rounded-lg overflow-hidden">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Maintenance Requests</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">Pending Maintenance</h2>
               <Link
                 href="/tenant/maintenance"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                className="text-sm font-medium text-primary-600 hover:text-primary-500"
               >
                 View all
               </Link>
             </div>
             <div className="space-y-3">
-              {maintenanceRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {request.title}
-                    </p>
-                    <p className="text-xs text-gray-500">Submitted {request.date}</p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      request.status === 'Completed'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}
+              {pendingMaintenance.length === 0 ? (
+                <p className="text-sm text-neutral-500 text-center py-4">No pending requests.</p>
+              ) : (
+                pendingMaintenance.map((request: any) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
                   >
-                    {request.status}
-                  </span>
-                </div>
-              ))}
+                    <div>
+                      <p className="text-sm font-medium text-neutral-900">
+                        {request.title}
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        Submitted {formatDate(request.createdAt)} · {request.property?.name || ''}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {request.status}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Lease Information */}
-      <div className="bg-white shadow rounded-lg p-6 mt-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Lease Information</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <p className="text-sm font-medium text-gray-500">Lease Start</p>
-            <p className="mt-1 text-sm text-gray-900">{tenant.leaseStart}</p>
+      {activeLease && (
+        <div className="bg-surface shadow rounded-lg p-6 mt-8">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Lease Information</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-sm font-medium text-neutral-500">Lease Start</p>
+              <p className="mt-1 text-sm text-neutral-900">{formatDate(activeLease.startDate)}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-neutral-500">Lease End</p>
+              <p className="mt-1 text-sm text-neutral-900">{formatDate(activeLease.endDate)}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-neutral-500">Property</p>
+              <p className="mt-1 text-sm text-neutral-900">{propertyAddress}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Lease End</p>
-            <p className="mt-1 text-sm text-gray-900">{tenant.leaseEnd}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Property</p>
-            <p className="mt-1 text-sm text-gray-900">{tenant.propertyAddress}</p>
+          <div className="mt-4">
+            <Link
+              href="/tenant/documents"
+              className="text-sm font-medium text-primary-600 hover:text-primary-500"
+            >
+              View Lease Agreement →
+            </Link>
           </div>
         </div>
-        <div className="mt-4">
-          <Link
-            href="/tenant/documents"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500"
-          >
-            View Lease Agreement →
-          </Link>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

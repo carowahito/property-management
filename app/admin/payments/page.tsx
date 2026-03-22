@@ -76,7 +76,7 @@ export default function AdminPaymentsPage() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
         <p className="text-red-800">Failed to load payments. Please try again.</p>
       </div>
     )
@@ -146,44 +146,44 @@ export default function AdminPaymentsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
-        <p className="text-gray-600 mt-2">Track and manage all payment transactions across all properties</p>
+        <h1 className="text-3xl font-bold text-neutral-900">Payments</h1>
+        <p className="text-neutral-600 mt-2">Track and manage all payment transactions across all properties</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Total Collected</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">KES {stats.totalCollected.toLocaleString()}</p>
-          <p className="text-xs text-green-600 mt-2">This month</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Total Collected</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">KES {stats.totalCollected.toLocaleString()}</p>
+          <p className="text-xs text-success-600 mt-2">This month</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Pending Payments</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">KES {stats.pending.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-2">Awaiting payment</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Pending Payments</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">KES {stats.pending.toLocaleString()}</p>
+          <p className="text-xs text-neutral-500 mt-2">Awaiting payment</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Overdue</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">KES {stats.overdue.toLocaleString()}</p>
-          <p className="text-xs text-orange-600 mt-2">{stats.overdueCount} overdue</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Overdue</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">KES {stats.overdue.toLocaleString()}</p>
+          <p className="text-xs text-warning-600 mt-2">{stats.overdueCount} overdue</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">Collection Rate</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.collectionRate.toFixed(1)}%</p>
-          <p className="text-xs text-gray-500 mt-2">{paidPayments.length} of {stats.totalTransactions} paid</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <p className="text-sm text-neutral-600">Collection Rate</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.collectionRate.toFixed(1)}%</p>
+          <p className="text-xs text-neutral-500 mt-2">{paidPayments.length} of {stats.totalTransactions} paid</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-4 space-y-4">
         {/* Time Period Filter */}
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Time Period</label>
             <select
               value={timePeriod}
               onChange={(e) => setTimePeriod(e.target.value as any)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="current">Current Month ({currentMonth})</option>
               <option value="last30">Last 30 Days</option>
@@ -196,21 +196,21 @@ export default function AdminPaymentsPage() {
           {timePeriod === 'custom' && (
             <>
               <div className="flex-1 min-w-[150px]">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Start Date</label>
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
               <div className="flex-1 min-w-[150px]">
-                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">End Date</label>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
             </>
@@ -223,7 +223,7 @@ export default function AdminPaymentsPage() {
             <input
               type="text"
               placeholder="Search by tenant, landlord, or transaction ID..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -233,8 +233,8 @@ export default function AdminPaymentsPage() {
               onClick={() => setStatusFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 statusFilter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               All ({stats.totalTransactions})
@@ -243,8 +243,8 @@ export default function AdminPaymentsPage() {
               onClick={() => setStatusFilter('COMPLETED')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 statusFilter === 'COMPLETED'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-success-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               Paid ({paidPayments.length})
@@ -254,7 +254,7 @@ export default function AdminPaymentsPage() {
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 statusFilter === 'PENDING'
                   ? 'bg-yellow-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               Pending ({pendingPayments.length})
@@ -263,8 +263,8 @@ export default function AdminPaymentsPage() {
               onClick={() => setStatusFilter('OVERDUE')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 statusFilter === 'OVERDUE'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-danger-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               Overdue ({overduePayments.length})
@@ -274,48 +274,48 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-surface rounded-lg border border-neutral-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-neutral-200">
+            <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Transaction ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Tenant
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Landlord
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Property
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Month
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Method
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-neutral-200">
               {filteredPayments.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <td colSpan={10} className="px-6 py-12 text-center text-neutral-500">
+                    <svg className="mx-auto h-12 w-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p className="mt-2 text-sm">No transactions found</p>
@@ -323,54 +323,54 @@ export default function AdminPaymentsPage() {
                 </tr>
               ) : (
                 filteredPayments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={payment.id} className="hover:bg-neutral-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
                       {payment.reference || payment.id.slice(0, 8)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <Link href={`/admin/tenants/${payment.tenant.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                      <Link href={`/admin/tenants/${payment.tenant.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                         {payment.tenant.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                       {payment.lease.landlord ? (
-                        <Link href={`/admin/landlords/${payment.lease.landlord.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                        <Link href={`/admin/landlords/${payment.lease.landlord.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                           {payment.lease.landlord.name}
                         </Link>
                       ) : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Link href={`/admin/properties/${payment.lease.property.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                      <Link href={`/admin/properties/${payment.lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                         {payment.lease.property.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
                       KES {Number(payment.amount).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                       {new Date(payment.dueDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                       {payment.method}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         payment.status === 'COMPLETED'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-success-100 text-green-800'
                           : payment.status === 'PENDING'
                           ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
+                          : 'bg-danger-100 text-red-800'
                       }`}>
                         {payment.status === 'COMPLETED' ? 'PAID' : payment.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                       {formatDate(payment.paidDate || payment.dueDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => setSelectedPayment(payment)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-primary-600 hover:text-primary-900"
                       >
                         View Details
                       </button>
@@ -386,13 +386,13 @@ export default function AdminPaymentsPage() {
       {/* Payment Detail Modal */}
       {selectedPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">Payment Details</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">Payment Details</h2>
                 <button
                   onClick={() => setSelectedPayment(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-neutral-400 hover:text-neutral-600"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -403,88 +403,88 @@ export default function AdminPaymentsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Transaction ID</p>
-                    <p className="text-lg font-semibold text-gray-900">{selectedPayment.reference || selectedPayment.id.slice(0, 8)}</p>
+                    <p className="text-sm text-neutral-600">Transaction ID</p>
+                    <p className="text-lg font-semibold text-neutral-900">{selectedPayment.reference || selectedPayment.id.slice(0, 8)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Status</p>
+                    <p className="text-sm text-neutral-600">Status</p>
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                       selectedPayment.status === 'COMPLETED'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-success-100 text-green-800'
                         : selectedPayment.status === 'PENDING'
                         ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
+                        : 'bg-danger-100 text-red-800'
                     }`}>
                       {selectedPayment.status === 'COMPLETED' ? 'PAID' : selectedPayment.status}
                     </span>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Payment Information</h3>
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="font-semibold text-neutral-900 mb-3">Payment Information</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Amount</p>
-                      <p className="text-xl font-bold text-gray-900">KES {Number(selectedPayment.amount).toLocaleString()}</p>
+                      <p className="text-sm text-neutral-600">Amount</p>
+                      <p className="text-xl font-bold text-neutral-900">KES {Number(selectedPayment.amount).toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Payment Method</p>
-                      <p className="text-lg font-semibold text-gray-900">{selectedPayment.method}</p>
+                      <p className="text-sm text-neutral-600">Payment Method</p>
+                      <p className="text-lg font-semibold text-neutral-900">{selectedPayment.method}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Period</p>
-                      <p className="text-lg font-semibold text-gray-900">{new Date(selectedPayment.dueDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                      <p className="text-sm text-neutral-600">Period</p>
+                      <p className="text-lg font-semibold text-neutral-900">{new Date(selectedPayment.dueDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Payment Date</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <p className="text-sm text-neutral-600">Payment Date</p>
+                      <p className="text-lg font-semibold text-neutral-900">
                         {formatDate(selectedPayment.paidDate || selectedPayment.dueDate)}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Parties Involved</h3>
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="font-semibold text-neutral-900 mb-3">Parties Involved</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <div>
-                        <p className="text-sm text-gray-600">Tenant</p>
-                        <Link href={`/admin/tenants/${selectedPayment.tenant.id}`} className="font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                        <p className="text-sm text-neutral-600">Tenant</p>
+                        <Link href={`/admin/tenants/${selectedPayment.tenant.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
                           {selectedPayment.tenant.name}
                         </Link>
-                        <p className="text-xs text-gray-500">{selectedPayment.tenant.email}</p>
+                        <p className="text-xs text-neutral-500">{selectedPayment.tenant.email}</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <div>
-                        <p className="text-sm text-gray-600">Landlord</p>
+                        <p className="text-sm text-neutral-600">Landlord</p>
                         {selectedPayment.lease.landlord ? (
-                          <Link href={`/admin/landlords/${selectedPayment.lease.landlord.id}`} className="font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                          <Link href={`/admin/landlords/${selectedPayment.lease.landlord.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
                             {selectedPayment.lease.landlord.name}
                           </Link>
                         ) : (
-                          <p className="font-semibold text-gray-900">N/A</p>
+                          <p className="font-semibold text-neutral-900">N/A</p>
                         )}
-                        <p className="text-xs text-gray-500">Property Owner</p>
+                        <p className="text-xs text-neutral-500">Property Owner</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <div>
-                        <p className="text-sm text-gray-600">Property</p>
-                        <Link href={`/admin/properties/${selectedPayment.lease.property.id}`} className="text-blue-600 hover:text-blue-800 hover:underline font-semibold">
+                        <p className="text-sm text-neutral-600">Property</p>
+                        <Link href={`/admin/properties/${selectedPayment.lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline font-semibold">
                           {selectedPayment.lease.property.name}
                         </Link>
-                        <p className="text-xs text-gray-500">Lease ID: {selectedPayment.lease.id.slice(0, 8)}</p>
+                        <p className="text-xs text-neutral-500">Lease ID: {selectedPayment.lease.id.slice(0, 8)}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4">
+                <div className="border-t border-neutral-200 pt-4">
                   <button
                     onClick={() => setSelectedPayment(null)}
-                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
+                    className="w-full px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 font-medium"
                   >
                     Close
                   </button>

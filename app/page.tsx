@@ -4,25 +4,25 @@ import Link from 'next/link'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="text-center py-20">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">🏢 PropManage</h1>
-          <p className="text-xl text-gray-600 mb-8">Complete Property Management Solution</p>
+          <h1 className="text-5xl font-bold text-neutral-900 mb-4">🏢 PropManage</h1>
+          <p className="text-xl text-neutral-600 mb-8">Complete Property Management Solution</p>
         </div>
 
         {/* Portal Selection Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
           {/* Admin Portal */}
           <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+            <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
               <div className="text-4xl mb-2">👨‍💼</div>
               <h2 className="text-2xl font-bold">Admin Portal</h2>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-6">Manage properties, tenants, finances, and maintenance.</p>
-              <ul className="space-y-2 mb-8 text-sm text-gray-700">
+              <p className="text-neutral-600 mb-6">Manage properties, tenants, finances, and maintenance.</p>
+              <ul className="space-y-2 mb-8 text-sm text-neutral-700">
                 <li className="flex items-center">
                   <span className="mr-2">✓</span> Property Management
                 </li>
@@ -41,7 +41,7 @@ export default function HomePage() {
               </ul>
               <Link
                 href="/admin"
-                className="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                className="w-full block text-center bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg transition"
               >
                 Go to Admin
               </Link>
@@ -50,13 +50,13 @@ export default function HomePage() {
 
           {/* Tenant Portal */}
           <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
-            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
+            <div className="bg-gradient-to-r from-success-600 to-success-700 p-6 text-white">
               <div className="text-4xl mb-2">👤</div>
               <h2 className="text-2xl font-bold">Tenant Portal</h2>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-6">Manage your lease, payments, and maintenance requests.</p>
-              <ul className="space-y-2 mb-8 text-sm text-gray-700">
+              <p className="text-neutral-600 mb-6">Manage your lease, payments, and maintenance requests.</p>
+              <ul className="space-y-2 mb-8 text-sm text-neutral-700">
                 <li className="flex items-center">
                   <span className="mr-2">✓</span> View Lease Info
                 </li>
@@ -75,7 +75,7 @@ export default function HomePage() {
               </ul>
               <Link
                 href="/tenant/login"
-                className="w-full block text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                className="w-full block text-center bg-success-600 hover:bg-success-700 text-white font-bold py-2 px-4 rounded-lg transition"
               >
                 Tenant Login
               </Link>
@@ -89,8 +89,8 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold">Landlord Portal</h2>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-6">Manage your properties and track rental income.</p>
-              <ul className="space-y-2 mb-8 text-sm text-gray-700">
+              <p className="text-neutral-600 mb-6">Manage your properties and track rental income.</p>
+              <ul className="space-y-2 mb-8 text-sm text-neutral-700">
                 <li className="flex items-center">
                   <span className="mr-2">✓</span> Property Listings
                 </li>

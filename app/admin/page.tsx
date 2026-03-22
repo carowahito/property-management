@@ -82,8 +82,8 @@ export default function AdminDashboard() {
 
   if (hasError) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
+      <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+        <p className="text-danger-800">Failed to load dashboard data. Please try again.</p>
       </div>
     )
   }
@@ -115,8 +115,8 @@ export default function AdminDashboard() {
     <div className='space-y-6'>
             <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Dashboard</h1>
-          <p className='text-gray-600 mt-1'>Property management overview</p>
+          <h1 className='text-3xl font-bold text-neutral-900'>Dashboard</h1>
+          <p className='text-neutral-600 mt-1'>Property management overview</p>
         </div>
         <Link href="/admin/properties">
           <Button variant="primary" size="lg">
@@ -130,70 +130,70 @@ export default function AdminDashboard() {
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Properties</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalProperties}</p>
-          <p className='text-sm text-green-600 mt-2'>↑ Active & Managed</p>
+          <p className='text-sm text-neutral-600'>Total Properties</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalProperties}</p>
+          <p className='text-sm text-success-600 mt-2'>↑ Active & Managed</p>
         </div>
 
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Total Units</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.totalUnits}</p>
-          <p className='text-sm text-blue-600 mt-2'>{stats.activeLeases} occupied</p>
+          <p className='text-sm text-neutral-600'>Total Units</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalUnits}</p>
+          <p className='text-sm text-primary-600 mt-2'>{stats.activeLeases} occupied</p>
         </div>
 
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Occupancy Rate</p>
-          <p className='text-3xl font-bold text-green-600'>{stats.occupancyRate}%</p>
-          <p className='text-sm text-gray-600 mt-2'>Industry avg: 85%</p>
+          <p className='text-sm text-neutral-600'>Occupancy Rate</p>
+          <p className='text-3xl font-bold text-success-600'>{stats.occupancyRate}%</p>
+          <p className='text-sm text-neutral-600 mt-2'>Industry avg: 85%</p>
         </div>
 
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Monthly Revenue</p>
-          <p className='text-3xl font-bold text-gray-900'>
+          <p className='text-sm text-neutral-600'>Monthly Revenue</p>
+          <p className='text-3xl font-bold text-neutral-900'>
             KSh {stats.monthlyRevenue.toLocaleString()}
           </p>
-          <p className='text-sm text-green-600 mt-2'>↑ 12% from last month</p>
+          <p className='text-sm text-success-600 mt-2'>↑ 12% from last month</p>
         </div>
 
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Active Leases</p>
-          <p className='text-3xl font-bold text-gray-900'>{stats.activeLeases}</p>
-          <p className='text-sm text-gray-600 mt-2'>7 renewals pending</p>
+          <p className='text-sm text-neutral-600'>Active Leases</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.activeLeases}</p>
+          <p className='text-sm text-neutral-600 mt-2'>7 renewals pending</p>
         </div>
 
         <div className='bg-white shadow rounded-lg p-6'>
-          <p className='text-sm text-gray-600'>Maintenance Requests</p>
-          <p className='text-3xl font-bold text-orange-600'>{stats.maintenanceRequests}</p>
-          <p className='text-sm text-gray-600 mt-2'>{stats.urgentMaintenance} urgent</p>
+          <p className='text-sm text-neutral-600'>Maintenance Requests</p>
+          <p className='text-3xl font-bold text-warning-600'>{stats.maintenanceRequests}</p>
+          <p className='text-sm text-neutral-600 mt-2'>{stats.urgentMaintenance} urgent</p>
         </div>
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <div className='bg-white shadow rounded-lg p-6'>
-          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Quick Actions</h2>
+          <h2 className='text-xl font-semibold text-neutral-900 mb-4'>Quick Actions</h2>
           <div className='space-y-3'>
-            <a href='/admin/properties' className='block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition'>
-              <div className='font-medium text-blue-900'>Manage Properties</div>
-              <div className='text-sm text-blue-700'>View and update property portfolio</div>
+            <a href='/admin/properties' className='block p-3 bg-primary-50 rounded-lg hover:bg-primary-100 transition'>
+              <div className='font-medium text-primary-900'>Manage Properties</div>
+              <div className='text-sm text-primary-700'>View and update property portfolio</div>
             </a>
-            <a href='/admin/tenants' className='block p-3 bg-green-50 rounded-lg hover:bg-green-100 transition'>
-              <div className='font-medium text-green-900'>Tenant Management</div>
-              <div className='text-sm text-green-700'>Add or manage tenant information</div>
+            <a href='/admin/tenants' className='block p-3 bg-success-50 rounded-lg hover:bg-success-100 transition'>
+              <div className='font-medium text-success-900'>Tenant Management</div>
+              <div className='text-sm text-success-700'>Add or manage tenant information</div>
             </a>
             <a href='/admin/payments' className='block p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition'>
               <div className='font-medium text-purple-900'>Collect Payments</div>
               <div className='text-sm text-purple-700'>Track rent and payment collection</div>
             </a>
-            <a href='/admin/maintenance' className='block p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition'>
-              <div className='font-medium text-orange-900'>Maintenance Requests</div>
-              <div className='text-sm text-orange-700'>Review and assign work orders</div>
+            <a href='/admin/maintenance' className='block p-3 bg-warning-50 rounded-lg hover:bg-warning-100 transition'>
+              <div className='font-medium text-warning-900'>Maintenance Requests</div>
+              <div className='text-sm text-warning-700'>Review and assign work orders</div>
             </a>
           </div>
         </div>
 
         <div className='bg-white shadow rounded-lg p-6'>
-          <h2 className='text-xl font-semibold text-gray-900 mb-4'>Recent Activity</h2>
-          <div className='text-sm text-gray-500'>No recent activity to display.</div>
+          <h2 className='text-xl font-semibold text-neutral-900 mb-4'>Recent Activity</h2>
+          <div className='text-sm text-neutral-500'>No recent activity to display.</div>
         </div>
       </div>
     </div>

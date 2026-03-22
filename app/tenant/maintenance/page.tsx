@@ -2,102 +2,94 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { formatDate } from '@/lib/utils'
 
 export default function MaintenancePage() {
   const [activeTab, setActiveTab] = useState('open')
 
-  // Mock data
-  const requests = [
-    {
-      id: 1,
-      title: 'Leaking Faucet in Kitchen',
-      category: 'Plumbing',
-      priority: 'High',
-      status: 'In Progress',
-      submittedDate: '2025-10-20',
-      scheduledDate: '2025-10-25',
-      vendor: 'Quick Fix Plumbing',
-      description: 'The kitchen sink faucet has been dripping constantly for the past week.',
-    },
-    {
-      id: 2,
-      title: 'Broken Window Lock',
-      category: 'General',
-      priority: 'Medium',
-      status: 'Open',
-      submittedDate: '2025-10-22',
-      scheduledDate: null,
-      vendor: null,
-      description: 'The lock on the bedroom window is broken and won\'t close properly.',
-    },
-    {
-      id: 3,
-      title: 'AC Not Cooling',
-      category: 'HVAC',
-      priority: 'Urgent',
-      status: 'Completed',
-      submittedDate: '2025-09-15',
-      scheduledDate: '2025-09-16',
-      completedDate: '2025-09-16',
-      vendor: 'Cool Air Services',
-      description: 'Air conditioner is running but not cooling the room.',
-      rating: 5,
-    },
-    {
-      id: 4,
-      title: 'Light Fixture Not Working',
-      category: 'Electrical',
-      priority: 'Low',
-      status: 'Completed',
-      submittedDate: '2025-08-10',
-      completedDate: '2025-08-12',
-      vendor: 'Bright Spark Electricians',
-      description: 'Living room ceiling light stopped working.',
-      rating: 4,
-    },
-  ]
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['tenant-maintenance-requests'],
+    queryFn: () => fetch('/api/maintenance-requests').then(r => r.json()),
+  })
+
+  const requests: any[] = data?.maintenanceRequests || []
 
   const filteredRequests = requests.filter((r) => {
-    if (activeTab === 'open') return r.status === 'Open' || r.status === 'In Progress'
-    if (activeTab === 'completed') return r.status === 'Completed'
+    if (activeTab === 'open') return r.status === 'PENDING' || r.status === 'IN_PROGRESS'
+    if (activeTab === 'completed') return r.status === 'COMPLETED'
     return true
   })
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Open':
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800'
-      case 'In Progress':
-        return 'bg-blue-100 text-blue-800'
-      case 'Completed':
-        return 'bg-green-100 text-green-800'
+      case 'IN_PROGRESS':
+        return 'bg-primary-100 text-primary-800'
+      case 'COMPLETED':
+        return 'bg-success-100 text-success-800'
+      case 'CANCELLED':
+        return 'bg-neutral-100 text-neutral-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-neutral-100 text-neutral-800'
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'Pending'
+      case 'IN_PROGRESS': return 'In Progress'
+      case 'COMPLETED': return 'Completed'
+      case 'CANCELLED': return 'Cancelled'
+      default: return status
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Urgent':
-        return 'text-red-600'
-      case 'High':
-        return 'text-orange-600'
-      case 'Medium':
+      case 'URGENT':
+        return 'text-danger-600'
+      case 'HIGH':
+        return 'text-warning-600'
+      case 'MEDIUM':
         return 'text-yellow-600'
-      case 'Low':
-        return 'text-green-600'
+      case 'LOW':
+        return 'text-success-600'
       default:
-        return 'text-gray-600'
+        return 'text-neutral-600'
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-neutral-600">Loading maintenance requests...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+          <p className="text-danger-800">Failed to load maintenance requests. Please try again later.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Maintenance Requests</h1>
+        <h1 className="text-2xl font-bold text-neutral-900">Maintenance Requests</h1>
         <Link
           href="/tenant/maintenance/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
         >
           + New Request
         </Link>
@@ -105,42 +97,42 @@ export default function MaintenancePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
-            <p className="text-sm font-medium text-gray-500">Open Requests</p>
+            <p className="text-sm font-medium text-neutral-500">Pending</p>
             <p className="mt-1 text-2xl font-semibold text-yellow-600">
-              {requests.filter((r) => r.status === 'Open').length}
+              {requests.filter((r) => r.status === 'PENDING').length}
             </p>
           </div>
         </div>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
-            <p className="text-sm font-medium text-gray-500">In Progress</p>
-            <p className="mt-1 text-2xl font-semibold text-blue-600">
-              {requests.filter((r) => r.status === 'In Progress').length}
+            <p className="text-sm font-medium text-neutral-500">In Progress</p>
+            <p className="mt-1 text-2xl font-semibold text-primary-600">
+              {requests.filter((r) => r.status === 'IN_PROGRESS').length}
             </p>
           </div>
         </div>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
-            <p className="text-sm font-medium text-gray-500">Completed</p>
-            <p className="mt-1 text-2xl font-semibold text-green-600">
-              {requests.filter((r) => r.status === 'Completed').length}
+            <p className="text-sm font-medium text-neutral-500">Completed</p>
+            <p className="mt-1 text-2xl font-semibold text-success-600">
+              {requests.filter((r) => r.status === 'COMPLETED').length}
             </p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="border-b border-gray-200">
+      <div className="bg-surface shadow rounded-lg">
+        <div className="border-b border-neutral-200">
           <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('open')}
               className={`${
                 activeTab === 'open'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Open & In Progress
@@ -149,8 +141,8 @@ export default function MaintenancePage() {
               onClick={() => setActiveTab('completed')}
               className={`${
                 activeTab === 'completed'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Completed
@@ -159,12 +151,12 @@ export default function MaintenancePage() {
         </div>
 
         {/* Requests List */}
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-neutral-200">
           {filteredRequests.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-4xl mb-4">🔧</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
-              <p className="text-gray-500">
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">No requests found</h3>
+              <p className="text-neutral-500">
                 {activeTab === 'open'
                   ? 'You have no open maintenance requests.'
                   : 'You have no completed maintenance requests.'}
@@ -174,13 +166,13 @@ export default function MaintenancePage() {
             filteredRequests.map((request) => (
               <div
                 key={request.id}
-                className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                className="p-6 hover:bg-neutral-50 transition-colors cursor-pointer"
                 onClick={() => (window.location.href = `/tenant/maintenance/${request.id}`)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-medium text-neutral-900">
                         {request.title}
                       </h3>
                       <span
@@ -188,14 +180,16 @@ export default function MaintenancePage() {
                           request.status
                         )}`}
                       >
-                        {request.status}
+                        {getStatusLabel(request.status)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">{request.description}</p>
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <span className="flex items-center">
-                        <strong className="mr-2">Category:</strong> {request.category}
-                      </span>
+                    <p className="text-sm text-neutral-600 mb-3">{request.description}</p>
+                    <div className="flex items-center gap-6 text-sm text-neutral-500">
+                      {request.category && (
+                        <span className="flex items-center">
+                          <strong className="mr-2">Category:</strong> {request.category}
+                        </span>
+                      )}
                       <span className="flex items-center">
                         <strong className={`mr-2 ${getPriorityColor(request.priority)}`}>
                           Priority:
@@ -205,34 +199,24 @@ export default function MaintenancePage() {
                         </span>
                       </span>
                       <span className="flex items-center">
-                        <strong className="mr-2">Submitted:</strong> {request.submittedDate}
+                        <strong className="mr-2">Submitted:</strong> {formatDate(request.createdAt)}
                       </span>
-                      {request.vendor && (
+                      {request.property && (
                         <span className="flex items-center">
-                          <strong className="mr-2">Vendor:</strong> {request.vendor}
+                          <strong className="mr-2">Property:</strong> {request.property.name}
                         </span>
                       )}
                     </div>
-                    {request.scheduledDate && request.status !== 'Completed' && (
-                      <div className="mt-2 text-sm text-blue-600">
-                        Scheduled for: {request.scheduledDate}
-                      </div>
-                    )}
-                    {request.status === 'Completed' && request.rating && (
-                      <div className="mt-2 flex items-center gap-1">
-                        <span className="text-sm text-gray-500">Your rating:</span>
-                        {[...Array(5)].map((_, i) => (
-                          <span key={i} className="text-yellow-400">
-                            {i < request.rating! ? '★' : '☆'}
-                          </span>
-                        ))}
+                    {request.status === 'COMPLETED' && request.resolvedAt && (
+                      <div className="mt-2 text-sm text-success-600">
+                        Resolved: {formatDate(request.resolvedAt)}
                       </div>
                     )}
                   </div>
                   <div>
                     <Link
                       href={`/tenant/maintenance/${request.id}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      className="text-primary-600 hover:text-primary-800 text-sm font-medium"
                       onClick={(e) => e.stopPropagation()}
                     >
                       View Details →
@@ -246,15 +230,15 @@ export default function MaintenancePage() {
       </div>
 
       {/* Help Section */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-2">Need Emergency Assistance?</h3>
-        <p className="text-sm text-blue-800 mb-3">
+      <div className="mt-6 bg-primary-50 border border-primary-200 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-primary-900 mb-2">Need Emergency Assistance?</h3>
+        <p className="text-sm text-primary-800 mb-3">
           For urgent issues that require immediate attention (e.g., flooding, gas leak, no
           power), please call our emergency line:
         </p>
         <a
           href="tel:+254700000000"
-          className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-900 bg-white hover:bg-blue-50"
+          className="inline-flex items-center px-4 py-2 border border-primary-300 text-sm font-medium rounded-md text-primary-900 bg-surface hover:bg-primary-50"
         >
           📞 +254 700 000 000
         </a>

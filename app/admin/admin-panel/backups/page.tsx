@@ -31,10 +31,10 @@ export default function BackupsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Completed': return 'bg-green-100 text-green-800'
-      case 'In Progress': return 'bg-blue-100 text-blue-800'
-      case 'Failed': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Completed': return 'bg-success-100 text-success-800'
+      case 'In Progress': return 'bg-primary-100 text-primary-800'
+      case 'Failed': return 'bg-danger-100 text-danger-800'
+      default: return 'bg-neutral-100 text-neutral-800'
     }
   }
 
@@ -42,45 +42,45 @@ export default function BackupsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Backups & Recovery</h1>
-        <p className="text-gray-600 mt-1">Manage data backups and disaster recovery</p>
+        <h1 className="text-3xl font-bold text-neutral-900">Backups & Recovery</h1>
+        <p className="text-neutral-600 mt-1">Manage data backups and disaster recovery</p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Last Backup</p>
-              <p className="text-2xl font-bold text-gray-900">2 hours ago</p>
+              <p className="text-sm text-neutral-500 mb-1">Last Backup</p>
+              <p className="text-2xl font-bold text-neutral-900">2 hours ago</p>
             </div>
-            <div className="bg-green-100 p-3 rounded-xl">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-success-100 p-3 rounded-xl">
+              <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Total Backups</p>
-              <p className="text-2xl font-bold text-gray-900">{backups.length}</p>
+              <p className="text-sm text-neutral-500 mb-1">Total Backups</p>
+              <p className="text-2xl font-bold text-neutral-900">{backups.length}</p>
             </div>
-            <div className="bg-blue-100 p-3 rounded-xl">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-primary-100 p-3 rounded-xl">
+              <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Storage Used</p>
-              <p className="text-2xl font-bold text-gray-900">2.4 GB</p>
+              <p className="text-sm text-neutral-500 mb-1">Storage Used</p>
+              <p className="text-2xl font-bold text-neutral-900">2.4 GB</p>
             </div>
             <div className="bg-purple-100 p-3 rounded-xl">
               <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,14 +90,14 @@ export default function BackupsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Next Backup</p>
-              <p className="text-2xl font-bold text-gray-900">22 hours</p>
+              <p className="text-sm text-neutral-500 mb-1">Next Backup</p>
+              <p className="text-2xl font-bold text-neutral-900">22 hours</p>
             </div>
-            <div className="bg-orange-100 p-3 rounded-xl">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-warning-100 p-3 rounded-xl">
+              <svg className="w-6 h-6 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -106,38 +106,38 @@ export default function BackupsPage() {
       </div>
 
       {/* Backup Settings */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-neutral-200 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Backup Settings</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">Backup Settings</h2>
           <Button variant="outline">Edit Settings</Button>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Backup Frequency</p>
-            <p className="text-lg font-semibold text-gray-900">{backupSettings.frequency}</p>
+          <div className="p-4 bg-neutral-50 rounded-lg">
+            <p className="text-sm text-neutral-600 mb-1">Backup Frequency</p>
+            <p className="text-lg font-semibold text-neutral-900">{backupSettings.frequency}</p>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Backup Time</p>
-            <p className="text-lg font-semibold text-gray-900">{backupSettings.time}</p>
+          <div className="p-4 bg-neutral-50 rounded-lg">
+            <p className="text-sm text-neutral-600 mb-1">Backup Time</p>
+            <p className="text-lg font-semibold text-neutral-900">{backupSettings.time}</p>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Retention Period</p>
-            <p className="text-lg font-semibold text-gray-900">{backupSettings.retention} days</p>
+          <div className="p-4 bg-neutral-50 rounded-lg">
+            <p className="text-sm text-neutral-600 mb-1">Retention Period</p>
+            <p className="text-lg font-semibold text-neutral-900">{backupSettings.retention} days</p>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Storage Location</p>
-            <p className="text-lg font-semibold text-gray-900">{backupSettings.location}</p>
+          <div className="p-4 bg-neutral-50 rounded-lg">
+            <p className="text-sm text-neutral-600 mb-1">Storage Location</p>
+            <p className="text-lg font-semibold text-neutral-900">{backupSettings.location}</p>
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
-          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mt-6 p-4 bg-success-50 border border-success-200 rounded-lg flex items-center gap-3">
+          <svg className="w-5 h-5 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
           <div>
-            <p className="text-sm font-medium text-green-900">Encryption Enabled</p>
-            <p className="text-xs text-green-700">All backups are encrypted with AES-256</p>
+            <p className="text-sm font-medium text-success-900">Encryption Enabled</p>
+            <p className="text-xs text-success-700">All backups are encrypted with AES-256</p>
           </div>
         </div>
       </div>
@@ -156,48 +156,48 @@ export default function BackupsPage() {
       </div>
 
       {/* Backup History */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Backup History</h2>
-          <p className="text-sm text-gray-600">View and manage your backup history</p>
+      <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+        <div className="p-6 border-b border-neutral-200">
+          <h2 className="text-lg font-semibold text-neutral-900">Backup History</h2>
+          <p className="text-sm text-neutral-600">View and manage your backup history</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-neutral-200">
+            <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Date & Time
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Size
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Duration
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-neutral-200">
               {backups.map(backup => (
-                <tr key={backup.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <tr key={backup.id} className="hover:bg-neutral-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
                     {formatDateTime(backup.date)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
                     {backup.type}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
                     {backup.size}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
                     {backup.duration}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -207,13 +207,13 @@ export default function BackupsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex gap-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium">
+                      <button className="text-primary-600 hover:text-primary-800 font-medium">
                         Restore
                       </button>
-                      <button className="text-green-600 hover:text-green-800 font-medium">
+                      <button className="text-success-600 hover:text-success-800 font-medium">
                         Download
                       </button>
-                      <button className="text-red-600 hover:text-red-800 font-medium">
+                      <button className="text-danger-600 hover:text-danger-800 font-medium">
                         Delete
                       </button>
                     </div>
@@ -226,43 +226,43 @@ export default function BackupsPage() {
       </div>
 
       {/* Disaster Recovery Plan */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Disaster Recovery Plan</h2>
+      <div className="bg-white rounded-lg border border-neutral-200 p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Disaster Recovery Plan</h2>
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-blue-600">1</span>
+            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-primary-600">1</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Automated Daily Backups</h3>
-              <p className="text-sm text-gray-600">System automatically creates backups every day at 2:00 AM</p>
+              <h3 className="font-medium text-neutral-900">Automated Daily Backups</h3>
+              <p className="text-sm text-neutral-600">System automatically creates backups every day at 2:00 AM</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-blue-600">2</span>
+            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-primary-600">2</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">30-Day Retention</h3>
-              <p className="text-sm text-gray-600">Backups are retained for 30 days before automatic deletion</p>
+              <h3 className="font-medium text-neutral-900">30-Day Retention</h3>
+              <p className="text-sm text-neutral-600">Backups are retained for 30 days before automatic deletion</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-blue-600">3</span>
+            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-primary-600">3</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Quick Recovery</h3>
-              <p className="text-sm text-gray-600">Restore from any backup point with one click</p>
+              <h3 className="font-medium text-neutral-900">Quick Recovery</h3>
+              <p className="text-sm text-neutral-600">Restore from any backup point with one click</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-sm font-bold text-blue-600">4</span>
+            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-sm font-bold text-primary-600">4</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Encrypted Storage</h3>
-              <p className="text-sm text-gray-600">All backups are encrypted with industry-standard AES-256</p>
+              <h3 className="font-medium text-neutral-900">Encrypted Storage</h3>
+              <p className="text-sm text-neutral-600">All backups are encrypted with industry-standard AES-256</p>
             </div>
           </div>
         </div>
