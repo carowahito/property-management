@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
-import { createInspectionSchema } from '@/lib/validations/inspection'
+import { createMoveInChecklistSchema } from '@/lib/validations/move-in'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,31 +14,28 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
-    const type = searchParams.get('type')
     const propertyId = searchParams.get('propertyId')
-    const tenantId = searchParams.get('tenantId')
-    const dateFrom = searchParams.get('dateFrom')
-    const dateTo = searchParams.get('dateTo')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
     const where: any = {}
 
     if (status && status !== 'all') where.status = status
-    if (type && type !== 'all') where.type = type
     if (propertyId && propertyId !== 'all') where.propertyId = propertyId
-    if (tenantId && tenantId !== 'all') where.tenantId = tenantId
 
-    if (dateFrom || dateTo) {
-      where.scheduledDate = {}
-      if (dateFrom) where.scheduledDate.gte = new Date(dateFrom)
-      if (dateTo) where.scheduledDate.lte = new Date(dateTo)
-    }
-
-    const [inspections, total] = await Promise.all([
-      prisma.inspection.findMany({
+    const [checklists, total] = await Promise.all([
+      prisma.moveInChecklist.findMany({
         where,
         include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              unit: true,
+            },
+          },
           property: {
             select: {
               id: true,
@@ -46,38 +43,27 @@ export async function GET(request: NextRequest) {
               address: true,
             },
           },
-          unit: {
-            select: {
-              id: true,
-              unitNumber: true,
-            },
-          },
-          tenant: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-            },
-          },
           lease: {
             select: {
               id: true,
+              unit: true,
+              unitId: true,
               startDate: true,
               endDate: true,
               status: true,
+              monthlyRent: true,
             },
           },
         },
-        orderBy: { scheduledDate: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.inspection.count({ where }),
+      prisma.moveInChecklist.count({ where }),
     ])
 
     return NextResponse.json({
-      inspections,
+      checklists,
       pagination: {
         page,
         limit,
@@ -86,7 +72,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error fetching inspections:', error)
+    console.error('Error fetching move-in checklists:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -100,54 +86,63 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = createInspectionSchema.parse(body)
+    const validatedData = createMoveInChecklistSchema.parse(body)
 
-    // Check if property exists
-    const property = await prisma.property.findUnique({
-      where: { id: validatedData.propertyId },
+    // Check if lease exists
+    const lease = await prisma.lease.findUnique({
+      where: { id: validatedData.leaseId },
     })
 
-    if (!property) {
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+    if (!lease) {
+      return NextResponse.json({ error: 'Lease not found' }, { status: 404 })
     }
 
-    const inspection = await prisma.inspection.create({
+    // Check for duplicate checklist on the same lease
+    const existing = await prisma.moveInChecklist.findUnique({
+      where: { leaseId: validatedData.leaseId },
+    })
+
+    if (existing) {
+      return NextResponse.json(
+        { error: 'A move-in checklist already exists for this lease' },
+        { status: 409 }
+      )
+    }
+
+    const checklist = await prisma.moveInChecklist.create({
       data: {
+        leaseId: validatedData.leaseId,
+        tenantId: validatedData.tenantId,
         propertyId: validatedData.propertyId,
-        unitId: validatedData.unitId || undefined,
-        tenantId: validatedData.tenantId || undefined,
-        leaseId: validatedData.leaseId || undefined,
-        type: validatedData.type,
-        scheduledDate: new Date(validatedData.scheduledDate),
-        inspector: validatedData.inspector || undefined,
-        status: validatedData.status,
+        unitId: validatedData.unitId || null,
+        notes: validatedData.notes || null,
       },
       include: {
-        property: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-          },
-        },
-        unit: {
-          select: {
-            id: true,
-            unitNumber: true,
-          },
-        },
         tenant: {
           select: {
             id: true,
             name: true,
+            email: true,
+          },
+        },
+        property: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        lease: {
+          select: {
+            id: true,
+            unit: true,
           },
         },
       },
     })
 
-    return NextResponse.json(inspection, { status: 201 })
+    return NextResponse.json(checklist, { status: 201 })
   } catch (error: any) {
-    console.error('Error creating inspection:', error)
+    console.error('Error creating move-in checklist:', error)
 
     if (error.name === 'ZodError') {
       return NextResponse.json(

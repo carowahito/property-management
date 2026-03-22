@@ -76,8 +76,10 @@ export default function AdminLayout({
       title: 'Operations',
       items: [
         { href: '/admin/maintenance', label: 'Maintenance', icon: '🔧' },
+        { href: '/admin/contractors', label: 'Contractors', icon: '🏗️' },
         { href: '/admin/work-orders', label: 'Work Orders', icon: '📝' },
         { href: '/admin/inspections', label: 'Inspections', icon: '🔍' },
+        { href: '/admin/move-in', label: 'Move-In', icon: '📦' },
         { href: '/admin/renewals', label: 'Renewals', icon: '🔄' },
         { href: '/admin/occupancy', label: 'Occupancy', icon: '📐' },
       ]

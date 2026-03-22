@@ -738,7 +738,18 @@ export default function PropertyDetailPage() {
                     </label>
                     <select
                       value={newUnit.landlordId}
-                      onChange={(e) => setNewUnit({ ...newUnit, landlordId: e.target.value })}
+                      onChange={(e) => {
+                        const selectedLandlord = landlords.find((l: any) => l.id === e.target.value);
+                        setNewUnit({
+                          ...newUnit,
+                          landlordId: e.target.value,
+                          // Pre-populate management fee from landlord defaults
+                          ...(selectedLandlord?.managementFeePercent != null ? {
+                            managementFee: String(Number(selectedLandlord.managementFeePercent)),
+                            managementFeeType: 'PERCENTAGE' as const,
+                          } : {}),
+                        });
+                      }}
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       required
                     >

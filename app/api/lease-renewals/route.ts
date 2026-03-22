@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
-import { createInspectionSchema } from '@/lib/validations/inspection'
+import { createLeaseRenewalSchema } from '@/lib/validations/lease-renewal'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,44 +14,19 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
-    const type = searchParams.get('type')
     const propertyId = searchParams.get('propertyId')
-    const tenantId = searchParams.get('tenantId')
-    const dateFrom = searchParams.get('dateFrom')
-    const dateTo = searchParams.get('dateTo')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
     const where: any = {}
 
     if (status && status !== 'all') where.status = status
-    if (type && type !== 'all') where.type = type
     if (propertyId && propertyId !== 'all') where.propertyId = propertyId
-    if (tenantId && tenantId !== 'all') where.tenantId = tenantId
 
-    if (dateFrom || dateTo) {
-      where.scheduledDate = {}
-      if (dateFrom) where.scheduledDate.gte = new Date(dateFrom)
-      if (dateTo) where.scheduledDate.lte = new Date(dateTo)
-    }
-
-    const [inspections, total] = await Promise.all([
-      prisma.inspection.findMany({
+    const [renewals, total] = await Promise.all([
+      prisma.leaseRenewal.findMany({
         where,
         include: {
-          property: {
-            select: {
-              id: true,
-              name: true,
-              address: true,
-            },
-          },
-          unit: {
-            select: {
-              id: true,
-              unitNumber: true,
-            },
-          },
           tenant: {
             select: {
               id: true,
@@ -60,24 +35,39 @@ export async function GET(request: NextRequest) {
               phone: true,
             },
           },
+          property: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+            },
+          },
           lease: {
             select: {
               id: true,
               startDate: true,
               endDate: true,
+              monthlyRent: true,
               status: true,
+              unit: true,
+              unitRef: {
+                select: {
+                  id: true,
+                  unitNumber: true,
+                },
+              },
             },
           },
         },
-        orderBy: { scheduledDate: 'desc' },
+        orderBy: { leaseEndDate: 'asc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.inspection.count({ where }),
+      prisma.leaseRenewal.count({ where }),
     ])
 
     return NextResponse.json({
-      inspections,
+      renewals,
       pagination: {
         page,
         limit,
@@ -86,7 +76,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error fetching inspections:', error)
+    console.error('Error fetching lease renewals:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -100,54 +90,65 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = createInspectionSchema.parse(body)
+    const validatedData = createLeaseRenewalSchema.parse(body)
 
-    // Check if property exists
-    const property = await prisma.property.findUnique({
-      where: { id: validatedData.propertyId },
+    // Check lease exists
+    const lease = await prisma.lease.findUnique({
+      where: { id: validatedData.leaseId },
     })
 
-    if (!property) {
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+    if (!lease) {
+      return NextResponse.json({ error: 'Lease not found' }, { status: 404 })
     }
 
-    const inspection = await prisma.inspection.create({
-      data: {
-        propertyId: validatedData.propertyId,
-        unitId: validatedData.unitId || undefined,
-        tenantId: validatedData.tenantId || undefined,
-        leaseId: validatedData.leaseId || undefined,
-        type: validatedData.type,
-        scheduledDate: new Date(validatedData.scheduledDate),
-        inspector: validatedData.inspector || undefined,
-        status: validatedData.status,
-      },
-      include: {
-        property: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-          },
-        },
-        unit: {
-          select: {
-            id: true,
-            unitNumber: true,
-          },
-        },
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-          },
+    // Check for existing renewal for this lease
+    const existingRenewal = await prisma.leaseRenewal.findFirst({
+      where: {
+        leaseId: validatedData.leaseId,
+        status: {
+          notIn: ['RENEWED', 'EXPIRED', 'DECLINED'],
         },
       },
     })
 
-    return NextResponse.json(inspection, { status: 201 })
+    if (existingRenewal) {
+      return NextResponse.json(
+        { error: 'An active renewal already exists for this lease' },
+        { status: 400 }
+      )
+    }
+
+    // Calculate alert date (90 days before lease end)
+    const leaseEndDate = new Date(validatedData.leaseEndDate)
+    const alertDate = new Date(leaseEndDate)
+    alertDate.setDate(alertDate.getDate() - 90)
+
+    const renewal = await prisma.leaseRenewal.create({
+      data: {
+        leaseId: validatedData.leaseId,
+        tenantId: validatedData.tenantId,
+        propertyId: validatedData.propertyId,
+        currentRent: validatedData.currentRent,
+        leaseEndDate,
+        alertDate,
+        renewalNotes: validatedData.renewalNotes,
+      },
+      include: {
+        tenant: {
+          select: { id: true, name: true, email: true },
+        },
+        property: {
+          select: { id: true, name: true, address: true },
+        },
+        lease: {
+          select: { id: true, startDate: true, endDate: true, monthlyRent: true },
+        },
+      },
+    })
+
+    return NextResponse.json(renewal, { status: 201 })
   } catch (error: any) {
-    console.error('Error creating inspection:', error)
+    console.error('Error creating lease renewal:', error)
 
     if (error.name === 'ZodError') {
       return NextResponse.json(

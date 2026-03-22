@@ -10,6 +10,8 @@ export const createLandlordSchema = z.object({
   bankAccount: z.string().optional(),
   taxId: z.string().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).default('ACTIVE'),
+  managementFeePercent: z.number().min(0).max(100).optional(),
+  tenantPlacementFee: z.number().min(0).max(12).optional(),
 })
 
 export const updateLandlordSchema = z.object({
@@ -22,6 +24,8 @@ export const updateLandlordSchema = z.object({
   bankAccount: z.string().optional(),
   taxId: z.string().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
+  managementFeePercent: z.number().min(0).max(100).optional(),
+  tenantPlacementFee: z.number().min(0).max(12).optional(),
 })
 
 export type CreateLandlordInput = z.infer<typeof createLandlordSchema>

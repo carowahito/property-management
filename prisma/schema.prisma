@@ -124,6 +124,8 @@ model Property {
   deposits    Deposit[]
   applications TenantApplication[]
   arrearsEscalations ArrearsEscalation[]
+  moveInChecklists MoveInChecklist[]
+  renewals    LeaseRenewal[]
 
   @@index([landlordId])
   @@index([status])
@@ -161,6 +163,7 @@ model Unit {
   payouts               Payout[]
   distributionItems     RentDistributionItem[]
   applications          TenantApplication[]
+  inspections           Inspection[]
 
   @@index([propertyId])
   @@index([landlordId])
@@ -179,6 +182,11 @@ model Landlord {
   bankAccount String?
   taxId       String?
   status      StakeholderStatus @default(ACTIVE)
+
+  // Commission defaults — applied to new units for this landlord
+  managementFeePercent   Decimal?  @db.Decimal(5, 2)  // e.g. 10.00 = 10%
+  tenantPlacementFee     Decimal?  @db.Decimal(5, 2)  // months of rent (e.g. 1.00)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -223,6 +231,9 @@ model Tenant {
   rentTransactions RentTransaction[]
   deposits        Deposit[]
   arrearsEscalations ArrearsEscalation[]
+  moveInChecklists MoveInChecklist[]
+  inspections      Inspection[]
+  renewals         LeaseRenewal[]
 
   @@index([email])
   @@index([propertyId])
@@ -378,6 +389,9 @@ model Lease {
   workOrders      WorkOrder[]
   deposits        Deposit[]
   arrearsEscalations ArrearsEscalation[]
+  moveInChecklist MoveInChecklist?
+  inspections     Inspection[]
+  renewals        LeaseRenewal[]
 
   @@index([tenantId])
   @@index([propertyId])
@@ -705,6 +719,19 @@ model MaintenanceRequest {
   updatedAt   DateTime @updatedAt
   resolvedAt  DateTime?
 
+  // Triage
+  triageCategory    MaintenancePriority?
+  slaDeadline       DateTime?
+  slaBreached       Boolean @default(false)
+
+  // Approval
+  estimatedCost     Decimal? @db.Decimal(10, 2)
+  approvalRequired  Boolean @default(false)
+  approvedBy        String?
+  approvedAt        DateTime?
+  landlordNotified  Boolean @default(false)
+  landlordNotifiedAt DateTime?
+
   // Relations
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
@@ -714,6 +741,7 @@ model MaintenanceRequest {
   @@index([propertyId])
   @@index([status])
   @@index([priority])
+  @@index([slaBreached])
   @@map("maintenance_requests")
 }
 
@@ -721,6 +749,7 @@ model WorkOrder {
   id                    String   @id @default(cuid())
   maintenanceRequestId  String?
   vendorId              String?
+  contractorId          String?
   leaseId               String?
   title                 String
   description           String
@@ -738,30 +767,85 @@ model WorkOrder {
   // Relations
   maintenanceRequest    MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id], onDelete: SetNull)
   vendor                Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  contractor            Contractor?         @relation(fields: [contractorId], references: [id], onDelete: SetNull)
   lease                 Lease?              @relation(fields: [leaseId], references: [id], onDelete: SetNull)
 
   @@index([vendorId])
+  @@index([contractorId])
   @@index([leaseId])
   @@index([status])
   @@map("work_orders")
 }
 
+model Contractor {
+  id                   String   @id @default(cuid())
+  name                 String
+  email                String?
+  phone                String
+  trade                String   // plumbing, electrical, carpentry, painting, security, general
+  businessRegistration String?
+  kraPin               String?
+  insurance            Boolean @default(false)
+  isVetted             Boolean @default(false)
+  isActive             Boolean @default(true)
+  rating               Decimal? @db.Decimal(3, 2) // 0.00 - 5.00
+  totalJobs            Int @default(0)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  workOrders           WorkOrder[]
+
+  @@index([trade])
+  @@index([isVetted, isActive])
+  @@map("contractors")
+}
+
 model Inspection {
-  id          String   @id @default(cuid())
-  propertyId  String
-  type        InspectionType
-  date        DateTime
-  inspector   String
-  findings    String?
-  status      InspectionStatus @default(SCHEDULED)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  propertyId      String
+  unitId          String?
+  tenantId        String?
+  leaseId         String?
+
+  type            InspectionType
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  inspector       String?  // agent name
+
+  // Overall
+  overallCondition String?  // EXCELLENT / GOOD / FAIR / POOR
+  summary         String?  @db.Text
+
+  // Room-by-room findings as JSON
+  rooms           Json?    // Array: [{room, condition, notes, photos: []}]
+
+  // Follow-up
+  followUpRequired Boolean @default(false)
+  maintenanceItems Json?   // Array: [{description, priority, room}]
+  violations      Json?    // Array: [{type, description, severity}]
+
+  // Signatures
+  inspectorSignature String?
+  tenantSignature    String?
+  tenantSignedAt     DateTime?
+
+  status          InspectionStatus @default(SCHEDULED)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
-  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unit            Unit?    @relation(fields: [unitId], references: [id])
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+  lease           Lease?   @relation(fields: [leaseId], references: [id])
 
   @@index([propertyId])
-  @@index([date])
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([scheduledDate])
   @@map("inspections")
 }
 
@@ -1108,6 +1192,13 @@ enum MaintenanceStatus {
   CANCELLED
 }
 
+enum MaintenancePriority {
+  EMERGENCY    // 2 hour SLA
+  URGENT       // Next business day
+  ROUTINE      // 5 business days
+  PREVENTIVE   // Scheduled
+}
+
 enum WorkOrderStatus {
   PENDING
   ASSIGNED
@@ -1118,14 +1209,16 @@ enum WorkOrderStatus {
 
 enum InspectionType {
   MOVE_IN
+  THREE_MONTH
+  ROUTINE_6_MONTH
+  PRE_MOVE_OUT
   MOVE_OUT
-  QUARTERLY
   ANNUAL
-  MAINTENANCE
 }
 
 enum InspectionStatus {
   SCHEDULED
+  IN_PROGRESS
   COMPLETED
   CANCELLED
 }
@@ -1360,6 +1453,57 @@ enum LeaveStatus {
 }
 
 // ============================================
+// Move-In Checklist & Workflow
+// ============================================
+
+model MoveInChecklist {
+  id              String   @id @default(cuid())
+  leaseId         String   @unique
+  tenantId        String
+  propertyId      String
+  unitId          String?
+
+  // Checklist items
+  agreementSigned    Boolean @default(false)
+  depositCleared     Boolean @default(false)
+  firstMonthCleared  Boolean @default(false)
+  inspectionDone     Boolean @default(false)
+  metersLogged       Boolean @default(false)
+  inventorySigned    Boolean @default(false)
+  profileActive      Boolean @default(false)
+  welcomePackSent    Boolean @default(false)
+  keysHandedOver     Boolean @default(false)
+
+  // Meter readings
+  electricityMeterReading String?
+  waterMeterReading       String?
+
+  // Status
+  status          MoveInStatus @default(PENDING)
+  completedAt     DateTime?
+  notes           String? @db.Text
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lease           Lease    @relation(fields: [leaseId], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  property        Property @relation(fields: [propertyId], references: [id])
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([status])
+  @@map("move_in_checklists")
+}
+
+enum MoveInStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
 // Arrears Escalation & Management
 // ============================================
 
@@ -1412,4 +1556,73 @@ enum ArrearsStep {
   FORMAL_NOTICE
   LEGAL_REFERRAL
   RESOLVED
+}
+
+// ============================================
+// Lease Renewals & Rent Review
+// ============================================
+
+model LeaseRenewal {
+  id              String   @id @default(cuid())
+  leaseId         String
+  tenantId        String
+  propertyId      String
+
+  // Current terms
+  currentRent     Decimal  @db.Decimal(10, 2)
+  leaseEndDate    DateTime
+
+  // Alert
+  alertDate       DateTime  // 90 days before end
+  alertSentAt     DateTime?
+  agentActionAt   DateTime?
+
+  // Landlord intent
+  landlordIntent  RenewalIntent?
+  landlordDecisionAt DateTime?
+
+  // Rent review
+  proposedRent    Decimal? @db.Decimal(10, 2)
+  rentIncreasePercent Decimal? @db.Decimal(5, 2)
+  marketComparables Json?  // Array: [{property, rent, source}]
+
+  // Tenant response
+  tenantNotifiedAt DateTime?
+  tenantResponse  String?  // ACCEPTED / NEGOTIATING / DECLINED
+  tenantResponseAt DateTime?
+
+  // Outcome
+  status          RenewalStatus @default(PENDING)
+  newLeaseId      String?  // if renewed, link to new lease
+  renewalNotes    String? @db.Text
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lease           Lease    @relation(fields: [leaseId], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  property        Property @relation(fields: [propertyId], references: [id])
+
+  @@index([leaseId])
+  @@index([status])
+  @@index([alertDate])
+  @@map("lease_renewals")
+}
+
+enum RenewalIntent {
+  RENEW_SAME
+  RENEW_NEW_RENT
+  NOT_RENEWING
+}
+
+enum RenewalStatus {
+  PENDING
+  LANDLORD_REVIEW
+  RENT_REVIEW
+  TENANT_NOTIFIED
+  ACCEPTED
+  DECLINED
+  RENEWED
+  EXPIRED
+  MONTH_TO_MONTH
 }

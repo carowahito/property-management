@@ -1,94 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface Template {
   id: string;
   name: string;
+  type: string;
   category: 'lease-agreement' | 'notice' | 'form' | 'report' | 'letter';
   propertyType: 'residential' | 'commercial' | 'all';
   lastModified: string;
   usageCount: number;
   status: 'active' | 'draft' | 'archived';
+  isActive?: boolean;
+  updatedAt?: string;
+  _count?: { leases: number };
 }
 
 export default function TemplatesPage() {
-  const [templates] = useState<Template[]>([
-    {
-      id: '1',
-      name: 'Standard Residential Lease Agreement',
-      category: 'lease-agreement',
-      propertyType: 'residential',
-      lastModified: '2024-02-15',
-      usageCount: 48,
-      status: 'active',
-    },
-    {
-      id: '2',
-      name: 'Commercial Lease Agreement',
-      category: 'lease-agreement',
-      propertyType: 'commercial',
-      lastModified: '2024-01-20',
-      usageCount: 12,
-      status: 'active',
-    },
-    {
-      id: '3',
-      name: 'Rent Increase Notice',
-      category: 'notice',
-      propertyType: 'all',
-      lastModified: '2024-03-01',
-      usageCount: 8,
-      status: 'active',
-    },
-    {
-      id: '4',
-      name: 'Lease Termination Notice',
-      category: 'notice',
-      propertyType: 'all',
-      lastModified: '2024-02-10',
-      usageCount: 15,
-      status: 'active',
-    },
-    {
-      id: '5',
-      name: 'Maintenance Request Form',
-      category: 'form',
-      propertyType: 'all',
-      lastModified: '2024-01-05',
-      usageCount: 67,
-      status: 'active',
-    },
-    {
-      id: '6',
-      name: 'Move-In Inspection Report',
-      category: 'report',
-      propertyType: 'residential',
-      lastModified: '2024-02-28',
-      usageCount: 22,
-      status: 'active',
-    },
-    {
-      id: '7',
-      name: 'Late Payment Warning Letter',
-      category: 'letter',
-      propertyType: 'all',
-      lastModified: '2024-03-05',
-      usageCount: 5,
-      status: 'draft',
-    },
-  ]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/lease-templates')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch templates');
+        return res.json();
+      })
+      .then((data) => {
+        setTemplates(data.templates || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const filteredTemplates = templates.filter(
-    (t) => filterCategory === 'all' || t.category === filterCategory
+    (t) => filterCategory === 'all' || t.type === filterCategory
   );
 
   const stats = {
-    totalActive: templates.filter((t) => t.status === 'active').length,
-    totalDraft: templates.filter((t) => t.status === 'draft').length,
-    totalUsage: templates.reduce((sum, t) => sum + t.usageCount, 0),
+    totalActive: templates.filter((t) => t.isActive).length,
+    totalDraft: 0, // Not tracked in schema
+    totalUsage: templates.reduce((sum, t) => sum + (t._count?.leases || 0), 0),
     totalTemplates: templates.length,
   };
 
@@ -139,69 +98,59 @@ export default function TemplatesPage() {
       </div>
 
       <div className='bg-surface shadow rounded-lg overflow-hidden'>
-        <table className='min-w-full divide-y divide-neutral-200'>
-          <thead className='bg-neutral-50'>
-            <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                Template Name
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                Category
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                Property Type
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                Last Modified
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                Usage Count
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                Status
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className='bg-surface divide-y divide-neutral-200'>
-            {filteredTemplates.map((template) => (
-              <tr key={template.id} className='hover:bg-neutral-50'>
-                <td className='px-6 py-4 text-sm font-medium text-neutral-900'>{template.name}</td>
-                <td className='px-6 py-4 text-sm text-neutral-900 capitalize'>
-                  {template.category.replace('-', ' ')}
-                </td>
-                <td className='px-6 py-4 text-sm text-neutral-900 capitalize'>
-                  {template.propertyType}
-                </td>
-                <td className='px-6 py-4 text-sm text-neutral-900'>{template.lastModified}</td>
-                <td className='px-6 py-4 text-sm text-neutral-900'>{template.usageCount} times</td>
-                <td className='px-6 py-4'>
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      template.status === 'active'
-                        ? 'bg-success-100 text-green-800'
-                        : template.status === 'draft'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-neutral-100 text-neutral-800'
-                    }`}
-                  >
-                    {template.status}
-                  </span>
-                </td>
-                <td className='px-6 py-4 text-sm space-x-2'>
-                  <Button variant="outline" size="sm">
-                    Edit
-                  </Button>
-                  <Button variant="primary" size="sm">
-                    Use
-                  </Button>
-                </td>
+        {loading ? (
+          <div className='p-8 text-center text-neutral-500'>Loading templates...</div>
+        ) : error ? (
+          <div className='p-8 text-center text-danger-600'>Error: {error}</div>
+        ) : (
+          <table className='min-w-full divide-y divide-neutral-200'>
+            <thead className='bg-neutral-50'>
+              <tr>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                  Template Name
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                  Type
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                  Last Updated
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                  Usage Count
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                  Active
+                </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className='bg-surface divide-y divide-neutral-200'>
+              {filteredTemplates.map((template) => (
+                <tr key={template.id} className='hover:bg-neutral-50'>
+                  <td className='px-6 py-4 text-sm font-medium text-neutral-900'>{template.name}</td>
+                  <td className='px-6 py-4 text-sm text-neutral-900 capitalize'>{template.type}</td>
+                  <td className='px-6 py-4 text-sm text-neutral-900'>{template.updatedAt ? new Date(template.updatedAt).toLocaleDateString() : '-'}</td>
+                  <td className='px-6 py-4 text-sm text-neutral-900'>{template._count?.leases || 0} times</td>
+                  <td className='px-6 py-4'>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${template.isActive ? 'bg-success-100 text-green-800' : 'bg-neutral-100 text-neutral-800'}`}>
+                      {template.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className='px-6 py-4 text-sm space-x-2'>
+                    <Button variant="outline" size="sm">
+                      Edit
+                    </Button>
+                    <Button variant="primary" size="sm">
+                      Use
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

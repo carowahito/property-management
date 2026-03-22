@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatDate } from '@/lib/utils';
@@ -11,34 +11,39 @@ interface MaintenanceRequest {
   id: string
   title: string
   description: string
-  issueType: string
+  category: string | null
   priority: string
   status: string
   createdAt: string
-  scheduledDate?: string
-  completedDate?: string
-  estimatedCost?: number
-  actualCost?: number
+  resolvedAt: string | null
+  // Triage fields
+  triageCategory: string | null
+  slaDeadline: string | null
+  slaBreached: boolean
+  // Approval fields
+  estimatedCost: number | null
+  approvalRequired: boolean
+  approvedBy: string | null
+  approvedAt: string | null
+  landlordNotified: boolean
+  landlordNotifiedAt: string | null
   tenant?: {
     id: string
     name: string
+    email: string
   }
-  lease?: {
+  property?: {
     id: string
-    unit: string | null
-    property: {
+    name: string
+    address: string
+    landlord?: {
       id: string
       name: string
     }
   }
-  assignedVendor?: {
-    id: string
-    name: string
+  _count?: {
+    workOrders: number
   }
-  workOrders?: {
-    id: string
-    status: string
-  }[]
 }
 
 interface MaintenanceResponse {
@@ -51,27 +56,124 @@ interface MaintenanceResponse {
   }
 }
 
+interface Contractor {
+  id: string
+  name: string
+  trade: string
+  phone: string
+  isVetted: boolean
+  rating: number | null
+}
+
 async function fetchMaintenanceRequests(): Promise<MaintenanceResponse> {
   const response = await fetch('/api/maintenance-requests')
   if (!response.ok) throw new Error('Failed to fetch maintenance requests')
   return response.json()
 }
 
+async function fetchContractors(): Promise<{ contractors: Contractor[] }> {
+  const response = await fetch('/api/contractors?isVetted=true&isActive=true')
+  if (!response.ok) throw new Error('Failed to fetch contractors')
+  return response.json()
+}
+
+function getSlaStatus(slaDeadline: string | null, slaBreached: boolean): { label: string; color: string } {
+  if (!slaDeadline) return { label: 'No SLA', color: 'text-neutral-400' };
+  if (slaBreached) return { label: 'SLA BREACHED', color: 'text-red-600 font-bold' };
+
+  const deadline = new Date(slaDeadline);
+  const now = new Date();
+  const diffMs = deadline.getTime() - now.getTime();
+
+  if (diffMs < 0) return { label: 'SLA BREACHED', color: 'text-red-600 font-bold' };
+
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  const remainingHours = diffHours % 24;
+
+  if (diffDays > 0) {
+    return { label: `${diffDays}d ${remainingHours}h remaining`, color: diffDays <= 1 ? 'text-yellow-600' : 'text-green-600' };
+  }
+  if (diffHours > 0) {
+    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return { label: `${diffHours}h ${mins}m remaining`, color: diffHours <= 2 ? 'text-yellow-600' : 'text-green-600' };
+  }
+  return { label: 'Due soon', color: 'text-yellow-600' };
+}
+
+function getTriageCategoryColor(category: string | null): string {
+  switch (category) {
+    case 'EMERGENCY': return 'bg-red-600 text-white';
+    case 'URGENT': return 'bg-orange-500 text-white';
+    case 'ROUTINE': return 'bg-blue-100 text-blue-800';
+    case 'PREVENTIVE': return 'bg-green-100 text-green-800';
+    default: return 'bg-neutral-100 text-neutral-600';
+  }
+}
+
 export default function MaintenancePage() {
+  const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
+  const [triageForm, setTriageForm] = useState<{ category: string; estimatedCost: string }>({
+    category: 'ROUTINE',
+    estimatedCost: '',
+  });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['maintenance-requests', filterStatus, filterPriority],
+    queryKey: ['maintenance-requests'],
     queryFn: fetchMaintenanceRequests,
-  })
+  });
+
+  const { data: contractorsData } = useQuery({
+    queryKey: ['contractors-vetted'],
+    queryFn: fetchContractors,
+  });
+
+  const triageMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`/api/maintenance-requests/${id}/triage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to triage');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance-requests'] });
+      setSelectedRequest(null);
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/maintenance-requests/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvedBy: 'Admin' }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to approve');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance-requests'] });
+    },
+  });
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -79,10 +181,11 @@ export default function MaintenancePage() {
       <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
         <p className="text-red-800">Failed to load maintenance requests. Please try again.</p>
       </div>
-    )
+    );
   }
 
-  const requests = data?.maintenanceRequests || []
+  const requests = data?.maintenanceRequests || [];
+  const contractors = contractorsData?.contractors || [];
 
   const filteredRequests = requests.filter((req) => {
     const matchesStatus = filterStatus === 'all' || req.status.toUpperCase() === filterStatus.toUpperCase();
@@ -95,46 +198,38 @@ export default function MaintenancePage() {
     openRequests: requests.filter((r) => r.status.toUpperCase() === 'PENDING').length,
     inProgress: requests.filter((r) => r.status.toUpperCase() === 'IN_PROGRESS').length,
     urgent: requests.filter((r) => r.priority.toUpperCase() === 'URGENT').length,
+    slaBreached: requests.filter((r) => r.slaBreached || (r.slaDeadline && new Date(r.slaDeadline) < new Date())).length,
+    awaitingApproval: requests.filter((r) => r.approvalRequired && !r.approvedAt).length,
   };
 
   const getPriorityColor = (priority: string) => {
     const upperPriority = priority.toUpperCase();
     switch (upperPriority) {
-      case 'LOW':
-        return 'bg-neutral-100 text-neutral-800';
-      case 'MEDIUM':
-        return 'bg-primary-100 text-primary-800';
-      case 'HIGH':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'URGENT':
-        return 'bg-danger-100 text-red-800';
-      default:
-        return 'bg-neutral-100 text-neutral-800';
+      case 'LOW': return 'bg-neutral-100 text-neutral-800';
+      case 'MEDIUM': return 'bg-primary-100 text-primary-800';
+      case 'HIGH': return 'bg-yellow-100 text-yellow-800';
+      case 'URGENT': return 'bg-danger-100 text-red-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
   const getStatusColor = (status: string) => {
     const upperStatus = status.toUpperCase();
     switch (upperStatus) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'IN_PROGRESS':
-        return 'bg-primary-100 text-primary-800';
-      case 'COMPLETED':
-        return 'bg-success-100 text-green-800';
-      case 'CANCELLED':
-        return 'bg-neutral-100 text-neutral-800';
-      default:
-        return 'bg-neutral-100 text-neutral-800';
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      case 'IN_PROGRESS': return 'bg-primary-100 text-primary-800';
+      case 'COMPLETED': return 'bg-success-100 text-green-800';
+      case 'CANCELLED': return 'bg-neutral-100 text-neutral-800';
+      default: return 'bg-neutral-100 text-neutral-800';
     }
   };
 
   return (
     <div className='p-6 space-y-6'>
-            <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900">Maintenance Requests</h1>
-          <p className="text-neutral-600 mt-1">Manage and track maintenance requests</p>
+          <p className="text-neutral-600 mt-1">Manage, triage, and track maintenance requests</p>
         </div>
         <Button variant="primary" size="lg">
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,24 +240,104 @@ export default function MaintenancePage() {
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Total Requests</p>
-          <p className='text-3xl font-bold text-neutral-900'>{stats.totalRequests}</p>
+      <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4'>
+        <div className='bg-surface shadow rounded-lg p-4'>
+          <p className='text-xs text-neutral-600'>Total</p>
+          <p className='text-2xl font-bold text-neutral-900'>{stats.totalRequests}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Open</p>
-          <p className='text-3xl font-bold text-yellow-600'>{stats.openRequests}</p>
+        <div className='bg-surface shadow rounded-lg p-4'>
+          <p className='text-xs text-neutral-600'>Open</p>
+          <p className='text-2xl font-bold text-yellow-600'>{stats.openRequests}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>In Progress</p>
-          <p className='text-3xl font-bold text-primary-600'>{stats.inProgress}</p>
+        <div className='bg-surface shadow rounded-lg p-4'>
+          <p className='text-xs text-neutral-600'>In Progress</p>
+          <p className='text-2xl font-bold text-primary-600'>{stats.inProgress}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Urgent</p>
-          <p className='text-3xl font-bold text-danger-600'>{stats.urgent}</p>
+        <div className='bg-surface shadow rounded-lg p-4'>
+          <p className='text-xs text-neutral-600'>Urgent</p>
+          <p className='text-2xl font-bold text-danger-600'>{stats.urgent}</p>
+        </div>
+        <div className='bg-surface shadow rounded-lg p-4 border-l-4 border-red-500'>
+          <p className='text-xs text-neutral-600'>SLA Breached</p>
+          <p className='text-2xl font-bold text-red-600'>{stats.slaBreached}</p>
+        </div>
+        <div className='bg-surface shadow rounded-lg p-4 border-l-4 border-orange-500'>
+          <p className='text-xs text-neutral-600'>Awaiting Approval</p>
+          <p className='text-2xl font-bold text-orange-600'>{stats.awaitingApproval}</p>
         </div>
       </div>
+
+      {/* Triage Panel */}
+      {selectedRequest && (
+        <div className="bg-surface shadow-lg rounded-lg p-6 border-2 border-primary-200">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-neutral-900">Triage Request</h2>
+            <button onClick={() => setSelectedRequest(null)} className="text-neutral-400 hover:text-neutral-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Triage Category</label>
+              <div className="flex gap-2 flex-wrap">
+                {['EMERGENCY', 'URGENT', 'ROUTINE', 'PREVENTIVE'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setTriageForm({ ...triageForm, category: cat })}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-full transition ${
+                      triageForm.category === cat
+                        ? getTriageCategoryColor(cat)
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Estimated Cost (KSh)</label>
+              <input
+                type="number"
+                value={triageForm.estimatedCost}
+                onChange={(e) => setTriageForm({ ...triageForm, estimatedCost: e.target.value })}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+              {Number(triageForm.estimatedCost) > 5000 && (
+                <p className="text-xs text-orange-600 mt-1">Approval required (over KSh 5,000)</p>
+              )}
+              {Number(triageForm.estimatedCost) > 15000 && (
+                <p className="text-xs text-red-600 mt-1">3 quotes required (over KSh 15,000)</p>
+              )}
+            </div>
+            <div className="flex items-end">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  triageMutation.mutate({
+                    id: selectedRequest,
+                    data: {
+                      triageCategory: triageForm.category,
+                      estimatedCost: triageForm.estimatedCost ? Number(triageForm.estimatedCost) : undefined,
+                    },
+                  });
+                }}
+                disabled={triageMutation.isPending}
+              >
+                {triageMutation.isPending ? 'Saving...' : 'Save Triage'}
+              </Button>
+              {triageMutation.isError && (
+                <p className="text-sm text-red-600 ml-3">
+                  {(triageMutation.error as Error).message}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className='bg-surface shadow rounded-lg p-4'>
@@ -201,10 +376,13 @@ export default function MaintenancePage() {
                 Request Details
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
-                Property/Unit
+                Property
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
-                Issue Type
+                Triage
+              </th>
+              <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                SLA
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Priority
@@ -213,7 +391,7 @@ export default function MaintenancePage() {
                 Status
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
-                Assigned To
+                Cost / Approval
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>
                 Actions
@@ -221,63 +399,105 @@ export default function MaintenancePage() {
             </tr>
           </thead>
           <tbody className='bg-surface divide-y divide-neutral-200'>
-            {filteredRequests.map((request) => (
-              <tr key={request.id} className='hover:bg-neutral-50'>
-                <td className='px-6 py-4'>
-                  <div className='text-sm font-medium text-neutral-900'>{request.title}</div>
-                  <div className='text-sm text-neutral-500'>
-                    by {request.tenant ? (
-                      <Link href={`/admin/tenants/${request.tenant.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                        {request.tenant.name}
-                      </Link>
-                    ) : 'Unknown'}
-                  </div>
-                  <div className='text-xs text-neutral-400'>{formatDate(request.createdAt)}</div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm'>
-                    {request.lease?.property ? (
-                      <Link href={`/admin/properties/${request.lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                        {request.lease.property.name}
-                      </Link>
-                    ) : 'N/A'}
-                  </div>
-                  <div className='text-sm text-neutral-500'>Unit {request.lease?.unit || 'N/A'}</div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
-                  {request.issueType}
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(request.priority)}`}
-                  >
-                    {request.priority}
-                  </span>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(request.status)}`}
-                  >
-                    {request.status}
-                  </span>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
-                  {request.assignedVendor ? (
-                    <Link href={`/admin/vendors/${request.assignedVendor.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                      {request.assignedVendor.name}
-                    </Link>
-                  ) : <span className='text-neutral-400'>Unassigned</span>}
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-500 space-x-2'>
-                  <button  >
-                    View
-                  </button>
-                  <button  >
-                    Assign
-                  </button>
+            {filteredRequests.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-12 text-center text-neutral-500">
+                  No maintenance requests found.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredRequests.map((request) => {
+                const slaStatus = getSlaStatus(request.slaDeadline, request.slaBreached);
+                const needsApproval = request.approvalRequired && !request.approvedAt;
+
+                return (
+                  <tr key={request.id} className='hover:bg-neutral-50'>
+                    <td className='px-6 py-4'>
+                      <div className='text-sm font-medium text-neutral-900'>{request.title}</div>
+                      <div className='text-sm text-neutral-500'>
+                        by {request.tenant ? (
+                          <Link href={`/admin/tenants/${request.tenant.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
+                            {request.tenant.name}
+                          </Link>
+                        ) : 'Unknown'}
+                      </div>
+                      <div className='text-xs text-neutral-400'>{formatDate(request.createdAt)}</div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='text-sm'>
+                        {request.property ? (
+                          <Link href={`/admin/properties/${request.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
+                            {request.property.name}
+                          </Link>
+                        ) : 'N/A'}
+                      </div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      {request.triageCategory ? (
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTriageCategoryColor(request.triageCategory)}`}>
+                          {request.triageCategory}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-neutral-400">Not triaged</span>
+                      )}
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <span className={`text-xs ${slaStatus.color}`}>
+                        {slaStatus.label}
+                      </span>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(request.priority)}`}
+                      >
+                        {request.priority}
+                      </span>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(request.status)}`}
+                      >
+                        {request.status}
+                      </span>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      {request.estimatedCost !== null && (
+                        <div className="text-sm text-neutral-900">
+                          KSh {Number(request.estimatedCost).toLocaleString()}
+                        </div>
+                      )}
+                      {needsApproval && (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 mt-1">
+                          Requires Approval
+                        </span>
+                      )}
+                      {request.approvedAt && (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800 mt-1">
+                          Approved
+                        </span>
+                      )}
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm space-x-2'>
+                      <button
+                        onClick={() => setSelectedRequest(selectedRequest === request.id ? null : request.id)}
+                        className="text-primary-600 hover:text-primary-800"
+                      >
+                        Triage
+                      </button>
+                      {needsApproval && (
+                        <button
+                          onClick={() => approveMutation.mutate(request.id)}
+                          disabled={approveMutation.isPending}
+                          className="text-green-600 hover:text-green-800"
+                        >
+                          Approve
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

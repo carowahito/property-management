@@ -55,7 +55,7 @@ async function fetchPayments(): Promise<PaymentsResponse> {
 
 export default function AdminPaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'COMPLETED' | 'PENDING' | 'OVERDUE'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PAID' | 'PENDING' | 'OVERDUE'>('all')
   const [timePeriod, setTimePeriod] = useState<'all' | 'current' | 'last30' | 'last90' | 'custom'>('current')
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
@@ -117,7 +117,7 @@ export default function AdminPaymentsPage() {
   const timeFilteredPayments = getFilteredByTime(payments)
 
   // Calculate statistics
-  const paidPayments = timeFilteredPayments.filter(p => p.status === 'COMPLETED')
+  const paidPayments = timeFilteredPayments.filter(p => p.status === 'PAID')
   const pendingPayments = timeFilteredPayments.filter(p => p.status === 'PENDING')
   const overduePayments = timeFilteredPayments.filter(p => p.status === 'OVERDUE')
 
@@ -240,9 +240,9 @@ export default function AdminPaymentsPage() {
               All ({stats.totalTransactions})
             </button>
             <button
-              onClick={() => setStatusFilter('COMPLETED')}
+              onClick={() => setStatusFilter('PAID')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'COMPLETED'
+                statusFilter === 'PAID'
                   ? 'bg-success-600 text-white'
                   : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
@@ -355,13 +355,13 @@ export default function AdminPaymentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        payment.status === 'COMPLETED'
+                        payment.status === 'PAID'
                           ? 'bg-success-100 text-green-800'
                           : payment.status === 'PENDING'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-danger-100 text-red-800'
                       }`}>
-                        {payment.status === 'COMPLETED' ? 'PAID' : payment.status}
+                        {payment.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">

@@ -36,6 +36,32 @@ export async function GET(
             },
           },
         },
+        unit: {
+          select: {
+            id: true,
+            unitNumber: true,
+            floor: true,
+            bedrooms: true,
+            bathrooms: true,
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        lease: {
+          select: {
+            id: true,
+            startDate: true,
+            endDate: true,
+            status: true,
+            monthlyRent: true,
+          },
+        },
       },
     })
 
@@ -68,8 +94,14 @@ export async function PATCH(
     const updateData: any = { ...validatedData }
 
     // Convert date strings to Date objects
-    if (validatedData.date) {
-      updateData.date = new Date(validatedData.date)
+    if (validatedData.scheduledDate) {
+      updateData.scheduledDate = new Date(validatedData.scheduledDate)
+    }
+    if (validatedData.completedDate) {
+      updateData.completedDate = new Date(validatedData.completedDate)
+    }
+    if (validatedData.tenantSignedAt) {
+      updateData.tenantSignedAt = new Date(validatedData.tenantSignedAt)
     }
 
     const inspection = await prisma.inspection.update({
@@ -81,6 +113,18 @@ export async function PATCH(
             id: true,
             name: true,
             address: true,
+          },
+        },
+        unit: {
+          select: {
+            id: true,
+            unitNumber: true,
+          },
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },

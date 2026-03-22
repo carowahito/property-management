@@ -58,7 +58,7 @@ export default function AdminLandlordsPage() {
       }
 
       // Extract only the fields that the API accepts
-      const landlordData = {
+      const landlordData: Record<string, unknown> = {
         name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
         email: formData.email.trim().toLowerCase(),
         phone: formData.phoneNumber.trim(),
@@ -68,12 +68,14 @@ export default function AdminLandlordsPage() {
         bankAccount: formData.bankAccountNumber?.trim() || undefined,
         taxId: formData.kraPin?.trim() || undefined,
         status: 'ACTIVE',
+        managementFeePercent: formData.monthlyManagementFeePercent ? parseFloat(formData.monthlyManagementFeePercent) : undefined,
+        tenantPlacementFee: formData.tenantPlacementFeeMonths ? parseFloat(formData.tenantPlacementFeeMonths) : undefined,
       };
 
       // Remove undefined values
-      Object.keys(landlordData).forEach(key => 
-        landlordData[key as keyof typeof landlordData] === undefined && delete landlordData[key as keyof typeof landlordData]
-      );
+      Object.keys(landlordData).forEach(key => {
+        if (landlordData[key] === undefined) delete landlordData[key];
+      });
 
       console.log('Sending landlord data:', landlordData);
 
