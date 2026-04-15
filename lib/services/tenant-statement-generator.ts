@@ -125,7 +125,7 @@ export class TenantStatementGenerator {
 
   // ── HTML export (print-to-PDF from browser) ─────────────────────────────
 
-  generateHTML(stmt: TenantStatementSummary, companyName = 'Tochi Property Ltd'): string {
+  generateHTML(stmt: TenantStatementSummary, companyName = 'Tochi Property Ltd', companyLogoUrl?: string): string {
     const fmtDate = (d: Date) => {
       const dd = new Date(d);
       return `${String(dd.getDate()).padStart(2, '0')}-${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dd.getMonth()]}-${dd.getFullYear()}`;
@@ -141,6 +141,10 @@ export class TenantStatementGenerator {
       return `${months[s.getMonth()]} ${s.getFullYear()} – ${months[e.getMonth()]} ${e.getFullYear()}`;
     };
 
+    const logoHtml = companyLogoUrl
+      ? `<img src="${companyLogoUrl}" alt="${companyName}" style="max-height: 48px; max-width: 180px; object-fit: contain;" />`
+      : `<span style="font-weight: 700; font-size: 16px; color: #374151; letter-spacing: 0.5px;">${companyName.toUpperCase()}</span>`;
+
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -151,9 +155,8 @@ export class TenantStatementGenerator {
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 30px 40px; color: #1a1a1a; font-size: 13px; }
 
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .header h1 { font-size: 22px; color: #1a1a1a; }
-    .header .subtitle { color: #666; font-size: 13px; margin-top: 2px; }
-    .company-logo { font-weight: 700; font-size: 16px; color: #b91c1c; }
+    .header h1 { font-size: 22px; color: #1f2937; }
+    .header .subtitle { color: #6b7280; font-size: 13px; margin-top: 2px; }
 
     .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #d1d5db; margin-bottom: 24px; }
     .meta-cell { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; display: flex; }
@@ -161,30 +164,28 @@ export class TenantStatementGenerator {
     .meta-label { color: #6b7280; min-width: 130px; }
     .meta-value { font-weight: 500; }
 
-    .section-title { background: #b91c1c; color: white; padding: 8px 12px; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; }
+    .section-title { background: #4b5563; color: white; padding: 8px 12px; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; }
 
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th { background: #b91c1c; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+    th { background: #4b5563; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 12px; }
     th.amount { text-align: right; }
     td { padding: 7px 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
     td.amount { text-align: right; font-family: 'Courier New', monospace; font-size: 12px; }
     tr:nth-child(even) { background: #f9fafb; }
-    tr.payment td { color: #059669; }
+    tr.payment td { color: #047857; }
     tr.charge td.desc { font-weight: 500; }
 
-    .balance-positive { color: #dc2626; font-weight: 600; }
-    .balance-negative { color: #059669; font-weight: 600; }
+    .balance-positive { color: #b91c1c; font-weight: 600; }
+    .balance-negative { color: #047857; font-weight: 600; }
     .balance-zero { color: #6b7280; }
 
-    .totals-row td { font-weight: 700; border-top: 2px solid #1a1a1a; background: #f3f4f6; }
+    .totals-row td { font-weight: 700; border-top: 2px solid #374151; background: #f3f4f6; }
 
-    .arrears-box { background: #b91c1c; color: white; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin: 16px 0; font-size: 14px; }
+    .arrears-box { background: #374151; color: white; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin: 16px 0; font-size: 14px; }
     .arrears-box .amount { font-size: 22px; font-weight: 700; }
-    .credit-box { background: #059669; }
+    .credit-box { background: #065f46; }
 
-    .payment-detail { margin-top: 20px; }
-
-    .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d1d5db; color: #6b7280; font-size: 11px; }
+    .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d1d5db; color: #9ca3af; font-size: 11px; }
 
     @media print {
       body { margin: 15px 20px; }
@@ -198,7 +199,7 @@ export class TenantStatementGenerator {
       <h1>STATEMENT OF ACCOUNT</h1>
       <div class="subtitle">${stmt.propertyName} · Unit ${stmt.unitNumber}</div>
     </div>
-    <div class="company-logo">${companyName.toUpperCase()}</div>
+    <div>${logoHtml}</div>
   </div>
 
   <div class="meta-grid">
@@ -255,35 +256,6 @@ export class TenantStatementGenerator {
     <span>CREDIT BALANCE AS AT ${fmtDate(stmt.statementDate)}</span>
     <span class="amount">${fmtMoney(stmt.closingBalance)}</span>
   </div>` : ''}
-
-  <div class="payment-detail">
-    <div class="section-title">PAYMENT TRANSACTION DETAIL</div>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:30px">#</th>
-          <th style="width:100px">Date</th>
-          <th>Description / Paid By</th>
-          <th style="width:150px">Receipt No.</th>
-          <th class="amount" style="width:120px">Amount (KES)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${stmt.entries.filter(e => e.type === 'PAYMENT').map((e, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${fmtDate(e.date)}</td>
-          <td>${stmt.tenantName} (Tenant)</td>
-          <td>${e.reference || '—'}</td>
-          <td class="amount">${e.credit.toLocaleString('en-KE')}</td>
-        </tr>`).join('\n        ')}
-        <tr class="totals-row">
-          <td colspan="4"></td>
-          <td class="amount">${stmt.totalPaid.toLocaleString('en-KE')}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
 
   <div class="footer">
     <p>Note: This statement covers ${fmtPeriod(stmt.periodStart, stmt.periodEnd)} as captured in transaction records. Please contact your property manager with any queries.</p>

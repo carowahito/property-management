@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { tenantStatementGenerator } from '@/lib/services/tenant-statement-generator';
+import { prisma } from '@/lib/db';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -30,7 +31,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     );
 
     if (format === 'html') {
-      const html = tenantStatementGenerator.generateHTML(statement);
+      // Look up company name and logo
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        include: { company: { select: { name: true, logo: true } } },
+      });
+      const companyName = tenant?.company?.name ?? 'Property Management';
+      const companyLogo = tenant?.company?.logo ?? undefined;
+
+      const html = tenantStatementGenerator.generateHTML(statement, companyName, companyLogo);
       return new NextResponse(html, {
         headers: { 'Content-Type': 'text/html' },
       });
