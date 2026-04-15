@@ -1,388 +1,135 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 export default function TenantProfilePage() {
-  const [formData, setFormData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+254700000000',
-    emergencyContact: '+254711111111',
-    emergencyName: 'Jane Doe',
-    emergencyRelation: 'Spouse',
+  const [isEditing, setIsEditing] = useState(false)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['tenant-profile'],
+    queryFn: () => fetch('/api/tenants?limit=1').then(r => r.json()),
   })
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  })
+  const tenant = data?.tenants?.[0]
 
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [isEditingPassword, setIsEditingPassword] = useState(false)
+  const [formData, setFormData] = useState<Record<string, string>>({})
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Implement profile update API call
-    alert('Profile updated successfully!')
-    setIsEditingProfile(false)
+  // Sync form when tenant loads
+  if (tenant && !formData.name) {
+    setFormData({
+      name: tenant.name || '',
+      email: tenant.email || '',
+      phone: tenant.phone || '',
+      emergencyContact: tenant.emergencyContact || '',
+      emergencyPhone: tenant.emergencyPhone || '',
+    })
   }
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match')
-      return
-    }
-
-    // TODO: Implement password change API call
-    alert('Password changed successfully!')
-    setIsEditingPassword(false)
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  if (!tenant) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <p className="text-neutral-600">Profile not found.</p>
+      </div>
+    )
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-neutral-900">Profile Settings</h1>
-        <p className="mt-2 text-neutral-600">Manage your account information and preferences</p>
+        <p className="mt-2 text-neutral-600">Manage your account information</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Profile Picture Section */}
+        {/* Profile Card */}
         <div className="lg:col-span-1">
           <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Profile Picture</h2>
             <div className="flex flex-col items-center">
-              <div className="w-32 h-32 bg-primary-100 rounded-full flex items-center justify-center mb-4">
-                <span className="text-4xl text-primary-600 font-bold">
-                  {formData.firstName[0]}{formData.lastName[0]}
+              <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4">
+                {tenant.name?.split(' ').map((n: string) => n[0]).join('') || '?'}
+              </div>
+              <h2 className="text-xl font-semibold text-neutral-900">{tenant.name}</h2>
+              <p className="text-neutral-600 text-sm">{tenant.email}</p>
+              <p className="text-neutral-500 text-sm mt-1">{tenant.phone}</p>
+              <div className="mt-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  tenant.status === 'ACTIVE' ? 'bg-success-100 text-success-800' : 'bg-neutral-100 text-neutral-800'
+                }`}>
+                  {tenant.status}
                 </span>
               </div>
-              <button className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700">
-                Upload Photo
-              </button>
-              <p className="mt-2 text-xs text-neutral-500">JPG, PNG or GIF (max 2MB)</p>
             </div>
 
-            {/* Account Info */}
-            <div className="mt-6 pt-6 border-t border-neutral-200">
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">Account Status</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-600">Status</span>
-                  <span className="text-sm font-medium text-success-600">Active</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-600">Member Since</span>
-                  <span className="text-sm font-medium text-neutral-900">Jan 2024</span>
-                </div>
+            <div className="mt-6 border-t border-neutral-200 pt-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Property</span>
+                <span className="font-medium">{tenant.property?.name || '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Unit</span>
+                <span className="font-medium">{tenant.unit || tenant.unitRef?.unitNumber || '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">ID Number</span>
+                <span className="font-medium">{tenant.idNumber || '—'}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
+        {/* Details Form */}
+        <div className="lg:col-span-2">
           <div className="bg-surface shadow rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-neutral-900">Personal Information</h2>
-              {!isEditingProfile && (
-                <button
-                  onClick={() => setIsEditingProfile(true)}
-                  className="text-sm text-primary-600 hover:text-primary-800 font-medium"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-
-            <form onSubmit={handleProfileSubmit}>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    disabled={!isEditingProfile}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    disabled={!isEditingProfile}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    disabled={!isEditingProfile}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    disabled={!isEditingProfile}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              {isEditingProfile && (
-                <div className="mt-4 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingProfile(false)}
-                    className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              )}
-            </form>
-          </div>
-
-          {/* Emergency Contact */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Emergency Contact</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="emergencyName" className="block text-sm font-medium text-neutral-700 mb-1">
-                  Contact Name
-                </label>
-                <input
-                  type="text"
-                  id="emergencyName"
-                  value={formData.emergencyName}
-                  onChange={(e) => setFormData({ ...formData, emergencyName: e.target.value })}
-                  disabled={!isEditingProfile}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="emergencyRelation" className="block text-sm font-medium text-neutral-700 mb-1">
-                  Relationship
-                </label>
-                <input
-                  type="text"
-                  id="emergencyRelation"
-                  value={formData.emergencyRelation}
-                  onChange={(e) => setFormData({ ...formData, emergencyRelation: e.target.value })}
-                  disabled={!isEditingProfile}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label htmlFor="emergencyContact" className="block text-sm font-medium text-neutral-700 mb-1">
-                  Emergency Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="emergencyContact"
-                  value={formData.emergencyContact}
-                  onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
-                  disabled={!isEditingProfile}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Change Password */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-neutral-900">Change Password</h2>
-              {!isEditingPassword && (
-                <button
-                  onClick={() => setIsEditingPassword(true)}
-                  className="text-sm text-primary-600 hover:text-primary-800 font-medium"
-                >
-                  Change Password
-                </button>
-              )}
-            </div>
-
-            {isEditingPassword ? (
-              <form onSubmit={handlePasswordSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="currentPassword" className="block text-sm font-medium text-neutral-700 mb-1">
-                      Current Password
-                    </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      value={passwordData.currentPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-neutral-700 mb-1">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      required
-                      minLength={8}
-                    />
-                    <p className="mt-1 text-xs text-neutral-500">Must be at least 8 characters long</p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-700 mb-1">
-                      Confirm New Password
-                    </label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditingPassword(false)
-                      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-                    }}
-                    className="px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
-                  >
-                    Update Password
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <p className="text-sm text-neutral-500">
-                Password last changed: October 15, 2024
-              </p>
-            )}
-          </div>
-
-          {/* Notifications Preferences */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Notification Preferences</h2>
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="emailNotifications"
-                  defaultChecked
-                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
-                />
-                <label htmlFor="emailNotifications" className="ml-3">
-                  <span className="block text-sm font-medium text-neutral-700">Email Notifications</span>
-                  <span className="block text-sm text-neutral-500">Receive email updates about payments and maintenance</span>
-                </label>
-              </div>
-
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="smsNotifications"
-                  defaultChecked
-                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
-                />
-                <label htmlFor="smsNotifications" className="ml-3">
-                  <span className="block text-sm font-medium text-neutral-700">SMS Notifications</span>
-                  <span className="block text-sm text-neutral-500">Get text messages for urgent updates</span>
-                </label>
-              </div>
-
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="paymentReminders"
-                  defaultChecked
-                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
-                />
-                <label htmlFor="paymentReminders" className="ml-3">
-                  <span className="block text-sm font-medium text-neutral-700">Payment Reminders</span>
-                  <span className="block text-sm text-neutral-500">Receive reminders before rent is due</span>
-                </label>
-              </div>
-
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="maintenanceUpdates"
-                  defaultChecked
-                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
-                />
-                <label htmlFor="maintenanceUpdates" className="ml-3">
-                  <span className="block text-sm font-medium text-neutral-700">Maintenance Updates</span>
-                  <span className="block text-sm text-neutral-500">Get notified about maintenance request status changes</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700">
-                Save Preferences
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+              >
+                {isEditing ? 'Cancel' : 'Edit'}
               </button>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: 'Full Name', key: 'name' },
+                { label: 'Email', key: 'email' },
+                { label: 'Phone', key: 'phone' },
+                { label: 'Emergency Contact', key: 'emergencyContact' },
+                { label: 'Emergency Phone', key: 'emergencyPhone' },
+              ].map((field) => (
+                <div key={field.key}>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">{field.label}</label>
+                  <input
+                    type="text"
+                    value={formData[field.key] || ''}
+                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                    disabled={!isEditing}
+                    className={`w-full px-3 py-2 border rounded-md text-sm ${
+                      isEditing ? 'border-neutral-300 bg-white' : 'border-transparent bg-neutral-50 text-neutral-700'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {isEditing && (
+              <div className="mt-4 flex justify-end">
+                <button className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700">
+                  Save Changes
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

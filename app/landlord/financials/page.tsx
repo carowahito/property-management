@@ -1,112 +1,128 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { formatDate } from '@/lib/utils'
 
 export default function LandlordFinancials() {
-  const [selectedPeriod, setSelectedPeriod] = useState('this-month')
+  const { data: payoutsData, isLoading: loadingPayouts } = useQuery({
+    queryKey: ['landlord-payouts'],
+    queryFn: () => fetch('/api/payouts').then(r => r.json()),
+  })
 
-  const financialSummary = {
-    totalRevenue: 189000,
-    collectedRent: 175000,
-    pendingRent: 14000,
-    expenses: 42000,
-    netIncome: 147000,
-    profitMargin: 77.8
+  const { data: paymentsData, isLoading: loadingPayments } = useQuery({
+    queryKey: ['landlord-payments'],
+    queryFn: () => fetch('/api/payments?limit=100').then(r => r.json()),
+  })
+
+  if (loadingPayouts || loadingPayments) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
-  const transactions = [
-    { id: 1, date: '2025-11-05', tenant: 'John Smith', unit: '4B', amount: 1500, type: 'rent', status: 'completed' },
-    { id: 2, date: '2025-11-04', vendor: 'Quick Fix Plumbing', amount: -250, type: 'maintenance', status: 'completed' },
-    { id: 3, date: '2025-11-03', tenant: 'Sarah Johnson', unit: '7A', amount: 1800, type: 'rent', status: 'completed' },
-    { id: 4, date: '2025-11-02', vendor: 'Cleaning Services Inc', amount: -150, type: 'service', status: 'completed' },
-  ]
+  const payouts = payoutsData?.payouts || []
+  const payments = paymentsData?.payments || []
+
+  const totalPaidToLandlord = payouts
+    .filter((p: any) => p.status === 'PAID')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+
+  const totalCollected = payments
+    .filter((p: any) => p.status === 'PAID')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+
+  const totalPending = payments
+    .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-neutral-900">Financial Overview</h1>
-        <div className="flex gap-3">
-          <Link
-            href="/landlord/financials/statements"
-            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition"
-          >
-            📊 View Statements
-          </Link>
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-4 py-2 border border-neutral-300 rounded-md"
-          >
-            <option value="this-month">This Month</option>
-            <option value="last-month">Last Month</option>
-            <option value="this-quarter">This Quarter</option>
-            <option value="this-year">This Year</option>
-          </select>
-        </div>
+        <Link
+          href="/landlord/financials/statements"
+          className="px-4 py-2 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-700 transition"
+        >
+          View Statements
+        </Link>
       </div>
 
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-surface shadow rounded-lg p-6">
-          <span className="text-3xl mb-2 block">💰</span>
-          <p className="text-sm text-neutral-600">Total Revenue</p>
-          <p className="text-3xl font-bold text-success-600">${financialSummary.totalRevenue.toLocaleString()}</p>
-          <p className="text-xs text-neutral-500 mt-1">${financialSummary.collectedRent.toLocaleString()} collected</p>
+          <p className="text-sm text-neutral-600">Total Collected from Tenants</p>
+          <p className="text-3xl font-bold text-success-600 mt-1">
+            KES {totalCollected.toLocaleString()}
+          </p>
         </div>
         <div className="bg-surface shadow rounded-lg p-6">
-          <span className="text-3xl mb-2 block">📤</span>
-          <p className="text-sm text-neutral-600">Total Expenses</p>
-          <p className="text-3xl font-bold text-danger-600">${financialSummary.expenses.toLocaleString()}</p>
-          <p className="text-xs text-neutral-500 mt-1">22% of revenue</p>
+          <p className="text-sm text-neutral-600">Total Paid to You</p>
+          <p className="text-3xl font-bold text-primary-700 mt-1">
+            KES {totalPaidToLandlord.toLocaleString()}
+          </p>
+          <p className="text-xs text-neutral-500 mt-1">{payouts.filter((p: any) => p.status === 'PAID').length} payouts</p>
         </div>
         <div className="bg-surface shadow rounded-lg p-6">
-          <span className="text-3xl mb-2 block">📊</span>
-          <p className="text-sm text-neutral-600">Net Income</p>
-          <p className="text-3xl font-bold text-primary-600">${financialSummary.netIncome.toLocaleString()}</p>
-          <p className="text-xs text-success-500 mt-1">+{financialSummary.profitMargin}% margin</p>
+          <p className="text-sm text-neutral-600">Pending / Overdue Rent</p>
+          <p className={`text-3xl font-bold mt-1 ${totalPending > 0 ? 'text-danger-600' : 'text-neutral-400'}`}>
+            KES {totalPending.toLocaleString()}
+          </p>
         </div>
       </div>
 
+      {/* Payout History */}
       <div className="bg-surface shadow rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-neutral-200">
-          <h2 className="text-lg font-semibold">Recent Transactions</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">Payout History</h2>
         </div>
-        <table className="min-w-full divide-y divide-neutral-200">
-          <thead className="bg-neutral-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
-            </tr>
-          </thead>
-          <tbody className="bg-surface divide-y divide-neutral-200">
-            {transactions.map(tx => (
-              <tr key={tx.id} className="hover:bg-neutral-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">{tx.date}</td>
-                <td className="px-6 py-4 text-sm text-neutral-900">
-                  {tx.tenant || tx.vendor} {tx.unit ? `- Unit ${tx.unit}` : ''}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-800">
-                    {tx.type}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <span className={tx.amount > 0 ? 'text-success-600' : 'text-danger-600'}>
-                    ${Math.abs(tx.amount)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-success-100 text-success-800">
-                    {tx.status}
-                  </span>
-                </td>
+        {payouts.length === 0 ? (
+          <div className="p-8 text-center text-neutral-500">No payouts recorded yet.</div>
+        ) : (
+          <table className="min-w-full divide-y divide-neutral-200">
+            <thead className="bg-neutral-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date Paid</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Reference</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-neutral-200">
+              {payouts.map((payout: any) => (
+                <tr key={payout.id} className="hover:bg-neutral-50">
+                  <td className="px-6 py-4 text-sm font-medium text-neutral-900">{payout.period}</td>
+                  <td className="px-6 py-4 text-sm text-right font-mono text-neutral-900">
+                    KES {Number(payout.amount).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-neutral-600">
+                    {payout.method === 'BANK_TRANSFER' ? 'Bank' : payout.method === 'MPESA' ? 'M-Pesa' : payout.method}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-neutral-600">
+                    {payout.paidDate ? formatDate(payout.paidDate) : '—'}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-mono text-neutral-500">
+                    {payout.reference || '—'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      payout.status === 'PAID' ? 'bg-success-100 text-success-800'
+                      : payout.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-neutral-100 text-neutral-800'
+                    }`}>
+                      {payout.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )

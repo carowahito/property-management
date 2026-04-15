@@ -1,160 +1,52 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 export default function MessagesPage() {
-  const [selectedMessage, setSelectedMessage] = useState<number | null>(1)
+  const { data, isLoading } = useQuery({
+    queryKey: ['tenant-messages'],
+    queryFn: () => fetch('/api/messages').then(r => r.json()),
+  })
 
-  // Mock data
-  const messages = [
-    {
-      id: 1,
-      from: 'Property Management',
-      subject: 'Lease Renewal Reminder',
-      preview: 'Your lease is expiring in 60 days. Please let us know if you wish to renew...',
-      date: '2025-10-25',
-      read: false,
-      body: 'Dear John,\n\nYour current lease is set to expire on December 31, 2025. We would like to offer you the opportunity to renew your lease for another year.\n\nYour new monthly rent would be KES 47,000 (a 4.4% increase from your current rent).\n\nPlease respond by November 15th if you wish to renew.\n\nBest regards,\nProperty Management Team',
-    },
-    {
-      id: 2,
-      from: 'Property Management',
-      subject: 'Maintenance Update - Kitchen Faucet',
-      preview: 'Your maintenance request #1234 has been assigned to Quick Fix Plumbing...',
-      date: '2025-10-22',
-      read: true,
-      body: 'Hello,\n\nYour maintenance request #1234 (Leaking Kitchen Faucet) has been assigned to Quick Fix Plumbing.\n\nScheduled Date: October 25, 2025\nTime: 2:00 PM - 4:00 PM\n\nPlease ensure someone is available to provide access to the property during this time.\n\nThank you,\nMaintenance Team',
-    },
-    {
-      id: 3,
-      from: 'Property Management',
-      subject: 'Rent Payment Confirmation',
-      preview: 'We have received your rent payment for October 2025...',
-      date: '2025-10-05',
-      read: true,
-      body: 'Dear John,\n\nThis is to confirm that we have received your rent payment for October 2025.\n\nAmount: KES 45,000\nPayment Method: M-Pesa\nDate: October 4, 2025\nReceipt: #OCT-2025-001\n\nThank you for your timely payment!\n\nBest regards,\nAccounts Team',
-    },
-    {
-      id: 4,
-      from: 'Property Management',
-      subject: 'Community Announcement - Building Maintenance',
-      preview: 'The building common areas will undergo maintenance next week...',
-      date: '2025-09-28',
-      read: true,
-      body: 'Dear Residents,\n\nWe will be conducting routine maintenance on the building common areas including hallways and stairwells next week from October 1-3.\n\nPlease excuse any inconvenience during this time. The work will be done between 9 AM - 5 PM.\n\nThank you for your cooperation,\nProperty Management',
-    },
-  ]
+  const messages = data?.messages || []
 
-  const currentMessage = messages.find((m) => m.id === selectedMessage)
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-neutral-900 mb-6">Messages</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Message List */}
-        <div className="lg:col-span-1">
-          <div className="bg-surface shadow rounded-lg overflow-hidden">
-            <div className="p-4 bg-neutral-50 border-b border-neutral-200">
-              <button className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
-                + New Message
-              </button>
-            </div>
-            <div className="divide-y divide-neutral-200 max-h-[600px] overflow-y-auto">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  onClick={() => setSelectedMessage(message.id)}
-                  className={`p-4 cursor-pointer transition-colors ${
-                    selectedMessage === message.id
-                      ? 'bg-primary-50 border-l-4 border-primary-600'
-                      : 'hover:bg-neutral-50'
-                  } ${!message.read ? 'bg-primary-50/30' : ''}`}
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <p
-                      className={`text-sm ${
-                        !message.read ? 'font-bold text-neutral-900' : 'font-medium text-neutral-700'
-                      }`}
-                    >
-                      {message.from}
-                    </p>
-                    {!message.read && (
-                      <span className="inline-block w-2 h-2 bg-primary-600 rounded-full"></span>
-                    )}
-                  </div>
-                  <p
-                    className={`text-sm mb-1 ${
-                      !message.read ? 'font-semibold text-neutral-900' : 'text-neutral-700'
-                    }`}
-                  >
-                    {message.subject}
-                  </p>
-                  <p className="text-xs text-neutral-500 truncate mb-1">{message.preview}</p>
-                  <p className="text-xs text-neutral-400">{message.date}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Message Content */}
-        <div className="lg:col-span-2">
-          {currentMessage ? (
-            <div className="bg-surface shadow rounded-lg">
-              <div className="p-6 border-b border-neutral-200">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-neutral-900">
-                      {currentMessage.subject}
-                    </h2>
-                    <p className="text-sm text-neutral-500 mt-1">
-                      From: {currentMessage.from}
-                    </p>
-                  </div>
-                  <span className="text-sm text-neutral-500">{currentMessage.date}</span>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="prose max-w-none">
-                  <p className="whitespace-pre-wrap text-neutral-700">{currentMessage.body}</p>
-                </div>
-              </div>
-              <div className="p-6 bg-neutral-50 border-t border-neutral-200">
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
-                  Reply
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-surface shadow rounded-lg p-12 text-center">
-              <div className="text-6xl mb-4">💌</div>
-              <h3 className="text-lg font-medium text-neutral-900 mb-2">No message selected</h3>
-              <p className="text-neutral-500">Select a message from the list to read it</p>
-            </div>
-          )}
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-neutral-900">Messages</h1>
+        <p className="mt-2 text-neutral-600">Your communications with property management</p>
       </div>
 
-      {/* Quick Actions */}
-      <div className="mt-6 bg-primary-50 border border-primary-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-primary-900 mb-2">Need to reach us?</h3>
-        <div className="flex gap-4">
-          <a
-            href="mailto:management@catalyst-properties.com"
-            className="text-sm text-primary-700 hover:text-primary-900 font-medium"
-          >
-            📧 management@catalyst-properties.com
-          </a>
-          <a
-            href="tel:+254700000000"
-            className="text-sm text-primary-700 hover:text-primary-900 font-medium"
-          >
-            📞 +254 700 000 000
-          </a>
+      {messages.length === 0 ? (
+        <div className="bg-surface shadow rounded-lg p-12 text-center">
+          <div className="text-4xl mb-4">💬</div>
+          <h3 className="text-lg font-medium text-neutral-900">No messages yet</h3>
+          <p className="text-neutral-500 mt-2">Messages from your property manager will appear here.</p>
         </div>
-      </div>
+      ) : (
+        <div className="bg-surface shadow rounded-lg divide-y divide-neutral-200">
+          {messages.map((msg: any) => (
+            <div key={msg.id} className="p-4 hover:bg-neutral-50 cursor-pointer">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-medium text-neutral-900">{msg.subject}</p>
+                  <p className="text-sm text-neutral-600 mt-1">{msg.content?.slice(0, 100)}...</p>
+                </div>
+                <span className="text-xs text-neutral-500">{msg.sentAt?.split('T')[0]}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
