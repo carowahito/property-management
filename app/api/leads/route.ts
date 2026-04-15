@@ -70,9 +70,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createLeadSchema.parse(body)
 
+    // Resolve company — TODO: derive from session.user.companyId
+    const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+    if (!company) {
+      return NextResponse.json({ error: 'No active company' }, { status: 500 })
+    }
+
     const lead = await prisma.lead.create({
       data: {
         ...validatedData,
+        companyId: company.id,
         moveInDate: validatedData.moveInDate
           ? new Date(validatedData.moveInDate)
           : undefined,

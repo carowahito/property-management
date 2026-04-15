@@ -96,8 +96,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
     }
 
+    const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+    if (!company) {
+      return NextResponse.json({ error: 'No active company' }, { status: 500 })
+    }
+
     const property = await prisma.property.create({
-      data: validatedData,
+      data: { ...validatedData, companyId: company.id },
       include: {
         landlord: {
           select: {

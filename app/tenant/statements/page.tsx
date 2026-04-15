@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatDate } from '@/lib/utils';
@@ -28,7 +27,6 @@ interface StatementData {
 }
 
 export default function TenantStatementsPage() {
-  const { data: session } = useSession();
   const [period, setPeriod] = useState('12'); // months
 
   // For now, fetch all tenants and use the first one (until tenant auth is wired)

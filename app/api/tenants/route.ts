@@ -99,9 +99,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
 
-    // Check if email is already in use
-    const existingTenant = await prisma.tenant.findUnique({
-      where: { email: validatedData.email },
+    // Resolve company
+    const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+    if (!company) {
+      return NextResponse.json({ error: 'No active company' }, { status: 500 })
+    }
+
+    // Check if email is already in use within this company
+    const existingTenant = await prisma.tenant.findFirst({
+      where: { companyId: company.id, email: validatedData.email },
     })
 
     if (existingTenant) {
@@ -111,7 +117,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const tenantData: any = { ...validatedData }
+    const tenantData: any = { ...validatedData, companyId: company.id }
 
     // Convert date strings to Date objects
     if (validatedData.moveInDate) {
