@@ -27,6 +27,7 @@ export default function AdminLayout({
 
   // In production, get this from auth context
   const currentUserRole = 'Admin' // or 'Manager', 'Sales', 'Customer Care', 'Caretaker', 'Operations', 'Finance'
+  const [showPortalSwitcher, setShowPortalSwitcher] = useState(false)
 
   // Don't show back button on main dashboard
   const showBackButton = pathname !== '/admin'
@@ -346,6 +347,63 @@ export default function AdminLayout({
             </div>
             <div className="flex items-center space-x-4">
               <GlobalSearch />
+
+              {/* Portal Switcher */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowPortalSwitcher(!showPortalSwitcher)}
+                  className="flex items-center space-x-2 px-3 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition text-sm font-medium"
+                  title="Switch portal view"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  <span>Switch Portal</span>
+                </button>
+                {showPortalSwitcher && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowPortalSwitcher(false)} />
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-neutral-200 z-50 py-2">
+                      <div className="px-4 py-2 border-b border-neutral-100">
+                        <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium">View as</p>
+                      </div>
+                      <button
+                        onClick={() => { window.open('/tenant/dashboard', '_blank'); setShowPortalSwitcher(false) }}
+                        className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-neutral-50 transition text-left"
+                      >
+                        <span className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm">T</span>
+                        <div>
+                          <p className="text-sm font-medium text-neutral-900">Tenant Portal</p>
+                          <p className="text-xs text-neutral-500">View as Faridah Kassim</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => { window.open('/landlord/dashboard', '_blank'); setShowPortalSwitcher(false) }}
+                        className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-neutral-50 transition text-left"
+                      >
+                        <span className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-sm">L</span>
+                        <div>
+                          <p className="text-sm font-medium text-neutral-900">Landlord Portal</p>
+                          <p className="text-xs text-neutral-500">View as Ann Karuga</p>
+                        </div>
+                      </button>
+                      <div className="border-t border-neutral-100 mt-1 pt-1">
+                        <button
+                          onClick={() => { router.push('/admin'); setShowPortalSwitcher(false) }}
+                          className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-neutral-50 transition text-left"
+                        >
+                          <span className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 text-sm">A</span>
+                          <div>
+                            <p className="text-sm font-medium text-neutral-900">Admin Portal</p>
+                            <p className="text-xs text-neutral-500">Back to admin dashboard</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               <button className="text-neutral-500 hover:text-neutral-900 p-2" title="Notifications">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />

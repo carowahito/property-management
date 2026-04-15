@@ -6,7 +6,7 @@ import { getToken } from 'next-auth/jwt'
 const protectedRoutes = ['/admin', '/tenant', '/landlord', '/vendor']
 
 // Public routes that should redirect to dashboard if already authenticated
-const publicRoutes = ['/admin/login', '/admin/forgot-password']
+const publicRoutes = ['/admin/login', '/admin/forgot-password', '/tenant/login', '/landlord/login', '/vendor/login']
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
@@ -22,15 +22,25 @@ export async function middleware(request: NextRequest) {
   })
 
   // Redirect to login if accessing protected route without authentication
-  if (isProtectedRoute && !token && !path.includes('/login')) {
-    const loginUrl = new URL('/admin/login', request.url)
+  if (isProtectedRoute && !token && !path.includes('/login') && !path.includes('/register') && !path.includes('/forgot-password')) {
+    // Redirect to the portal-specific login page
+    let loginPath = '/admin/login'
+    if (path.startsWith('/tenant')) loginPath = '/tenant/login'
+    else if (path.startsWith('/landlord')) loginPath = '/landlord/login'
+    else if (path.startsWith('/vendor')) loginPath = '/vendor/login'
+
+    const loginUrl = new URL(loginPath, request.url)
     loginUrl.searchParams.set('callbackUrl', path)
     return NextResponse.redirect(loginUrl)
   }
 
   // Redirect to dashboard if accessing public route while authenticated
   if (isPublicRoute && token) {
-    return NextResponse.redirect(new URL('/admin', request.url))
+    let dashboard = '/admin'
+    if (path.startsWith('/tenant')) dashboard = '/tenant/dashboard'
+    else if (path.startsWith('/landlord')) dashboard = '/landlord/dashboard'
+
+    return NextResponse.redirect(new URL(dashboard, request.url))
   }
 
   return NextResponse.next()
