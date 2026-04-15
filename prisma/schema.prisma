@@ -31,15 +31,16 @@ model Company {
   updatedAt     DateTime @updatedAt
 
   // Relations
-  users         User[]
-  properties    Property[]
-  landlords     Landlord[]
-  tenants       Tenant[]
-  vendors       Vendor[]
-  contractors   Contractor[]
-  leads         Lead[]
-  enquiries     Enquiry[]
-  leaseTemplates LeaseTemplate[]
+  users             User[]
+  properties        Property[]
+  landlords         Landlord[]
+  tenants           Tenant[]
+  vendors           Vendor[]
+  contractors       Contractor[]
+  leads             Lead[]
+  enquiries         Enquiry[]
+  leaseTemplates    LeaseTemplate[]
+  gatewayTransactions GatewayTransaction[]
 
   @@index([slug])
   @@index([status])
@@ -1763,4 +1764,122 @@ enum RenewalStatus {
   RENEWED
   EXPIRED
   MONTH_TO_MONTH
+}
+
+// ============================================
+// M-Pesa / Daraja Integration
+// ============================================
+
+/// Raw payment gateway transaction as received from callbacks (M-Pesa, Card, Bank).
+/// This is the single source of truth for what the gateway says happened.
+/// Reconciliation matches these to tenant_ledger / payouts.
+model GatewayTransaction {
+  id                String   @id @default(cuid())
+  companyId         String
+
+  // Gateway identification
+  gateway           PaymentGateway        // MPESA, CARD, BANK
+  transactionType   GatewayTransactionType // INBOUND (tenant pays) or OUTBOUND (landlord payout)
+  receiptNumber     String   @unique      // M-Pesa code, card auth ref, bank txn ref
+  transactionDate   DateTime
+  amount            Decimal  @db.Decimal(10, 2)
+
+  // Payer/payee details
+  senderIdentifier  String?               // phone, card last4, bank account
+  recipientIdentifier String?             // phone, bank account
+  accountReference  String?               // paybill account ref (e.g. unit number "GWG2-A55")
+  transactionDesc   String?
+  senderName        String?               // name from gateway
+  recipientName     String?
+
+  // Gateway-specific
+  gatewayBalance    Decimal? @db.Decimal(10, 2)  // float balance after txn
+  rawPayload        Json?                 // full callback payload for audit
+
+  // Reconciliation
+  reconciliationStatus  ReconciliationStatus @default(UNMATCHED)
+  matchedTenantId       String?
+  matchedLandlordId     String?
+  matchedLedgerEntryId  String?
+  matchedPayoutId       String?
+  reconciledAt          DateTime?
+  reconciledBy          String?     // user ID or "SYSTEM"
+  reconciliationNotes   String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([receiptNumber])
+  @@index([senderIdentifier])
+  @@index([accountReference])
+  @@index([reconciliationStatus])
+  @@index([transactionDate])
+  @@index([gateway])
+  @@map("gateway_transactions")
+}
+
+enum PaymentGateway {
+  MPESA
+  CARD        // Visa, Mastercard via payment processor
+  BANK        // Direct bank transfer / EFT / RTGS
+  PESALINK    // PesaLink (Kenya interbank)
+  PAYPAL
+  OTHER
+}
+
+enum GatewayTransactionType {
+  INBOUND     // Money coming in (tenant rent, deposits)
+  OUTBOUND    // Money going out (landlord payouts, vendor payments)
+}
+
+enum ReconciliationStatus {
+  UNMATCHED       // Received from Daraja, not yet matched
+  AUTO_MATCHED    // System matched by phone + amount + account ref
+  MANUAL_MATCHED  // Agent manually matched
+  DISPUTED        // Amount or tenant mismatch flagged
+  DUPLICATE       // Duplicate transaction detected
+  REFUNDED        // Payment was reversed
+}
+
+/// Reconciliation run log — tracks each batch reconciliation attempt
+model ReconciliationRun {
+  id              String   @id @default(cuid())
+  companyId       String
+  runDate         DateTime @default(now())
+  periodStart     DateTime
+  periodEnd       DateTime
+
+  // Results
+  totalMpesaTxns      Int @default(0)
+  autoMatched         Int @default(0)
+  manuallyMatched     Int @default(0)
+  unmatched           Int @default(0)
+  disputed            Int @default(0)
+  duplicates          Int @default(0)
+
+  // Financial
+  totalMpesaAmount    Decimal @db.Decimal(12, 2) @default(0)
+  totalLedgerExpected Decimal @db.Decimal(12, 2) @default(0)
+  variance            Decimal @db.Decimal(12, 2) @default(0)  // mpesa - expected
+
+  status          ReconciliationRunStatus @default(IN_PROGRESS)
+  completedAt     DateTime?
+  runBy           String?
+
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([runDate])
+  @@map("reconciliation_runs")
+}
+
+enum ReconciliationRunStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
 }
