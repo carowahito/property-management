@@ -47,7 +47,10 @@ export interface StatementTransaction {
   netAmount: number;
   paidDate: Date | null;
   payoutStatus: string;
-  fundingSource: 'TENANT' | 'AGENT';  // whether tenant paid or agent fronted
+  payoutDate: Date | null;
+  payoutReference: string | null;
+  payoutMethod: string | null;
+  fundingSource: 'TENANT' | 'AGENT';
 }
 
 export interface PropertyBreakdown {
@@ -157,6 +160,9 @@ export class LandlordStatementGenerator {
         netAmount: Number(txn.netAmount),
         paidDate: txn.paidDate,
         payoutStatus: txn.payoutStatus,
+        payoutDate: txn.payoutDate,
+        payoutReference: txn.payoutReference,
+        payoutMethod: txn.payoutMethod,
         fundingSource: txn.paymentId ? 'TENANT' : 'AGENT',
       }));
 
@@ -441,39 +447,46 @@ export class LandlordStatementGenerator {
   <table>
     <thead>
       <tr>
-        <th>Period</th>
-        <th>Property</th>
+        <th>Rent Period</th>
         <th>Tenant</th>
         <th class="amount">Gross Rent</th>
         <th class="amount">Service Chg</th>
         <th class="amount">Mgmt Fee</th>
-        <th class="amount">Other</th>
+        <th class="amount">Repairs</th>
         <th class="amount">Net Paid</th>
-        <th>Payout Ref</th>
+        <th>Date Paid</th>
+        <th>Method</th>
+        <th>Payment Ref</th>
       </tr>
     </thead>
     <tbody>
-      ${statement.transactions.map(txn => `
+      ${statement.transactions.map(txn => {
+        const methodLabel = txn.payoutMethod === 'BANK_TRANSFER' ? 'Bank'
+          : txn.payoutMethod === 'MPESA' ? 'M-Pesa'
+          : txn.payoutMethod === 'CHEQUE' ? 'Cheque'
+          : txn.payoutMethod || '—';
+        return `
       <tr>
         <td>${txn.rentPeriod}</td>
-        <td>${txn.propertyName}</td>
         <td>${txn.tenantName}</td>
         <td class="amount">${fmtMoney(txn.grossRent)}</td>
         <td class="amount deduction">${fmtMoney(txn.deductions.serviceCharge)}</td>
         <td class="amount deduction">${fmtMoney(txn.deductions.managementFee)}</td>
-        <td class="amount">${txn.deductions.maintenanceFees + txn.deductions.otherDeductions > 0 ? fmtMoney(txn.deductions.maintenanceFees + txn.deductions.otherDeductions) : ''}</td>
+        <td class="amount">${txn.deductions.maintenanceFees + txn.deductions.otherDeductions > 0 ? fmtMoney(txn.deductions.maintenanceFees + txn.deductions.otherDeductions) : '—'}</td>
         <td class="amount income">${fmtMoney(txn.netAmount)}</td>
-        <td style="font-size:10px;">${txn.payoutStatus === 'PAID' ? '✓' : '—'}</td>
-      </tr>
-      `).join('')}
+        <td>${txn.payoutDate ? fmtDate(new Date(txn.payoutDate)) : '—'}</td>
+        <td>${methodLabel}</td>
+        <td style="font-family: 'Courier New', monospace; font-size: 10px;">${txn.payoutReference || '—'}</td>
+      </tr>`;
+      }).join('')}
       <tr class="totals-row">
-        <td colspan="3">TOTALS</td>
+        <td colspan="2">TOTALS (${statement.transactionCount} months)</td>
         <td class="amount">${fmtMoney(statement.totalGrossRent)}</td>
         <td class="amount deduction">${fmtMoney(statement.totalServiceCharges)}</td>
         <td class="amount deduction">${fmtMoney(statement.totalManagementFees)}</td>
-        <td class="amount">${statement.totalMaintenanceFees + statement.totalOtherDeductions > 0 ? fmtMoney(statement.totalMaintenanceFees + statement.totalOtherDeductions) : ''}</td>
+        <td class="amount">${statement.totalMaintenanceFees + statement.totalOtherDeductions > 0 ? fmtMoney(statement.totalMaintenanceFees + statement.totalOtherDeductions) : '—'}</td>
         <td class="amount income">${fmtMoney(statement.totalNetAmount)}</td>
-        <td></td>
+        <td colspan="3"></td>
       </tr>
     </tbody>
   </table>
