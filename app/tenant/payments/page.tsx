@@ -70,12 +70,20 @@ export default function TenantPaymentsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Payment History</h1>
-        <Link
-          href="/tenant/payments/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
-        >
-          Make Payment
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/tenant/statements"
+            className="inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50"
+          >
+            View Statement
+          </Link>
+          <Link
+            href="/tenant/payments/new"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+          >
+            Make Payment
+          </Link>
+        </div>
       </div>
 
       {/* Summary Cards */}

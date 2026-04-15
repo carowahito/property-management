@@ -75,6 +75,17 @@ export default function LandlordStatementsPage() {
     window.print();
   };
 
+  // Download the full landlord statement via the statement API
+  const handleDownloadStatement = () => {
+    // Use the first statement's landlordId
+    const landlordId = statements[0]?.landlordId;
+    if (!landlordId) return;
+    window.open(
+      `/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`,
+      '_blank'
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -100,8 +111,20 @@ export default function LandlordStatementsPage() {
         <Link href="/landlord/financials" className="text-primary-600 hover:text-primary-800 mb-2 inline-block">
           &larr; Back to Financials
         </Link>
-        <h1 className="text-3xl font-bold text-neutral-900">Rent Statements</h1>
-        <p className="text-neutral-600 mt-2">View detailed breakdown of rent collected and deductions</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-neutral-900">Rent Statements</h1>
+            <p className="text-neutral-600 mt-2">View detailed breakdown of rent collected and deductions</p>
+          </div>
+          {statements.length > 0 && (
+            <button
+              onClick={handleDownloadStatement}
+              className="px-4 py-2 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-700 transition-colors"
+            >
+              Download Full Statement
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Statements Table */}
