@@ -465,6 +465,11 @@ export default function TenantCRMPage({ params }: Props) {
             <Button variant="outline" onClick={handleEditClick}>
               ✏️ Edit
             </Button>
+            <Button variant="outline" onClick={() => {
+              window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
+            }}>
+              📄 Statement
+            </Button>
             <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>
               💬 Contact
             </Button>
@@ -604,7 +609,14 @@ export default function TenantCRMPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-neutral-900">Payment History</h3>
-                <Button variant="primary" onClick={() => setShowRecordPaymentModal(true)}>+ Record Payment</Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => {
+                    window.open(`/api/tenants/${tenantId}/statement?format=html`, '_blank')
+                  }}>
+                    📄 Download Statement
+                  </Button>
+                  <Button variant="primary" onClick={() => setShowRecordPaymentModal(true)}>+ Record Payment</Button>
+                </div>
               </div>
 
               {/* Filters */}

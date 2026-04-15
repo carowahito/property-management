@@ -153,7 +153,7 @@ export async function GET(
 
   // ── Totals ────────────────────────────────────────────────────────────────
   const totalRentDue          = rentTransactions.reduce((s, t) => s + Number(t.grossRent), 0)
-  const totalActualDeposited  = rentTransactions.reduce((s, t) => s + Number(t.payment.amount), 0)
+  const totalActualDeposited  = rentTransactions.reduce((s, t) => s + Number(t.payment?.amount ?? 0), 0)
   const totalLateFees         = rentTransactions.reduce((s, t) => s + Number(t.lateFees), 0)
   const totalServiceCharges   = rentTransactions.reduce((s, t) => s + Number(t.serviceCharge), 0)
   const totalManagementFees   = rentTransactions.reduce((s, t) => s + Number(t.managementFee), 0)
@@ -198,9 +198,9 @@ export async function GET(
       },
       transactions: rentTransactions.map(t => ({
         rentPeriod:      t.rentPeriod,
-        receiptNo:       t.payment.reference,
+        receiptNo:       t.payment?.reference ?? null,
         rentDue:         Number(t.grossRent),
-        actualDeposit:   Number(t.payment.amount),
+        actualDeposit:   Number(t.payment?.amount ?? 0),
         lateFees:        Number(t.lateFees),
         serviceCharge:   Number(t.serviceCharge),
         managementFee:   Number(t.managementFee),
@@ -213,7 +213,7 @@ export async function GET(
         payoutReference: t.payoutReference,
         dueDate:         t.dueDate,
         paidDate:        t.paidDate,
-        method:          t.payment.method,
+        method:          t.payment?.method ?? null,
         notes:           t.notes,
       })),
       distributionItems,

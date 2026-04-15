@@ -49,13 +49,13 @@ export class RentProcessor {
             },
           },
           tenant: true,
-          rentTransaction: true,
+          rentTransactions: true,
         },
       });
 
       if (!payment) throw new Error('Payment not found');
       if (payment.type !== PaymentType.RENT) throw new Error('Payment is not a rent payment');
-      if (payment.rentTransaction) throw new Error('Payment already processed');
+      if (payment.rentTransactions.length > 0) throw new Error('Payment already processed');
       if (!payment.lease?.unitRef) throw new Error('Payment has no associated unit');
 
       const { lease } = payment;

@@ -78,9 +78,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createVendorSchema.parse(body)
 
-    // Check if email is already in use
-    const existingVendor = await prisma.vendor.findUnique({
-      where: { email: validatedData.email },
+    const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+    if (!company) {
+      return NextResponse.json({ error: 'No active company' }, { status: 500 })
+    }
+
+    // Check if email is already in use within this company
+    const existingVendor = await prisma.vendor.findFirst({
+      where: { companyId: company.id, email: validatedData.email },
     })
 
     if (existingVendor) {
@@ -91,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     const vendor = await prisma.vendor.create({
-      data: validatedData,
+      data: { ...validatedData, companyId: company.id },
     })
 
     return NextResponse.json(vendor, { status: 201 })

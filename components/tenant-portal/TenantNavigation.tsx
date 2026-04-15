@@ -29,6 +29,7 @@ export default function TenantNavigation() {
       icon: '💰',
       submenu: [
         { href: '/tenant/payments', label: 'Payments' },
+        { href: '/tenant/statements', label: 'Statements' },
         { href: '/tenant/autopay', label: 'Auto-Pay' },
         { href: '/tenant/payment-plans', label: 'Payment Plans' },
         { href: '/tenant/insurance', label: 'Insurance' },

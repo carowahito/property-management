@@ -37,28 +37,73 @@ async function main() {
       sessions,
       accounts,
       verification_tokens,
-      users
+      users,
+      companies
     CASCADE
   `)
 
   console.log('✅ All data cleared')
 
+  // ── Company: Tochi Property Ltd ───────────────────────────────────────────
+  const company = await prisma.company.create({
+    data: {
+      name: 'Tochi Property Ltd',
+      slug: 'tochi-property',
+      email: 'info@tochipropertyltd.com',
+      phone: '+254700000000',
+      address: 'Nairobi',
+      city: 'Nairobi',
+      country: 'Kenya',
+      status: 'ACTIVE',
+      plan: 'PROFESSIONAL',
+    },
+  })
+  console.log('✅ Company created:', company.name)
+
   // ── Admin User ────────────────────────────────────────────────────────────
   const hashedPassword = await bcrypt.hash('admin123', 10)
   const admin = await prisma.user.create({
     data: {
-      email: 'admin@propmanage.com',
+      companyId: company.id,
+      email: 'admin@tochipropertyltd.com',
       password: hashedPassword,
-      name: 'Admin User',
+      name: 'Tochi Admin',
       role: 'ADMIN',
       active: true,
     },
   })
   console.log('✅ Admin user created:', admin.email)
 
+  // ── Sales Agent: Rose Chege ───────────────────────────────────────────────
+  const rosePassword = await bcrypt.hash('rose123', 10)
+  const rose = await prisma.user.create({
+    data: {
+      companyId: company.id,
+      email: 'rose@tochipropertyltd.com',
+      password: rosePassword,
+      name: 'Rose Chege',
+      role: 'AGENT',
+      active: true,
+    },
+  })
+  await prisma.teamMember.create({
+    data: {
+      userId: rose.id,
+      employeeId: 'TOCHI-001',
+      department: 'SALES',
+      position: 'Sales Agent',
+      hireDate: new Date('2025-01-01'),
+      status: 'ACTIVE',
+      skills: ['property-management', 'tenant-relations', 'mpesa-reconciliation'],
+      certifications: [],
+    },
+  })
+  console.log('✅ Sales agent created:', rose.name)
+
   // ── Landlord: Ann Karuga ──────────────────────────────────────────────────
   const landlord = await prisma.landlord.create({
     data: {
+      companyId: company.id,
       name: 'Ann Karuga',
       email: 'carowahito@gmail.com',
       phone: '+254721998499',
@@ -74,6 +119,7 @@ async function main() {
   // ── Property: Greatwall Gardens II ───────────────────────────────────────
   const property = await prisma.property.create({
     data: {
+      companyId: company.id,
       name: 'Greatwall Gardens II',
       address: 'Shanghai Road',
       city: 'Athi River',
@@ -106,6 +152,7 @@ async function main() {
   // ── Tenant: Faridah Achieng Kassim ───────────────────────────────────────
   const tenant = await prisma.tenant.create({
     data: {
+      companyId: company.id,
       name: 'Faridah Achieng Kassim',
       email: 'faridahkassim592@gmail.com',
       phone: '+254721656564',
@@ -323,11 +370,13 @@ async function main() {
 
   console.log(`✅ Created ${months.length} months of payment history (Jul 2025 – Mar 2026)`)
 
-  console.log('\n🎉 Seed complete — 1 unit, 1 landlord, 1 tenant, 9 paid months')
-  console.log('   Unit:     GWG2-A55')
+  console.log('\n🎉 Seed complete — Tochi Property Ltd')
+  console.log('   Company:  Tochi Property Ltd (tochi-property)')
+  console.log('   Admin:    admin@tochipropertyltd.com / admin123')
+  console.log('   Agent:    rose@tochipropertyltd.com / rose123 (Rose Chege)')
   console.log('   Landlord: Ann Karuga')
   console.log('   Tenant:   Faridah Achieng Kassim')
-  console.log('   Admin:    admin@propmanage.com / admin123')
+  console.log('   Unit:     GWG2-A55 @ Greatwall Gardens II')
 }
 
 main()

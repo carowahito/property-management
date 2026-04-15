@@ -16,8 +16,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials')
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        // Email is unique per company, not globally. For login, find the first
+        // active user with this email. Multi-company login will use company slug later.
+        const user = await prisma.user.findFirst({
+          where: { email: credentials.email, active: true },
         })
 
         if (!user || !user.password) {

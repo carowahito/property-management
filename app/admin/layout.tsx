@@ -70,6 +70,7 @@ export default function AdminLayout({
         { href: '/admin/late-fees', label: 'Late Fees', icon: '⏰' },
         { href: '/admin/deposits', label: 'Deposits', icon: '🏦' },
         { href: '/admin/statements', label: 'Owner Statements', icon: '📋' },
+        { href: '/admin/arrears-analytics', label: 'Arrears & Risk', icon: '🚨' },
       ]
     },
     {

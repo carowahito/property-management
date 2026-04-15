@@ -133,6 +133,11 @@ export default function LandlordCRMPage({ params }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline">✏️ Edit</Button>
+            <Button variant="outline" onClick={() => {
+              window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
+            }}>
+              📄 Statement
+            </Button>
             <Button variant="primary">💬 Contact</Button>
           </div>
         </div>
@@ -302,12 +307,22 @@ export default function LandlordCRMPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-neutral-900">Financial History</h3>
-                <Button 
-                  variant="primary" 
-                  onClick={() => router.push(`/admin/landlords/${landlordId}/statements`)}
-                >
-                  📊 View Detailed Statements
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
+                    }}
+                  >
+                    📄 Download Statement
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => router.push(`/admin/landlords/${landlordId}/statements`)}
+                  >
+                    📊 View Detailed Statements
+                  </Button>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-neutral-200">

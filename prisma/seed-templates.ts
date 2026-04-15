@@ -17,8 +17,12 @@ async function main() {
     })
     console.log('Template updated.')
   } else {
+    const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+    if (!company) throw new Error('No active company — run main seed first')
+
     await prisma.leaseTemplate.create({
       data: {
+        companyId: company.id,
         name: 'Standard Residential Tenancy Agreement',
         type: 'RESIDENTIAL_STANDARD',
         content: DEFAULT_RESIDENTIAL_TEMPLATE,

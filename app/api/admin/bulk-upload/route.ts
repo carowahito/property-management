@@ -79,8 +79,17 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Resolve the company for bulk operations.
+// TODO: derive from session.user.companyId once auth is wired.
+async function getCompanyId(): Promise<string> {
+  const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+  if (!company) throw new Error('No active company found')
+  return company.id
+}
+
 async function uploadLandlords(rows: Record<string, string>[]) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
+  const companyId = await getCompanyId()
 
   for (const row of rows) {
     if (!row.name || !row.email || !row.phone) {
@@ -89,30 +98,37 @@ async function uploadLandlords(rows: Record<string, string>[]) {
       continue
     }
     try {
-      await prisma.landlord.upsert({
-        where: { email: row.email },
-        update: {
-          name: row.name,
-          phone: row.phone,
-          idNumber: row.idNumber || null,
-          address: row.address || null,
-          bankName: row.bankName || null,
-          bankAccount: row.bankAccount || null,
-          taxId: row.taxId || null,
-          status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
-        },
-        create: {
-          name: row.name,
-          email: row.email,
-          phone: row.phone,
-          idNumber: row.idNumber || null,
-          address: row.address || null,
-          bankName: row.bankName || null,
-          bankAccount: row.bankAccount || null,
-          taxId: row.taxId || null,
-          status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
-        },
-      })
+      const existing = await prisma.landlord.findFirst({ where: { companyId, email: row.email } })
+      if (existing) {
+        await prisma.landlord.update({
+          where: { id: existing.id },
+          data: {
+            name: row.name,
+            phone: row.phone,
+            idNumber: row.idNumber || null,
+            address: row.address || null,
+            bankName: row.bankName || null,
+            bankAccount: row.bankAccount || null,
+            taxId: row.taxId || null,
+            status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
+          },
+        })
+      } else {
+        await prisma.landlord.create({
+          data: {
+            companyId,
+            name: row.name,
+            email: row.email,
+            phone: row.phone,
+            idNumber: row.idNumber || null,
+            address: row.address || null,
+            bankName: row.bankName || null,
+            bankAccount: row.bankAccount || null,
+            taxId: row.taxId || null,
+            status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
+          },
+        })
+      }
       results.created++
     } catch (e) {
       results.errors.push(`${row.email}: ${String(e)}`)
@@ -125,6 +141,7 @@ async function uploadLandlords(rows: Record<string, string>[]) {
 
 async function uploadProperties(rows: Record<string, string>[]) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
+  const companyId = await getCompanyId()
 
   for (const row of rows) {
     if (!row.name || !row.landlordEmail || !row.address || !row.type) {
@@ -133,7 +150,7 @@ async function uploadProperties(rows: Record<string, string>[]) {
       continue
     }
 
-    const landlord = await prisma.landlord.findUnique({ where: { email: row.landlordEmail } })
+    const landlord = await prisma.landlord.findFirst({ where: { companyId, email: row.landlordEmail } })
     if (!landlord) {
       results.errors.push(`Property "${row.name}": landlord with email "${row.landlordEmail}" not found — upload landlords first`)
       results.skipped++
@@ -161,6 +178,7 @@ async function uploadProperties(rows: Record<string, string>[]) {
           description: row.description || null,
         },
         create: {
+          companyId,
           name: row.name,
           landlordId: landlord.id,
           address: row.address,
@@ -195,14 +213,15 @@ async function uploadUnits(rows: Record<string, string>[]) {
       continue
     }
 
-    const property = await prisma.property.findFirst({ where: { name: row.propertyName } })
+    const companyId = await getCompanyId()
+    const property = await prisma.property.findFirst({ where: { companyId, name: row.propertyName } })
     if (!property) {
       results.errors.push(`Unit "${row.unitNumber}": property "${row.propertyName}" not found — upload properties first`)
       results.skipped++
       continue
     }
 
-    const landlord = await prisma.landlord.findUnique({ where: { email: row.landlordEmail } })
+    const landlord = await prisma.landlord.findFirst({ where: { companyId, email: row.landlordEmail } })
     if (!landlord) {
       results.errors.push(`Unit "${row.unitNumber}": landlord "${row.landlordEmail}" not found — upload landlords first`)
       results.skipped++
@@ -257,6 +276,8 @@ async function uploadUnits(rows: Record<string, string>[]) {
 async function uploadTenants(rows: Record<string, string>[]) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
 
+  const companyId = await getCompanyId()
+
   for (const row of rows) {
     if (!row.name || !row.email || !row.phone || !row.propertyName) {
       results.errors.push(`Skipping row: missing required fields (name, email, phone, propertyName) — ${JSON.stringify(row)}`)
@@ -264,7 +285,7 @@ async function uploadTenants(rows: Record<string, string>[]) {
       continue
     }
 
-    const property = await prisma.property.findFirst({ where: { name: row.propertyName } })
+    const property = await prisma.property.findFirst({ where: { companyId, name: row.propertyName } })
     if (!property) {
       results.errors.push(`Tenant "${row.name}": property "${row.propertyName}" not found — upload properties first`)
       results.skipped++
@@ -276,34 +297,24 @@ async function uploadTenants(rows: Record<string, string>[]) {
       : null
 
     try {
-      await prisma.tenant.upsert({
-        where: { email: row.email },
-        update: {
-          name: row.name,
-          phone: row.phone,
-          idNumber: row.idNumber || null,
-          emergencyContact: row.emergencyContact || null,
-          emergencyPhone: row.emergencyPhone || null,
-          propertyId: property.id,
-          unitId: unitRecord?.id ?? null,
-          unit: row.unit || null,
-          moveInDate: row.moveInDate ? new Date(row.moveInDate) : null,
-          status: (row.status as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'EVICTED') || 'ACTIVE',
-        },
-        create: {
-          name: row.name,
-          email: row.email,
-          phone: row.phone,
-          idNumber: row.idNumber || null,
-          emergencyContact: row.emergencyContact || null,
-          emergencyPhone: row.emergencyPhone || null,
-          propertyId: property.id,
-          unitId: unitRecord?.id ?? null,
-          unit: row.unit || null,
-          moveInDate: row.moveInDate ? new Date(row.moveInDate) : null,
-          status: (row.status as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'EVICTED') || 'ACTIVE',
-        },
-      })
+      const existing = await prisma.tenant.findFirst({ where: { companyId, email: row.email } })
+      const tenantData = {
+        name: row.name,
+        phone: row.phone,
+        idNumber: row.idNumber || null,
+        emergencyContact: row.emergencyContact || null,
+        emergencyPhone: row.emergencyPhone || null,
+        propertyId: property.id,
+        unitId: unitRecord?.id ?? null,
+        unit: row.unit || null,
+        moveInDate: row.moveInDate ? new Date(row.moveInDate) : null,
+        status: (row.status as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'EVICTED') || 'ACTIVE',
+      }
+      if (existing) {
+        await prisma.tenant.update({ where: { id: existing.id }, data: tenantData })
+      } else {
+        await prisma.tenant.create({ data: { companyId, email: row.email, ...tenantData } })
+      }
       results.created++
     } catch (e) {
       results.errors.push(`${row.email}: ${String(e)}`)
@@ -324,14 +335,15 @@ async function uploadLeases(rows: Record<string, string>[]) {
       continue
     }
 
-    const tenant = await prisma.tenant.findUnique({ where: { email: row.tenantEmail } })
+    const companyId = await getCompanyId()
+    const tenant = await prisma.tenant.findFirst({ where: { companyId, email: row.tenantEmail } })
     if (!tenant) {
       results.errors.push(`Lease: tenant "${row.tenantEmail}" not found — upload tenants first`)
       results.skipped++
       continue
     }
 
-    const property = await prisma.property.findFirst({ where: { name: row.propertyName } })
+    const property = await prisma.property.findFirst({ where: { companyId, name: row.propertyName } })
     if (!property) {
       results.errors.push(`Lease: property "${row.propertyName}" not found — upload properties first`)
       results.skipped++

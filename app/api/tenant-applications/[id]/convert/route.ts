@@ -64,8 +64,12 @@ export async function POST(
     // Use a transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create the tenant
+      // Resolve company from the property
+      const prop = await tx.property.findUnique({ where: { id: application.propertyId }, select: { companyId: true } })
+
       const tenant = await tx.tenant.create({
         data: {
+          companyId: prop!.companyId,
           name: application.fullName,
           email: application.email,
           phone: application.phone,

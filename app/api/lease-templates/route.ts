@@ -50,8 +50,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+    if (!company) {
+      return NextResponse.json({ error: 'No active company' }, { status: 500 })
+    }
+
     const template = await prisma.leaseTemplate.create({
       data: {
+        companyId: company.id,
         name: body.name,
         type: body.type,
         content: body.content,

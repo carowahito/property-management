@@ -74,9 +74,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createLandlordSchema.parse(body)
 
-    // Check if email is already in use
-    const existingLandlord = await prisma.landlord.findUnique({
-      where: { email: validatedData.email },
+    // Resolve company — TODO: derive from session.user.companyId
+    const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
+    if (!company) {
+      return NextResponse.json({ error: 'No active company' }, { status: 500 })
+    }
+
+    // Check if email is already in use within this company
+    const existingLandlord = await prisma.landlord.findFirst({
+      where: { companyId: company.id, email: validatedData.email },
     })
 
     if (existingLandlord) {
@@ -87,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     const landlord = await prisma.landlord.create({
-      data: validatedData,
+      data: { ...validatedData, companyId: company.id },
     })
 
     return NextResponse.json(landlord, { status: 201 })
