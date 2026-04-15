@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { statementGenerator } from '@/lib/services/statement-generator';
+import { prisma } from '@/lib/db';
 
 interface RouteParams {
   params: Promise<{
@@ -77,7 +78,15 @@ export async function GET(
 
     // Return HTML format for PDF export
     if (format === 'html') {
-      const html = statementGenerator.generateHTML(statement);
+      // Look up company name and logo via landlord
+      const landlord = await prisma.landlord.findUnique({
+        where: { id: landlordId },
+        include: { company: { select: { name: true, logo: true } } },
+      });
+      const companyName = landlord?.company?.name ?? 'Property Management';
+      const companyLogo = landlord?.company?.logo ?? undefined;
+
+      const html = statementGenerator.generateHTML(statement, companyName, companyLogo);
       return new NextResponse(html, {
         headers: {
           'Content-Type': 'text/html',

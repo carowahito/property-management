@@ -331,138 +331,159 @@ export class LandlordStatementGenerator {
   /**
    * Generate statement in HTML format for PDF export
    */
-  generateHTML(statement: StatementSummary): string {
-    return `
-<!DOCTYPE html>
+  generateHTML(statement: StatementSummary, companyName = 'Property Management', logoUrl?: string): string {
+    const fmtDate = (d: Date) => {
+      const dd = new Date(d);
+      return `${String(dd.getDate()).padStart(2, '0')}-${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dd.getMonth()]}-${dd.getFullYear()}`;
+    };
+    const fmtMoney = (n: number) => n.toLocaleString('en-KE');
+
+    const logoHtml = logoUrl
+      ? `<img src="${logoUrl}" alt="${companyName}" style="max-height: 48px; max-width: 180px; object-fit: contain;" />`
+      : `<span style="font-weight: 700; font-size: 16px; color: #374151; letter-spacing: 0.5px;">${companyName.toUpperCase()}</span>`;
+
+    return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Landlord Statement - ${statement.period}</title>
+  <title>Landlord Statement - ${statement.landlordName} - ${statement.period}</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-    .header { border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
-    .header h1 { margin: 0; color: #1e40af; }
-    .header p { margin: 5px 0; color: #64748b; }
-    .summary { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
-    .summary-row { display: flex; justify-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-    .summary-row.total { font-weight: bold; font-size: 1.1em; border-top: 2px solid #2563eb; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th { background: #1e40af; color: white; padding: 12px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
-    tr:hover { background: #f8fafc; }
-    .amount { text-align: right; font-family: 'Courier New', monospace; }
-    .positive { color: #059669; }
-    .negative { color: #dc2626; }
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; color: #64748b; font-size: 0.9em; }
-    .note { background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 30px 40px; color: #1a1a1a; font-size: 13px; }
+
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .header h1 { font-size: 22px; color: #1f2937; }
+    .header .subtitle { color: #6b7280; font-size: 13px; margin-top: 2px; }
+
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #d1d5db; margin-bottom: 24px; }
+    .meta-cell { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; display: flex; }
+    .meta-cell:nth-child(odd) { border-right: 1px solid #e5e7eb; }
+    .meta-label { color: #6b7280; min-width: 130px; }
+    .meta-value { font-weight: 500; }
+
+    .section-title { background: #4b5563; color: white; padding: 8px 12px; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; }
+
+    .summary { border: 1px solid #e5e7eb; border-radius: 4px; margin: 16px 0; }
+    .summary-row { display: flex; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid #e5e7eb; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row.total { font-weight: 700; border-top: 2px solid #374151; background: #f3f4f6; }
+    .summary-row .amount { font-family: 'Courier New', monospace; }
+    .deduction { color: #b91c1c; }
+    .income { color: #047857; }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th { background: #4b5563; color: white; padding: 8px 10px; text-align: left; font-weight: 600; font-size: 11px; }
+    th.amount { text-align: right; }
+    td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
+    td.amount { text-align: right; font-family: 'Courier New', monospace; }
+    tr:nth-child(even) { background: #f9fafb; }
+    .totals-row td { font-weight: 700; border-top: 2px solid #374151; background: #f3f4f6; }
+
+    .net-box { background: #374151; color: white; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+    .net-box .amount { font-size: 22px; font-weight: 700; }
+
+    .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d1d5db; color: #9ca3af; font-size: 11px; }
+
+    @media print { body { margin: 15px 20px; } }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Landlord Statement</h1>
-    <p><strong>Landlord:</strong> ${statement.landlordName}</p>
-    <p><strong>Period:</strong> ${statement.period}</p>
-    <p><strong>Generated:</strong> ${new Date().toLocaleDateString()}</p>
+    <div>
+      <h1>LANDLORD STATEMENT</h1>
+      <div class="subtitle">Rent Income &amp; Deductions Summary</div>
+    </div>
+    <div>${logoHtml}</div>
   </div>
 
+  <div class="meta-grid">
+    <div class="meta-cell"><span class="meta-label">Landlord:</span><span class="meta-value">${statement.landlordName}</span></div>
+    <div class="meta-cell"><span class="meta-label">Statement Date:</span><span class="meta-value">${fmtDate(new Date())}</span></div>
+    <div class="meta-cell"><span class="meta-label">Period:</span><span class="meta-value">${statement.period}</span></div>
+    <div class="meta-cell"><span class="meta-label">Transactions:</span><span class="meta-value">${statement.transactionCount} months</span></div>
+  </div>
+
+  <div class="section-title">FINANCIAL SUMMARY</div>
   <div class="summary">
-    <h2>Financial Summary</h2>
     <div class="summary-row">
       <span>Total Gross Rent</span>
-      <span class="amount positive">KES ${statement.totalGrossRent.toLocaleString()}</span>
+      <span class="amount">KES ${fmtMoney(statement.totalGrossRent)}</span>
     </div>
     <div class="summary-row">
-      <span>Service Charges</span>
-      <span class="amount negative">-KES ${statement.totalServiceCharges.toLocaleString()}</span>
+      <span>Less: Service Charges</span>
+      <span class="amount deduction">- KES ${fmtMoney(statement.totalServiceCharges)}</span>
     </div>
     <div class="summary-row">
-      <span>Management Fees</span>
-      <span class="amount negative">-KES ${statement.totalManagementFees.toLocaleString()}</span>
+      <span>Less: Management Fees</span>
+      <span class="amount deduction">- KES ${fmtMoney(statement.totalManagementFees)}</span>
     </div>
     <div class="summary-row">
-      <span>Maintenance & Repairs</span>
-      <span class="amount negative">-KES ${statement.totalMaintenanceFees.toLocaleString()}</span>
+      <span>Less: Maintenance &amp; Repairs</span>
+      <span class="amount deduction">- KES ${fmtMoney(statement.totalMaintenanceFees)}</span>
     </div>
     ${statement.totalOtherDeductions > 0 ? `
     <div class="summary-row">
-      <span>Other Deductions</span>
-      <span class="amount negative">-KES ${statement.totalOtherDeductions.toLocaleString()}</span>
-    </div>
-    ` : ''}
+      <span>Less: Other Deductions</span>
+      <span class="amount deduction">- KES ${fmtMoney(statement.totalOtherDeductions)}</span>
+    </div>` : ''}
     <div class="summary-row total">
-      <span>Net Amount Payable</span>
-      <span class="amount positive">KES ${statement.totalNetAmount.toLocaleString()}</span>
+      <span>Net Amount Paid to You</span>
+      <span class="amount income">KES ${fmtMoney(statement.totalNetAmount)}</span>
     </div>
   </div>
 
-  <div class="note">
-    <strong>Note:</strong> Late payment fees collected from tenants are not included in this statement 
-    as they represent additional income retained by the property management company.
+  <div class="net-box">
+    <span>TOTAL NET DISBURSEMENT</span>
+    <span class="amount">KES ${fmtMoney(statement.totalNetAmount)}</span>
   </div>
 
-  <h2>Transaction Details</h2>
+  <div class="section-title">TRANSACTION DETAILS</div>
   <table>
     <thead>
       <tr>
-        <th>Property</th>
-        <th>Unit</th>
-        <th>Tenant</th>
         <th>Period</th>
+        <th>Property</th>
+        <th>Tenant</th>
         <th class="amount">Gross Rent</th>
-        <th class="amount">Deductions</th>
-        <th class="amount">Net Amount</th>
-        <th>Source</th>
+        <th class="amount">Service Chg</th>
+        <th class="amount">Mgmt Fee</th>
+        <th class="amount">Other</th>
+        <th class="amount">Net Paid</th>
+        <th>Payout Ref</th>
       </tr>
     </thead>
     <tbody>
       ${statement.transactions.map(txn => `
       <tr>
-        <td>${txn.propertyName}</td>
-        <td>${txn.unitId || '-'}</td>
-        <td>${txn.tenantName}</td>
         <td>${txn.rentPeriod}</td>
-        <td class="amount">KES ${txn.grossRent.toLocaleString()}</td>
-        <td class="amount negative">-KES ${txn.deductions.total.toLocaleString()}</td>
-        <td class="amount positive">KES ${txn.netAmount.toLocaleString()}</td>
-        <td style="color: ${txn.fundingSource === 'AGENT' ? '#dc2626' : '#059669'}; font-weight: 600;">${txn.fundingSource === 'AGENT' ? 'Agent-Funded' : 'Tenant'}</td>
+        <td>${txn.propertyName}</td>
+        <td>${txn.tenantName}</td>
+        <td class="amount">${fmtMoney(txn.grossRent)}</td>
+        <td class="amount deduction">${fmtMoney(txn.deductions.serviceCharge)}</td>
+        <td class="amount deduction">${fmtMoney(txn.deductions.managementFee)}</td>
+        <td class="amount">${txn.deductions.maintenanceFees + txn.deductions.otherDeductions > 0 ? fmtMoney(txn.deductions.maintenanceFees + txn.deductions.otherDeductions) : ''}</td>
+        <td class="amount income">${fmtMoney(txn.netAmount)}</td>
+        <td style="font-size:10px;">${txn.payoutStatus === 'PAID' ? '✓' : '—'}</td>
       </tr>
       `).join('')}
+      <tr class="totals-row">
+        <td colspan="3">TOTALS</td>
+        <td class="amount">${fmtMoney(statement.totalGrossRent)}</td>
+        <td class="amount deduction">${fmtMoney(statement.totalServiceCharges)}</td>
+        <td class="amount deduction">${fmtMoney(statement.totalManagementFees)}</td>
+        <td class="amount">${statement.totalMaintenanceFees + statement.totalOtherDeductions > 0 ? fmtMoney(statement.totalMaintenanceFees + statement.totalOtherDeductions) : ''}</td>
+        <td class="amount income">${fmtMoney(statement.totalNetAmount)}</td>
+        <td></td>
+      </tr>
     </tbody>
   </table>
-
-  ${statement.propertyBreakdown.length > 1 ? `
-  <h2>Property Breakdown</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Property</th>
-        <th class="amount">Units</th>
-        <th class="amount">Gross Rent</th>
-        <th class="amount">Deductions</th>
-        <th class="amount">Net Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${statement.propertyBreakdown.map(prop => `
-      <tr>
-        <td>${prop.propertyName}</td>
-        <td class="amount">${prop.unitCount}</td>
-        <td class="amount">KES ${prop.grossRent.toLocaleString()}</td>
-        <td class="amount negative">-KES ${prop.deductions.toLocaleString()}</td>
-        <td class="amount positive">KES ${prop.netAmount.toLocaleString()}</td>
-      </tr>
-      `).join('')}
-    </tbody>
-  </table>
-  ` : ''}
 
   <div class="footer">
-    <p>This statement has been generated automatically by the Property Management System.</p>
-    <p>For any queries, please contact your property manager.</p>
+    <p>Note: Late payment penalties collected from tenants are retained by the management company and are not reflected in this statement.</p>
+    <p style="margin-top: 8px;">Generated by ${companyName} · ${fmtDate(new Date())}</p>
   </div>
 </body>
-</html>
-    `;
+</html>`;
   }
 }
 
