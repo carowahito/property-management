@@ -4,9 +4,7 @@
  * NOTE: Late fees are excluded as they are property manager income
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db';
 
 export interface StatementSummary {
   landlordId: string;
@@ -47,8 +45,9 @@ export interface StatementTransaction {
     total: number;
   };
   netAmount: number;
-  paidDate: Date;
+  paidDate: Date | null;
   payoutStatus: string;
+  fundingSource: 'TENANT' | 'AGENT';  // whether tenant paid or agent fronted
 }
 
 export interface PropertyBreakdown {
@@ -80,10 +79,11 @@ export class LandlordStatementGenerator {
         throw new Error('Landlord not found');
       }
 
-      // Build query filter
+      // Build query filter — use dueDate (always set) rather than paidDate
+      // (which is null for agent-funded months where tenant hasn't paid)
       const where: any = {
         landlordId,
-        paidDate: {
+        dueDate: {
           gte: startDate,
           lte: endDate,
         },
@@ -109,7 +109,7 @@ export class LandlordStatementGenerator {
           payout: true,
         },
         orderBy: {
-          paidDate: 'asc',
+          dueDate: 'asc',
         },
       });
 
@@ -157,6 +157,7 @@ export class LandlordStatementGenerator {
         netAmount: Number(txn.netAmount),
         paidDate: txn.paidDate,
         payoutStatus: txn.payoutStatus,
+        fundingSource: txn.paymentId ? 'TENANT' : 'AGENT',
       }));
 
       // Property breakdown
@@ -410,6 +411,7 @@ export class LandlordStatementGenerator {
         <th class="amount">Gross Rent</th>
         <th class="amount">Deductions</th>
         <th class="amount">Net Amount</th>
+        <th>Source</th>
       </tr>
     </thead>
     <tbody>
@@ -422,6 +424,7 @@ export class LandlordStatementGenerator {
         <td class="amount">KES ${txn.grossRent.toLocaleString()}</td>
         <td class="amount negative">-KES ${txn.deductions.total.toLocaleString()}</td>
         <td class="amount positive">KES ${txn.netAmount.toLocaleString()}</td>
+        <td style="color: ${txn.fundingSource === 'AGENT' ? '#dc2626' : '#059669'}; font-weight: 600;">${txn.fundingSource === 'AGENT' ? 'Agent-Funded' : 'Tenant'}</td>
       </tr>
       `).join('')}
     </tbody>

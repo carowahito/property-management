@@ -9,12 +9,64 @@ datasource db {
 }
 
 // ============================================
+// Multi-Tenancy
+// ============================================
+
+model Company {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique  // URL-safe identifier, e.g. "tochi-property"
+  email         String?
+  phone         String?
+  address       String?
+  city          String?
+  country       String   @default("Kenya")
+  logo          String?
+  website       String?
+  taxId         String?  // KRA PIN
+  businessReg   String?  // Business registration number
+  status        CompanyStatus @default(ACTIVE)
+  plan          CompanyPlan   @default(FREE)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  users         User[]
+  properties    Property[]
+  landlords     Landlord[]
+  tenants       Tenant[]
+  vendors       Vendor[]
+  contractors   Contractor[]
+  leads         Lead[]
+  enquiries     Enquiry[]
+  leaseTemplates LeaseTemplate[]
+
+  @@index([slug])
+  @@index([status])
+  @@map("companies")
+}
+
+enum CompanyStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum CompanyPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+// ============================================
 // Authentication & Users
 // ============================================
 
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique
+  companyId     String
+  email         String
   emailVerified DateTime?
   password      String
   name          String?
@@ -25,6 +77,7 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   accounts      Account[]
   sessions      Session[]
 
@@ -36,7 +89,9 @@ model User {
   // Team member profile
   teamMember    TeamMember?
 
+  @@unique([companyId, email])
   @@index([email])
+  @@index([companyId])
   @@map("users")
 }
 
@@ -92,6 +147,7 @@ enum UserRole {
 
 model Property {
   id          String   @id @default(cuid())
+  companyId   String
   name        String
   address     String
   city        String?
@@ -110,6 +166,7 @@ model Property {
   updatedAt   DateTime @updatedAt
 
   // Relations
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   landlord    Landlord?    @relation(fields: [landlordId], references: [id], onDelete: SetNull)
   propertyUnits Unit[]
   tenants     Tenant[]
@@ -127,6 +184,7 @@ model Property {
   moveInChecklists MoveInChecklist[]
   renewals    LeaseRenewal[]
 
+  @@index([companyId])
   @@index([landlordId])
   @@index([status])
   @@map("properties")
@@ -160,6 +218,7 @@ model Unit {
   tenants               Tenant[]
   leases                Lease[]
   rentTransactions      RentTransaction[]
+  ledgerEntries         TenantLedger[]
   payouts               Payout[]
   distributionItems     RentDistributionItem[]
   applications          TenantApplication[]
@@ -173,10 +232,11 @@ model Unit {
 
 model Landlord {
   id          String   @id @default(cuid())
+  companyId   String
   name        String
-  email       String   @unique
+  email       String
   phone       String
-  idNumber    String?  @unique
+  idNumber    String?
   address     String?
   bankName    String?
   bankAccount String?
@@ -191,6 +251,7 @@ model Landlord {
   updatedAt   DateTime @updatedAt
 
   // Relations
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   properties  Property[]
   units       Unit[]
   payouts     Payout[]
@@ -199,17 +260,20 @@ model Landlord {
   statements  LandlordStatement[]
   ownerStatements OwnerStatement[]
 
+  @@unique([companyId, email])
   @@index([email])
+  @@index([companyId])
   @@index([status])
   @@map("landlords")
 }
 
 model Tenant {
   id              String   @id @default(cuid())
+  companyId       String
   name            String
-  email           String   @unique
+  email           String
   phone           String
-  idNumber        String?  @unique
+  idNumber        String?
   emergencyContact String?
   emergencyPhone  String?
   propertyId      String
@@ -222,6 +286,7 @@ model Tenant {
   updatedAt       DateTime @updatedAt
 
   // Relations
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   unitRef         Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
   leases          Lease[]
@@ -229,13 +294,16 @@ model Tenant {
   maintenanceRequests MaintenanceRequest[]
   messages        Message[]
   rentTransactions RentTransaction[]
+  ledgerEntries   TenantLedger[]
   deposits        Deposit[]
   arrearsEscalations ArrearsEscalation[]
   moveInChecklists MoveInChecklist[]
   inspections      Inspection[]
   renewals         LeaseRenewal[]
 
+  @@unique([companyId, email])
   @@index([email])
+  @@index([companyId])
   @@index([propertyId])
   @@index([unitId])
   @@index([status])
@@ -244,8 +312,9 @@ model Tenant {
 
 model Vendor {
   id             String   @id @default(cuid())
+  companyId      String
   name           String
-  email          String   @unique
+  email          String
   phone          String
   specialization String
   rating         Float    @default(0)
@@ -256,10 +325,13 @@ model Vendor {
   updatedAt      DateTime @updatedAt
 
   // Relations
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   workOrders     WorkOrder[]
   messages       Message[]
 
+  @@unique([companyId, email])
   @@index([email])
+  @@index([companyId])
   @@index([specialization])
   @@index([status])
   @@map("vendors")
@@ -267,6 +339,7 @@ model Vendor {
 
 model Lead {
   id          String   @id @default(cuid())
+  companyId   String
   name        String
   email       String
   phone       String
@@ -284,11 +357,13 @@ model Lead {
   convertedAt DateTime?
 
   // Relations
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   tasks       Task[]
   communications Communication[]
   notes_rel   Note[]
 
   @@index([email])
+  @@index([companyId])
   @@index([status])
   @@index([assignedTo])
   @@map("leads")
@@ -296,6 +371,7 @@ model Lead {
 
 model Enquiry {
   id          String   @id @default(cuid())
+  companyId   String
   name        String
   email       String
   phone       String
@@ -310,11 +386,13 @@ model Enquiry {
   propertyId  String?
 
   // Relations
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   tasks       Task[]
   communications Communication[]
   notes_rel   Note[]
 
   @@index([email])
+  @@index([companyId])
   @@index([status])
   @@index([priority])
   @@map("enquiries")
@@ -326,6 +404,7 @@ model Enquiry {
 
 model LeaseTemplate {
   id              String   @id @default(cuid())
+  companyId       String
   name            String
   type            LeaseTemplateType
   content         String   @db.Text  // HTML with {{placeholders}}
@@ -336,8 +415,10 @@ model LeaseTemplate {
   updatedAt       DateTime @updatedAt
 
   // Relations
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   leases          Lease[]
 
+  @@index([companyId])
   @@map("lease_templates")
 }
 
@@ -386,6 +467,7 @@ model Lease {
   template        LeaseTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   payments        Payment[]
   rentTransactions RentTransaction[]
+  ledgerEntries   TenantLedger[]
   workOrders      WorkOrder[]
   deposits        Deposit[]
   arrearsEscalations ArrearsEscalation[]
@@ -421,7 +503,8 @@ model Payment {
   // Relations
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   lease           Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
-  rentTransaction RentTransaction?
+  rentTransactions RentTransaction[]
+  ledgerEntries   TenantLedger[]
 
   @@index([tenantId])
   @@index([leaseId])
@@ -456,12 +539,63 @@ model Payout {
 }
 
 // ============================================
+// Tenant Ledger (Statement of Account)
+// ============================================
+
+model TenantLedger {
+  id            String   @id @default(cuid())
+  tenantId      String
+  leaseId       String
+  unitId        String
+
+  date          DateTime            // Transaction date
+  type          LedgerEntryType     // CHARGE, PAYMENT, CREDIT_NOTE, LATE_FEE, ADJUSTMENT
+  description   String              // e.g. "Rent Jul 2025", "M-PESA TH583BXHG8"
+  reference     String?             // M-PESA ref, receipt number, etc.
+  period        String?             // Rent period this relates to, e.g. "July 2025"
+
+  debit         Decimal  @db.Decimal(10, 2) @default(0)  // Amount charged
+  credit        Decimal  @db.Decimal(10, 2) @default(0)  // Amount received/credited
+  balance       Decimal  @db.Decimal(10, 2)               // Running balance after this entry
+
+  // Link to actual payment record (for PAYMENT entries)
+  paymentId     String?
+
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lease         Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  unit          Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  payment       Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([leaseId])
+  @@index([unitId])
+  @@index([date])
+  @@index([type])
+  @@map("tenant_ledger")
+}
+
+enum LedgerEntryType {
+  CHARGE        // Rent due, service charge, etc.
+  PAYMENT       // M-PESA, bank transfer, cash received
+  CREDIT_NOTE   // Refund, correction, overpayment applied
+  LATE_FEE      // Penalty for late payment
+  ADJUSTMENT    // Manual correction
+}
+
+// ============================================
 // Rent Distribution & Statements
 // ============================================
 
 model RentTransaction {
   id                String   @id @default(cuid())
-  paymentId         String   @unique
+  // paymentId is nullable: months funded by the agent (no tenant payment) have no payment.
+  // paymentId is NOT unique: a single lump-sum payment (e.g. 60k) can cover multiple months.
+  paymentId         String?
 
   // Core chain: transactionId + tenantId + unitId fully identifies a transaction.
   // landlordId and propertyId are denormalized from unit for query performance —
@@ -476,7 +610,7 @@ model RentTransaction {
   grossRent         Decimal  @db.Decimal(10, 2)
   rentPeriod        String   // e.g., "November 2025"
   dueDate           DateTime
-  paidDate          DateTime
+  paidDate          DateTime?
 
   // Deductions
   serviceCharge     Decimal  @db.Decimal(10, 2) @default(0) // Monthly service charge
@@ -508,7 +642,7 @@ model RentTransaction {
   updatedAt         DateTime @updatedAt
 
   // Relations
-  payment           Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  payment           Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   unit              Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
   lease             Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
@@ -779,6 +913,7 @@ model WorkOrder {
 
 model Contractor {
   id                   String   @id @default(cuid())
+  companyId            String
   name                 String
   email                String?
   phone                String
@@ -794,8 +929,11 @@ model Contractor {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
+  // Relations
+  company              Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   workOrders           WorkOrder[]
 
+  @@index([companyId])
   @@index([trade])
   @@index([isVetted, isActive])
   @@map("contractors")
