@@ -1,0 +1,488 @@
+/* /listings/[slug] — gallery, floorplan, booking sidebar */
+
+.crumbs {
+  background: var(--cream);
+  padding: 20px 0;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--ink-mute);
+}
+.crumbs a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.crumbs a:hover {
+  color: var(--saffron-dark);
+}
+.crumbs .sep {
+  margin: 0 8px;
+  color: var(--ink-mute);
+}
+
+/* GALLERY */
+.gallery {
+  background: var(--cream);
+  padding: 0 0 32px;
+}
+.galleryGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 240px 240px;
+  gap: 12px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.galleryGrid .ph {
+  background: var(--navy);
+  position: relative;
+  overflow: hidden;
+}
+.galleryGrid .ph::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(241, 182, 73, 0.18), transparent 55%),
+    linear-gradient(135deg, #1f3148 0%, #0f1f33 100%);
+}
+.galleryGrid .ph:nth-child(2)::after {
+  background:
+    radial-gradient(circle at 70% 40%, rgba(255, 248, 240, 0.15), transparent 55%),
+    linear-gradient(135deg, #2a3e58 0%, #16273d 100%);
+}
+.galleryGrid .ph:nth-child(3)::after {
+  background:
+    radial-gradient(circle at 40% 60%, rgba(241, 182, 73, 0.22), transparent 50%),
+    linear-gradient(135deg, #182e47 0%, #0a1726 100%);
+}
+.galleryGrid .ph:nth-child(4)::after {
+  background:
+    radial-gradient(circle at 60% 30%, rgba(255, 248, 240, 0.12), transparent 55%),
+    linear-gradient(135deg, #243a55 0%, #11203a 100%);
+}
+.galleryGrid .ph:nth-child(5)::after {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(241, 182, 73, 0.15), transparent 50%),
+    linear-gradient(135deg, #1d324c 0%, #0d1c30 100%);
+}
+.galleryGrid .ph:first-child {
+  grid-row: span 2;
+}
+.viewAll {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  background: rgba(15, 28, 46, 0.85);
+  color: var(--cream);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  backdrop-filter: blur(8px);
+  z-index: 2;
+}
+
+/* MAIN LAYOUT */
+.main {
+  padding: 48px 0 96px;
+  background: var(--cream);
+}
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 56px;
+  align-items: flex-start;
+}
+
+/* HEADER */
+.title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--navy-line);
+  margin-bottom: 32px;
+}
+.title h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 38px;
+  line-height: 1.05;
+  color: var(--navy);
+  margin: 8px 0;
+  letter-spacing: -0.02em;
+}
+.title .addr {
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.title .actions {
+  display: flex;
+  gap: 8px;
+}
+.iconBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--white);
+  border: 1px solid var(--navy-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* SPEC ROW */
+.specRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  margin-bottom: 48px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--navy-line);
+}
+.specRow .cell {
+  padding: 20px;
+  text-align: center;
+  border-right: 1px solid var(--navy-line);
+}
+.specRow .cell:last-child {
+  border-right: 0;
+}
+.specRow .v {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--navy);
+}
+.specRow .l {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-top: 4px;
+}
+
+/* SECTIONS */
+.section {
+  margin-bottom: 56px;
+}
+.section h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--navy);
+  margin: 0 0 16px;
+  letter-spacing: -0.01em;
+}
+.section p {
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 28px;
+  color: var(--ink-soft);
+  margin: 0 0 16px;
+}
+
+/* AMENITIES */
+.amenities {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.amenity {
+  background: var(--white);
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--navy-line);
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.amenity .dot {
+  width: 8px;
+  height: 8px;
+  background: var(--saffron);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* FLOORPLAN */
+.floorplan {
+  background: var(--white);
+  border-radius: var(--r-card);
+  padding: 28px;
+  border: 1px solid var(--navy-line);
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.floorplan svg {
+  width: 100%;
+  height: 100%;
+  max-width: 600px;
+}
+
+/* MAP */
+.mapBlock {
+  background: var(--white);
+  border-radius: var(--r-card);
+  padding: 28px;
+  border: 1px solid var(--navy-line);
+}
+.mapCanvas {
+  aspect-ratio: 16 / 8;
+  background: linear-gradient(135deg, #fff8f0 0%, #f3eadc 100%);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.mapCanvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent calc(20% - 1px), rgba(15, 28, 46, 0.08) 20%, transparent calc(20% + 1px)),
+    linear-gradient(180deg, transparent calc(50% - 1px), rgba(15, 28, 46, 0.08) 50%, transparent calc(50% + 1px)),
+    linear-gradient(180deg, transparent calc(75% - 1px), rgba(15, 28, 46, 0.08) 75%, transparent calc(75% + 1px)),
+    linear-gradient(90deg, transparent calc(25% - 1px), rgba(15, 28, 46, 0.08) 25%, transparent calc(25% + 1px)),
+    linear-gradient(90deg, transparent calc(55% - 1px), rgba(15, 28, 46, 0.08) 55%, transparent calc(55% + 1px)),
+    linear-gradient(90deg, transparent calc(80% - 1px), rgba(15, 28, 46, 0.08) 80%, transparent calc(80% + 1px));
+}
+.mapPin {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--saffron);
+  top: 42%;
+  left: 38%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 3px solid var(--white);
+  z-index: 2;
+}
+.mapPin::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--navy);
+  border-radius: 50%;
+}
+.mapPoi {
+  position: absolute;
+  padding: 4px 10px;
+  background: var(--white);
+  border: 1px solid var(--navy-line);
+  border-radius: 6px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--navy);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* SIDEBAR / CTA */
+.ctaCard {
+  background: var(--white);
+  border-radius: var(--r-card);
+  padding: 28px;
+  border: 1px solid var(--navy-line);
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 24px;
+}
+.ctaCard .priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--navy-line);
+  margin-top: 8px;
+}
+.ctaCard .priceLabel {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 32px;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+.ctaCard .per {
+  font-family: var(--body);
+  font-size: 14px;
+  color: var(--ink-mute);
+}
+.ctaCard .field {
+  margin-top: 16px;
+}
+.ctaCard label {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  display: block;
+  margin-bottom: 6px;
+}
+.ctaCard input,
+.ctaCard select {
+  width: 100%;
+  background: var(--cream-2);
+  border: 1px solid var(--navy-line);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--navy);
+}
+.ctaCard .fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ctaCard .btnFull {
+  width: 100%;
+  justify-content: center;
+}
+.ctaCard .btnStack {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+.ctaCard .smallPrint {
+  font-family: var(--body);
+  font-size: 12px;
+  color: var(--ink-mute);
+  text-align: center;
+  margin: 12px 0 0;
+  line-height: 18px;
+}
+.ctaCard .agent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid var(--navy-line);
+}
+.ctaCard .agent .avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--saffron) 0%, var(--saffron-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 14px;
+}
+.ctaCard .agent .name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--navy);
+}
+.ctaCard .agent .role {
+  font-family: var(--body);
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+/* RELATED */
+.related {
+  padding: 80px 0;
+  background: var(--cream-2);
+}
+.relatedHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: flex-end;
+  margin-bottom: 32px;
+}
+.relatedHead h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 36px;
+  color: var(--navy);
+  margin: 12px 0 0;
+  letter-spacing: -0.02em;
+}
+.relatedHead .btnRow {
+  justify-self: end;
+}
+.relatedGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+  .galleryGrid {
+    grid-template-rows: 200px 200px;
+  }
+  .title h1 {
+    font-size: 28px;
+  }
+  .specRow {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .amenities,
+  .relatedGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .relatedHead {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .relatedHead .btnRow {
+    justify-self: start;
+  }
+}
+@media (max-width: 640px) {
+  .galleryGrid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 240px;
+  }
+  .galleryGrid .ph:not(:first-child) {
+    display: none;
+  }
+  .specRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .amenities,
+  .relatedGrid {
+    grid-template-columns: 1fr;
+  }
+}

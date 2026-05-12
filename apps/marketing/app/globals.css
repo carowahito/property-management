@@ -1,5 +1,39 @@
-/* Minimal reset for the marketing site.
-   All page-specific styling lives in CSS Modules (page.module.css). */
+/* Tochi Property — global design tokens & reset.
+   Class definitions live in styles/shared.module.css (scoped). */
+
+:root {
+  --navy: #002444;
+  --navy-2: #1a3a5c;
+  --navy-3: #2a486b;
+  --navy-soft: rgba(0, 36, 68, 0.08);
+  --navy-line: rgba(0, 36, 68, 0.12);
+  --saffron: #e8960c;
+  --saffron-dark: #855400;
+  --saffron-bright: #ffa928;
+  --cream: #fff8f0;
+  --cream-2: #faf3ea;
+  --cream-3: #f4ede4;
+  --white: #ffffff;
+  --ink: #1e1b16;
+  --ink-soft: #43474e;
+  --ink-mute: #73777f;
+  --line: #e5e7eb;
+  --green: #2a6b3c;
+  --red: #ba1a1a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 36, 68, 0.05);
+  --shadow-md: 0 2px 8px rgba(0, 36, 68, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 36, 68, 0.12);
+
+  --r-input: 8px;
+  --r-card: 12px;
+  --r-modal: 16px;
+
+  --display: 'Montserrat', system-ui, sans-serif;
+  --body: 'Open Sans', system-ui, sans-serif;
+  --serif: 'Playfair Display', Georgia, serif;
+  --jp: 'Noto Sans JP', 'Yu Gothic', 'Hiragino Sans', sans-serif;
+}
 
 *,
 *::before,
@@ -11,9 +45,9 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #fff8f0;
-  color: #1e1b16;
-  font-family: 'Open Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
