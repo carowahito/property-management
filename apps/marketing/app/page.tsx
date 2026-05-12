@@ -36,19 +36,19 @@ function Nav() {
           TOCHI <span className={styles.light}>Property</span>
         </a>
         <nav className={styles.navLinks}>
-          <a className={styles.navLink} href={portal('/landlord')}>
+          <a className={styles.navLink} href="/owners">
             Owners
           </a>
-          <a className={styles.navLink} href={portal('/tenant')}>
+          <a className={styles.navLink} href="/tenants">
             Tenants
           </a>
-          <a className={styles.navLink} href="#listings">
+          <a className={styles.navLink} href="/listings">
             Listings
           </a>
-          <a className={styles.navLink} href="#about">
+          <a className={styles.navLink} href="/about">
             About
           </a>
-          <a className={styles.navLink} href="#contact">
+          <a className={styles.navLink} href="/contact">
             Contact
           </a>
         </nav>
@@ -56,7 +56,7 @@ function Nav() {
           <a className={`${styles.btn} ${styles.btnGhostNavy}`} href={portal('/')}>
             Sign in
           </a>
-          <a className={`${styles.btn} ${styles.btnSaffron}`} href="#valuation">
+          <a className={`${styles.btn} ${styles.btnSaffron}`} href="/contact">
             Get a valuation <span className={styles.arrow}>→</span>
           </a>
         </div>
@@ -84,10 +84,10 @@ function HeroSplit() {
             diaspora.
           </p>
           <div className={styles.ctas}>
-            <a className={`${styles.btn} ${styles.btnSaffron} ${styles.btnLg}`} href="#valuation">
+            <a className={`${styles.btn} ${styles.btnSaffron} ${styles.btnLg}`} href="/contact">
               Get a free valuation <span className={styles.arrow}>→</span>
             </a>
-            <a className={styles.btnLink} href="#how-we-work">
+            <a className={styles.btnLink} href="/owners#services">
               How we work
             </a>
           </div>
@@ -122,7 +122,7 @@ function HeroSplit() {
             move-in day.
           </p>
           <div className={styles.ctas}>
-            <a className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`} href="#listings">
+            <a className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`} href="/listings">
               Browse 240 homes <span className={styles.arrow}>→</span>
             </a>
             <a className={styles.btnLink} href={portal('/tenant/login')}>
@@ -287,7 +287,7 @@ function Services() {
 
         <div className={styles.services}>
           {services.map((s) => (
-            <a key={s.num} className={styles.service} href="#services">
+            <a key={s.num} className={styles.service} href="/owners#services">
               <div className={styles.num}>{s.num}</div>
               <div className={styles.name}>{s.name}</div>
               <div className={styles.desc}>{s.desc}</div>
@@ -434,14 +434,14 @@ function Listings() {
             <h2>Featured Nairobi homes.</h2>
           </div>
           <div style={{ textAlign: 'right', alignSelf: 'end' }}>
-            <a className={styles.btnLink} href="#listings">
+            <a className={styles.btnLink} href="/listings">
               Browse all 240 listings →
             </a>
           </div>
         </div>
 
         <div className={styles.listings}>
-          <a className={styles.listing} href="#listings">
+          <a className={styles.listing} href="/listings">
             <div className={styles.photo}>
               <span className={styles.tag}>For rent</span>
               <div className={styles.price}>KSh 95,000 / mo</div>
@@ -456,7 +456,7 @@ function Listings() {
               </div>
             </div>
           </a>
-          <a className={`${styles.listing} ${styles.listingV2}`} href="#listings">
+          <a className={`${styles.listing} ${styles.listingV2}`} href="/listings">
             <div className={styles.photo}>
               <span className={styles.tag}>For rent</span>
               <div className={styles.price}>KSh 150,000 / mo</div>
@@ -471,7 +471,7 @@ function Listings() {
               </div>
             </div>
           </a>
-          <a className={`${styles.listing} ${styles.listingV3}`} href="#listings">
+          <a className={`${styles.listing} ${styles.listingV3}`} href="/listings">
             <div className={styles.photo}>
               <span className={styles.tag}>For sale</span>
               <div className={styles.price}>KSh 38,000,000</div>
@@ -573,10 +573,10 @@ function Diaspora() {
               phone.
             </p>
             <div className={styles.diasporaCtas}>
-              <a className={`${styles.btn} ${styles.btnPrimary}`} href="#contact">
+              <a className={`${styles.btn} ${styles.btnPrimary}`} href="/contact">
                 Schedule a call <span className={styles.arrow}>→</span>
               </a>
-              <a className={`${styles.btn} ${styles.btnGhostNavy}`} href="#diaspora">
+              <a className={`${styles.btn} ${styles.btnGhostNavy}`} href="/owners#diaspora">
                 Diaspora services
               </a>
             </div>
@@ -623,10 +623,10 @@ function TaglineBlock() {
             suburb.
           </p>
           <div className={styles.taglineCtas}>
-            <a className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`} href="#valuation">
+            <a className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`} href="/contact">
               Request a valuation <span className={styles.arrow}>→</span>
             </a>
-            <a className={`${styles.btn} ${styles.btnGhostNavy} ${styles.btnLg}`} href="#whatsapp">
+            <a className={`${styles.btn} ${styles.btnGhostNavy} ${styles.btnLg}`} href="https://wa.me/254700000000">
               WhatsApp Tochi
             </a>
           </div>
@@ -658,19 +658,19 @@ function Footer() {
             <h5>Owners</h5>
             <ul>
               <li>
-                <a href="#valuation">Get a valuation</a>
+                <a href="/contact">Get a valuation</a>
               </li>
               <li>
-                <a href="#services">Management services</a>
+                <a href="/owners#services">Management services</a>
               </li>
               <li>
                 <a href={portal('/landlord')}>Owner dashboard</a>
               </li>
               <li>
-                <a href="#diaspora">Diaspora support</a>
+                <a href="/owners#diaspora">Diaspora support</a>
               </li>
               <li>
-                <a href="#pricing">Pricing</a>
+                <a href="/owners">Pricing</a>
               </li>
             </ul>
           </div>
@@ -678,16 +678,16 @@ function Footer() {
             <h5>Tenants</h5>
             <ul>
               <li>
-                <a href="#listings">Find a home</a>
+                <a href="/listings">Find a home</a>
               </li>
               <li>
                 <a href={portal('/tenant/login')}>Tenant portal</a>
               </li>
               <li>
-                <a href="#maintenance">Maintenance</a>
+                <a href="/tenants#maintenance">Maintenance</a>
               </li>
               <li>
-                <a href="#faq">FAQ</a>
+                <a href="/contact#faq">FAQ</a>
               </li>
             </ul>
           </div>
@@ -695,19 +695,19 @@ function Footer() {
             <h5>Company</h5>
             <ul>
               <li>
-                <a href="#about">About</a>
+                <a href="/about">About</a>
               </li>
               <li>
-                <a href="#brand">Brand story</a>
+                <a href="/about#name">Brand story</a>
               </li>
               <li>
-                <a href="#rics">RICS standards</a>
+                <a href="/owners#standards">RICS standards</a>
               </li>
               <li>
-                <a href="#careers">Careers</a>
+                <a href="/about#team">Careers</a>
               </li>
               <li>
-                <a href="#press">Press</a>
+                <a href="/contact">Press</a>
               </li>
             </ul>
           </div>
@@ -721,10 +721,10 @@ function Footer() {
                 <a href="tel:+254700000000">+254 700 000 000</a>
               </li>
               <li>
-                <a href="#address">Delta Corner, Westlands</a>
+                <a href="/contact#office">Delta Corner, Westlands</a>
               </li>
               <li>
-                <a href="#whatsapp">WhatsApp →</a>
+                <a href="https://wa.me/254700000000" target="_blank" rel="noopener">WhatsApp →</a>
               </li>
             </ul>
           </div>
