@@ -8,12 +8,34 @@ const protectedRoutes = ['/admin', '/tenant', '/landlord', '/vendor']
 // Public routes that should redirect to dashboard if already authenticated
 const publicRoutes = ['/admin/login', '/admin/forgot-password', '/tenant/login', '/landlord/login', '/vendor/login']
 
+function getDashboardForRole(role?: string): string {
+  switch (role) {
+    case 'TENANT':
+      return '/tenant/dashboard'
+    case 'LANDLORD':
+      return '/landlord/dashboard'
+    case 'VENDOR':
+      return '/vendor/dashboard'
+    default:
+      return '/admin'
+  }
+}
+
+function getLoginForRole(role?: string): string {
+  switch (role) {
+    case 'TENANT':
+      return '/tenant/login'
+    case 'LANDLORD':
+      return '/landlord/login'
+    case 'VENDOR':
+      return '/vendor/login'
+    default:
+      return '/admin/login'
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
-
-  // Check if route is protected
-  const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route))
-  const isPublicRoute = publicRoutes.some((route) => path === route)
 
   // Get session token
   const token = await getToken({
@@ -21,9 +43,20 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   })
 
+  // Root path: redirect based on auth state
+  if (path === '/') {
+    if (token) {
+      return NextResponse.redirect(new URL(getDashboardForRole(token.role as string), request.url))
+    }
+    return NextResponse.redirect(new URL('/admin/login', request.url))
+  }
+
+  // Check if route is protected
+  const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route))
+  const isPublicRoute = publicRoutes.some((route) => path === route)
+
   // Redirect to login if accessing protected route without authentication
   if (isProtectedRoute && !token && !path.includes('/login') && !path.includes('/register') && !path.includes('/forgot-password')) {
-    // Redirect to the portal-specific login page
     let loginPath = '/admin/login'
     if (path.startsWith('/tenant')) loginPath = '/tenant/login'
     else if (path.startsWith('/landlord')) loginPath = '/landlord/login'
@@ -34,12 +67,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Redirect to dashboard if accessing public route while authenticated
+  // Redirect to dashboard if accessing login route while authenticated
   if (isPublicRoute && token) {
-    let dashboard = '/admin'
-    if (path.startsWith('/tenant')) dashboard = '/tenant/dashboard'
-    else if (path.startsWith('/landlord')) dashboard = '/landlord/dashboard'
-
+    const dashboard = getDashboardForRole(token.role as string)
     return NextResponse.redirect(new URL(dashboard, request.url))
   }
 
