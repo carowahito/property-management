@@ -1,6 +1,49 @@
-# Property Management System
+# Tochi Property
 
-A complete, production-ready property management solution extracted from Catalyst Suite.
+Monorepo containing the **marketing site** (`tochiproperty.com`) and the **operations portal** (admin / landlord / tenant / vendor).
+
+## Repo layout
+
+```
+apps/
+├── marketing/   @tochi/marketing — Next.js 15 marketing site (port 3002)
+└── portal/      @tochi/portal    — Next.js 15 portal app    (port 3001)
+```
+
+Workspace is managed with **pnpm workspaces + Turborepo**. The two apps share zero code today; each deploys independently on Vercel.
+
+## Quick start
+
+```bash
+pnpm install           # install everything
+
+pnpm dev               # run both apps in parallel
+pnpm dev:portal        # portal only        → http://localhost:3001
+pnpm dev:marketing     # marketing only     → http://localhost:3002
+
+pnpm build             # build both
+pnpm build:portal      # portal only
+pnpm build:marketing   # marketing only
+```
+
+Marketing's "Sign in" and "Tenant portal" links resolve against `NEXT_PUBLIC_PORTAL_URL` (defaults to `http://localhost:3001`). Copy `apps/marketing/.env.example` to `apps/marketing/.env.local` to override for staging/prod.
+
+## Deploys (Vercel)
+
+Two separate Vercel projects pointed at the same repo:
+
+| Project          | Root Directory      | Domain                          |
+| ---------------- | ------------------- | ------------------------------- |
+| `tochi-marketing`| `apps/marketing`    | `tochiproperty.com`             |
+| `tochi-portal`   | `apps/portal`       | `app.tochiproperty.com`         |
+
+Configure each project's *Ignored Build Step* with `git diff --quiet HEAD^ HEAD -- apps/<name>` so a commit that only touches the other app skips the build. Marketing edits will not trigger a portal deploy.
+
+---
+
+## Operations portal — feature reference
+
+The remainder of this document describes the portal application (admin/landlord/tenant/vendor).
 
 ## Features
 
