@@ -1,4 +1,4 @@
-# Tochi Property
+# Tochi Property Management
 
 Monorepo containing the **marketing site** (`tochiproperty.com`) and the **operations portal** (admin / landlord / tenant / vendor).
 
