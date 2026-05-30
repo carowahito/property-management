@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import s from '@/styles/shared.module.css'
 import { portal } from './portal'
+import { MobileMenu } from './MobileMenu'
 
 type NavKey = 'home' | 'owners' | 'tenants' | 'listings' | 'about' | 'contact'
 
@@ -38,6 +39,7 @@ export function Nav({ current }: { current?: NavKey } = {}) {
             Get a valuation <span className={s.arrow}>→</span>
           </Link>
         </div>
+        <MobileMenu />
       </div>
     </header>
   )
