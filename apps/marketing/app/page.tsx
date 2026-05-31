@@ -590,8 +590,12 @@ function Footer() {
       <div className={styles.container}>
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
-            <a className={styles.wordmark} href="/">
-              TOCHI <span className={styles.light}>Property</span>
+            <a href="/" className={styles.logoLink}>
+              <img src="/tochi-icon.svg" alt="" height={48} className={styles.logoIcon} style={{ display: 'block' }} />
+              <div className={styles.logoText}>
+                <span className={styles.logoName}>TOCHI PROPERTY</span>
+                <span className={styles.logoTagline}>Your Property. Our Pride.</span>
+              </div>
             </a>
             <p>
               Property management and sales across Nairobi, Mombasa and Kisumu — operating to the

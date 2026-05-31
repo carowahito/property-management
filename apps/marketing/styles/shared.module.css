@@ -403,11 +403,41 @@
   padding-bottom: 48px;
   border-bottom: 1px solid rgba(255, 248, 240, 0.12);
 }
-.footerBrand .wordmark {
+.footerBrand .logoLink {
   color: var(--cream);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
 }
-.footerBrand .wordmark .light {
+.footerBrand .logoIcon {
+  display: block !important;
+  flex-shrink: 0;
+  height: 48px !important;
+  width: auto;
+}
+.footerBrand .logoText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.footerBrand .logoName {
+  color: var(--cream);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  display: block;
+}
+.footerBrand .logoTagline {
   color: var(--saffron);
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  display: block;
 }
 .footerBrand p {
   font-family: var(--body);
