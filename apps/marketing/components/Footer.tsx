@@ -8,8 +8,12 @@ export function Footer() {
       <div className={s.container}>
         <div className={s.footerTop}>
           <div className={s.footerBrand}>
-            <Link className={s.wordmark} href="/">
-              TOCHI <span className={s.light}>Property</span>
+            <Link href="/" className={s.logoLink}>
+              <img src="/tochi-icon.svg" alt="" height={44} className={s.logoIcon} style={{ display: 'block' }} />
+              <div className={s.logoText}>
+                <span className={s.logoName}>TOCHI PROPERTY</span>
+                <span className={s.logoTagline}>Your Property. Our Pride.</span>
+              </div>
             </Link>
             <p>
               Property management and sales across Nairobi, Mombasa and Kisumu — operating to the
