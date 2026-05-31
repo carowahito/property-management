@@ -49,7 +49,7 @@ export function MobileMenu() {
               </Link>
             ))}
             <hr className={m.divider} />
-            <a className={`${s.btn} ${s.btnGhostNavy} ${m.drawerBtn}`} href={portal('/')}>
+            <a className={`${s.btn} ${s.btnGhostNavy} ${m.drawerBtn}`} href="https://app.tochiproperty.com">
               Sign in
             </a>
             <Link className={`${s.btn} ${s.btnSaffron} ${m.drawerBtn}`} href="/contact" onClick={() => setOpen(false)}>
