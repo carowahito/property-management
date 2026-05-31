@@ -774,10 +774,33 @@
 }
 @media (max-width: 640px) {
   .container {
-    padding: 0 20px;
+    padding: 0 16px;
   }
   .navLinks {
     display: none;
+  }
+  .navInner {
+    padding: 12px 0;
+    gap: 12px;
+  }
+  .navActions {
+    gap: 8px;
+  }
+  .navActions > *:first-child {
+    display: none;
+  }
+  .btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  .logoIcon {
+    height: 32px !important;
+  }
+  .logoName {
+    font-size: 11px;
+  }
+  .logoTagline {
+    font-size: 9px;
   }
   .cols2,
   .cols3,
