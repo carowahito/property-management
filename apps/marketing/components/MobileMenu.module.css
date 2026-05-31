@@ -1,0 +1,91 @@
+/* Hamburger button — hidden on desktop, visible ≤768px */
+.burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 60;
+}
+.bar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--navy);
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+/* Animated X */
+.barTop  { transform: translateY(7px) rotate(45deg); }
+.barMid  { opacity: 0; }
+.barBot  { transform: translateY(-7px) rotate(-45deg); }
+
+/* Full-screen overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(0, 36, 68, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Slide-down drawer */
+.drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--cream);
+  padding: 80px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 32px rgba(0, 36, 68, 0.12);
+  animation: slideDown 0.25s ease;
+}
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.drawerLink {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--navy);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--navy-line);
+  transition: color 0.15s;
+}
+.drawerLink:hover {
+  color: var(--saffron-dark);
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--navy-line);
+  margin: 8px 0;
+}
+
+.drawerBtn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .burger {
+    display: flex;
+  }
+}
