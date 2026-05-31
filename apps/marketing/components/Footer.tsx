@@ -9,7 +9,7 @@ export function Footer() {
         <div className={s.footerTop}>
           <div className={s.footerBrand}>
             <Link href="/" className={s.logoLink}>
-              <img src="/tochi-icon.svg" alt="" height={44} className={s.logoIcon} style={{ display: 'block' }} />
+              <img src="/tochi-icon.svg" alt="" height={48} className={s.logoIcon} style={{ display: 'block' }} />
               <div className={s.logoText}>
                 <span className={s.logoName}>TOCHI PROPERTY</span>
                 <span className={s.logoTagline}>Your Property. Our Pride.</span>

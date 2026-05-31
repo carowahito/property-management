@@ -1339,11 +1339,42 @@
   padding-bottom: 48px;
   border-bottom: 1px solid rgba(255, 248, 240, 0.12);
 }
-.footerBrand .wordmark {
-  color: var(--cream);
+.footerBrand .logoLink {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  margin-bottom: 16px;
 }
-.footerBrand .wordmark .light {
+.footerBrand .logoIcon {
+  display: block !important;
+  flex-shrink: 0;
+  height: 48px !important;
+  width: auto;
+}
+.footerBrand .logoText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.footerBrand .logoName {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  line-height: 1;
+  display: block;
+}
+.footerBrand .logoTagline {
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.03em;
   color: var(--saffron);
+  line-height: 1;
+  display: block;
 }
 .footerBrand p {
   font-family: var(--body);
