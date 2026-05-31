@@ -36,7 +36,7 @@ export function Nav({ current }: { current?: NavKey } = {}) {
           ))}
         </nav>
         <div className={s.navActions}>
-          <a className={`${s.btn} ${s.btnGhostNavy}`} href={portal('/')}>
+          <a className={`${s.btn} ${s.btnGhostNavy}`} href="https://app.tochiproperty.com">
             Sign in
           </a>
           <Link className={`${s.btn} ${s.btnSaffron}`} href="/contact">
