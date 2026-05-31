@@ -1,6 +1,5 @@
 import styles from './page.module.css'
 import { Nav } from '@/components/Nav'
-import { Footer } from '@/components/Footer'
 
 // Cross-app links resolve against the portal. Configure via NEXT_PUBLIC_PORTAL_URL;
 // defaults to localhost:3001 for dev. In production this points at the portal's domain
@@ -582,3 +581,111 @@ function TaglineBlock() {
   )
 }
 
+/* ─────────────────────────────────────────────
+   FOOTER
+   ───────────────────────────────────────────── */
+function Footer() {
+  return (
+    <footer className={styles.footer}>
+      <div className={styles.container}>
+        <div className={styles.footerTop}>
+          <div className={styles.footerBrand}>
+            <a href="/" className={styles.logoLink}>
+              <img src="/tochi-icon.svg" alt="" height={48} className={styles.logoIcon} style={{ display: 'block' }} />
+              <div className={styles.logoText}>
+                <span className={styles.logoName}>TOCHI PROPERTY</span>
+                <span className={styles.logoTagline}>Your Property. Our Pride.</span>
+              </div>
+            </a>
+            <p>
+              Property management and sales across Nairobi, Mombasa and Kisumu — operating to the
+              standards of the Royal Institution of Chartered Surveyors.
+            </p>
+          </div>
+          <div className={styles.footerCol}>
+            <h5>Owners</h5>
+            <ul>
+              <li>
+                <a href="/contact">Get a valuation</a>
+              </li>
+              <li>
+                <a href="/owners#services">Management services</a>
+              </li>
+              <li>
+                <a href={portal('/landlord')}>Owner dashboard</a>
+              </li>
+              <li>
+                <a href="/owners#diaspora">Diaspora support</a>
+              </li>
+              <li>
+                <a href="/owners">Pricing</a>
+              </li>
+            </ul>
+          </div>
+          <div className={styles.footerCol}>
+            <h5>Tenants</h5>
+            <ul>
+              <li>
+                <a href="/listings">Find a home</a>
+              </li>
+              <li>
+                <a href={portal('/tenant/login')}>Tenant portal</a>
+              </li>
+              <li>
+                <a href="/tenants#maintenance">Maintenance</a>
+              </li>
+              <li>
+                <a href="/contact#faq">FAQ</a>
+              </li>
+            </ul>
+          </div>
+          <div className={styles.footerCol}>
+            <h5>Company</h5>
+            <ul>
+              <li>
+                <a href="/about">About</a>
+              </li>
+              <li>
+                <a href="/about#name">Brand story</a>
+              </li>
+              <li>
+                <a href="/owners#standards">RICS standards</a>
+              </li>
+              <li>
+                <a href="/about#team">Careers</a>
+              </li>
+              <li>
+                <a href="/contact">Press</a>
+              </li>
+            </ul>
+          </div>
+          <div className={styles.footerCol}>
+            <h5>Get in touch</h5>
+            <ul>
+              <li>
+                <a href="mailto:info@tochiproperty.com">info@tochiproperty.com</a>
+              </li>
+              <li>
+                <a href="tel:+254700000000">+254 700 000 000</a>
+              </li>
+              <li>
+                <a href="/contact#office">Delta Corner, Westlands</a>
+              </li>
+              <li>
+                <a href="https://wa.me/254700000000" target="_blank" rel="noopener">WhatsApp →</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className={styles.footerBottom}>
+          <span>© 2026 Tochi Property Ltd. · Nairobi, Kenya</span>
+          <div className={styles.seals}>
+            <span className={styles.seal}>RICS aligned</span>
+            <span className={styles.seal}>ISO-ready</span>
+            <span className={styles.seal}>M-Pesa partner</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}
