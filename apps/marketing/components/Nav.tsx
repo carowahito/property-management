@@ -16,8 +16,12 @@ export function Nav({ current }: { current?: NavKey } = {}) {
   return (
     <header className={s.nav}>
       <div className={`${s.container} ${s.navInner}`}>
-        <Link className={s.wordmark} href="/">
-          TOCHI <span className={s.light}>Property</span>
+        <Link href="/" className={s.logoLink}>
+          <img src="/tochi-icon.svg" alt="" height={48} style={{ display: 'block' }} />
+          <div className={s.logoText}>
+            <span className={s.logoName}>TOCHI PROPERTY</span>
+            <span className={s.logoTagline}>Your Property. Our Pride.</span>
+          </div>
         </Link>
         <nav className={s.navLinks}>
           {LINKS.map((link) => (

@@ -1,4 +1,5 @@
 import styles from './page.module.css'
+import { Nav } from '@/components/Nav'
 
 // Cross-app links resolve against the portal. Configure via NEXT_PUBLIC_PORTAL_URL;
 // defaults to localhost:3001 for dev. In production this points at the portal's domain
@@ -13,7 +14,6 @@ export default function HomePage() {
       <HeroSplit />
       <HeroStatsBand />
       <TrustStrip />
-      <Meaning />
       <Services />
       <DashboardPreview />
       <Listings />
@@ -28,43 +28,6 @@ export default function HomePage() {
 /* ─────────────────────────────────────────────
    NAV
    ───────────────────────────────────────────── */
-function Nav() {
-  return (
-    <header className={styles.nav}>
-      <div className={`${styles.container} ${styles.navInner}`}>
-        <a className={styles.wordmark} href="/">
-          TOCHI <span className={styles.light}>Property</span>
-        </a>
-        <nav className={styles.navLinks}>
-          <a className={styles.navLink} href="/owners">
-            Owners
-          </a>
-          <a className={styles.navLink} href="/tenants">
-            Tenants
-          </a>
-          <a className={styles.navLink} href="/listings">
-            Listings
-          </a>
-          <a className={styles.navLink} href="/about">
-            About
-          </a>
-          <a className={styles.navLink} href="/contact">
-            Contact
-          </a>
-        </nav>
-        <div className={styles.navActions}>
-          <a className={`${styles.btn} ${styles.btnGhostNavy}`} href={portal('/')}>
-            Sign in
-          </a>
-          <a className={`${styles.btn} ${styles.btnSaffron}`} href="/contact">
-            Get a valuation <span className={styles.arrow}>→</span>
-          </a>
-        </div>
-      </div>
-    </header>
-  )
-}
-
 /* ─────────────────────────────────────────────
    DUAL-AUDIENCE HERO (Option C)
    ───────────────────────────────────────────── */
@@ -104,7 +67,6 @@ function HeroSplit() {
 
       <div className={styles.heroSpine} aria-hidden="true">
         OWNERS
-        <span className={styles.jp}>土地</span>
         <span className={styles.or}>— or —</span>
         TENANTS
       </div>
@@ -593,24 +555,7 @@ function Diaspora() {
 function TaglineBlock() {
   return (
     <section className={styles.taglineBlock}>
-      <div className={styles.taglineWatermark} aria-hidden="true">
-        <svg viewBox="0 0 560 400" xmlns="http://www.w3.org/2000/svg">
-          <text
-            x="50%"
-            y="54%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontFamily="'Noto Sans JP', 'Yu Gothic', 'Hiragino Sans', sans-serif"
-            fontWeight={700}
-            fontSize={380}
-            letterSpacing={-16}
-            fill="rgba(0,36,68,0.08)"
-          >
-            土地
-          </text>
-        </svg>
-      </div>
-      <div className={`${styles.container} ${styles.taglineInner}`}>
+<div className={`${styles.container} ${styles.taglineInner}`}>
         <h2>
           Your Property.
           <br />
@@ -652,7 +597,6 @@ function Footer() {
               Property management and sales across Nairobi, Mombasa and Kisumu — operating to the
               standards of the Royal Institution of Chartered Surveyors.
             </p>
-            <div className={styles.meaningLine}>土地 · Tochi · Light · Praise</div>
           </div>
           <div className={styles.footerCol}>
             <h5>Owners</h5>

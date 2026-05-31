@@ -15,7 +15,6 @@ export function Footer() {
               Property management and sales across Nairobi, Mombasa and Kisumu — operating to the
               standards of the Royal Institution of Chartered Surveyors.
             </p>
-            <div className={s.meaningLine}>土地 · Tochi · Light · Praise</div>
           </div>
           <div className={s.footerCol}>
             <h5>Owners</h5>

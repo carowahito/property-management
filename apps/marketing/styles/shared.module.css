@@ -116,6 +116,40 @@
 }
 
 /* WORDMARK */
+.logoLink {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logoText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.logoName {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--navy);
+  line-height: 1;
+  display: block;
+}
+
+.logoTagline {
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--saffron-dark);
+  line-height: 1;
+  display: block;
+}
+
 .wordmark {
   font-family: var(--display);
   font-weight: 700;
