@@ -5,29 +5,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 
-type AccountType = 'admin' | 'tenant' | 'landlord'
-
-const ACCOUNT_TYPES: { value: AccountType; label: string; description: string }[] = [
-  { value: 'admin', label: 'Property Manager', description: 'Manage properties, tenants, and finances' },
-  { value: 'tenant', label: 'Tenant', description: 'View your lease, pay rent, and submit requests' },
-  { value: 'landlord', label: 'Landlord', description: 'Track your properties and rental income' },
-]
-
-function getDashboardForRole(role: string): string {
-  switch (role) {
-    case 'TENANT': return '/tenant/dashboard'
-    case 'LANDLORD': return '/landlord/dashboard'
-    default: return '/admin'
-  }
-}
-
 export default function AdminSignUpPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [accountType, setAccountType] = useState<AccountType>('admin')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -53,7 +35,7 @@ export default function AdminSignUpPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, phone, accountType }),
+        body: JSON.stringify({ name, email, password }),
       })
 
       const data = await res.json()
@@ -74,7 +56,7 @@ export default function AdminSignUpPage() {
       if (result?.error) {
         router.push('/admin/login')
       } else {
-        router.push(getDashboardForRole(data.role))
+        router.push('/admin')
         router.refresh()
       }
     } catch {
@@ -88,10 +70,10 @@ export default function AdminSignUpPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Create an Account
+            Get Started
           </h2>
           <p className="mt-2 text-center text-sm text-neutral-400">
-            Sign up for the property management portal
+            Create your property management account
           </p>
         </div>
 
@@ -103,30 +85,6 @@ export default function AdminSignUpPage() {
           )}
 
           <div className="space-y-4">
-            {/* Account Type Selector */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                I am a...
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {ACCOUNT_TYPES.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setAccountType(type.value)}
-                    className={`p-3 rounded-lg border text-center transition ${
-                      accountType === type.value
-                        ? 'border-primary-500 bg-primary-500/20 text-primary-300'
-                        : 'border-neutral-600 bg-neutral-700 text-neutral-400 hover:border-neutral-500'
-                    }`}
-                  >
-                    <p className="text-sm font-medium">{type.label}</p>
-                    <p className="text-xs mt-1 opacity-75">{type.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-neutral-300 mb-1">
                 Full Name
@@ -157,22 +115,6 @@ export default function AdminSignUpPage() {
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-neutral-300 mb-1">
-                Phone Number {accountType !== 'admin' && <span className="text-danger-400">*</span>}
-              </label>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                required={accountType !== 'admin'}
-                className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-md placeholder-neutral-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="+254 7XX XXX XXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
               />
             </div>
             <div>
@@ -236,6 +178,10 @@ export default function AdminSignUpPage() {
           >
             {isLoading ? 'Creating account...' : 'Create Account'}
           </button>
+
+          <p className="text-xs text-neutral-500 text-center">
+            Are you a tenant or landlord? Your property manager will send you an invite to access the portal.
+          </p>
 
           <div className="text-center">
             <p className="text-sm text-neutral-400">
