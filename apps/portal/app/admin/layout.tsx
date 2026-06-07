@@ -38,6 +38,7 @@ export default function AdminLayout({
       title: 'Administration',
       items: [
         { href: '/admin/admin-panel', label: 'Admin Panel', icon: '🔐', adminOnly: true },
+        { href: '/admin/onboarding', label: 'Onboard Property', icon: '🚀', adminOnly: true },
       ]
     },
     {
