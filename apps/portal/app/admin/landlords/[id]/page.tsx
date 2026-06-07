@@ -279,7 +279,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-neutral-600">🏠 Units</p>
-                  <p className="font-medium text-neutral-900">{totalUnits} unit{totalUnits !== 1 ? 's' : ''} across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
+                  <button onClick={() => setActiveTab('properties')} className="font-medium text-primary-600 hover:underline text-left">{totalUnits} unit{totalUnits !== 1 ? 's' : ''} across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</button>
                 </div>
                 <div>
                   <p className="text-neutral-600">🏦 Bank</p>
@@ -347,11 +347,11 @@ export default function LandlordCRMPage({ params }: Props) {
           <p className="text-2xl font-bold text-success-600 mt-2">KES {yearlyRevenue.toLocaleString()}</p>
           <p className="text-xs text-neutral-500 mt-1">KES {totalMonthlyRevenue.toLocaleString()}/mo</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Units</p>
           <p className="text-2xl font-bold text-primary-600 mt-2">{totalUnits}</p>
           <p className="text-xs text-neutral-500 mt-1">across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
-        </div>
+        </button>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
           <p className="text-2xl font-bold text-purple-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
