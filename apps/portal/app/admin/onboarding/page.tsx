@@ -440,7 +440,7 @@ export default function OnboardingPage() {
             </div>
             <div>
               <label className={labelClass}>Monthly Rent (KES) *</label>
-              <input name="monthlyRent" type="number" value={unit.monthlyRent} onChange={handleInput(setUnit)} className={inputClass} placeholder="25000" />
+              <input name="monthlyRent" type="number" min="1" value={unit.monthlyRent} onChange={handleInput(setUnit)} className={inputClass} placeholder="25000" />
             </div>
             <div>
               <label className={labelClass}>Floor</label>
@@ -593,6 +593,10 @@ export default function OnboardingPage() {
               setCreated({})
               setLandlord({ name: '', email: '', phone: '', idNumber: '', address: '', bankName: '', bankAccount: '', taxId: '', managementFeePercent: '10' })
               setProperty({ name: '', address: '', type: 'APARTMENT', city: 'Nairobi', totalUnits: '1', description: '' })
+              setSelectedExistingProperty(null)
+              setUnit({ unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', serviceCharge: '', description: '' })
+              setTenant({ name: '', email: '', phone: '', idNumber: '', emergencyContact: '', emergencyPhone: '', unitId: '' })
+              setLease({ unitId: '', startDate: '', endDate: '', monthlyRent: '', securityDeposit: '', terms: '' })
               setError('')
             }}>
               + Onboard Another

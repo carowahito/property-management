@@ -8,6 +8,7 @@ export const createTenantSchema = z.object({
   emergencyContact: z.string().optional(),
   emergencyPhone: z.string().optional(),
   propertyId: z.string().min(1, 'Property is required'),
+  unitId: z.string().optional(),
   unit: z.string().optional(),
   moveInDate: z.string().optional(),
   moveOutDate: z.string().optional(),
