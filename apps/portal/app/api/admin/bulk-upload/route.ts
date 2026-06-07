@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const type = searchParams.get('type')
+  const validateOnly = searchParams.get('validate') === 'true'
   const csvText = await req.text()
 
   if (!type || !csvText) {
@@ -59,17 +60,17 @@ export async function POST(req: NextRequest) {
   try {
     switch (type) {
       case 'landlords':
-        return await uploadLandlords(rows)
+        return await uploadLandlords(rows, validateOnly)
       case 'properties':
-        return await uploadProperties(rows)
+        return await uploadProperties(rows, validateOnly)
       case 'tenants':
-        return await uploadTenants(rows)
+        return await uploadTenants(rows, validateOnly)
       case 'units':
-        return await uploadUnits(rows)
+        return await uploadUnits(rows, validateOnly)
       case 'leases':
-        return await uploadLeases(rows)
+        return await uploadLeases(rows, validateOnly)
       case 'transactions':
-        return await uploadTransactions(rows)
+        return await uploadTransactions(rows, validateOnly)
       default:
         return NextResponse.json({ error: `Unknown type: ${type}. Use: landlords, properties, tenants, leases` }, { status: 400 })
     }
@@ -87,7 +88,7 @@ async function getCompanyId(): Promise<string> {
   return company.id
 }
 
-async function uploadLandlords(rows: Record<string, string>[]) {
+async function uploadLandlords(rows: Record<string, string>[], validateOnly = false) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
   const companyId = await getCompanyId()
 
@@ -139,7 +140,7 @@ async function uploadLandlords(rows: Record<string, string>[]) {
   return NextResponse.json({ type: 'landlords', ...results })
 }
 
-async function uploadProperties(rows: Record<string, string>[]) {
+async function uploadProperties(rows: Record<string, string>[], validateOnly = false) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
   const companyId = await getCompanyId()
 
@@ -203,7 +204,7 @@ async function uploadProperties(rows: Record<string, string>[]) {
   return NextResponse.json({ type: 'properties', ...results })
 }
 
-async function uploadUnits(rows: Record<string, string>[]) {
+async function uploadUnits(rows: Record<string, string>[], validateOnly = false) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
 
   for (const row of rows) {
@@ -273,22 +274,41 @@ async function uploadUnits(rows: Record<string, string>[]) {
   return NextResponse.json({ type: 'units', ...results })
 }
 
-async function uploadTenants(rows: Record<string, string>[]) {
-  const results = { created: 0, skipped: 0, errors: [] as string[] }
+interface RowValidation {
+  row: number
+  referenceId: string
+  name: string
+  email: string
+  status: 'valid' | 'error' | 'update'
+  error?: string
+}
+
+async function uploadTenants(rows: Record<string, string>[], validateOnly = false) {
+  const results = { created: 0, updated: 0, skipped: 0, errors: [] as string[] }
+  const rowValidations: RowValidation[] = []
 
   const companyId = await getCompanyId()
 
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 1
+    const ref = row.referenceId || ''
+
     if (!row.name || !row.email || !row.phone || !row.propertyName) {
-      results.errors.push(`Skipping row: missing required fields (name, email, phone, propertyName) — ${JSON.stringify(row)}`)
+      const missing = ['name', 'email', 'phone', 'propertyName'].filter(f => !row[f]).join(', ')
+      const err = `Missing required fields: ${missing}`
+      results.errors.push(`Row ${rowNum}: ${err}`)
       results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name || '', email: row.email || '', status: 'error', error: err })
       continue
     }
 
     const property = await prisma.property.findFirst({ where: { companyId, name: row.propertyName } })
     if (!property) {
-      results.errors.push(`Tenant "${row.name}": property "${row.propertyName}" not found — upload properties first`)
+      const err = `Property "${row.propertyName}" not found`
+      results.errors.push(`Row ${rowNum}: ${err}`)
       results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
       continue
     }
 
@@ -296,8 +316,50 @@ async function uploadTenants(rows: Record<string, string>[]) {
       ? await prisma.unit.findFirst({ where: { propertyId: property.id, unitNumber: row.unit } })
       : null
 
+    if (row.unit && !unitRecord) {
+      const err = `Unit "${row.unit}" not found in property "${row.propertyName}"`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+
+    if (row.moveInDate && isNaN(Date.parse(row.moveInDate))) {
+      const err = `Invalid moveInDate format: "${row.moveInDate}"`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+
+    if (row.moveOutDate && isNaN(Date.parse(row.moveOutDate))) {
+      const err = `Invalid moveOutDate format: "${row.moveOutDate}"`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+
+    const validStatuses = ['ACTIVE', 'INACTIVE', 'PENDING', 'EVICTED']
+    if (row.status && !validStatuses.includes(row.status.toUpperCase())) {
+      const err = `Invalid status "${row.status}". Use: ${validStatuses.join(', ')}`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+
+    const existing = await prisma.tenant.findFirst({ where: { companyId, email: row.email } })
+    const rowStatus = existing ? 'update' as const : 'valid' as const
+
+    if (validateOnly) {
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: rowStatus })
+      if (existing) results.updated++
+      else results.created++
+      continue
+    }
+
     try {
-      const existing = await prisma.tenant.findFirst({ where: { companyId, email: row.email } })
       const tenantData = {
         name: row.name,
         phone: row.phone,
@@ -308,24 +370,29 @@ async function uploadTenants(rows: Record<string, string>[]) {
         unitId: unitRecord?.id ?? null,
         unit: row.unit || null,
         moveInDate: row.moveInDate ? new Date(row.moveInDate) : null,
-        status: (row.status as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'EVICTED') || 'ACTIVE',
+        moveOutDate: row.moveOutDate ? new Date(row.moveOutDate) : null,
+        status: ((row.status?.toUpperCase() || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'EVICTED'),
       }
       if (existing) {
         await prisma.tenant.update({ where: { id: existing.id }, data: tenantData })
+        results.updated++
       } else {
         await prisma.tenant.create({ data: { companyId, email: row.email, ...tenantData } })
+        results.created++
       }
-      results.created++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: rowStatus })
     } catch (e) {
-      results.errors.push(`${row.email}: ${String(e)}`)
+      const err = String(e)
+      results.errors.push(`Row ${rowNum} (${row.email}): ${err}`)
       results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
     }
   }
 
-  return NextResponse.json({ type: 'tenants', ...results })
+  return NextResponse.json({ type: 'tenants', validateOnly, rows: rowValidations, ...results })
 }
 
-async function uploadLeases(rows: Record<string, string>[]) {
+async function uploadLeases(rows: Record<string, string>[], validateOnly = false) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
 
   for (const row of rows) {
@@ -387,7 +454,7 @@ async function uploadLeases(rows: Record<string, string>[]) {
   return NextResponse.json({ type: 'leases', ...results })
 }
 
-async function uploadTransactions(rows: Record<string, string>[]) {
+async function uploadTransactions(rows: Record<string, string>[], validateOnly = false) {
   const results = { created: 0, skipped: 0, errors: [] as string[] }
 
   for (const row of rows) {
