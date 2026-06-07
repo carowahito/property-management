@@ -167,7 +167,7 @@ export default function AdminLayout({
   const visibleSections = getVisibleSections()
 
   // Auth pages render without the sidebar layout
-  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/forgot-password'
+  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/signup' || pathname === '/admin/forgot-password'
   if (isAuthPage) {
     return <>{children}</>
   }

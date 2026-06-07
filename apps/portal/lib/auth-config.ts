@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,32 +16,44 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials')
         }
 
-        // Email is unique per company, not globally. For login, find the first
-        // active user with this email. Multi-company login will use company slug later.
+        // Authenticate via Supabase Auth
+        const { error } = await supabaseAdmin.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        })
+
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        // Check users table first (admin/staff roles)
         const user = await prisma.user.findFirst({
           where: { email: credentials.email, active: true },
         })
 
-        if (!user || !user.password) {
-          throw new Error('Invalid credentials')
+        if (user) {
+          return { id: user.id, email: user.email, name: user.name, role: user.role }
         }
 
-        if (!user.active) {
-          throw new Error('Account is inactive')
+        // Check tenants table
+        const tenant = await prisma.tenant.findFirst({
+          where: { email: credentials.email, status: 'ACTIVE' },
+        })
+
+        if (tenant) {
+          return { id: tenant.id, email: tenant.email, name: tenant.name, role: 'TENANT' }
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+        // Check landlords table
+        const landlord = await prisma.landlord.findFirst({
+          where: { email: credentials.email, status: 'ACTIVE' },
+        })
 
-        if (!isPasswordValid) {
-          throw new Error('Invalid credentials')
+        if (landlord) {
+          return { id: landlord.id, email: landlord.email, name: landlord.name, role: 'LANDLORD' }
         }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        }
+        throw new Error('No account found for this email')
       },
     }),
   ],

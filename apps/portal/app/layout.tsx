@@ -1,7 +1,7 @@
 'use client'
 
 import './globals.css'
-// import { SessionProvider } from 'next-auth/react'
+import { SessionProvider } from 'next-auth/react'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { ToastProvider } from '@/components/providers/ToastProvider'
 
@@ -13,11 +13,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        {/* SessionProvider disabled - authentication is off */}
-        <QueryProvider>
-          {children}
-          <ToastProvider />
-        </QueryProvider>
+        <SessionProvider>
+          <QueryProvider>
+            {children}
+            <ToastProvider />
+          </QueryProvider>
+        </SessionProvider>
       </body>
     </html>
   )
