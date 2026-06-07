@@ -37,9 +37,13 @@ export async function GET(request: NextRequest) {
       prisma.landlord.findMany({
         where,
         include: {
+          units: {
+            select: { propertyId: true },
+          },
           _count: {
             select: {
               properties: true,
+              units: true,
               payouts: true,
             },
           },
@@ -51,9 +55,21 @@ export async function GET(request: NextRequest) {
       prisma.landlord.count({ where }),
     ])
 
-    console.log('[GET /api/landlords] found:', landlords.length)
+    // Compute unique property count from units (not just properties.landlordId)
+    const enriched = landlords.map((l: any) => {
+      const uniquePropertyIds = new Set(l.units?.map((u: any) => u.propertyId) || [])
+      // Also include directly owned properties
+      const totalProperties = Math.max(l._count.properties, uniquePropertyIds.size)
+      return {
+        ...l,
+        units: undefined, // remove raw units from response
+        _count: { ...l._count, properties: totalProperties },
+      }
+    })
+
+    console.log('[GET /api/landlords] found:', enriched.length)
     return NextResponse.json({
-      landlords,
+      landlords: enriched,
       pagination: {
         page,
         limit,

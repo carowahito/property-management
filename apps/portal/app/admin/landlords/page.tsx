@@ -16,6 +16,7 @@ interface Landlord {
   status: string
   _count: {
     properties: number
+    units: number
     payouts: number
   }
 }
@@ -164,7 +165,7 @@ export default function AdminLandlordsPage() {
     totalLandlords: landlords.length,
     activeLandlords: landlords.filter((l) => l.status === 'ACTIVE').length,
     inactiveLandlords: landlords.filter((l) => l.status === 'INACTIVE').length,
-    totalProperties: landlords.reduce((sum, l) => sum + l._count.properties, 0),
+    totalUnits: landlords.reduce((sum, l) => sum + l._count.units, 0),
   };
 
   return (
@@ -191,8 +192,8 @@ export default function AdminLandlordsPage() {
           <p className='text-3xl font-bold text-neutral-600'>{stats.inactiveLandlords}</p>
         </div>
         <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Total Properties</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.totalProperties}</p>
+          <p className='text-sm text-neutral-600'>Total Units</p>
+          <p className='text-3xl font-bold text-purple-600'>{stats.totalUnits}</p>
         </div>
       </div>
 
@@ -231,7 +232,7 @@ export default function AdminLandlordsPage() {
                   Contact
                 </th>
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
-                  Properties
+                  Units
                 </th>
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Status
@@ -264,7 +265,7 @@ export default function AdminLandlordsPage() {
                     <p className='text-sm text-neutral-500'>{landlord.phone}</p>
                   </td>
                   <td className='px-6 py-4'>
-                    <p className='text-sm font-semibold text-primary-600'>{landlord._count.properties} properties</p>
+                    <p className='text-sm font-semibold text-primary-600'>{landlord._count.units} units</p>
                   </td>
                   <td className='px-6 py-4'>
                     <span
@@ -351,8 +352,8 @@ export default function AdminLandlordsPage() {
                   <h3 className='font-semibold text-neutral-900 mb-2'>Portfolio Summary</h3>
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
-                      <p className='text-sm text-neutral-600'>Properties</p>
-                      <p className='text-2xl font-bold text-primary-600'>{selectedLandlord._count.properties}</p>
+                      <p className='text-sm text-neutral-600'>Units</p>
+                      <p className='text-2xl font-bold text-primary-600'>{selectedLandlord._count.units}</p>
                     </div>
                     <div>
                       <p className='text-sm text-neutral-600'>Payouts</p>
