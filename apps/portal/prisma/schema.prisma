@@ -1909,7 +1909,6 @@ model Invitation {
   landlord    Landlord? @relation(fields: [landlordId], references: [id], onDelete: SetNull)
   vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
 
-  @@index([token])
   @@index([email])
   @@index([companyId])
   @@map("invitations")

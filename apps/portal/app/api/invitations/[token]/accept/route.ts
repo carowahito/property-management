@@ -39,6 +39,11 @@ export async function POST(
 
   if (authError) {
     if (authError.message.includes('already been registered')) {
+      // Mark invitation as accepted to prevent dangling PENDING state
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+      })
       return NextResponse.json({ error: 'An account with this email already exists. Try signing in instead.' }, { status: 409 })
     }
     return NextResponse.json({ error: authError.message }, { status: 400 })
@@ -48,7 +53,12 @@ export async function POST(
   try {
     await ensureAppRecord(invitation)
   } catch (e) {
-    console.error('Failed to create app record (non-blocking):', e)
+    // Roll back: delete the Supabase Auth user since they can't sign in without an app record
+    const { data: users } = await supabaseAdmin.auth.admin.listUsers()
+    const authUser = users.users.find(u => u.email === invitation.email)
+    if (authUser) await supabaseAdmin.auth.admin.deleteUser(authUser.id)
+    console.error('Failed to create app record, rolled back auth user:', e)
+    return NextResponse.json({ error: 'Failed to create account. Please contact your property manager.' }, { status: 500 })
   }
 
   // Mark invitation as accepted
@@ -82,9 +92,8 @@ async function ensureAppRecord(invitation: {
     let property = await prisma.property.findFirst({ where: { companyId, status: 'ACTIVE' } })
     if (!property) {
       const landlord = await prisma.landlord.findFirst({ where: { companyId } })
-      if (!landlord) return // can't create tenant without a property and landlord
       property = await prisma.property.create({
-        data: { companyId, name: 'Unassigned', address: 'TBD', type: 'APARTMENT', totalUnits: 0, landlordId: landlord.id, status: 'ACTIVE' },
+        data: { companyId, name: 'Unassigned', address: 'TBD', type: 'APARTMENT', totalUnits: 0, landlordId: landlord?.id || '', status: 'ACTIVE' },
       })
     }
     await prisma.tenant.create({

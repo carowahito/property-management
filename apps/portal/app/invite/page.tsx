@@ -80,7 +80,7 @@ function InviteForm() {
       if (result?.error) {
         setSuccess(true)
       } else {
-        const dashboard = data.role === 'TENANT' ? '/tenant/dashboard' : data.role === 'LANDLORD' ? '/landlord/dashboard' : '/admin'
+        const dashboard = data.role === 'TENANT' ? '/tenant/dashboard' : data.role === 'LANDLORD' ? '/landlord/dashboard' : data.role === 'VENDOR' ? '/vendor/dashboard' : '/admin'
         router.push(dashboard)
         router.refresh()
       }

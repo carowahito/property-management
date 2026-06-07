@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
@@ -44,6 +44,11 @@ export default function OnboardingPage() {
     name: '', address: '', type: 'APARTMENT' as string, city: 'Nairobi',
     totalUnits: '1', description: '',
   })
+  const [existingProperties, setExistingProperties] = useState<{ id: string; name: string; address: string; type: string; city: string | null; totalUnits: number }[]>([])
+  const [propertySuggestions, setPropertySuggestions] = useState<typeof existingProperties>([])
+  const [selectedExistingProperty, setSelectedExistingProperty] = useState<string | null>(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
 
   // --- Unit form ---
   const [unit, setUnit] = useState({
@@ -62,6 +67,50 @@ export default function OnboardingPage() {
     unitId: '', startDate: '', endDate: '', monthlyRent: '',
     securityDeposit: '', terms: '',
   })
+
+  // Fetch existing properties when entering property step
+  useEffect(() => {
+    if (step === 'property') {
+      fetch('/api/properties')
+        .then(res => res.json())
+        .then(data => setExistingProperties(data.properties || []))
+        .catch(() => {})
+    }
+  }, [step])
+
+  // Filter suggestions as user types property name
+  useEffect(() => {
+    if (property.name.length >= 2 && !selectedExistingProperty) {
+      const query = property.name.toLowerCase()
+      const matches = existingProperties.filter(p => p.name.toLowerCase().includes(query))
+      setPropertySuggestions(matches)
+      setShowSuggestions(matches.length > 0)
+    } else {
+      setShowSuggestions(false)
+    }
+  }, [property.name, existingProperties, selectedExistingProperty])
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const selectExistingProperty = (p: typeof existingProperties[0]) => {
+    setSelectedExistingProperty(p.id)
+    setProperty({ name: p.name, address: p.address, type: p.type, city: p.city || 'Nairobi', totalUnits: String(p.totalUnits), description: '' })
+    setShowSuggestions(false)
+  }
+
+  const clearSelectedProperty = () => {
+    setSelectedExistingProperty(null)
+    setProperty({ name: '', address: '', type: 'APARTMENT', city: 'Nairobi', totalUnits: '1', description: '' })
+  }
 
   const handleInput = (setter: any) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setter((prev: any) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -102,6 +151,12 @@ export default function OnboardingPage() {
   }
 
   const saveProperty = async () => {
+    if (selectedExistingProperty) {
+      // Use existing property — skip creation
+      setCreated(prev => ({ ...prev, propertyId: selectedExistingProperty, propertyName: property.name, units: [] }))
+      setStep('units')
+      return
+    }
     const data = await save('/api/properties', {
       ...property,
       landlordId: created.landlordId,
@@ -274,39 +329,83 @@ export default function OnboardingPage() {
           <h2 className="text-lg font-semibold text-neutral-900 mb-1">Step 2: Add Property</h2>
           <p className="text-sm text-neutral-500 mb-6">
             The building owned by <span className="font-medium text-neutral-700">{created.landlordName}</span>.
+            If the property already exists, start typing to select it.
           </p>
+
+          {/* Selected existing property banner */}
+          {selectedExistingProperty && (
+            <div className="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-lg flex items-center justify-between">
+              <span className="text-sm text-primary-800">
+                Using existing property: <strong>{property.name}</strong> — {property.address}
+              </span>
+              <button onClick={clearSelectedProperty} className="text-primary-600 hover:text-primary-800 text-sm font-medium">
+                Change
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="relative" ref={suggestionsRef}>
               <label className={labelClass}>Property Name *</label>
-              <input name="name" value={property.name} onChange={handleInput(setProperty)} className={inputClass} placeholder="Greatwall Gardens Phase II" />
+              <input
+                name="name"
+                value={property.name}
+                onChange={(e) => {
+                  setProperty(prev => ({ ...prev, name: e.target.value }))
+                  if (selectedExistingProperty) setSelectedExistingProperty(null)
+                }}
+                onFocus={() => {
+                  if (propertySuggestions.length > 0 && !selectedExistingProperty) setShowSuggestions(true)
+                }}
+                className={inputClass}
+                placeholder="Start typing to search or enter a new name..."
+                disabled={!!selectedExistingProperty}
+              />
+              {showSuggestions && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-neutral-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  <p className="px-3 py-1.5 text-xs text-neutral-500 border-b border-neutral-100">Existing properties</p>
+                  {propertySuggestions.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => selectExistingProperty(p)}
+                      className="w-full text-left px-3 py-2 hover:bg-primary-50 transition text-sm"
+                    >
+                      <span className="font-medium text-neutral-900">{p.name}</span>
+                      <span className="text-neutral-500 ml-2">— {p.address}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className={labelClass}>Type *</label>
-              <select name="type" value={property.type} onChange={handleInput(setProperty)} className={inputClass}>
+              <select name="type" value={property.type} onChange={handleInput(setProperty)} className={inputClass} disabled={!!selectedExistingProperty}>
                 {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</option>)}
               </select>
             </div>
             <div className="col-span-2">
               <label className={labelClass}>Address *</label>
-              <input name="address" value={property.address} onChange={handleInput(setProperty)} className={inputClass} placeholder="Athi River, Machakos County" />
+              <input name="address" value={property.address} onChange={handleInput(setProperty)} className={inputClass} placeholder="Athi River, Machakos County" disabled={!!selectedExistingProperty} />
             </div>
             <div>
               <label className={labelClass}>City</label>
-              <input name="city" value={property.city} onChange={handleInput(setProperty)} className={inputClass} />
+              <input name="city" value={property.city} onChange={handleInput(setProperty)} className={inputClass} disabled={!!selectedExistingProperty} />
             </div>
             <div>
               <label className={labelClass}>Total Units</label>
-              <input name="totalUnits" type="number" min="1" value={property.totalUnits} onChange={handleInput(setProperty)} className={inputClass} />
+              <input name="totalUnits" type="number" min="1" value={property.totalUnits} onChange={handleInput(setProperty)} className={inputClass} disabled={!!selectedExistingProperty} />
             </div>
-            <div className="col-span-2">
-              <label className={labelClass}>Description</label>
-              <textarea name="description" value={property.description} onChange={handleInput(setProperty)} className={inputClass} rows={2} placeholder="Brief description of the property..." />
-            </div>
+            {!selectedExistingProperty && (
+              <div className="col-span-2">
+                <label className={labelClass}>Description</label>
+                <textarea name="description" value={property.description} onChange={handleInput(setProperty)} className={inputClass} rows={2} placeholder="Brief description of the property..." />
+              </div>
+            )}
           </div>
           <div className="flex justify-between mt-6">
             <Button variant="outline" onClick={() => setStep('landlord')}>← Back</Button>
             <Button variant="primary" onClick={saveProperty} disabled={saving || !property.name || !property.address}>
-              {saving ? 'Saving...' : 'Save & Continue →'}
+              {saving ? 'Saving...' : selectedExistingProperty ? 'Use This Property →' : 'Save & Continue →'}
             </Button>
           </div>
         </div>
@@ -341,7 +440,7 @@ export default function OnboardingPage() {
             </div>
             <div>
               <label className={labelClass}>Monthly Rent (KES) *</label>
-              <input name="monthlyRent" type="number" value={unit.monthlyRent} onChange={handleInput(setUnit)} className={inputClass} placeholder="25000" />
+              <input name="monthlyRent" type="number" min="1" value={unit.monthlyRent} onChange={handleInput(setUnit)} className={inputClass} placeholder="25000" />
             </div>
             <div>
               <label className={labelClass}>Floor</label>
@@ -494,6 +593,10 @@ export default function OnboardingPage() {
               setCreated({})
               setLandlord({ name: '', email: '', phone: '', idNumber: '', address: '', bankName: '', bankAccount: '', taxId: '', managementFeePercent: '10' })
               setProperty({ name: '', address: '', type: 'APARTMENT', city: 'Nairobi', totalUnits: '1', description: '' })
+              setSelectedExistingProperty(null)
+              setUnit({ unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', serviceCharge: '', description: '' })
+              setTenant({ name: '', email: '', phone: '', idNumber: '', emergencyContact: '', emergencyPhone: '', unitId: '' })
+              setLease({ unitId: '', startDate: '', endDate: '', monthlyRent: '', securityDeposit: '', terms: '' })
               setError('')
             }}>
               + Onboard Another

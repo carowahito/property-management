@@ -29,31 +29,49 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
   }
 
-  // Check for existing pending invitation
+  // Validate that referenced records belong to the admin's company
+  if (role === 'TENANT' && tenantId) {
+    const t = await prisma.tenant.findFirst({ where: { id: tenantId, companyId: adminUser.companyId } })
+    if (!t) return NextResponse.json({ error: 'Tenant not found in your company' }, { status: 403 })
+    if (t.email !== email) return NextResponse.json({ error: 'Email does not match tenant record' }, { status: 400 })
+  }
+  if (role === 'LANDLORD' && landlordId) {
+    const l = await prisma.landlord.findFirst({ where: { id: landlordId, companyId: adminUser.companyId } })
+    if (!l) return NextResponse.json({ error: 'Landlord not found in your company' }, { status: 403 })
+    if (l.email !== email) return NextResponse.json({ error: 'Email does not match landlord record' }, { status: 400 })
+  }
+  if (role === 'VENDOR' && vendorId) {
+    const v = await prisma.vendor.findFirst({ where: { id: vendorId, companyId: adminUser.companyId } })
+    if (!v) return NextResponse.json({ error: 'Vendor not found in your company' }, { status: 403 })
+    if (v.email !== email) return NextResponse.json({ error: 'Email does not match vendor record' }, { status: 400 })
+  }
+
+  // Upsert: reuse existing pending invitation or create new one
+  const token = crypto.randomBytes(32).toString('hex')
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+
   const existing = await prisma.invitation.findFirst({
     where: { email, companyId: adminUser.companyId, status: 'PENDING' },
   })
 
-  if (existing) {
-    return NextResponse.json({ error: 'A pending invitation already exists for this email' }, { status: 409 })
-  }
-
-  const token = crypto.randomBytes(32).toString('hex')
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-
-  const invitation = await prisma.invitation.create({
-    data: {
-      companyId: adminUser.companyId,
-      email,
-      name,
-      role,
-      token,
-      expiresAt,
-      tenantId: role === 'TENANT' ? tenantId : null,
-      landlordId: role === 'LANDLORD' ? landlordId : null,
-      vendorId: role === 'VENDOR' ? vendorId : null,
-    },
-  })
+  const invitation = existing
+    ? await prisma.invitation.update({
+        where: { id: existing.id },
+        data: { token, expiresAt, name, role },
+      })
+    : await prisma.invitation.create({
+        data: {
+          companyId: adminUser.companyId,
+          email,
+          name,
+          role,
+          token,
+          expiresAt,
+          tenantId: role === 'TENANT' ? tenantId : null,
+          landlordId: role === 'LANDLORD' ? landlordId : null,
+          vendorId: role === 'VENDOR' ? vendorId : null,
+        },
+      })
 
   const inviteUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/invite?token=${token}`
 
