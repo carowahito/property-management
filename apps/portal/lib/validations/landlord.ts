@@ -25,7 +25,7 @@ export const updateLandlordSchema = z.object({
   bankName: z.string().optional(),
   bankAccount: z.string().optional(),
   taxId: z.string().optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'ARCHIVED']).optional(),
   managementFeePercent: z.number().min(0).optional(),
   managementFeeType: z.enum(['PERCENTAGE', 'FIXED']).optional(),
   tenantPlacementFee: z.number().min(0).optional(),

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Link from 'next/link'
 import { Download, Upload, CheckCircle2, XCircle, AlertTriangle, FileSpreadsheet, X } from 'lucide-react'
+import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
 interface Tenant {
   id: string
@@ -524,6 +525,7 @@ function TenantsPage() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Unit</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Leases</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
@@ -552,6 +554,17 @@ function TenantsPage() {
                       }`}>
                         {tenant.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <ArchiveDeleteButtons
+                        entityName="tenant"
+                        entityLabel={tenant.name}
+                        archiveUrl={`/api/tenants/${tenant.id}`}
+                        deleteUrl={`/api/tenants/${tenant.id}`}
+                        isArchived={tenant.status === 'ARCHIVED'}
+                        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['tenants'] })}
+                        size="sm"
+                      />
                     </td>
                   </tr>
                 ))}

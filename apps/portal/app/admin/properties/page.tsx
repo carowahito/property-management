@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Link from 'next/link'
+import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
 interface Property {
   id: string
@@ -538,12 +539,11 @@ export default function PropertiesPage() {
         ) : (
           <div className="space-y-4">
             {properties.map((property) => (
-              <Link
-                key={property.id}
-                href={`/admin/properties/${property.id}`}
-                className="block"
-              >
-                <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition cursor-pointer">
+              <div key={property.id} className="flex items-center gap-2 p-4 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition">
+                <Link
+                  href={`/admin/properties/${property.id}`}
+                  className="flex-1 flex items-center justify-between"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-neutral-900">{property.name}</p>
@@ -560,7 +560,7 @@ export default function PropertiesPage() {
                       Landlord: {property.landlord?.name ?? 'Unassigned'} • Type: {property.type}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right mr-4">
                     <p className="text-sm font-medium text-neutral-900">{property.totalUnits} Units</p>
                     <p className={`text-xs ${property._count.tenants === property.totalUnits ? 'text-success-600' : 'text-yellow-600'}`}>
                       {property._count.tenants}/{property.totalUnits} Occupied
@@ -569,8 +569,17 @@ export default function PropertiesPage() {
                       {property._count.leases} Leases
                     </p>
                   </div>
-                </div>
-              </Link>
+                </Link>
+                <ArchiveDeleteButtons
+                  entityName="property"
+                  entityLabel={property.name}
+                  archiveUrl={`/api/properties/${property.id}`}
+                  deleteUrl={`/api/properties/${property.id}`}
+                  isArchived={property.status === 'ARCHIVED'}
+                  onSuccess={() => queryClient.invalidateQueries({ queryKey: ['properties'] })}
+                  size="sm"
+                />
+              </div>
             ))}
           </div>
         )}

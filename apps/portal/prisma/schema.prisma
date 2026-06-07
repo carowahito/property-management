@@ -1229,12 +1229,14 @@ enum PropertyStatus {
   ACTIVE
   INACTIVE
   MAINTENANCE
+  ARCHIVED
 }
 
 enum StakeholderStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+  ARCHIVED
 }
 
 enum TenantStatus {
@@ -1242,6 +1244,7 @@ enum TenantStatus {
   INACTIVE
   PENDING
   EVICTED
+  ARCHIVED
 }
 
 enum LeadType {

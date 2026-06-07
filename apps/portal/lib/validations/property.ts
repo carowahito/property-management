@@ -10,7 +10,7 @@ export const createPropertySchema = z.object({
   type: z.enum(['APARTMENT', 'HOUSE', 'CONDO', 'TOWNHOUSE', 'STUDIO', 'COMMERCIAL']),
   totalUnits: z.number().int().min(1, 'Property must have at least 1 unit').default(1),
   yearBuilt: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'MAINTENANCE']).default('ACTIVE'),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'ARCHIVED']).default('ACTIVE'),
   description: z.string().optional(),
   landlordId: z.string().optional(),
 })
@@ -25,7 +25,7 @@ export const updatePropertySchema = z.object({
   type: z.enum(['APARTMENT', 'HOUSE', 'CONDO', 'TOWNHOUSE', 'STUDIO', 'COMMERCIAL']).optional(),
   totalUnits: z.number().int().min(1).optional(),
   yearBuilt: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'MAINTENANCE']).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'ARCHIVED']).optional(),
   description: z.string().optional(),
   landlordId: z.string().optional(),
 })

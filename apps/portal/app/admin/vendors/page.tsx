@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'
+import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons';
 
 interface Vendor {
   id: string;
@@ -232,7 +233,7 @@ export default function AdminVendorsPage() {
                       {vendor.status}
                     </span>
                   </td>
-                  <td className='px-6 py-4 text-sm space-x-2'>
+                  <td className='px-6 py-4 text-sm space-x-2' onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="primary"
                       size="sm"
@@ -243,6 +244,15 @@ export default function AdminVendorsPage() {
                     <Button variant="outline" size="sm">
                       Edit
                     </Button>
+                    <ArchiveDeleteButtons
+                      entityName="vendor"
+                      entityLabel={vendor.name}
+                      archiveUrl={`/api/vendors/${vendor.id}`}
+                      deleteUrl={`/api/vendors/${vendor.id}`}
+                      isArchived={vendor.status === 'suspended'}
+                      onSuccess={() => refreshVendors()}
+                      size="sm"
+                    />
                   </td>
                 </tr>
               ))}

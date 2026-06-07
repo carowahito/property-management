@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import AddLandlordForm from '@/components/forms/AddLandlordForm';
+import AddLandlordForm from '@/components/forms/AddLandlordForm'
+import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons';
 
 interface Landlord {
   id: string
@@ -294,6 +295,15 @@ export default function AdminLandlordsPage() {
                         Details
                       </Button>
                     </Link>
+                    <ArchiveDeleteButtons
+                      entityName="landlord"
+                      entityLabel={landlord.name}
+                      archiveUrl={`/api/landlords/${landlord.id}`}
+                      deleteUrl={`/api/landlords/${landlord.id}`}
+                      isArchived={landlord.status === 'ARCHIVED'}
+                      onSuccess={() => queryClient.invalidateQueries({ queryKey: ['landlords'] })}
+                      size="sm"
+                    />
                   </td>
                 </tr>
               ))}

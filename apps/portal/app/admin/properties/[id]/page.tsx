@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
 interface PropertyDetail {
   id: string
@@ -73,6 +74,7 @@ async function fetchProperty(id: string): Promise<PropertyDetail> {
 export default function PropertyDetailPage() {
   const params = useParams()
   const id = params.id as string
+  const router = useRouter()
   const [showAddUnitModal, setShowAddUnitModal] = useState(false)
   const [showAddLandlordModal, setShowAddLandlordModal] = useState(false)
   const [isImprovingText, setIsImprovingText] = useState(false)
@@ -354,6 +356,14 @@ export default function PropertyDetailPage() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowEditModal(true)}>Edit Property</Button>
             <Button variant="primary" onClick={() => setShowAddUnitModal(true)}>+ Add Unit</Button>
+            <ArchiveDeleteButtons
+              entityName="property"
+              entityLabel={property.name}
+              archiveUrl={`/api/properties/${id}`}
+              deleteUrl={`/api/properties/${id}`}
+              isArchived={property.status === 'ARCHIVED'}
+              onSuccess={() => router.push('/admin/properties')}
+            />
           </div>
         </div>
       </div>

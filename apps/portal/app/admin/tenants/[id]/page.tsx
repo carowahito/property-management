@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 import TaskManager from '@/components/crm/TaskManager'
+import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -535,6 +536,14 @@ export default function TenantCRMPage({ params }: Props) {
             <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>
               💬 Contact
             </Button>
+            <ArchiveDeleteButtons
+              entityName="tenant"
+              entityLabel={tenant.name}
+              archiveUrl={`/api/tenants/${tenantId}`}
+              deleteUrl={`/api/tenants/${tenantId}`}
+              isArchived={tenant.status === 'ARCHIVED'}
+              onSuccess={() => router.push('/admin/tenants')}
+            />
           </div>
         </div>
       </div>

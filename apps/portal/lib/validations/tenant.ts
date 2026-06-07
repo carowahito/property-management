@@ -12,7 +12,7 @@ export const createTenantSchema = z.object({
   unit: z.string().optional(),
   moveInDate: z.string().optional(),
   moveOutDate: z.string().optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING', 'EVICTED']).default('ACTIVE'),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING', 'EVICTED', 'ARCHIVED']).default('ACTIVE'),
 })
 
 export const updateTenantSchema = z.object({
@@ -26,7 +26,7 @@ export const updateTenantSchema = z.object({
   unit: z.string().optional(),
   moveInDate: z.string().optional(),
   moveOutDate: z.string().optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING', 'EVICTED']).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING', 'EVICTED', 'ARCHIVED']).optional(),
 })
 
 export type CreateTenantInput = z.infer<typeof createTenantSchema>

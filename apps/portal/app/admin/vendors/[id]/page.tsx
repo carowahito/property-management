@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
 import TaskManager from '@/components/crm/TaskManager'
+import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
 interface Vendor {
   id: string
@@ -248,6 +249,14 @@ export default function VendorCRMPage({ params }: Props) {
               {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
             </Button>
             <Button variant="primary" onClick={() => setShowContactModal(true)}>💬 Contact</Button>
+            <ArchiveDeleteButtons
+              entityName="vendor"
+              entityLabel={vendor.name}
+              archiveUrl={`/api/vendors/${vendorId}`}
+              deleteUrl={`/api/vendors/${vendorId}`}
+              isArchived={vendor.status === 'ARCHIVED'}
+              onSuccess={() => router.push('/admin/vendors')}
+            />
           </div>
         </div>
       </div>
