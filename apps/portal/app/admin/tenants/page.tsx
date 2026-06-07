@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Link from 'next/link'
@@ -96,8 +97,9 @@ async function fetchTenants(): Promise<TenantsResponse> {
   return response.json()
 }
 
-export default function TenantsPage() {
+function TenantsPage() {
   const queryClient = useQueryClient()
+  const searchParams = useSearchParams()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterProperty, setFilterProperty] = useState<string>('all')
   const [showAddTenantModal, setShowAddTenantModal] = useState(false)
@@ -203,6 +205,20 @@ export default function TenantsPage() {
     leaseGenerated: false,
     leaseApproved: false,
   })
+
+  // Pre-fill form from URL params (e.g. coming from a unit page)
+  useEffect(() => {
+    const propertyId  = searchParams.get('propertyId')
+    const unitNumber  = searchParams.get('unitNumber')
+    if (propertyId || unitNumber) {
+      setFormData(prev => ({
+        ...prev,
+        ...(propertyId  ? { propertyId }  : {}),
+        ...(unitNumber  ? { unit: unitNumber } : {}),
+      }))
+      setShowAddTenantModal(true)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch properties from API for the dropdown
   const { data: propertiesData } = useQuery({
@@ -1273,4 +1289,9 @@ export default function TenantsPage() {
       )}
     </div>
   )
+}
+
+import { Suspense } from 'react'
+export default function Page() {
+  return <Suspense><TenantsPage /></Suspense>
 }

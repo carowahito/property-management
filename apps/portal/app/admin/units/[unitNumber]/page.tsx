@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ const labelCls = 'block text-sm font-medium text-neutral-700 mb-1'
 
 export default function UnitDetailPage() {
   const { unitNumber } = useParams<{ unitNumber: string }>()
+  const router = useRouter()
   const queryClient = useQueryClient()
   const [showEdit, setShowEdit] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -118,14 +119,31 @@ export default function UnitDetailPage() {
           <p className="text-lg font-semibold text-neutral-900 mt-1">{unit?.landlord?.name ?? '—'}</p>
           <p className="text-xs text-neutral-400">{unit?.landlord?.email}</p>
         </div>
-        <div className="bg-surface rounded-lg shadow p-5">
-          <p className="text-xs text-neutral-500 uppercase tracking-wide">Tenant</p>
-          <p className="text-lg font-semibold text-neutral-900 mt-1">{unit?.activeTenant?.name ?? '—'}</p>
-          <p className="text-xs text-neutral-400">
-            {unit?.activeTenant
-              ? `Moved in ${new Date(unit.activeTenant.moveInDate).toLocaleDateString()}`
-              : 'No active tenant'}
-          </p>
+        <div className="bg-surface rounded-lg shadow p-5 flex flex-col justify-between">
+          <div>
+            <p className="text-xs text-neutral-500 uppercase tracking-wide">Tenant</p>
+            <p className="text-lg font-semibold text-neutral-900 mt-1">{unit?.activeTenant?.name ?? '—'}</p>
+            <p className="text-xs text-neutral-400">
+              {unit?.activeTenant
+                ? `Moved in ${new Date(unit.activeTenant.moveInDate).toLocaleDateString()}`
+                : 'No active tenant'}
+            </p>
+          </div>
+          {!unit?.activeTenant && (
+            <Button
+              variant="primary"
+              size="sm"
+              className="mt-3 w-full"
+              onClick={() => {
+                const params = new URLSearchParams()
+                if (unit?.property?.id) params.set('propertyId', unit.property.id)
+                params.set('unitNumber', unitNumber)
+                router.push(`/admin/tenants?${params.toString()}`)
+              }}
+            >
+              + Add Tenant
+            </Button>
+          )}
         </div>
       </div>
 
