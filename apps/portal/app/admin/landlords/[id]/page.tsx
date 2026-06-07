@@ -18,6 +18,9 @@ export default function LandlordCRMPage({ params }: Props) {
   const [landlordApiData, setLandlordApiData] = useState<any>(null)
   const [isLoadingLandlord, setIsLoadingLandlord] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState<any>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     params.then(p => setLandlordId(p.id))
@@ -133,7 +136,22 @@ export default function LandlordCRMPage({ params }: Props) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">✏️ Edit</Button>
+            <Button variant="outline" onClick={() => {
+              setEditForm({
+                name: landlord.name || '',
+                email: landlord.email || '',
+                phone: landlord.phone || '',
+                idNumber: landlord.idNumber || '',
+                address: landlord.address || '',
+                bankName: landlord.bankName || '',
+                bankAccount: landlord.bankAccount || '',
+                taxId: landlord.taxId || '',
+                status: landlord.status || 'ACTIVE',
+                managementFeePercent: landlord.managementFeePercent ?? '',
+                tenantPlacementFee: landlord.tenantPlacementFee ?? '',
+              })
+              setShowEditModal(true)
+            }}>✏️ Edit</Button>
             <Button variant="outline" onClick={() => {
               window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
             }}>
@@ -508,6 +526,96 @@ export default function LandlordCRMPage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Edit Landlord Modal */}
+      {showEditModal && editForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-neutral-900">Edit Landlord</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: 'Full Name', key: 'name', type: 'text' },
+                { label: 'Email', key: 'email', type: 'email' },
+                { label: 'Phone', key: 'phone', type: 'text' },
+                { label: 'ID Number', key: 'idNumber', type: 'text' },
+                { label: 'Address', key: 'address', type: 'text' },
+                { label: 'Bank Name', key: 'bankName', type: 'text' },
+                { label: 'Bank Account', key: 'bankAccount', type: 'text' },
+                { label: 'Tax ID (KRA PIN)', key: 'taxId', type: 'text' },
+                { label: 'Management Fee %', key: 'managementFeePercent', type: 'number' },
+                { label: 'Tenant Placement Fee (months)', key: 'tenantPlacementFee', type: 'number' },
+              ].map(({ label, key, type }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">{label}</label>
+                  <input
+                    type={type}
+                    value={editForm[key]}
+                    onChange={e => setEditForm({ ...editForm, [key]: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+                <select
+                  value={editForm.status}
+                  onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="SUSPENDED">Suspended</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">Cancel</Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                disabled={isSaving}
+                onClick={async () => {
+                  setIsSaving(true)
+                  try {
+                    const payload: any = { ...editForm }
+                    if (payload.managementFeePercent !== '') payload.managementFeePercent = parseFloat(payload.managementFeePercent)
+                    else delete payload.managementFeePercent
+                    if (payload.tenantPlacementFee !== '') payload.tenantPlacementFee = parseFloat(payload.tenantPlacementFee)
+                    else delete payload.tenantPlacementFee
+
+                    const res = await fetch(`/api/landlords/${landlordId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload),
+                    })
+                    if (!res.ok) {
+                      const err = await res.json()
+                      alert(err.error || 'Failed to update landlord')
+                    } else {
+                      const updated = await res.json()
+                      setLandlordApiData(updated)
+                      setShowEditModal(false)
+                    }
+                  } catch {
+                    alert('Failed to update landlord')
+                  } finally {
+                    setIsSaving(false)
+                  }
+                }}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Note Modal */}
       {showNoteModal && (
