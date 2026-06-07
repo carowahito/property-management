@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 // ============================================
@@ -246,8 +247,10 @@ model Landlord {
   status      StakeholderStatus @default(ACTIVE)
 
   // Commission defaults — applied to new units for this landlord
-  managementFeePercent   Decimal?  @db.Decimal(5, 2)  // e.g. 10.00 = 10%
-  tenantPlacementFee     Decimal?  @db.Decimal(5, 2)  // months of rent (e.g. 1.00)
+  managementFeePercent   Decimal?  @db.Decimal(10, 2) // value: % or fixed KES amount
+  managementFeeType      String    @default("PERCENTAGE") // "PERCENTAGE" | "FIXED"
+  tenantPlacementFee     Decimal?  @db.Decimal(5, 2)  // value: months (0.5 steps) or %
+  tenantPlacementFeeType String    @default("MONTHS")  // "MONTHS" | "PERCENTAGE"
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

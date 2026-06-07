@@ -4,9 +4,12 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createLandlordSchema } from '@/lib/validations/landlord'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    console.log('[GET /api/landlords] session:', session?.user?.email ?? 'null')
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -48,6 +51,7 @@ export async function GET(request: NextRequest) {
       prisma.landlord.count({ where }),
     ])
 
+    console.log('[GET /api/landlords] found:', landlords.length)
     return NextResponse.json({
       landlords,
       pagination: {
@@ -57,9 +61,9 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     })
-  } catch (error) {
-    console.error('Error fetching landlords:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[GET /api/landlords] error:', error?.message, error?.code)
+    return NextResponse.json({ error: 'Internal server error', detail: error?.message }, { status: 500 })
   }
 }
 

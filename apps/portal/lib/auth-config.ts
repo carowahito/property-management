@@ -1,5 +1,6 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { supabaseAdmin } from '@/lib/supabase'
 
@@ -16,22 +17,24 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials')
         }
 
-        // Authenticate via Supabase Auth
-        const { error } = await supabaseAdmin.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password,
-        })
-
-        if (error) {
-          throw new Error(error.message)
-        }
-
         // Check users table first (admin/staff roles)
         const user = await prisma.user.findFirst({
           where: { email: credentials.email, active: true },
         })
 
         if (user) {
+          if (user.password === 'MANAGED_BY_SUPABASE') {
+            // New users: authenticate via Supabase Auth
+            const { error } = await supabaseAdmin.auth.signInWithPassword({
+              email: credentials.email,
+              password: credentials.password,
+            })
+            if (error) throw new Error(error.message)
+          } else {
+            // Legacy users: authenticate via bcrypt
+            const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+            if (!isPasswordValid) throw new Error('Invalid credentials')
+          }
           return { id: user.id, email: user.email, name: user.name, role: user.role }
         }
 
@@ -41,6 +44,16 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (tenant) {
+          if (tenant.password === 'MANAGED_BY_SUPABASE') {
+            const { error } = await supabaseAdmin.auth.signInWithPassword({
+              email: credentials.email,
+              password: credentials.password,
+            })
+            if (error) throw new Error(error.message)
+          } else {
+            const isPasswordValid = await bcrypt.compare(credentials.password, tenant.password ?? '')
+            if (!isPasswordValid) throw new Error('Invalid credentials')
+          }
           return { id: tenant.id, email: tenant.email, name: tenant.name, role: 'TENANT' }
         }
 
@@ -50,6 +63,16 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (landlord) {
+          if (landlord.password === 'MANAGED_BY_SUPABASE') {
+            const { error } = await supabaseAdmin.auth.signInWithPassword({
+              email: credentials.email,
+              password: credentials.password,
+            })
+            if (error) throw new Error(error.message)
+          } else {
+            const isPasswordValid = await bcrypt.compare(credentials.password, landlord.password ?? '')
+            if (!isPasswordValid) throw new Error('Invalid credentials')
+          }
           return { id: landlord.id, email: landlord.email, name: landlord.name, role: 'LANDLORD' }
         }
 

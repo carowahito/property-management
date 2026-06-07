@@ -139,10 +139,10 @@ export default function LandlordCRMPage({ params }: Props) {
 
   const landlord = landlordApiData
 
-  if (!landlord) {
+  if (!landlord || !landlord.id) {
     return <div className="flex items-center justify-center h-64">
       <div className="text-center">
-        <p className="text-neutral-500 text-lg">Landlord not found</p>
+        <p className="text-neutral-500 text-lg">{landlordApiData?.error || 'Landlord not found'}</p>
         <Button onClick={() => router.push('/admin/landlords')} className="mt-4">
           Back to Landlords
         </Button>
@@ -214,7 +214,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-neutral-600">🏢 Properties</p>
-                  <p className="font-medium text-neutral-900">{landlord.totalUnits} units in {landlord.properties.length} properties</p>
+                  <p className="font-medium text-neutral-900">{landlord.totalUnits ?? 0} units in {landlord.properties?.length ?? totalProperties} properties</p>
                 </div>
                 <div>
                   <p className="text-neutral-600">🏦 Bank</p>
@@ -607,6 +607,166 @@ export default function LandlordCRMPage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Edit Landlord Modal */}
+      {showEditModal && editForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-neutral-900">Edit Landlord</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: 'Full Name', key: 'name', type: 'text' },
+                { label: 'Email', key: 'email', type: 'email' },
+                { label: 'Phone', key: 'phone', type: 'text' },
+                { label: 'ID Number', key: 'idNumber', type: 'text' },
+                { label: 'Address', key: 'address', type: 'text' },
+                { label: 'Bank Name', key: 'bankName', type: 'text' },
+                { label: 'Bank Account', key: 'bankAccount', type: 'text' },
+                { label: 'Tax ID (KRA PIN)', key: 'taxId', type: 'text' },
+              ].map(({ label, key, type }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">{label}</label>
+                  <input
+                    type={type}
+                    value={editForm[key]}
+                    onChange={e => setEditForm({ ...editForm, [key]: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              ))}
+
+              {/* Management Fee */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Management Fee</label>
+                <div className="flex gap-2">
+                  <select
+                    value={editForm.managementFeeType}
+                    onChange={e => setEditForm({ ...editForm, managementFeeType: e.target.value })}
+                    className="w-48 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="PERCENTAGE">% of Rent</option>
+                    <option value="FIXED">Fixed Amount (KES)</option>
+                  </select>
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      step={editForm.managementFeeType === 'PERCENTAGE' ? '0.01' : '1'}
+                      value={editForm.managementFeePercent}
+                      onChange={e => setEditForm({ ...editForm, managementFeePercent: e.target.value })}
+                      placeholder={editForm.managementFeeType === 'PERCENTAGE' ? 'e.g. 10' : 'e.g. 5000'}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">
+                      {editForm.managementFeeType === 'PERCENTAGE' ? '%' : 'KES'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tenant Placement Fee */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Tenant Placement Fee</label>
+                <div className="flex gap-2">
+                  <select
+                    value={editForm.tenantPlacementFeeType}
+                    onChange={e => setEditForm({ ...editForm, tenantPlacementFeeType: e.target.value, tenantPlacementFee: '' })}
+                    className="w-48 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="MONTHS">Months of Rent</option>
+                    <option value="PERCENTAGE">% of Rent</option>
+                  </select>
+                  {editForm.tenantPlacementFeeType === 'MONTHS' ? (
+                    <select
+                      value={editForm.tenantPlacementFee}
+                      onChange={e => setEditForm({ ...editForm, tenantPlacementFee: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">Select months</option>
+                      {[0.5, 1, 1.5, 2, 2.5, 3, 4, 6].map(m => (
+                        <option key={m} value={m}>{m} month{m !== 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editForm.tenantPlacementFee}
+                        onChange={e => setEditForm({ ...editForm, tenantPlacementFee: e.target.value })}
+                        placeholder="e.g. 50"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+                <select
+                  value={editForm.status}
+                  onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="SUSPENDED">Suspended</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">Cancel</Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                disabled={isSaving}
+                onClick={async () => {
+                  setIsSaving(true)
+                  try {
+                    const payload: any = { ...editForm }
+                    if (payload.managementFeePercent !== '') payload.managementFeePercent = parseFloat(payload.managementFeePercent)
+                    else delete payload.managementFeePercent
+                    if (payload.tenantPlacementFee !== '') payload.tenantPlacementFee = parseFloat(payload.tenantPlacementFee)
+                    else delete payload.tenantPlacementFee
+                    // always send fee types
+                    payload.managementFeeType = editForm.managementFeeType
+                    payload.tenantPlacementFeeType = editForm.tenantPlacementFeeType
+
+                    const res = await fetch(`/api/landlords/${landlordId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload),
+                    })
+                    if (!res.ok) {
+                      const err = await res.json()
+                      alert(err.error || 'Failed to update landlord')
+                    } else {
+                      const updated = await res.json()
+                      setLandlordApiData(updated)
+                      setShowEditModal(false)
+                    }
+                  } catch {
+                    alert('Failed to update landlord')
+                  } finally {
+                    setIsSaving(false)
+                  }
+                }}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Note Modal */}
       {showNoteModal && (
