@@ -288,6 +288,18 @@ export default function PropertiesPage() {
       return
     }
 
+    // Map category label to Prisma enum value
+    const propertyTypeMap: Record<string, string> = {
+      'Residential Properties': 'APARTMENT',
+      'Commercial Properties': 'COMMERCIAL',
+      'Industrial Properties': 'COMMERCIAL',
+      'Mixed-Use Properties': 'APARTMENT',
+      'Special-Purpose Properties': 'COMMERCIAL',
+      'HOA / Community Associations': 'APARTMENT',
+      'Government / Public Properties': 'COMMERCIAL',
+    }
+    const mappedType = propertyTypeMap[newProperty.propertyType] ?? newProperty.propertyType.toUpperCase()
+
     // Prepare data for API - map form fields to database schema
     const propertyData = {
       name: newProperty.name,
@@ -296,7 +308,7 @@ export default function PropertiesPage() {
       state: newProperty.state,
       postalCode: newProperty.zipCode,
       country: newProperty.country,
-      type: newProperty.propertyType.toUpperCase(),
+      type: mappedType,
       totalUnits: newProperty.totalUnits ? parseInt(newProperty.totalUnits) : 1,
       description: newProperty.description,
       yearBuilt: newProperty.yearBuilt ? parseInt(newProperty.yearBuilt) : undefined,
