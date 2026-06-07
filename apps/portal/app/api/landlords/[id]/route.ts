@@ -71,7 +71,18 @@ export async function GET(
       return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
     }
 
-    return NextResponse.json(landlord)
+    // Compute distinct properties via the landlord's units (unit.propertyId)
+    // A landlord may own units in a property without being the property's primary landlord
+    const unitPropertyIds = [...new Set(landlord.units.map(u => u.propertyId))]
+    const propertiesViaUnits = unitPropertyIds.length > 0
+      ? await prisma.property.findMany({
+          where: { id: { in: unitPropertyIds } },
+          select: { id: true, name: true, address: true, type: true, totalUnits: true, status: true },
+          orderBy: { name: 'asc' },
+        })
+      : []
+
+    return NextResponse.json({ ...landlord, propertiesViaUnits })
   } catch (error) {
     console.error('Error fetching landlord:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

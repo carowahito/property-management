@@ -212,7 +212,9 @@ export default function LandlordCRMPage({ params }: Props) {
   }
 
   // Get related data from API response
-  const landlordProperties = landlordApiData?.properties || []
+  // propertiesViaUnits = distinct properties containing this landlord's units
+  // (preferred over landlordApiData.properties which uses property.landlordId)
+  const landlordProperties: any[] = landlordApiData?.propertiesViaUnits || landlordApiData?.properties || []
   const landlordUnitsFromApi: any[] = landlordApiData?.units || []
   const landlordTenants: any[] = []
   const landlordPayouts = landlordApiData?.payouts || []
