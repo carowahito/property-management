@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('[POST /api/properties] body:', JSON.stringify(body))
     const validatedData = createPropertySchema.parse(body)
 
     // Check if landlord exists
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating property:', error)
 
     if (error.name === 'ZodError') {
+      console.log('[POST /api/properties] ZodError:', JSON.stringify(error.errors))
       return NextResponse.json(
         { error: 'Validation error', details: error.errors },
         { status: 400 }
