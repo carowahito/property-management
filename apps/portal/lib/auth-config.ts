@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,24 +16,23 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials')
         }
 
-        // Email is unique per company, not globally. For login, find the first
-        // active user with this email. Multi-company login will use company slug later.
+        // Authenticate via Supabase Auth
+        const { error } = await supabaseAdmin.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        })
+
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        // Look up the app user record for role and company context
         const user = await prisma.user.findFirst({
           where: { email: credentials.email, active: true },
         })
 
-        if (!user || !user.password) {
-          throw new Error('Invalid credentials')
-        }
-
-        if (!user.active) {
-          throw new Error('Account is inactive')
-        }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-
-        if (!isPasswordValid) {
-          throw new Error('Invalid credentials')
+        if (!user) {
+          throw new Error('No account found for this email')
         }
 
         return {

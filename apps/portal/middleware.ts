@@ -6,7 +6,7 @@ import { getToken } from 'next-auth/jwt'
 const protectedRoutes = ['/admin', '/tenant', '/landlord', '/vendor']
 
 // Public routes that should redirect to dashboard if already authenticated
-const publicRoutes = ['/admin/login', '/admin/forgot-password', '/tenant/login', '/landlord/login', '/vendor/login']
+const publicRoutes = ['/admin/login', '/admin/signup', '/admin/forgot-password', '/tenant/login', '/landlord/login', '/vendor/login']
 
 function getDashboardForRole(role?: string): string {
   switch (role) {
@@ -56,7 +56,7 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => path === route)
 
   // Redirect to login if accessing protected route without authentication
-  if (isProtectedRoute && !token && !path.includes('/login') && !path.includes('/register') && !path.includes('/forgot-password')) {
+  if (isProtectedRoute && !token && !path.includes('/login') && !path.includes('/signup') && !path.includes('/register') && !path.includes('/forgot-password')) {
     let loginPath = '/admin/login'
     if (path.startsWith('/tenant')) loginPath = '/tenant/login'
     else if (path.startsWith('/landlord')) loginPath = '/landlord/login'
