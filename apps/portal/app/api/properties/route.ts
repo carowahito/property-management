@@ -88,13 +88,14 @@ export async function POST(request: NextRequest) {
     console.log('[POST /api/properties] body:', JSON.stringify(body))
     const validatedData = createPropertySchema.parse(body)
 
-    // Check if landlord exists
-    const landlord = await prisma.landlord.findUnique({
-      where: { id: validatedData.landlordId },
-    })
-
-    if (!landlord) {
-      return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
+    // Check if landlord exists (if provided)
+    if (validatedData.landlordId) {
+      const landlord = await prisma.landlord.findUnique({
+        where: { id: validatedData.landlordId },
+      })
+      if (!landlord) {
+        return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
+      }
     }
 
     const company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
