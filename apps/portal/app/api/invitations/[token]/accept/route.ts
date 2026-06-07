@@ -39,6 +39,11 @@ export async function POST(
 
   if (authError) {
     if (authError.message.includes('already been registered')) {
+      // Mark invitation as accepted to prevent dangling PENDING state
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+      })
       return NextResponse.json({ error: 'An account with this email already exists. Try signing in instead.' }, { status: 409 })
     }
     return NextResponse.json({ error: authError.message }, { status: 400 })
