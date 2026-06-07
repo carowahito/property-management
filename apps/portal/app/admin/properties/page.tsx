@@ -557,7 +557,7 @@ export default function PropertiesPage() {
                     </div>
                     <p className="text-sm text-neutral-600 mt-1">{property.address}</p>
                     <p className="text-xs text-neutral-500 mt-1">
-                      Landlord: {property.landlord.name} • Type: {property.type}
+                      Landlord: {property.landlord?.name ?? 'Unassigned'} • Type: {property.type}
                     </p>
                   </div>
                   <div className="text-right">
