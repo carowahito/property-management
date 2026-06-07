@@ -16,20 +16,27 @@ export default function LeaseDetailPage({ params }: Props) {
   const [lease, setLease] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showRenewModal, setShowRenewModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editForm, setEditForm] = useState({
     monthlyRent: '', securityDeposit: '', status: '', terms: '',
+    noticePeriod: '', petPolicy: '', specialConditions: '',
+  })
+  const [renewForm, setRenewForm] = useState({
+    newStartDate: '', newEndDate: '', newMonthlyRent: '', leaseTerm: '12',
   })
 
   useEffect(() => { params.then(p => setLeaseId(p.id)) }, [params])
 
-  useEffect(() => {
+  const refreshLease = () => {
     if (!leaseId) return
     fetch(`/api/leases/${leaseId}`)
       .then(r => r.json())
       .then(data => { setLease(data); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [leaseId])
+  }
+
+  useEffect(() => { refreshLease() }, [leaseId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
@@ -46,12 +53,48 @@ export default function LeaseDetailPage({ params }: Props) {
     )
   }
 
+  // Calculations
+  const startDate = new Date(lease.startDate)
+  const endDate = new Date(lease.endDate)
+  const now = new Date()
+  const totalDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+  const elapsedDays = Math.max(0, (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+  const remainingDays = Math.max(0, (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const progressPercent = Math.min(100, Math.round((elapsedDays / totalDays) * 100))
+  const totalMonths = Math.round(totalDays / 30)
+  const remainingMonths = Math.round(remainingDays / 30)
+
+  // Renewal alerts
+  const threeMonthsBeforeExpiry = new Date(endDate)
+  threeMonthsBeforeExpiry.setMonth(threeMonthsBeforeExpiry.getMonth() - 3)
+  const oneWeekBeforeNotice = new Date(threeMonthsBeforeExpiry)
+  oneWeekBeforeNotice.setDate(oneWeekBeforeNotice.getDate() - 7)
+  const isInRenewalWindow = now >= oneWeekBeforeNotice && lease.status === 'ACTIVE'
+  const isExpiringSoon = remainingDays <= 90 && lease.status === 'ACTIVE'
+  const isExpired = now > endDate && lease.status === 'ACTIVE'
+
+  const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
+  const formatCurrency = (n: number) => `KES ${Number(n).toLocaleString()}`
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'bg-success-50 text-success-700'
+      case 'EXPIRED': return 'bg-neutral-100 text-neutral-700'
+      case 'TERMINATED': return 'bg-danger-50 text-danger-700'
+      case 'PENDING': return 'bg-yellow-50 text-yellow-700'
+      default: return 'bg-neutral-100 text-neutral-700'
+    }
+  }
+
   const handleEditClick = () => {
     setEditForm({
       monthlyRent: String(lease.monthlyRent || ''),
       securityDeposit: String(lease.securityDeposit || ''),
       status: lease.status || 'ACTIVE',
       terms: lease.terms || '',
+      noticePeriod: String(lease.noticePeriod || '1'),
+      petPolicy: lease.petPolicy || '',
+      specialConditions: lease.specialConditions || '',
     })
     setShowEditModal(true)
   }
@@ -67,42 +110,115 @@ export default function LeaseDetailPage({ params }: Props) {
           securityDeposit: parseFloat(editForm.securityDeposit) || undefined,
           status: editForm.status,
           terms: editForm.terms || undefined,
+          noticePeriod: parseInt(editForm.noticePeriod) || undefined,
+          petPolicy: editForm.petPolicy || undefined,
+          specialConditions: editForm.specialConditions || undefined,
         }),
       })
-      if (res.ok) {
-        const updated = await res.json()
-        setLease(updated)
-        setShowEditModal(false)
-      } else {
-        const data = await res.json()
-        alert(data.error || 'Failed to save')
-      }
+      if (res.ok) { refreshLease(); setShowEditModal(false) }
+      else { const d = await res.json(); alert(d.error || 'Failed to save') }
     } catch { alert('Failed to save') }
     finally { setSaving(false) }
   }
 
-  const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
-  const formatCurrency = (n: number) => `KES ${Number(n).toLocaleString()}`
+  const handleRenewClick = () => {
+    const newStart = new Date(lease.endDate)
+    newStart.setDate(newStart.getDate() + 1)
+    const newEnd = new Date(newStart)
+    newEnd.setFullYear(newEnd.getFullYear() + 1)
+    setRenewForm({
+      newStartDate: newStart.toISOString().split('T')[0],
+      newEndDate: newEnd.toISOString().split('T')[0],
+      newMonthlyRent: String(lease.monthlyRent || ''),
+      leaseTerm: '12',
+    })
+    setShowRenewModal(true)
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE': return 'bg-success-50 text-success-700'
-      case 'EXPIRED': return 'bg-neutral-100 text-neutral-700'
-      case 'TERMINATED': return 'bg-danger-50 text-danger-700'
-      case 'PENDING': return 'bg-yellow-50 text-yellow-700'
-      default: return 'bg-neutral-100 text-neutral-700'
+  // Auto-calc renewal end date
+  const updateRenewEndDate = (startDate: string, term: string) => {
+    if (startDate && term) {
+      const d = new Date(startDate)
+      d.setMonth(d.getMonth() + parseInt(term))
+      setRenewForm(prev => ({ ...prev, newEndDate: d.toISOString().split('T')[0] }))
     }
   }
 
-  const startDate = new Date(lease.startDate)
-  const endDate = new Date(lease.endDate)
-  const totalMonths = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30))
-  const now = new Date()
-  const elapsedMonths = Math.max(0, Math.round((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)))
-  const progressPercent = Math.min(100, Math.round((elapsedMonths / totalMonths) * 100))
+  const handleRenew = async () => {
+    setSaving(true)
+    try {
+      // Create new lease for same tenant/property/unit
+      const res = await fetch('/api/leases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: lease.tenantId,
+          propertyId: lease.propertyId,
+          unitId: lease.unitId || undefined,
+          unit: lease.unit || '',
+          startDate: renewForm.newStartDate,
+          endDate: renewForm.newEndDate,
+          monthlyRent: parseFloat(renewForm.newMonthlyRent) || lease.monthlyRent,
+          securityDeposit: lease.securityDeposit,
+          status: 'ACTIVE',
+        }),
+      })
+      if (res.ok) {
+        // Mark old lease as expired
+        await fetch(`/api/leases/${leaseId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'EXPIRED' }),
+        })
+        const newLease = await res.json()
+        setShowRenewModal(false)
+        router.push(`/admin/leases/${newLease.id}`)
+      } else {
+        const d = await res.json()
+        alert(d.error || 'Failed to renew lease')
+      }
+    } catch { alert('Failed to renew lease') }
+    finally { setSaving(false) }
+  }
+
+  const handleGenerateDocument = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/leases/${leaseId}/generate-document`, { method: 'POST' })
+      if (res.ok) { refreshLease(); alert('Lease document generated') }
+      else { const d = await res.json(); alert(d.error || 'Failed to generate document') }
+    } catch { alert('Failed to generate document') }
+    finally { setSaving(false) }
+  }
 
   return (
     <div className="space-y-6">
+      {/* Renewal Alert */}
+      {isExpired && (
+        <div className="p-4 bg-danger-50 border border-danger-200 rounded-lg flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-danger-800">Lease has expired</p>
+            <p className="text-sm text-danger-700">This lease expired on {formatDate(lease.endDate)}. Renew or terminate it.</p>
+          </div>
+          <Button variant="primary" onClick={handleRenewClick}>Renew Lease</Button>
+        </div>
+      )}
+
+      {!isExpired && isInRenewalWindow && (
+        <div className="p-4 bg-warning-50 border border-warning-200 rounded-lg flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-warning-800">Lease expiring in {remainingMonths} month{remainingMonths !== 1 ? 's' : ''}</p>
+            <p className="text-sm text-warning-700">
+              Tenant notice required {lease.noticePeriod || 3} months before expiry ({formatDate(threeMonthsBeforeExpiry.toISOString())}).
+              {now < threeMonthsBeforeExpiry
+                ? ` You have ${Math.ceil((threeMonthsBeforeExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))} days to notify the tenant.`
+                : ' Notice period has begun — act now.'}
+            </p>
+          </div>
+          <Button variant="primary" onClick={handleRenewClick}>Renew Lease</Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-surface rounded-lg border border-neutral-200 p-6">
         <div className="flex items-start justify-between">
@@ -119,156 +235,273 @@ export default function LeaseDetailPage({ params }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
-            <Link href={`/admin/leases/${leaseId}/document`}>
-              <Button variant="outline">📄 Document</Button>
-            </Link>
+            {lease.documentHtml ? (
+              <Link href={`/admin/leases/${leaseId}/document`}>
+                <Button variant="outline">📄 View Document</Button>
+              </Link>
+            ) : (
+              <Button variant="outline" onClick={handleGenerateDocument} disabled={saving}>
+                {saving ? '⏳ Generating...' : '📄 Generate Document'}
+              </Button>
+            )}
+            {lease.status === 'ACTIVE' && (
+              <Button variant="primary" onClick={handleRenewClick}>🔄 Renew</Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-surface rounded-lg border border-neutral-200 p-5">
           <p className="text-sm text-neutral-600">Monthly Rent</p>
-          <p className="text-2xl font-bold text-primary-600 mt-1">{formatCurrency(lease.monthlyRent)}</p>
+          <p className="text-xl font-bold text-primary-600 mt-1">{formatCurrency(lease.monthlyRent)}</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-5">
           <p className="text-sm text-neutral-600">Security Deposit</p>
-          <p className="text-2xl font-bold text-neutral-900 mt-1">{formatCurrency(lease.securityDeposit)}</p>
+          <p className="text-xl font-bold text-neutral-900 mt-1">{formatCurrency(lease.securityDeposit)}</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-5">
           <p className="text-sm text-neutral-600">Lease Term</p>
-          <p className="text-2xl font-bold text-neutral-900 mt-1">{totalMonths} months</p>
+          <p className="text-xl font-bold text-neutral-900 mt-1">{totalMonths} months</p>
+        </div>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-5">
+          <p className="text-sm text-neutral-600">Remaining</p>
+          <p className={`text-xl font-bold mt-1 ${isExpiringSoon ? 'text-warning-600' : 'text-neutral-900'}`}>{remainingMonths} months</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-5">
           <p className="text-sm text-neutral-600">Progress</p>
-          <p className="text-2xl font-bold text-neutral-900 mt-1">{progressPercent}%</p>
+          <p className="text-xl font-bold text-neutral-900 mt-1">{progressPercent}%</p>
           <div className="w-full bg-neutral-200 rounded-full h-2 mt-2">
-            <div className="bg-primary-600 h-2 rounded-full" style={{ width: `${progressPercent}%` }} />
+            <div className={`h-2 rounded-full ${isExpiringSoon ? 'bg-warning-500' : 'bg-primary-600'}`} style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
       </div>
 
-      {/* Details Grid */}
+      {/* Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Lease Details */}
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <h3 className="font-semibold text-neutral-900 mb-4">Lease Details</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-neutral-600">Start Date</span>
-              <span className="font-medium">{formatDate(lease.startDate)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-600">End Date</span>
-              <span className="font-medium">{formatDate(lease.endDate)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-600">Unit</span>
-              <span className="font-medium">{lease.unit || '-'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-600">Notice Period</span>
-              <span className="font-medium">{lease.noticePeriod || 1} month{(lease.noticePeriod || 1) !== 1 ? 's' : ''}</span>
-            </div>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between"><span className="text-neutral-600">Start Date</span><span className="font-medium">{formatDate(lease.startDate)}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-600">End Date</span><span className="font-medium">{formatDate(lease.endDate)}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-600">Unit</span><span className="font-medium">{lease.unit || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-600">Notice Period</span><span className="font-medium">{lease.noticePeriod || 1} month{(lease.noticePeriod || 1) !== 1 ? 's' : ''}</span></div>
             {lease.rentEscalation > 0 && (
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Rent Escalation</span>
-                <span className="font-medium">{lease.rentEscalation}%</span>
-              </div>
+              <div className="flex justify-between"><span className="text-neutral-600">Rent Escalation</span><span className="font-medium">{lease.rentEscalation}% per year</span></div>
             )}
-            {lease.terms && (
-              <div className="pt-3 border-t border-neutral-200">
-                <p className="text-sm text-neutral-600 mb-1">Special Terms</p>
-                <p className="text-sm text-neutral-900">{lease.terms}</p>
-              </div>
+            {lease.petPolicy && (
+              <div className="flex justify-between"><span className="text-neutral-600">Pet Policy</span><span className="font-medium">{lease.petPolicy}</span></div>
             )}
+            <div className="flex justify-between"><span className="text-neutral-600">Payments Made</span><span className="font-medium">{lease._count?.payments || 0}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-600">Created</span><span className="font-medium">{formatDate(lease.createdAt)}</span></div>
           </div>
-        </div>
-
-        {/* Tenant Details */}
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <h3 className="font-semibold text-neutral-900 mb-4">Tenant</h3>
-          {lease.tenant ? (
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Name</span>
-                <Link href={`/admin/tenants/${lease.tenant.id}`} className="font-medium text-primary-600 hover:underline">{lease.tenant.name}</Link>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Email</span>
-                <span className="font-medium">{lease.tenant.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Phone</span>
-                <span className="font-medium">{lease.tenant.phone}</span>
-              </div>
-              {lease.tenant.idNumber && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-600">ID Number</span>
-                  <span className="font-medium">{lease.tenant.idNumber}</span>
+          {(lease.terms || lease.specialConditions) && (
+            <div className="mt-4 pt-4 border-t border-neutral-200">
+              {lease.terms && (
+                <div className="mb-3">
+                  <p className="text-sm text-neutral-600 mb-1">Terms</p>
+                  <p className="text-sm text-neutral-900">{lease.terms}</p>
+                </div>
+              )}
+              {lease.specialConditions && (
+                <div>
+                  <p className="text-sm text-neutral-600 mb-1">Special Conditions</p>
+                  <p className="text-sm text-neutral-900">{lease.specialConditions}</p>
                 </div>
               )}
             </div>
-          ) : (
-            <p className="text-neutral-500">No tenant assigned</p>
           )}
+        </div>
+
+        {/* Tenant + Property */}
+        <div className="space-y-6">
+          <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="font-semibold text-neutral-900 mb-4">Tenant</h3>
+            {lease.tenant ? (
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between"><span className="text-neutral-600">Name</span><Link href={`/admin/tenants/${lease.tenant.id}`} className="font-medium text-primary-600 hover:underline">{lease.tenant.name}</Link></div>
+                <div className="flex justify-between"><span className="text-neutral-600">Email</span><span className="font-medium">{lease.tenant.email}</span></div>
+                <div className="flex justify-between"><span className="text-neutral-600">Phone</span><span className="font-medium">{lease.tenant.phone}</span></div>
+                {lease.tenant.idNumber && <div className="flex justify-between"><span className="text-neutral-600">ID Number</span><span className="font-medium">{lease.tenant.idNumber}</span></div>}
+              </div>
+            ) : <p className="text-sm text-neutral-500">No tenant assigned</p>}
+          </div>
+
+          <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="font-semibold text-neutral-900 mb-4">Property</h3>
+            {lease.property ? (
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between"><span className="text-neutral-600">Name</span><Link href={`/admin/properties/${lease.property.id}`} className="font-medium text-primary-600 hover:underline">{lease.property.name}</Link></div>
+                <div className="flex justify-between"><span className="text-neutral-600">Address</span><span className="font-medium">{lease.property.address}</span></div>
+                <div className="flex justify-between"><span className="text-neutral-600">Type</span><span className="font-medium">{lease.property.type}</span></div>
+                {lease.property.landlord && (
+                  <div className="flex justify-between"><span className="text-neutral-600">Landlord</span><span className="font-medium">{lease.property.landlord.name}</span></div>
+                )}
+              </div>
+            ) : <p className="text-sm text-neutral-500">No property assigned</p>}
+          </div>
+
+          {/* Signing Status */}
+          <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+            <h3 className="font-semibold text-neutral-900 mb-4">Signing Status</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-neutral-600">Document</span>
+                <span className={`font-medium ${lease.documentHtml ? 'text-success-600' : 'text-neutral-400'}`}>
+                  {lease.documentHtml ? '✓ Generated' : '○ Not generated'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-600">Sent for Signing</span>
+                <span className={`font-medium ${lease.sentForSigning ? 'text-success-600' : 'text-neutral-400'}`}>
+                  {lease.sentForSigning ? `✓ Sent ${formatDate(lease.sentAt)}` : '○ Not sent'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-600">Tenant Signature</span>
+                <span className={`font-medium ${lease.tenantSignedAt ? 'text-success-600' : 'text-neutral-400'}`}>
+                  {lease.tenantSignedAt ? `✓ Signed ${formatDate(lease.tenantSignedAt)}` : '○ Not signed'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-600">Landlord Signature</span>
+                <span className={`font-medium ${lease.landlordSignedAt ? 'text-success-600' : 'text-neutral-400'}`}>
+                  {lease.landlordSignedAt ? `✓ Signed ${formatDate(lease.landlordSignedAt)}` : '○ Not signed'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Property Details */}
-      {lease.property && (
+      {/* Payment History */}
+      {lease.payments && lease.payments.length > 0 && (
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <h3 className="font-semibold text-neutral-900 mb-4">Property</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-neutral-600">Name</p>
-              <Link href={`/admin/properties/${lease.property.id}`} className="font-medium text-primary-600 hover:underline">{lease.property.name}</Link>
-            </div>
-            <div>
-              <p className="text-sm text-neutral-600">Address</p>
-              <p className="font-medium">{lease.property.address}</p>
-            </div>
-            <div>
-              <p className="text-sm text-neutral-600">Type</p>
-              <p className="font-medium">{lease.property.type}</p>
-            </div>
-          </div>
+          <h3 className="font-semibold text-neutral-900 mb-4">Payment History</h3>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-neutral-200">
+                <th className="text-left py-2 text-neutral-600 font-medium">Date</th>
+                <th className="text-left py-2 text-neutral-600 font-medium">Amount</th>
+                <th className="text-left py-2 text-neutral-600 font-medium">Method</th>
+                <th className="text-left py-2 text-neutral-600 font-medium">Type</th>
+                <th className="text-left py-2 text-neutral-600 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lease.payments.map((p: any) => (
+                <tr key={p.id} className="border-b border-neutral-100">
+                  <td className="py-2">{formatDate(p.paidDate)}</td>
+                  <td className="py-2 font-medium">{formatCurrency(p.amount)}</td>
+                  <td className="py-2">{p.method}</td>
+                  <td className="py-2">{p.type}</td>
+                  <td className="py-2">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${p.status === 'PAID' ? 'bg-success-50 text-success-700' : 'bg-yellow-50 text-yellow-700'}`}>{p.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
       {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-lg w-full p-6">
+          <div className="bg-surface rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
             <h3 className="text-xl font-bold text-neutral-900 mb-4">Edit Lease</h3>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES)</label>
-                <input type="number" value={editForm.monthlyRent} onChange={(e) => setEditForm(prev => ({ ...prev, monthlyRent: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES)</label>
+                  <input type="number" value={editForm.monthlyRent} onChange={(e) => setEditForm(prev => ({ ...prev, monthlyRent: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES)</label>
+                  <input type="number" value={editForm.securityDeposit} onChange={(e) => setEditForm(prev => ({ ...prev, securityDeposit: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+                  <select value={editForm.status} onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm">
+                    <option value="ACTIVE">Active</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="EXPIRED">Expired</option>
+                    <option value="TERMINATED">Terminated</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Notice Period (months)</label>
+                  <input type="number" min="1" value={editForm.noticePeriod} onChange={(e) => setEditForm(prev => ({ ...prev, noticePeriod: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES)</label>
-                <input type="number" value={editForm.securityDeposit} onChange={(e) => setEditForm(prev => ({ ...prev, securityDeposit: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Terms</label>
+                <textarea value={editForm.terms} onChange={(e) => setEditForm(prev => ({ ...prev, terms: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" rows={2} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
-                <select value={editForm.status} onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm">
-                  <option value="ACTIVE">Active</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="EXPIRED">Expired</option>
-                  <option value="TERMINATED">Terminated</option>
-                </select>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Pet Policy</label>
+                <input value={editForm.petPolicy} onChange={(e) => setEditForm(prev => ({ ...prev, petPolicy: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Special Terms</label>
-                <textarea value={editForm.terms} onChange={(e) => setEditForm(prev => ({ ...prev, terms: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" rows={3} />
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Special Conditions</label>
+                <textarea value={editForm.specialConditions} onChange={(e) => setEditForm(prev => ({ ...prev, specialConditions: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" rows={2} />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">Cancel</Button>
-              <Button variant="primary" onClick={handleSaveEdit} disabled={saving} className="flex-1">
-                {saving ? 'Saving...' : 'Save Changes'}
+              <Button variant="primary" onClick={handleSaveEdit} disabled={saving} className="flex-1">{saving ? 'Saving...' : 'Save Changes'}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Renew Modal */}
+      {showRenewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-2">Renew Lease</h3>
+            <p className="text-sm text-neutral-500 mb-4">
+              Create a new lease for {lease.tenant?.name} at {lease.unit || lease.property?.name}. The current lease will be marked as expired.
+            </p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">New Start Date *</label>
+                  <input type="date" value={renewForm.newStartDate} onChange={(e) => { setRenewForm(prev => ({ ...prev, newStartDate: e.target.value })); updateRenewEndDate(e.target.value, renewForm.leaseTerm) }} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term</label>
+                  <select value={renewForm.leaseTerm} onChange={(e) => { setRenewForm(prev => ({ ...prev, leaseTerm: e.target.value })); updateRenewEndDate(renewForm.newStartDate, e.target.value) }} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm">
+                    <option value="6">6 months</option>
+                    <option value="12">12 months</option>
+                    <option value="18">18 months</option>
+                    <option value="24">24 months</option>
+                    <option value="36">36 months</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date</label>
+                  <input type="date" value={renewForm.newEndDate} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-neutral-50" readOnly />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">New Monthly Rent (KES)</label>
+                  <input type="number" value={renewForm.newMonthlyRent} onChange={(e) => setRenewForm(prev => ({ ...prev, newMonthlyRent: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                  {lease.rentEscalation > 0 && (
+                    <p className="text-xs text-neutral-500 mt-1">Previous: {formatCurrency(lease.monthlyRent)} (+{lease.rentEscalation}% = {formatCurrency(lease.monthlyRent * (1 + lease.rentEscalation / 100))})</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowRenewModal(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleRenew} disabled={saving || !renewForm.newStartDate || !renewForm.newEndDate || !renewForm.newMonthlyRent} className="flex-1">
+                {saving ? 'Renewing...' : 'Renew Lease'}
               </Button>
             </div>
           </div>
