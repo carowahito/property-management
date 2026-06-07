@@ -182,6 +182,7 @@ model Property {
   statements  LandlordStatement[]
   ownerStatements OwnerStatement[]
   deposits    Deposit[]
+  payments    Payment[]
   applications TenantApplication[]
   arrearsEscalations ArrearsEscalation[]
   moveInChecklists MoveInChecklist[]
@@ -226,6 +227,8 @@ model Unit {
   distributionItems     RentDistributionItem[]
   applications          TenantApplication[]
   inspections           Inspection[]
+  deposits              Deposit[]
+  payments              Payment[]
 
   @@index([propertyId])
   @@index([landlordId])
@@ -266,6 +269,8 @@ model Landlord {
   ownerStatements OwnerStatement[]
   invitations     Invitation[]
   documents   LandlordDocument[]
+  deposits    Deposit[]
+  payments    Payment[]
 
   @@unique([companyId, email])
   @@index([email])
@@ -514,6 +519,9 @@ model Payment {
   id              String   @id @default(cuid())
   tenantId        String
   leaseId         String
+  propertyId      String?
+  unitId          String?
+  landlordId      String?
   amount          Decimal  @db.Decimal(10, 2)
   type            PaymentType @default(RENT)
   method          PaymentMethod
@@ -530,11 +538,17 @@ model Payment {
   // Relations
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   lease           Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  property        Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  unit            Unit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  landlord        Landlord? @relation(fields: [landlordId], references: [id], onDelete: SetNull)
   rentTransactions RentTransaction[]
   ledgerEntries   TenantLedger[]
 
   @@index([tenantId])
   @@index([leaseId])
+  @@index([propertyId])
+  @@index([unitId])
+  @@index([landlordId])
   @@index([status])
   @@index([dueDate])
   @@map("payments")
@@ -827,6 +841,8 @@ model Deposit {
   tenantId        String
   leaseId         String
   propertyId      String
+  unitId          String?
+  landlordId      String?
   amount          Decimal  @db.Decimal(10, 2)
   paymentDate     DateTime
   paymentMethod   PaymentMethod @default(MPESA)
@@ -846,10 +862,14 @@ model Deposit {
   tenant          Tenant   @relation(fields: [tenantId], references: [id])
   lease           Lease    @relation(fields: [leaseId], references: [id])
   property        Property @relation(fields: [propertyId], references: [id])
+  unit            Unit?    @relation(fields: [unitId], references: [id])
+  landlord        Landlord? @relation(fields: [landlordId], references: [id])
 
   @@index([tenantId])
   @@index([leaseId])
   @@index([propertyId])
+  @@index([unitId])
+  @@index([landlordId])
   @@index([status])
   @@map("deposits")
 }
