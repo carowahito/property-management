@@ -265,7 +265,7 @@ export default function AdminLandlordsPage() {
                     <p className='text-sm text-neutral-500'>{landlord.phone}</p>
                   </td>
                   <td className='px-6 py-4'>
-                    <p className='text-sm font-semibold text-primary-600'>{landlord._count.units} units</p>
+                    <Link href={`/admin/landlords/${landlord.id}?tab=properties`} className='text-sm font-semibold text-primary-600 hover:underline'>{landlord._count.units} units</Link>
                   </td>
                   <td className='px-6 py-4'>
                     <span
