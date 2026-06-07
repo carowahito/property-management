@@ -148,7 +148,9 @@ export default function LandlordCRMPage({ params }: Props) {
                 taxId: landlord.taxId || '',
                 status: landlord.status || 'ACTIVE',
                 managementFeePercent: landlord.managementFeePercent ?? '',
+                managementFeeType: landlord.managementFeeType || 'PERCENTAGE',
                 tenantPlacementFee: landlord.tenantPlacementFee ?? '',
+                tenantPlacementFeeType: landlord.tenantPlacementFeeType || 'MONTHS',
               })
               setShowEditModal(true)
             }}>✏️ Edit</Button>
@@ -549,8 +551,6 @@ export default function LandlordCRMPage({ params }: Props) {
                 { label: 'Bank Name', key: 'bankName', type: 'text' },
                 { label: 'Bank Account', key: 'bankAccount', type: 'text' },
                 { label: 'Tax ID (KRA PIN)', key: 'taxId', type: 'text' },
-                { label: 'Management Fee %', key: 'managementFeePercent', type: 'number' },
-                { label: 'Tenant Placement Fee (months)', key: 'tenantPlacementFee', type: 'number' },
               ].map(({ label, key, type }) => (
                 <div key={key}>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">{label}</label>
@@ -562,6 +562,75 @@ export default function LandlordCRMPage({ params }: Props) {
                   />
                 </div>
               ))}
+
+              {/* Management Fee */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Management Fee</label>
+                <div className="flex gap-2">
+                  <select
+                    value={editForm.managementFeeType}
+                    onChange={e => setEditForm({ ...editForm, managementFeeType: e.target.value })}
+                    className="w-48 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="PERCENTAGE">% of Rent</option>
+                    <option value="FIXED">Fixed Amount (KES)</option>
+                  </select>
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      step={editForm.managementFeeType === 'PERCENTAGE' ? '0.01' : '1'}
+                      value={editForm.managementFeePercent}
+                      onChange={e => setEditForm({ ...editForm, managementFeePercent: e.target.value })}
+                      placeholder={editForm.managementFeeType === 'PERCENTAGE' ? 'e.g. 10' : 'e.g. 5000'}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">
+                      {editForm.managementFeeType === 'PERCENTAGE' ? '%' : 'KES'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tenant Placement Fee */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Tenant Placement Fee</label>
+                <div className="flex gap-2">
+                  <select
+                    value={editForm.tenantPlacementFeeType}
+                    onChange={e => setEditForm({ ...editForm, tenantPlacementFeeType: e.target.value, tenantPlacementFee: '' })}
+                    className="w-48 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="MONTHS">Months of Rent</option>
+                    <option value="PERCENTAGE">% of Rent</option>
+                  </select>
+                  {editForm.tenantPlacementFeeType === 'MONTHS' ? (
+                    <select
+                      value={editForm.tenantPlacementFee}
+                      onChange={e => setEditForm({ ...editForm, tenantPlacementFee: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">Select months</option>
+                      {[0.5, 1, 1.5, 2, 2.5, 3, 4, 6].map(m => (
+                        <option key={m} value={m}>{m} month{m !== 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editForm.tenantPlacementFee}
+                        onChange={e => setEditForm({ ...editForm, tenantPlacementFee: e.target.value })}
+                        placeholder="e.g. 50"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
                 <select
@@ -589,6 +658,9 @@ export default function LandlordCRMPage({ params }: Props) {
                     else delete payload.managementFeePercent
                     if (payload.tenantPlacementFee !== '') payload.tenantPlacementFee = parseFloat(payload.tenantPlacementFee)
                     else delete payload.tenantPlacementFee
+                    // always send fee types
+                    payload.managementFeeType = editForm.managementFeeType
+                    payload.tenantPlacementFeeType = editForm.tenantPlacementFeeType
 
                     const res = await fetch(`/api/landlords/${landlordId}`, {
                       method: 'PATCH',
