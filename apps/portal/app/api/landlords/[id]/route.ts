@@ -47,6 +47,7 @@ export async function GET(
           select: {
             id: true,
             unitNumber: true,
+            propertyId: true,
             status: true,
             monthlyRent: true,
             bedrooms: true,

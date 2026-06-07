@@ -427,27 +427,72 @@ export default function LandlordCRMPage({ params }: Props) {
           {activeTab === 'properties' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-neutral-900">Properties</h3>
-                <Button variant="primary">+ Add Property</Button>
+                <h3 className="font-semibold text-neutral-900">
+                  Properties ({landlordProperties.length})
+                </h3>
+                <Button variant="primary" onClick={() => router.push('/admin/properties')}>+ Add Property</Button>
               </div>
-              <div className="grid gap-4">
-                {landlordProperties.map((property: any) => (
-                  <div key={property.id} className="border border-neutral-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-neutral-900 text-lg">{property.name}</h4>
-                        <p className="text-sm text-neutral-600 mt-1">{property.address}</p>
-                        <div className="flex gap-4 mt-3 text-sm">
-                          <span className="text-neutral-600">Units: <strong>{property.units}</strong></span>
-                          <span className="text-neutral-600">Type: <strong>{property.type}</strong></span>
-                          <span className="text-neutral-600">Occupied: <strong>{property.occupied}/{property.units}</strong></span>
+              {landlordProperties.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-lg">
+                  <p className="text-neutral-500">No properties linked to this landlord yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {landlordProperties.map((property: any) => {
+                    const propertyUnits = landlordUnitsFromApi.filter((u: any) => u.property?.id === property.id || u.propertyId === property.id)
+                    const occupiedCount = propertyUnits.filter((u: any) => u.status === 'OCCUPIED').length
+                    const monthlyRent = propertyUnits.reduce((sum: number, u: any) => sum + Number(u.monthlyRent || 0), 0)
+                    return (
+                      <div key={property.id} className="border border-neutral-200 rounded-lg overflow-hidden">
+                        {/* Property header */}
+                        <div className="flex justify-between items-start p-4 bg-neutral-50">
+                          <div>
+                            <h4 className="font-semibold text-neutral-900 text-lg">{property.name}</h4>
+                            <p className="text-sm text-neutral-600 mt-0.5">{property.address}</p>
+                            <div className="flex gap-4 mt-2 text-sm text-neutral-600">
+                              <span>Type: <strong>{property.type}</strong></span>
+                              <span>Units (this landlord): <strong>{propertyUnits.length}</strong></span>
+                              <span>Occupied: <strong>{occupiedCount}/{propertyUnits.length}</strong></span>
+                              {monthlyRent > 0 && <span>Monthly Rent: <strong>KES {monthlyRent.toLocaleString()}</strong></span>}
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => router.push(`/admin/properties/${property.id}`)}>
+                            View Details
+                          </Button>
                         </div>
+                        {/* Units under this property */}
+                        {propertyUnits.length > 0 && (
+                          <div className="divide-y divide-neutral-100">
+                            <div className="grid grid-cols-5 gap-2 px-4 py-2 bg-neutral-100 text-xs font-medium text-neutral-500 uppercase">
+                              <span>Unit</span>
+                              <span>Bedrooms</span>
+                              <span>Bathrooms</span>
+                              <span>Monthly Rent</span>
+                              <span>Status</span>
+                            </div>
+                            {propertyUnits.map((unit: any) => (
+                              <div key={unit.id} className="grid grid-cols-5 gap-2 px-4 py-3 text-sm items-center">
+                                <span className="font-medium text-neutral-900">{unit.unitNumber}</span>
+                                <span className="text-neutral-600">{unit.bedrooms ?? '—'} bed</span>
+                                <span className="text-neutral-600">{unit.bathrooms ?? '—'} bath</span>
+                                <span className="text-neutral-700 font-medium">KES {Number(unit.monthlyRent || 0).toLocaleString()}</span>
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium w-fit ${
+                                  unit.status === 'OCCUPIED' ? 'bg-success-100 text-green-700' :
+                                  unit.status === 'VACANT' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-neutral-100 text-neutral-600'
+                                }`}>{unit.status}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {propertyUnits.length === 0 && (
+                          <p className="px-4 py-3 text-sm text-neutral-400 italic">No units assigned to this landlord in this property.</p>
+                        )}
                       </div>
-                      <Button variant="outline" size="sm">View Details</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
