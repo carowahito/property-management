@@ -2,7 +2,7 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAuth } from '@/lib/supabase'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
         if (user) {
           if (user.password === 'MANAGED_BY_SUPABASE') {
             // New users: authenticate via Supabase Auth
-            const { error } = await supabaseAdmin.auth.signInWithPassword({
+            const { error } = await supabaseAuth.auth.signInWithPassword({
               email: credentials.email,
               password: credentials.password,
             })
@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
 
         if (tenant) {
           if (tenant.password === 'MANAGED_BY_SUPABASE') {
-            const { error } = await supabaseAdmin.auth.signInWithPassword({
+            const { error } = await supabaseAuth.auth.signInWithPassword({
               email: credentials.email,
               password: credentials.password,
             })
@@ -64,7 +64,7 @@ export const authOptions: NextAuthOptions = {
 
         if (landlord) {
           if (landlord.password === 'MANAGED_BY_SUPABASE') {
-            const { error } = await supabaseAdmin.auth.signInWithPassword({
+            const { error } = await supabaseAuth.auth.signInWithPassword({
               email: credentials.email,
               password: credentials.password,
             })
