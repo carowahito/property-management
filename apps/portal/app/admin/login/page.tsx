@@ -47,10 +47,10 @@ function AdminLoginForm() {
         {/* Header */}
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Admin Portal
+            Tochi Portal
           </h2>
           <p className="mt-2 text-center text-sm text-neutral-400">
-            Property management system administration
+            Sign in to your property management account
           </p>
         </div>
 
