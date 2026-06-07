@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { supabaseAdmin } from '@/lib/supabase'
 
+const VALID_ACCOUNT_TYPES = ['admin', 'tenant', 'landlord'] as const
+type AccountType = typeof VALID_ACCOUNT_TYPES[number]
+
 export async function POST(req: NextRequest) {
-  const { name, email, password } = await req.json()
+  const { name, email, password, phone, accountType = 'admin' } = await req.json()
 
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
@@ -11,6 +14,10 @@ export async function POST(req: NextRequest) {
 
   if (password.length < 6) {
     return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+  }
+
+  if (!VALID_ACCOUNT_TYPES.includes(accountType)) {
+    return NextResponse.json({ error: 'Invalid account type' }, { status: 400 })
   }
 
   // Create user in Supabase Auth
@@ -27,7 +34,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: authError.message }, { status: 400 })
   }
 
-  // Find or create a default company for new signups
+  // Find or create a default company
   let company = await prisma.company.findFirst({ where: { status: 'ACTIVE' } })
   if (!company) {
     company = await prisma.company.create({
@@ -35,20 +42,10 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // Create matching record in Prisma users table
   try {
-    await prisma.user.create({
-      data: {
-        companyId: company.id,
-        email,
-        name,
-        password: 'MANAGED_BY_SUPABASE',
-        role: 'ADMIN',
-        active: true,
-      },
-    })
+    await createAppRecord(accountType as AccountType, { name, email, phone, companyId: company.id })
   } catch (e: any) {
-    // If Prisma user creation fails, clean up the Supabase Auth user
+    // Roll back Supabase Auth user on failure
     if (authData.user) {
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
     }
@@ -58,5 +55,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })
   }
 
-  return NextResponse.json({ message: 'Account created successfully' })
+  const role = accountType === 'tenant' ? 'TENANT' : accountType === 'landlord' ? 'LANDLORD' : 'ADMIN'
+  return NextResponse.json({ message: 'Account created successfully', role })
+}
+
+async function createAppRecord(
+  type: AccountType,
+  data: { name: string; email: string; phone?: string; companyId: string }
+) {
+  switch (type) {
+    case 'tenant':
+      // Tenants need a property — find first available or leave unassigned
+      const property = await prisma.property.findFirst({ where: { companyId: data.companyId, status: 'ACTIVE' } })
+      return prisma.tenant.create({
+        data: {
+          companyId: data.companyId,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || '',
+          propertyId: property?.id || '',
+          status: 'PENDING',
+        },
+      })
+
+    case 'landlord':
+      return prisma.landlord.create({
+        data: {
+          companyId: data.companyId,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || '',
+          status: 'ACTIVE',
+        },
+      })
+
+    case 'admin':
+    default:
+      return prisma.user.create({
+        data: {
+          companyId: data.companyId,
+          email: data.email,
+          name: data.name,
+          password: 'MANAGED_BY_SUPABASE',
+          role: 'ADMIN',
+          active: true,
+        },
+      })
+  }
 }

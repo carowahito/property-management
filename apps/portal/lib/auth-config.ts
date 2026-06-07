@@ -26,21 +26,34 @@ export const authOptions: NextAuthOptions = {
           throw new Error(error.message)
         }
 
-        // Look up the app user record for role and company context
+        // Check users table first (admin/staff roles)
         const user = await prisma.user.findFirst({
           where: { email: credentials.email, active: true },
         })
 
-        if (!user) {
-          throw new Error('No account found for this email')
+        if (user) {
+          return { id: user.id, email: user.email, name: user.name, role: user.role }
         }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+        // Check tenants table
+        const tenant = await prisma.tenant.findFirst({
+          where: { email: credentials.email, status: 'ACTIVE' },
+        })
+
+        if (tenant) {
+          return { id: tenant.id, email: tenant.email, name: tenant.name, role: 'TENANT' }
         }
+
+        // Check landlords table
+        const landlord = await prisma.landlord.findFirst({
+          where: { email: credentials.email, status: 'ACTIVE' },
+        })
+
+        if (landlord) {
+          return { id: landlord.id, email: landlord.email, name: landlord.name, role: 'LANDLORD' }
+        }
+
+        throw new Error('No account found for this email')
       },
     }),
   ],
