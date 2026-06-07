@@ -1,12 +1,20 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+
+const inputCls = 'w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+const labelCls = 'block text-sm font-medium text-neutral-700 mb-1'
 
 export default function UnitDetailPage() {
   const { unitNumber } = useParams<{ unitNumber: string }>()
+  const queryClient = useQueryClient()
+  const [showEdit, setShowEdit] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState<any>(null)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['unit-statement', unitNumber],
@@ -23,6 +31,58 @@ export default function UnitDetailPage() {
   const { unit, summary, transactions, statement, payouts } = data ?? {}
   const rows = transactions ?? statement ?? []
 
+  const openEdit = () => {
+    setForm({
+      monthlyRent: unit?.agreedMonthlyRent ?? unit?.monthlyRent ?? '',
+      serviceCharge: unit?.serviceCharge ?? '',
+      serviceChargeType: unit?.serviceChargeType ?? 'FIXED',
+      managementFee: unit?.managementFee ?? '',
+      managementFeeType: unit?.managementFeeType ?? 'FIXED',
+      status: unit?.status ?? 'VACANT',
+      bedrooms: unit?.bedrooms ?? '',
+      bathrooms: unit?.bathrooms ?? '',
+      floor: unit?.floor ?? '',
+      sizeSqm: unit?.sizeSqm ?? '',
+      description: unit?.description ?? '',
+    })
+    setShowEdit(true)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const payload: any = {}
+      if (form.monthlyRent !== '') payload.monthlyRent = parseFloat(form.monthlyRent)
+      if (form.serviceCharge !== '') payload.serviceCharge = parseFloat(form.serviceCharge)
+      if (form.serviceChargeType) payload.serviceChargeType = form.serviceChargeType
+      if (form.managementFee !== '') payload.managementFee = parseFloat(form.managementFee)
+      if (form.managementFeeType) payload.managementFeeType = form.managementFeeType
+      if (form.status) payload.status = form.status
+      if (form.bedrooms !== '') payload.bedrooms = parseInt(form.bedrooms)
+      if (form.bathrooms !== '') payload.bathrooms = parseInt(form.bathrooms)
+      if (form.floor !== '') payload.floor = parseInt(form.floor)
+      if (form.sizeSqm !== '') payload.sizeSqm = parseFloat(form.sizeSqm)
+      if (form.description !== '') payload.description = form.description
+
+      const res = await fetch(`/api/units/${unitNumber}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Failed to update unit')
+        return
+      }
+      await queryClient.invalidateQueries({ queryKey: ['unit-statement', unitNumber] })
+      setShowEdit(false)
+    } catch {
+      alert('Failed to update unit')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -31,11 +91,14 @@ export default function UnitDetailPage() {
           <h1 className="text-3xl font-bold text-neutral-900">Unit {unit?.unitNumber}</h1>
           <p className="text-neutral-500 mt-1">{unit?.property?.name} · {unit?.property?.address}</p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-          unit?.activeTenant ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-600'
-        }`}>
-          {unit?.activeTenant ? 'Occupied' : 'Vacant'}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+            unit?.activeTenant ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-600'
+          }`}>
+            {unit?.activeTenant ? 'Occupied' : 'Vacant'}
+          </span>
+          <Button variant="outline" onClick={openEdit}>✏️ Edit</Button>
+        </div>
       </div>
 
       {/* Cards */}
@@ -45,7 +108,7 @@ export default function UnitDetailPage() {
           <p className="text-2xl font-bold text-primary-600 mt-1">
             KES {Number(unit?.agreedMonthlyRent ?? 0).toLocaleString()}
           </p>
-          <p className="text-xs text-neutral-400 mt-1">{unit?.bedrooms}bd · {unit?.bathrooms}ba</p>
+          <p className="text-xs text-neutral-400 mt-1">{unit?.bedrooms}bd · {unit?.bathrooms}ba{unit?.floor != null ? ` · Floor ${unit.floor}` : ''}</p>
         </div>
         <div className="bg-surface rounded-lg shadow p-5">
           <p className="text-xs text-neutral-500 uppercase tracking-wide">Landlord</p>
@@ -160,6 +223,125 @@ export default function UnitDetailPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEdit && form && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-neutral-900">Edit Unit {unitNumber}</h3>
+              <button onClick={() => setShowEdit(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Monthly Rent */}
+              <div className="md:col-span-2">
+                <label className={labelCls}>Monthly Rent (KES)</label>
+                <input type="number" min="0" step="1" value={form.monthlyRent}
+                  onChange={e => setForm({ ...form, monthlyRent: e.target.value })}
+                  className={inputCls} placeholder="e.g. 30000" />
+              </div>
+
+              {/* Service Charge */}
+              <div>
+                <label className={labelCls}>Service Charge</label>
+                <div className="flex gap-2">
+                  <select value={form.serviceChargeType}
+                    onChange={e => setForm({ ...form, serviceChargeType: e.target.value })}
+                    className="w-32 px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+                    <option value="FIXED">Fixed (KES)</option>
+                    <option value="PERCENTAGE">% of Rent</option>
+                  </select>
+                  <input type="number" min="0" step="1" value={form.serviceCharge}
+                    onChange={e => setForm({ ...form, serviceCharge: e.target.value })}
+                    className={inputCls} placeholder={form.serviceChargeType === 'FIXED' ? 'e.g. 3000' : 'e.g. 5'} />
+                </div>
+              </div>
+
+              {/* Management Fee */}
+              <div>
+                <label className={labelCls}>Management Fee</label>
+                <div className="flex gap-2">
+                  <select value={form.managementFeeType}
+                    onChange={e => setForm({ ...form, managementFeeType: e.target.value })}
+                    className="w-32 px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+                    <option value="FIXED">Fixed (KES)</option>
+                    <option value="PERCENTAGE">% of Rent</option>
+                  </select>
+                  <input type="number" min="0" step="1" value={form.managementFee}
+                    onChange={e => setForm({ ...form, managementFee: e.target.value })}
+                    className={inputCls} placeholder={form.managementFeeType === 'FIXED' ? 'e.g. 1500' : 'e.g. 10'} />
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className={labelCls}>Status</label>
+                <select value={form.status}
+                  onChange={e => setForm({ ...form, status: e.target.value })}
+                  className={inputCls}>
+                  <option value="VACANT">Vacant</option>
+                  <option value="OCCUPIED">Occupied</option>
+                  <option value="MAINTENANCE">Maintenance</option>
+                  <option value="RESERVED">Reserved</option>
+                </select>
+              </div>
+
+              {/* Floor */}
+              <div>
+                <label className={labelCls}>Floor</label>
+                <input type="number" min="0" value={form.floor}
+                  onChange={e => setForm({ ...form, floor: e.target.value })}
+                  className={inputCls} placeholder="e.g. 1" />
+              </div>
+
+              {/* Bedrooms */}
+              <div>
+                <label className={labelCls}>Bedrooms</label>
+                <input type="number" min="0" value={form.bedrooms}
+                  onChange={e => setForm({ ...form, bedrooms: e.target.value })}
+                  className={inputCls} placeholder="e.g. 3" />
+              </div>
+
+              {/* Bathrooms */}
+              <div>
+                <label className={labelCls}>Bathrooms</label>
+                <input type="number" min="0" value={form.bathrooms}
+                  onChange={e => setForm({ ...form, bathrooms: e.target.value })}
+                  className={inputCls} placeholder="e.g. 2" />
+              </div>
+
+              {/* Size */}
+              <div>
+                <label className={labelCls}>Size (sqm)</label>
+                <input type="number" min="0" step="0.1" value={form.sizeSqm}
+                  onChange={e => setForm({ ...form, sizeSqm: e.target.value })}
+                  className={inputCls} placeholder="e.g. 85" />
+              </div>
+
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className={labelCls}>Description / Notes</label>
+                <textarea rows={3} value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value })}
+                  className={inputCls} placeholder="Any additional notes about the unit..." />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowEdit(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSave} disabled={saving} className="flex-1">
+                {saving ? 'Saving…' : 'Save Changes'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
