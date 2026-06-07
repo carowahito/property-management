@@ -88,11 +88,16 @@ export default function TenantCRMPage({ params }: Props) {
   }, [tenantId])
 
   // Adapt API response to shape used by this component
+  const unitData = tenantApiData?.unitRef || null
   const tenant = tenantApiData ? {
     ...tenantApiData,
     property: tenantApiData.property?.name || '',
-    unit: tenantApiData.unit || tenantApiData.unitRef?.unitNumber || '',
-    rent: Number(tenantApiData.leases?.[0]?.monthlyRent) || 0,
+    unit: tenantApiData.unit || unitData?.unitNumber || '',
+    rent: Number(tenantApiData.leases?.[0]?.monthlyRent) || Number(unitData?.monthlyRent) || 0,
+    serviceCharge: Number(unitData?.serviceCharge) || 0,
+    deposit: Number(tenantApiData.leases?.[0]?.securityDeposit) || 0,
+    landlordName: unitData?.landlord?.name || tenantApiData.property?.landlord?.name || '',
+    landlordId: unitData?.landlord?.id || tenantApiData.property?.landlord?.id || '',
     moveIn: tenantApiData.moveInDate ? tenantApiData.moveInDate.split('T')[0] : '',
   } : null
 
@@ -519,10 +524,26 @@ export default function TenantCRMPage({ params }: Props) {
                   <p className="text-neutral-600">💵 Monthly Rent</p>
                   <p className="font-medium text-neutral-900">KES {tenant.rent?.toLocaleString()}</p>
                 </div>
+                {tenant.serviceCharge > 0 && (
+                  <div>
+                    <p className="text-neutral-600">🏷️ Service Charge</p>
+                    <p className="font-medium text-neutral-900">KES {tenant.serviceCharge?.toLocaleString()}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-neutral-600">📅 Move-in Date</p>
                   <p className="font-medium text-neutral-900">{formatDate(tenant.moveIn)}</p>
                 </div>
+                {tenant.landlordName && (
+                  <div>
+                    <p className="text-neutral-600">🏢 Landlord</p>
+                    {tenant.landlordId ? (
+                      <Link href={`/admin/landlords/${tenant.landlordId}`} className="font-medium text-primary-600 hover:underline">{tenant.landlordName}</Link>
+                    ) : (
+                      <p className="font-medium text-neutral-900">{tenant.landlordName}</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

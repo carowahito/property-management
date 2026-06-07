@@ -249,10 +249,11 @@ function TenantsPage() {
     enabled: !!formData.propertyId,
   })
 
-  const propertyUnits: { id: string; unitNumber: string; monthlyRent: number; status: string; bedrooms: number | null; tenants: any[] }[] = (unitsData?.units || []).map((u: any) => ({
+  const propertyUnits: { id: string; unitNumber: string; monthlyRent: number; serviceCharge: number; status: string; bedrooms: number | null; tenants: any[] }[] = (unitsData?.units || []).map((u: any) => ({
     id: u.id,
     unitNumber: u.unitNumber,
     monthlyRent: Number(u.monthlyRent) || 0,
+    serviceCharge: Number(u.serviceCharge) || 0,
     status: u.status,
     bedrooms: u.bedrooms,
     tenants: u.tenants || [],
@@ -266,6 +267,18 @@ function TenantsPage() {
       // Reset unit when property changes
       if (name === 'propertyId') {
         updated.unit = ''
+        updated.rentAmount = ''
+        updated.depositAmount = ''
+        updated.serviceChargeAmount = ''
+      }
+      // Auto-fill rent, deposit, service charge when unit is selected
+      if (name === 'unit') {
+        const selectedUnit = propertyUnits.find(u => u.unitNumber === value)
+        if (selectedUnit) {
+          updated.rentAmount = String(selectedUnit.monthlyRent || '')
+          updated.depositAmount = String(selectedUnit.monthlyRent || '')
+          updated.serviceChargeAmount = String(selectedUnit.serviceCharge || '')
+        }
       }
       // Auto-calculate lease end date based on lease start date and lease term
       if (name === 'leaseStartDate' || name === 'leaseTerm') {

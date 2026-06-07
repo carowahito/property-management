@@ -36,6 +36,25 @@ export async function GET(
             },
           },
         },
+        unitRef: {
+          select: {
+            id: true,
+            unitNumber: true,
+            monthlyRent: true,
+            serviceCharge: true,
+            status: true,
+            bedrooms: true,
+            bathrooms: true,
+            floor: true,
+            landlord: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
         leases: {
           select: {
             id: true,
