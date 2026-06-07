@@ -50,6 +50,7 @@ export default function VendorCRMPage({ params }: Props) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'invoices' | 'performance' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
+  const [inviteSending, setInviteSending] = useState(false)
   const [vendorId, setVendorId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -165,6 +166,30 @@ export default function VendorCRMPage({ params }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline">✏️ Edit</Button>
+            <Button variant="outline" onClick={async () => {
+              if (inviteSending) return
+              setInviteSending(true)
+              try {
+                const res = await fetch('/api/invitations', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: vendor.email, name: vendor.name, role: 'VENDOR', vendorId }),
+                })
+                const data = await res.json()
+                if (!res.ok) {
+                  alert(data.error)
+                } else {
+                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                }
+              } catch {
+                alert('Failed to send invitation')
+              } finally {
+                setInviteSending(false)
+              }
+            }}>
+              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
+            </Button>
             <Button variant="primary">💬 Contact</Button>
           </div>
         </div>

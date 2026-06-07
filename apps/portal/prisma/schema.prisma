@@ -332,6 +332,7 @@ model Vendor {
   company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   workOrders     WorkOrder[]
   messages       Message[]
+  invitations    Invitation[]
 
   @@unique([companyId, email])
   @@index([email])
@@ -1898,12 +1899,14 @@ model Invitation {
   status      InvitationStatus @default(PENDING)
   tenantId    String?
   landlordId  String?
+  vendorId    String?
   createdAt   DateTime         @default(now())
   acceptedAt  DateTime?
 
   company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   landlord    Landlord? @relation(fields: [landlordId], references: [id], onDelete: SetNull)
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
 
   @@index([token])
   @@index([email])
@@ -1914,6 +1917,7 @@ model Invitation {
 enum InvitationRole {
   TENANT
   LANDLORD
+  VENDOR
 }
 
 enum InvitationStatus {

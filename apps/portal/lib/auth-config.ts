@@ -53,6 +53,15 @@ export const authOptions: NextAuthOptions = {
           return { id: landlord.id, email: landlord.email, name: landlord.name, role: 'LANDLORD' }
         }
 
+        // Check vendors table
+        const vendor = await prisma.vendor.findFirst({
+          where: { email: credentials.email, status: 'ACTIVE' },
+        })
+
+        if (vendor) {
+          return { id: vendor.id, email: vendor.email, name: vendor.name, role: 'VENDOR' }
+        }
+
         throw new Error('No account found for this email')
       },
     }),

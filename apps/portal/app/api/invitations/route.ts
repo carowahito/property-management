@@ -10,14 +10,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { email, name, role, tenantId, landlordId } = await req.json()
+  const { email, name, role, tenantId, landlordId, vendorId } = await req.json()
 
   if (!email || !name || !role) {
     return NextResponse.json({ error: 'Email, name, and role are required' }, { status: 400 })
   }
 
-  if (!['TENANT', 'LANDLORD'].includes(role)) {
-    return NextResponse.json({ error: 'Role must be TENANT or LANDLORD' }, { status: 400 })
+  if (!['TENANT', 'LANDLORD', 'VENDOR'].includes(role)) {
+    return NextResponse.json({ error: 'Role must be TENANT, LANDLORD, or VENDOR' }, { status: 400 })
   }
 
   // Get company from the admin's user record
@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       expiresAt,
       tenantId: role === 'TENANT' ? tenantId : null,
       landlordId: role === 'LANDLORD' ? landlordId : null,
+      vendorId: role === 'VENDOR' ? vendorId : null,
     },
   })
 
