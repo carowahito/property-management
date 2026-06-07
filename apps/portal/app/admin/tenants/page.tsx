@@ -337,6 +337,11 @@ function TenantsPage() {
           unit: formData.unit,
           moveInDate: formData.moveInDate || undefined,
           status: 'ACTIVE',
+          // Lease fields
+          leaseStartDate: formData.leaseStartDate || formData.moveInDate || undefined,
+          leaseEndDate: formData.leaseEndDate || undefined,
+          monthlyRent: formData.rentAmount ? parseFloat(formData.rentAmount) : undefined,
+          securityDeposit: formData.depositAmount ? parseFloat(formData.depositAmount) : undefined,
         }),
       })
       if (!res.ok) {

@@ -3,6 +3,14 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createTenantSchema } from '@/lib/validations/tenant'
+import { z } from 'zod'
+
+const leaseSchema = z.object({
+  leaseStartDate: z.string().optional(),
+  leaseEndDate: z.string().optional(),
+  monthlyRent: z.number().min(0).optional(),
+  securityDeposit: z.number().min(0).optional(),
+}).optional()
 
 export async function GET(request: NextRequest) {
   try {
@@ -88,7 +96,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = createTenantSchema.parse(body)
+    const { leaseStartDate, leaseEndDate, monthlyRent, securityDeposit, ...tenantBody } = body
+    const validatedData = createTenantSchema.parse(tenantBody)
 
     // Check if property exists (if provided)
     if (validatedData.propertyId) {
@@ -141,6 +150,27 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Create a lease if lease fields were provided
+    if (leaseStartDate && leaseEndDate && monthlyRent && validatedData.propertyId) {
+      try {
+        await prisma.lease.create({
+          data: {
+            tenantId: tenant.id,
+            propertyId: validatedData.propertyId,
+            unitId: tenant.unitId ?? undefined,
+            unit: validatedData.unit ?? undefined,
+            startDate: new Date(leaseStartDate),
+            endDate: new Date(leaseEndDate),
+            monthlyRent,
+            securityDeposit: securityDeposit ?? 0,
+            status: 'ACTIVE',
+          },
+        })
+      } catch (leaseErr) {
+        console.error('Lease creation failed (tenant still created):', leaseErr)
+      }
+    }
 
     return NextResponse.json(tenant, { status: 201 })
   } catch (error: any) {
