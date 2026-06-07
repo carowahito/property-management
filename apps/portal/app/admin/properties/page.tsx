@@ -557,9 +557,16 @@ export default function PropertiesPage() {
                     </div>
                     <p className="text-sm text-neutral-600 mt-1">{property.address}</p>
                     <p className="text-xs text-neutral-500 mt-1">
-                      Landlord: {property.landlord?.id ? (
-                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${property.landlord!.id}` }} className="text-primary-600 hover:underline cursor-pointer">{property.landlord.name}</span>
-                      ) : 'Unassigned'} • Type: {property.type}
+                      {(property as any).unitLandlords?.length > 0 ? (
+                        <>Landlords: {(property as any).unitLandlords.map((l: any, i: number) => (
+                          <span key={l.id}>
+                            {i > 0 && ', '}
+                            <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${l.id}` }} className="text-primary-600 hover:underline cursor-pointer">{l.name}</span>
+                          </span>
+                        ))}</>
+                      ) : property.landlord?.id ? (
+                        <>Landlord: <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${property.landlord!.id}` }} className="text-primary-600 hover:underline cursor-pointer">{property.landlord.name}</span></>
+                      ) : 'Landlord: Unassigned'} • Type: {property.type}
                     </p>
                   </div>
                   <div className="text-right mr-4">
