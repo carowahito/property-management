@@ -248,7 +248,15 @@ function TenantsPage() {
     enabled: !!formData.propertyId,
   })
 
-  const propertyUnitsList: string[] = (unitsData?.units || []).map((u: any) => u.unitNumber)
+  const propertyUnits: { id: string; unitNumber: string; monthlyRent: number; status: string; bedrooms: number | null; tenants: any[] }[] = (unitsData?.units || []).map((u: any) => ({
+    id: u.id,
+    unitNumber: u.unitNumber,
+    monthlyRent: Number(u.monthlyRent) || 0,
+    status: u.status,
+    bedrooms: u.bedrooms,
+    tenants: u.tenants || [],
+  }))
+  const propertyUnitsList: string[] = propertyUnits.map(u => u.unitNumber)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -324,6 +332,7 @@ function TenantsPage() {
           phone: formData.mobilePhone,
           idNumber: formData.idNumber || undefined,
           propertyId: formData.propertyId,
+          unitId: propertyUnits.find(u => u.unitNumber === formData.unit)?.id || undefined,
           unit: formData.unit,
           moveInDate: formData.moveInDate || undefined,
           status: 'ACTIVE',
@@ -889,8 +898,10 @@ function TenantsPage() {
                         required
                       >
                         <option value="">{formData.propertyId ? 'Select unit...' : 'Select property first'}</option>
-                        {formData.propertyId && propertyUnitsList.map(unit => (
-                          <option key={unit} value={unit}>Unit {unit}</option>
+                        {formData.propertyId && propertyUnits.map(u => (
+                          <option key={u.unitNumber} value={u.unitNumber} disabled={u.tenants.length > 0}>
+                            Unit {u.unitNumber} — KES {u.monthlyRent.toLocaleString()}/mo{u.bedrooms ? ` • ${u.bedrooms}BR` : ''}{u.tenants.length > 0 ? ' (occupied)' : ''}
+                          </option>
                         ))}
                       </select>
                     </div>
