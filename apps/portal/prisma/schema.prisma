@@ -470,6 +470,7 @@ model Lease {
   // Template & Document
   templateId      String?
   documentHtml    String?  @db.Text  // Rendered HTML document
+  documentUrl     String?            // Uploaded PDF URL (Supabase Storage)
   noticePeriod    Int      @default(1) // months
   rentEscalation  Decimal? @db.Decimal(5, 2) // annual % increase
   petPolicy       String?

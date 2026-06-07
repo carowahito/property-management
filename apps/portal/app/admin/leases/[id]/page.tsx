@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -25,6 +25,10 @@ export default function LeaseDetailPage({ params }: Props) {
   const [renewForm, setRenewForm] = useState({
     newStartDate: '', newEndDate: '', newMonthlyRent: '', leaseTerm: '12',
   })
+  const [uploading, setUploading] = useState('')
+  const docInputRef = useRef<HTMLInputElement>(null)
+  const landlordSigRef = useRef<HTMLInputElement>(null)
+  const tenantSigRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { params.then(p => setLeaseId(p.id)) }, [params])
 
@@ -37,6 +41,19 @@ export default function LeaseDetailPage({ params }: Props) {
   }
 
   useEffect(() => { refreshLease() }, [leaseId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleUpload = async (file: File, type: 'document' | 'landlordSignature' | 'tenantSignature') => {
+    setUploading(type)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('type', type)
+    try {
+      const res = await fetch(`/api/leases/${leaseId}/upload`, { method: 'POST', body: formData })
+      if (res.ok) { refreshLease() }
+      else { const d = await res.json(); alert(d.error || 'Upload failed') }
+    } catch { alert('Upload failed') }
+    finally { setUploading('') }
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
@@ -343,33 +360,84 @@ export default function LeaseDetailPage({ params }: Props) {
             ) : <p className="text-sm text-neutral-500">No property assigned</p>}
           </div>
 
-          {/* Signing Status */}
+          {/* Document & Signatures */}
           <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-            <h3 className="font-semibold text-neutral-900 mb-4">Signing Status</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Document</span>
-                <span className={`font-medium ${lease.documentHtml ? 'text-success-600' : 'text-neutral-400'}`}>
-                  {lease.documentHtml ? '✓ Generated' : '○ Not generated'}
-                </span>
+            <h3 className="font-semibold text-neutral-900 mb-4">Document & Signatures</h3>
+            <div className="space-y-4">
+              {/* Lease Document */}
+              <div className="p-3 bg-neutral-50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-neutral-700">Lease Document</span>
+                  {(lease.documentUrl || lease.documentHtml) ? (
+                    <span className="text-xs text-success-600 font-medium">✓ Uploaded</span>
+                  ) : (
+                    <span className="text-xs text-neutral-400">No document</span>
+                  )}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  {lease.documentUrl && (
+                    <a href={lease.documentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:underline">View PDF</a>
+                  )}
+                  {lease.documentHtml && (
+                    <Link href={`/admin/leases/${leaseId}/document`} className="text-xs text-primary-600 hover:underline">View Document</Link>
+                  )}
+                  <input type="file" ref={docInputRef} accept=".pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'document') }} />
+                  <button onClick={() => docInputRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
+                    {uploading === 'document' ? 'Uploading...' : lease.documentUrl ? 'Replace' : 'Upload PDF'}
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Sent for Signing</span>
-                <span className={`font-medium ${lease.sentForSigning ? 'text-success-600' : 'text-neutral-400'}`}>
-                  {lease.sentForSigning ? `✓ Sent ${formatDate(lease.sentAt)}` : '○ Not sent'}
-                </span>
+
+              {/* Landlord Signature */}
+              <div className="p-3 bg-neutral-50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-neutral-700">Landlord Signature</span>
+                  {lease.landlordSignedAt ? (
+                    <span className="text-xs text-success-600 font-medium">✓ Signed {formatDate(lease.landlordSignedAt)}</span>
+                  ) : (
+                    <span className="text-xs text-neutral-400">Not signed</span>
+                  )}
+                </div>
+                {lease.landlordSignature && lease.landlordSignature.startsWith('http') && (
+                  <img src={lease.landlordSignature} alt="Landlord signature" className="h-16 border border-neutral-200 rounded mt-1 bg-white" />
+                )}
+                <div className="flex gap-2 mt-2">
+                  <input type="file" ref={landlordSigRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'landlordSignature') }} />
+                  <button onClick={() => landlordSigRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
+                    {uploading === 'landlordSignature' ? 'Uploading...' : lease.landlordSignature ? 'Replace signature' : 'Upload signature'}
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Tenant Signature</span>
-                <span className={`font-medium ${lease.tenantSignedAt ? 'text-success-600' : 'text-neutral-400'}`}>
-                  {lease.tenantSignedAt ? `✓ Signed ${formatDate(lease.tenantSignedAt)}` : '○ Not signed'}
-                </span>
+
+              {/* Tenant Signature */}
+              <div className="p-3 bg-neutral-50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-neutral-700">Tenant Signature</span>
+                  {lease.tenantSignedAt ? (
+                    <span className="text-xs text-success-600 font-medium">✓ Signed {formatDate(lease.tenantSignedAt)}</span>
+                  ) : (
+                    <span className="text-xs text-neutral-400">Not signed</span>
+                  )}
+                </div>
+                {lease.tenantSignature && lease.tenantSignature.startsWith('http') && (
+                  <img src={lease.tenantSignature} alt="Tenant signature" className="h-16 border border-neutral-200 rounded mt-1 bg-white" />
+                )}
+                <div className="flex gap-2 mt-2">
+                  <input type="file" ref={tenantSigRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'tenantSignature') }} />
+                  <button onClick={() => tenantSigRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
+                    {uploading === 'tenantSignature' ? 'Uploading...' : lease.tenantSignature ? 'Replace signature' : 'Upload signature'}
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Landlord Signature</span>
-                <span className={`font-medium ${lease.landlordSignedAt ? 'text-success-600' : 'text-neutral-400'}`}>
-                  {lease.landlordSignedAt ? `✓ Signed ${formatDate(lease.landlordSignedAt)}` : '○ Not signed'}
-                </span>
+
+              {/* Sent for Signing */}
+              <div className="pt-3 border-t border-neutral-200">
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Sent for Signing</span>
+                  <span className={`font-medium ${lease.sentForSigning ? 'text-success-600' : 'text-neutral-400'}`}>
+                    {lease.sentForSigning ? `✓ Sent ${formatDate(lease.sentAt)}` : '○ Not sent'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
