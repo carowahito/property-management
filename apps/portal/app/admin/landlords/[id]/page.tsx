@@ -15,6 +15,11 @@ export default function LandlordCRMPage({ params }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'financials' | 'tenants' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [docsList, setDocsList] = useState<any[]>([])
+  const [docsLoading, setDocsLoading] = useState(false)
   const [editTab, setEditTab] = useState<'details' | 'units'>('details')
   const [landlordUnits, setLandlordUnits] = useState<any[]>([])
   const [propertiesList, setPropertiesList] = useState<any[]>([])
@@ -36,6 +41,34 @@ export default function LandlordCRMPage({ params }: Props) {
     managementFeePercent: '', managementFeeType: 'PERCENTAGE',
     tenantPlacementFee: '', tenantPlacementFeeType: 'MONTHS',
   })
+
+  const fetchDocuments = () => {
+    if (!landlordId) return
+    setDocsLoading(true)
+    fetch(`/api/landlords/${landlordId}/documents`)
+      .then(r => r.json())
+      .then(d => setDocsList(d.documents || []))
+      .finally(() => setDocsLoading(false))
+  }
+
+  const handleUpload = async () => {
+    if (!uploadFile || !landlordId) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', uploadFile)
+      const res = await fetch(`/api/landlords/${landlordId}/documents`, { method: 'POST', body: fd })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+      } else {
+        setUploadFile(null)
+        setShowUploadModal(false)
+        fetchDocuments()
+      }
+    } catch { alert('Upload failed') }
+    finally { setUploading(false) }
+  }
 
   const refreshLandlord = () => {
     if (!landlordId) return
@@ -333,7 +366,10 @@ export default function LandlordCRMPage({ params }: Props) {
             ].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => {
+                  setActiveTab(tab.id as any)
+                  if (tab.id === 'documents') fetchDocuments()
+                }}
                 className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-purple-600 text-white'
@@ -582,25 +618,42 @@ export default function LandlordCRMPage({ params }: Props) {
           {activeTab === 'documents' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-neutral-900">Documents</h3>
-                <Button variant="primary">📤 Upload Document</Button>
+                <h3 className="font-semibold text-neutral-900">Documents ({docsList.length})</h3>
+                <Button variant="primary" onClick={() => setShowUploadModal(true)}>📤 Upload Document</Button>
               </div>
-              <div className="grid gap-3">
-                {documents.map(doc => (
-                  <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-danger-100 rounded flex items-center justify-center">
-                        <span className="text-danger-600">📄</span>
+              {docsLoading ? (
+                <p className="text-sm text-neutral-400 text-center py-8">Loading documents…</p>
+              ) : docsList.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
+                  <p className="text-4xl mb-2">📄</p>
+                  <p className="text-neutral-500 font-medium">No documents yet</p>
+                  <p className="text-sm text-neutral-400 mt-1">Upload KRA PIN, ID copy, bank letters, etc.</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setShowUploadModal(true)}>Upload First Document</Button>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {docsList.map((doc: any) => {
+                    const sizeMb = (doc.fileSize / (1024 * 1024)).toFixed(2)
+                    const ext = doc.name.split('.').pop()?.toUpperCase() ?? 'FILE'
+                    return (
+                      <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-primary-600">{ext}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-neutral-900">{doc.name}</p>
+                            <p className="text-xs text-neutral-500">{sizeMb} MB • {formatDate(doc.uploadedAt)}</p>
+                          </div>
+                        </div>
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="sm">⬇ Download</Button>
+                        </a>
                       </div>
-                      <div>
-                        <p className="font-medium text-neutral-900">{doc.name}</p>
-                        <p className="text-xs text-neutral-500">{doc.type} • {doc.size} • {formatDate(doc.date)}</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm">Download</Button>
-                  </div>
-                ))}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -1005,6 +1058,55 @@ export default function LandlordCRMPage({ params }: Props) {
               <Button variant="outline" onClick={() => setShowContactModal(false)} className="flex-1">Cancel</Button>
               <Button variant="primary" onClick={handleSendContact} disabled={saving || !contactMessage.subject || !contactMessage.content} className="flex-1">
                 {saving ? 'Sending...' : 'Send Message'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Document Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-neutral-900">Upload Document</h3>
+              <button onClick={() => { setShowUploadModal(false); setUploadFile(null) }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <label className="block">
+              <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${uploadFile ? 'border-primary-400 bg-primary-50' : 'border-neutral-300 hover:border-primary-400'}`}>
+                {uploadFile ? (
+                  <>
+                    <p className="text-3xl mb-2">📄</p>
+                    <p className="font-medium text-neutral-900 text-sm">{uploadFile.name}</p>
+                    <p className="text-xs text-neutral-500 mt-1">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-3xl mb-2">📁</p>
+                    <p className="text-sm text-neutral-600">Click or drag a file here</p>
+                    <p className="text-xs text-neutral-400 mt-1">PDF, JPG, PNG, DOCX — max 10 MB</p>
+                  </>
+                )}
+              </div>
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                onChange={e => setUploadFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+
+            <div className="flex gap-3 mt-5">
+              <Button variant="outline" className="flex-1" onClick={() => { setShowUploadModal(false); setUploadFile(null) }}>
+                Cancel
+              </Button>
+              <Button variant="primary" className="flex-1" disabled={!uploadFile || uploading} onClick={handleUpload}>
+                {uploading ? 'Uploading…' : 'Upload'}
               </Button>
             </div>
           </div>

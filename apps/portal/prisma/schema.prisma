@@ -265,12 +265,29 @@ model Landlord {
   statements  LandlordStatement[]
   ownerStatements OwnerStatement[]
   invitations     Invitation[]
+  documents   LandlordDocument[]
 
   @@unique([companyId, email])
   @@index([email])
   @@index([companyId])
   @@index([status])
   @@map("landlords")
+}
+
+model LandlordDocument {
+  id          String   @id @default(cuid())
+  landlordId  String
+  name        String
+  fileType    String
+  fileSize    Int
+  storagePath String
+  url         String
+  uploadedAt  DateTime @default(now())
+
+  landlord    Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+
+  @@index([landlordId])
+  @@map("landlord_documents")
 }
 
 model Tenant {
