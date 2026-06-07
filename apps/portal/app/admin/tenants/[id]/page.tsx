@@ -644,7 +644,18 @@ export default function TenantCRMPage({ params }: Props) {
                         <span className="text-sm text-neutral-600">Monthly Rent</span>
                         <span className="text-sm font-medium text-neutral-900">KES {currentLease.monthlyRent.toLocaleString()}</span>
                       </div>
-                      <Button variant="outline" className="w-full mt-2">View Lease Details</Button>
+                      <Button
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={() => {
+                          // If a current lease exists, navigate to the lease detail page
+                          if (currentLease && currentLease.id) {
+                            router.push(`/admin/leases/${currentLease.id}`)
+                          }
+                        }}
+                      >
+                        View Lease Details
+                      </Button>
                     </div>
                   ) : (
                     <p className="text-neutral-500">No active lease</p>
