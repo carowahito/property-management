@@ -44,6 +44,13 @@ export async function POST(
     return NextResponse.json({ error: authError.message }, { status: 400 })
   }
 
+  // Ensure the app record exists so the user can log in
+  try {
+    await ensureAppRecord(invitation)
+  } catch (e) {
+    console.error('Failed to create app record (non-blocking):', e)
+  }
+
   // Mark invitation as accepted
   await prisma.invitation.update({
     where: { id: invitation.id },
@@ -54,4 +61,55 @@ export async function POST(
     message: 'Account created successfully. You can now sign in.',
     role: invitation.role,
   })
+}
+
+async function ensureAppRecord(invitation: {
+  role: string
+  email: string
+  name: string
+  companyId: string
+  tenantId: string | null
+  landlordId: string | null
+  vendorId: string | null
+}) {
+  const { role, email, name, companyId } = invitation
+
+  if (role === 'TENANT') {
+    if (invitation.tenantId) return // already linked to existing record
+    const existing = await prisma.tenant.findFirst({ where: { companyId, email } })
+    if (existing) return
+    // Find or create a default property for the tenant
+    let property = await prisma.property.findFirst({ where: { companyId, status: 'ACTIVE' } })
+    if (!property) {
+      const landlord = await prisma.landlord.findFirst({ where: { companyId } })
+      if (!landlord) return // can't create tenant without a property and landlord
+      property = await prisma.property.create({
+        data: { companyId, name: 'Unassigned', address: 'TBD', type: 'APARTMENT', totalUnits: 0, landlordId: landlord.id, status: 'ACTIVE' },
+      })
+    }
+    await prisma.tenant.create({
+      data: {
+        companyId,
+        name,
+        email,
+        phone: '',
+        propertyId: property.id,
+        status: 'ACTIVE',
+      },
+    })
+  } else if (role === 'LANDLORD') {
+    if (invitation.landlordId) return
+    const existing = await prisma.landlord.findFirst({ where: { companyId, email } })
+    if (existing) return
+    await prisma.landlord.create({
+      data: { companyId, name, email, phone: '', status: 'ACTIVE' },
+    })
+  } else if (role === 'VENDOR') {
+    if (invitation.vendorId) return
+    const existing = await prisma.vendor.findFirst({ where: { companyId, email } })
+    if (existing) return
+    await prisma.vendor.create({
+      data: { companyId, name, email, phone: '', specialization: 'general', status: 'ACTIVE' },
+    })
+  }
 }
