@@ -47,10 +47,10 @@ function AdminLoginForm() {
         {/* Header */}
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Admin Portal
+            Tochi Portal
           </h2>
           <p className="mt-2 text-center text-sm text-neutral-400">
-            Property management system administration
+            Sign in to your property management account
           </p>
         </div>
 
@@ -159,18 +159,6 @@ function AdminLoginForm() {
             </p>
           </div>
         </form>
-
-        {/* Demo Credentials */}
-        <div className="bg-neutral-800 rounded-lg shadow-xl p-6 border border-neutral-700">
-          <h3 className="text-sm font-semibold text-white mb-3">Demo Account</h3>
-          <div className="text-xs bg-neutral-700 p-3 rounded border border-neutral-600">
-            <div className="text-neutral-300 mb-1">Email: <span className="text-white font-mono">admin@propmanage.com</span></div>
-            <div className="text-neutral-300">Password: <span className="text-white font-mono">admin123</span></div>
-          </div>
-          <p className="text-xs text-neutral-400 mt-2">
-            Use the above credentials for testing. Change password after first login.
-          </p>
-        </div>
 
         {/* Back to Home */}
         <div className="text-center">

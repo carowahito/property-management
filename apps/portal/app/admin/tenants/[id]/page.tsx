@@ -16,6 +16,7 @@ export default function TenantCRMPage({ params }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'payments' | 'maintenance' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [inviteSending, setInviteSending] = useState(false)
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
@@ -469,6 +470,30 @@ export default function TenantCRMPage({ params }: Props) {
               window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
             }}>
               📄 Statement
+            </Button>
+            <Button variant="outline" onClick={async () => {
+              if (inviteSending) return
+              setInviteSending(true)
+              try {
+                const res = await fetch('/api/invitations', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: tenant.email, name: tenant.name, role: 'TENANT', tenantId }),
+                })
+                const data = await res.json()
+                if (!res.ok) {
+                  alert(data.error)
+                } else {
+                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                }
+              } catch {
+                alert('Failed to send invitation')
+              } finally {
+                setInviteSending(false)
+              }
+            }}>
+              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
             </Button>
             <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>
               💬 Contact

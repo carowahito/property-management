@@ -10,6 +10,7 @@ const LINKS = [
   { label: 'Owners', href: '/owners' },
   { label: 'Tenants', href: '/tenants' },
   { label: 'Listings', href: '/listings' },
+  { label: 'Platform', href: '/platform' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ]

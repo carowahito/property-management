@@ -42,6 +42,7 @@ model Company {
   enquiries         Enquiry[]
   leaseTemplates    LeaseTemplate[]
   gatewayTransactions GatewayTransaction[]
+  invitations       Invitation[]
 
   @@index([slug])
   @@index([status])
@@ -261,6 +262,7 @@ model Landlord {
   rentTransactions RentTransaction[]
   statements  LandlordStatement[]
   ownerStatements OwnerStatement[]
+  invitations     Invitation[]
 
   @@unique([companyId, email])
   @@index([email])
@@ -302,6 +304,7 @@ model Tenant {
   moveInChecklists MoveInChecklist[]
   inspections      Inspection[]
   renewals         LeaseRenewal[]
+  invitations      Invitation[]
 
   @@unique([companyId, email])
   @@index([email])
@@ -330,6 +333,7 @@ model Vendor {
   company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   workOrders     WorkOrder[]
   messages       Message[]
+  invitations    Invitation[]
 
   @@unique([companyId, email])
   @@index([email])
@@ -1883,4 +1887,42 @@ enum ReconciliationRunStatus {
   IN_PROGRESS
   COMPLETED
   FAILED
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  companyId   String
+  email       String
+  name        String
+  role        InvitationRole
+  token       String           @unique
+  expiresAt   DateTime
+  status      InvitationStatus @default(PENDING)
+  tenantId    String?
+  landlordId  String?
+  vendorId    String?
+  createdAt   DateTime         @default(now())
+  acceptedAt  DateTime?
+
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  landlord    Landlord? @relation(fields: [landlordId], references: [id], onDelete: SetNull)
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  @@index([token])
+  @@index([email])
+  @@index([companyId])
+  @@map("invitations")
+}
+
+enum InvitationRole {
+  TENANT
+  LANDLORD
+  VENDOR
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
 }
