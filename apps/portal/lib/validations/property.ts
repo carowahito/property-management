@@ -12,7 +12,7 @@ export const createPropertySchema = z.object({
   yearBuilt: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'MAINTENANCE']).default('ACTIVE'),
   description: z.string().optional(),
-  landlordId: z.string().min(1, 'Landlord is required'),
+  landlordId: z.string().optional(),
 })
 
 export const updatePropertySchema = z.object({

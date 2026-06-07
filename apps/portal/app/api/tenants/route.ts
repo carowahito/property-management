@@ -90,13 +90,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createTenantSchema.parse(body)
 
-    // Check if property exists
-    const property = await prisma.property.findUnique({
-      where: { id: validatedData.propertyId },
-    })
-
-    if (!property) {
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+    // Check if property exists (if provided)
+    if (validatedData.propertyId) {
+      const property = await prisma.property.findUnique({
+        where: { id: validatedData.propertyId },
+      })
+      if (!property) {
+        return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+      }
     }
 
     // Resolve company

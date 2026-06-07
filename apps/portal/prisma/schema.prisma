@@ -300,7 +300,7 @@ model Tenant {
   idNumber        String?
   emergencyContact String?
   emergencyPhone  String?
-  propertyId      String
+  propertyId      String?
   unitId          String?
   unit            String?  // kept for backward compatibility
   moveInDate      DateTime?
@@ -311,7 +311,7 @@ model Tenant {
 
   // Relations
   company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property        Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   unitRef         Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
   leases          Lease[]
   payments        Payment[]
