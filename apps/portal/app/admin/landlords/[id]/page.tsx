@@ -342,26 +342,26 @@ export default function LandlordCRMPage({ params }: Props) {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <button onClick={() => setActiveTab('financials')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Portfolio Value</p>
           <p className="text-2xl font-bold text-success-600 mt-2">KES {yearlyRevenue.toLocaleString()}</p>
           <p className="text-xs text-neutral-500 mt-1">KES {totalMonthlyRevenue.toLocaleString()}/mo</p>
-        </div>
+        </button>
         <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Units</p>
           <p className="text-2xl font-bold text-primary-600 mt-2">{totalUnits}</p>
           <p className="text-xs text-neutral-500 mt-1">across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
         </button>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
           <p className="text-2xl font-bold text-purple-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
           <p className="text-xs text-neutral-500 mt-1">{occupiedUnits}/{totalUnits} units occupied</p>
-        </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        </button>
+        <button onClick={() => setActiveTab('tenants')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Active Tenants</p>
           <p className="text-2xl font-bold text-warning-600 mt-2">{landlord.totalTenants}</p>
           <p className="text-xs text-neutral-500 mt-1">Across all properties</p>
-        </div>
+        </button>
       </div>
 
       {/* Tabs */}
