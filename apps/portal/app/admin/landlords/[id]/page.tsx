@@ -218,7 +218,15 @@ export default function LandlordCRMPage({ params }: Props) {
   // (preferred over landlordApiData.properties which uses property.landlordId)
   const landlordProperties: any[] = landlordApiData?.propertiesViaUnits || landlordApiData?.properties || []
   const landlordUnitsFromApi: any[] = landlordApiData?.units || []
-  const landlordTenants: any[] = []
+  const landlordTenants: any[] = landlordUnitsFromApi.flatMap((u: any) =>
+    (u.tenants || []).map((t: any) => ({
+      ...t,
+      unit: u.unitNumber,
+      property: u.property?.name || '',
+      propertyId: u.propertyId,
+      rent: Number(u.monthlyRent) || 0,
+    }))
+  )
   const landlordPayouts = landlordApiData?.payouts || []
 
   const tenantNotes: any[] = []
@@ -359,7 +367,7 @@ export default function LandlordCRMPage({ params }: Props) {
         </button>
         <button onClick={() => setActiveTab('tenants')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Active Tenants</p>
-          <p className="text-2xl font-bold text-warning-600 mt-2">{landlord.totalTenants}</p>
+          <p className="text-2xl font-bold text-warning-600 mt-2">{landlordTenants.length}</p>
           <p className="text-xs text-neutral-500 mt-1">Across all properties</p>
         </button>
       </div>
@@ -611,21 +619,31 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Tenants Tab */}
           {activeTab === 'tenants' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-neutral-900">Tenants Across All Properties</h3>
-              <div className="grid gap-3">
-                {landlordTenants.map(tenant => (
-                  <div key={tenant.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
-                    <div>
-                      <p className="font-medium text-neutral-900">{tenant.name}</p>
-                      <p className="text-sm text-neutral-600">{tenant.property} - Unit {tenant.unit}</p>
-                      <p className="text-xs text-neutral-500 mt-1">KES {tenant.rent?.toLocaleString()}/month</p>
+              <h3 className="font-semibold text-neutral-900">Tenants in {landlord.name}&apos;s Units ({landlordTenants.length})</h3>
+              {landlordTenants.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
+                  <p className="text-4xl mb-2">👥</p>
+                  <p className="text-neutral-500 font-medium">No active tenants</p>
+                  <p className="text-sm text-neutral-400 mt-1">Tenants will appear here when assigned to this landlord&apos;s units</p>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {landlordTenants.map(tenant => (
+                    <div key={tenant.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
+                      <div>
+                        <Link href={`/admin/tenants/${tenant.id}`} className="font-medium text-primary-600 hover:underline">{tenant.name}</Link>
+                        <p className="text-sm text-neutral-600">
+                          <Link href={`/admin/properties/${tenant.propertyId}`} className="hover:underline">{tenant.property}</Link> — Unit <Link href={`/admin/units/${tenant.unit}`} className="hover:underline">{tenant.unit}</Link>
+                        </p>
+                        <p className="text-xs text-neutral-500 mt-1">KES {tenant.rent?.toLocaleString()}/month</p>
+                      </div>
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-green-800">
+                        {tenant.status}
+                      </span>
                     </div>
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-green-800">
-                      {tenant.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

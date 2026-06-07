@@ -53,6 +53,10 @@ export async function GET(
             bedrooms: true,
             bathrooms: true,
             property: { select: { id: true, name: true } },
+            tenants: {
+              where: { status: 'ACTIVE' },
+              select: { id: true, name: true, email: true, phone: true, status: true },
+            },
           },
           orderBy: { unitNumber: 'asc' },
         },
