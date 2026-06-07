@@ -316,18 +316,17 @@ export default function PropertyDetailPage() {
     }))
   }
 
+  // All landlords — used only for the Add Unit dropdown
   const landlords = landlordsData?.landlords || []
-  
-  // Get unique landlords who own units in this property (from leases/tenants data)
-  const propertyLandlords = property ?
-    Array.from(new Set(
-      leases
-        .map(lease => lease.tenant?.id)
-        .filter(Boolean)
-    )).map(id => {
-      return landlords.find((l: any) => l.id === id)
-    }).filter(Boolean)
-    : []
+
+  // Landlords who actually own units in THIS property (from propertyUnits relation)
+  const propertyLandlords: any[] = Array.from(
+    new Map(
+      ((property as any).propertyUnits ?? [])
+        .filter((u: any) => u.landlord)
+        .map((u: any) => [u.landlord.id, u.landlord])
+    ).values()
+  )
 
   return (
     <div className="space-y-6">
@@ -399,18 +398,18 @@ export default function PropertyDetailPage() {
       {/* Property Owners */}
       <div className="bg-surface rounded-lg border border-neutral-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-neutral-900">Property Owners ({landlords.length})</h2>
-          <p className="text-sm text-neutral-600">Multiple landlords can own units in this property</p>
+          <h2 className="text-xl font-bold text-neutral-900">Unit Owners ({propertyLandlords.length})</h2>
+          <p className="text-sm text-neutral-600">Landlords who own units in this property</p>
         </div>
-        
-        {landlords.length === 0 ? (
+
+        {propertyLandlords.length === 0 ? (
           <div className="text-center py-8 bg-neutral-50 rounded-lg">
             <p className="text-neutral-500 mb-2">No landlords assigned to units yet</p>
-            <p className="text-xs text-neutral-400">Landlords will be listed here when units are assigned to them</p>
+            <p className="text-xs text-neutral-400">Landlords appear here once units are assigned to them</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {landlords.slice(0, 6).map((landlord: any) => (
+            {propertyLandlords.slice(0, 6).map((landlord: any) => (
               <Link
                 key={landlord.id}
                 href={`/admin/landlords/${landlord.id}`}
@@ -423,22 +422,17 @@ export default function PropertyDetailPage() {
                   <p className="font-semibold text-neutral-900 truncate">{landlord.name}</p>
                   <p className="text-xs text-neutral-600 truncate">{landlord.email}</p>
                   <p className="text-xs text-neutral-500 mt-1">
-                    {landlord._count?.properties || 0} {landlord._count?.properties === 1 ? 'property' : 'properties'}
+                    {((property as any).propertyUnits ?? []).filter((u: any) => u.landlord?.id === landlord.id).length} unit{((property as any).propertyUnits ?? []).filter((u: any) => u.landlord?.id === landlord.id).length !== 1 ? 's' : ''} here
                   </p>
                 </div>
               </Link>
             ))}
           </div>
         )}
-        
-        {landlords.length > 6 && (
+
+        {propertyLandlords.length > 6 && (
           <div className="mt-4 text-center">
-            <p className="text-sm text-neutral-600">
-              Showing 6 of {landlords.length} landlords. 
-              <Link href="/admin/landlords" className="text-primary-600 hover:text-primary-800 ml-1">
-                View all
-              </Link>
-            </p>
+            <p className="text-sm text-neutral-600">Showing 6 of {propertyLandlords.length} landlords.</p>
           </div>
         )}
 
