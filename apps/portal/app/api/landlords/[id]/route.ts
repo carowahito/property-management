@@ -43,9 +43,22 @@ export async function GET(
           orderBy: { createdAt: 'desc' },
           take: 10,
         },
+        units: {
+          select: {
+            id: true,
+            unitNumber: true,
+            status: true,
+            monthlyRent: true,
+            bedrooms: true,
+            bathrooms: true,
+            property: { select: { id: true, name: true } },
+          },
+          orderBy: { unitNumber: 'asc' },
+        },
         _count: {
           select: {
             properties: true,
+            units: true,
             payouts: true,
             messages: true,
           },

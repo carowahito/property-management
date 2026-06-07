@@ -177,6 +177,7 @@ export default function LandlordCRMPage({ params }: Props) {
 
   // Get related data from API response
   const landlordProperties = landlordApiData?.properties || []
+  const landlordUnitsFromApi: any[] = landlordApiData?.units || []
   const landlordTenants: any[] = []
   const landlordPayouts = landlordApiData?.payouts || []
 
@@ -187,8 +188,8 @@ export default function LandlordCRMPage({ params }: Props) {
 
   // Calculate statistics from real data
   const totalProperties = landlordProperties.length
-  const totalUnits = landlordProperties.reduce((sum: number, p: any) => sum + (p.totalUnits || 0), 0)
-  const occupiedUnits = 0
+  const totalUnits = landlordUnitsFromApi.length  // actual unit records, not property.totalUnits
+  const occupiedUnits = landlordUnitsFromApi.filter((u: any) => u.status === 'OCCUPIED').length
   const paidPayouts = landlordPayouts.filter((p: any) => p.status === 'PAID')
   // Most recent payout = monthly revenue; sum of all paid payouts = total collected
   const latestPayout = paidPayouts.length > 0 ? Number(paidPayouts[0].amount) : 0
@@ -239,7 +240,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-neutral-600">🏢 Properties</p>
-                  <p className="font-medium text-neutral-900">{landlord.totalUnits ?? 0} units in {landlord.properties?.length ?? totalProperties} properties</p>
+                  <p className="font-medium text-neutral-900">{totalUnits} unit{totalUnits !== 1 ? 's' : ''} in {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
                 </div>
                 <div>
                   <p className="text-neutral-600">🏦 Bank</p>
@@ -306,7 +307,7 @@ export default function LandlordCRMPage({ params }: Props) {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{Math.round((occupiedUnits / totalUnits) * 100)}%</p>
+          <p className="text-2xl font-bold text-purple-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
           <p className="text-xs text-neutral-500 mt-1">{occupiedUnits}/{totalUnits} units occupied</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
