@@ -17,32 +17,59 @@ interface Vendor {
   vendorType: 'individual' | 'company';
 }
 
+const SPECIALIZATIONS = ['plumbing', 'electrical', 'carpentry', 'painting', 'cleaning', 'landscaping', 'security', 'pest_control', 'hvac', 'general']
+
 export default function AdminVendorsPage() {
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [addForm, setAddForm] = useState({ name: '', email: '', phone: '', specialization: 'general' });
 
-  useEffect(() => {
+  const refreshVendors = () => {
     fetch('/api/vendors?limit=100')
       .then(r => r.json())
       .then(data => {
         const mapped = (data.vendors || []).map((v: any) => ({
           id: v.id,
           name: v.name,
-          category: v.specialization || 'General',
+          category: v.specialization,
           email: v.email,
           phone: v.phone,
           rating: v.rating || 0,
           completedJobs: v._count?.workOrders || 0,
           activeJobs: 0,
-          status: (v.status || 'ACTIVE').toLowerCase() as Vendor['status'],
-          vendorType: 'company' as Vendor['vendorType'],
+          status: (v.status || 'ACTIVE').toLowerCase() as 'active' | 'inactive' | 'suspended',
+          vendorType: 'individual' as const,
         }));
         setVendors(mapped);
-      })
-      .catch(() => {});
-  }, []);
+      });
+  };
+
+  const handleAddVendor = async () => {
+    if (!addForm.name || !addForm.email || !addForm.phone) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/vendors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addForm),
+      });
+      if (res.ok) {
+        setShowAddModal(false);
+        setAddForm({ name: '', email: '', phone: '', specialization: 'general' });
+        refreshVendors();
+      } else {
+        const data = await res.json();
+        alert(data.error || data.details?.[0]?.message || 'Failed to add vendor');
+      }
+    } catch { alert('Failed to add vendor'); }
+    finally { setSaving(false); }
+  };
+
+  useEffect(() => { refreshVendors() }, []);
 
   const filteredVendors = vendors.filter(
     (vendor) =>
@@ -65,7 +92,7 @@ export default function AdminVendorsPage() {
           <h1 className='text-3xl font-bold text-neutral-900'>Vendors CRM</h1>
           <p className='text-neutral-600 mt-1'>Manage vendor relationships and performance</p>
         </div>
-        <Button variant="primary" size="lg">+ Add Vendor</Button>
+        <Button variant="primary" size="lg" onClick={() => setShowAddModal(true)}>+ Add Vendor</Button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
@@ -279,6 +306,41 @@ export default function AdminVendorsPage() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Vendor Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-4">Add Vendor</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Name *</label>
+                <input value={addForm.name} onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="Vendor name" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Email *</label>
+                <input type="email" value={addForm.email} onChange={(e) => setAddForm(prev => ({ ...prev, email: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="vendor@example.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone *</label>
+                <input type="tel" value={addForm.phone} onChange={(e) => setAddForm(prev => ({ ...prev, phone: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="+254 7XX XXX XXX" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Specialization</label>
+                <select value={addForm.specialization} onChange={(e) => setAddForm(prev => ({ ...prev, specialization: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm">
+                  {SPECIALIZATIONS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleAddVendor} disabled={saving || !addForm.name || !addForm.email || !addForm.phone} className="flex-1">
+                {saving ? 'Adding...' : 'Add Vendor'}
+              </Button>
             </div>
           </div>
         </div>

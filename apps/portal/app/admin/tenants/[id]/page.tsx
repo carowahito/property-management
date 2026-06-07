@@ -132,23 +132,60 @@ export default function TenantCRMPage({ params }: Props) {
     setShowEditModal(true)
   }
 
-  const handleSaveEdit = () => {
-    console.log('Saving tenant updates:', editForm)
-    // In real app, this would make an API call
-    setShowEditModal(false)
+  const handleSaveEdit = async () => {
+    try {
+      const res = await fetch(`/api/tenants/${tenantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          unit: editForm.unit,
+          status: editForm.status,
+        }),
+      })
+      if (res.ok) {
+        setShowEditModal(false)
+        window.location.reload()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to save changes')
+      }
+    } catch { alert('Failed to save changes') }
   }
 
-  const handleRecordPayment = () => {
-    console.log('Recording payment:', paymentForm)
-    // In real app, this would make an API call
-    setShowRecordPaymentModal(false)
-    setPaymentForm({
-      month: '',
-      amount: '',
-      date: '',
-      method: 'Bank Transfer',
-      status: 'Paid',
-    })
+  const handleRecordPayment = async () => {
+    if (!paymentForm.amount || !paymentForm.date) return
+    const methodMap: Record<string, string> = {
+      'Bank Transfer': 'BANK_TRANSFER', 'M-Pesa': 'MPESA', 'Cash': 'CASH', 'Cheque': 'CHEQUE', 'Card': 'CARD'
+    }
+    try {
+      const lease = tenantLeases[0]
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          leaseId: lease?.id,
+          amount: parseFloat(paymentForm.amount),
+          type: 'RENT',
+          method: methodMap[paymentForm.method] || 'BANK_TRANSFER',
+          dueDate: paymentForm.date,
+          paidDate: paymentForm.date,
+          status: paymentForm.status === 'Paid' ? 'PAID' : 'PENDING',
+          notes: paymentForm.month ? `${paymentForm.month} rent` : undefined,
+        }),
+      })
+      if (res.ok) {
+        setShowRecordPaymentModal(false)
+        setPaymentForm({ month: '', amount: '', date: '', method: 'Bank Transfer', status: 'Paid' })
+        window.location.reload()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to record payment')
+      }
+    } catch { alert('Failed to record payment') }
   }
 
   // Get related data from API response

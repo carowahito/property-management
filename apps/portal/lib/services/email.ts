@@ -11,7 +11,12 @@ interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
+  if (process.env.ENABLE_EMAIL_NOTIFICATIONS === 'false') {
+    console.warn('Email notifications disabled. Email not sent.')
+    return false
+  }
+
+  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY.startsWith('your-')) {
     console.warn('SendGrid API key not configured. Email not sent.')
     return false
   }

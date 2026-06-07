@@ -14,13 +14,109 @@ export default function LandlordCRMPage({ params }: Props) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'financials' | 'tenants' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showContactModal, setShowContactModal] = useState(false)
   const [landlordId, setLandlordId] = useState<string | null>(null)
   const [landlordApiData, setLandlordApiData] = useState<any>(null)
   const [isLoadingLandlord, setIsLoadingLandlord] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState<any>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [contactMessage, setContactMessage] = useState({ subject: '', content: '', method: 'EMAIL' })
+  const [editForm, setEditForm] = useState({
+    name: '', email: '', phone: '', idNumber: '', address: '',
+    bankName: '', bankAccount: '', taxId: '',
+  })
+
+  const refreshLandlord = () => {
+    if (!landlordId) return
+    fetch(`/api/landlords/${landlordId}`)
+      .then(r => r.json())
+      .then(data => setLandlordApiData(data))
+  }
+
+  const handleEditClick = () => {
+    setEditForm({
+      name: landlord?.name || '',
+      email: landlord?.email || '',
+      phone: landlord?.phone || '',
+      idNumber: landlord?.idNumber || '',
+      address: landlord?.address || '',
+      bankName: landlord?.bankName || '',
+      bankAccount: landlord?.bankAccount || '',
+      taxId: landlord?.taxId || '',
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSaveEdit = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/landlords/${landlordId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
+      if (res.ok) {
+        refreshLandlord()
+        setShowEditModal(false)
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to save changes')
+      }
+    } catch { alert('Failed to save changes') }
+    finally { setSaving(false) }
+  }
+
+  const handleSaveNote = async () => {
+    if (!noteText.trim()) return
+    // Notes are stored as messages with category NOTE
+    setSaving(true)
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'NOTE',
+          stakeholderType: 'LANDLORD',
+          stakeholderId: landlordId,
+          subject: 'Note',
+          content: noteText,
+          category: 'GENERAL',
+        }),
+      })
+      setNoteText('')
+      setShowNoteModal(false)
+    } catch { alert('Failed to save note') }
+    finally { setSaving(false) }
+  }
+
+  const handleSendContact = async () => {
+    if (!contactMessage.subject.trim() || !contactMessage.content.trim()) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: contactMessage.method,
+          stakeholderType: 'LANDLORD',
+          stakeholderId: landlordId,
+          subject: contactMessage.subject,
+          content: contactMessage.content,
+          category: 'GENERAL',
+        }),
+      })
+      if (res.ok) {
+        setContactMessage({ subject: '', content: '', method: 'EMAIL' })
+        setShowContactModal(false)
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to send message')
+      }
+    } catch { alert('Failed to send message') }
+    finally { setSaving(false) }
+  }
 
   useEffect(() => {
     params.then(p => setLandlordId(p.id))
@@ -136,24 +232,7 @@ export default function LandlordCRMPage({ params }: Props) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {
-              setEditForm({
-                name: landlord.name || '',
-                email: landlord.email || '',
-                phone: landlord.phone || '',
-                idNumber: landlord.idNumber || '',
-                address: landlord.address || '',
-                bankName: landlord.bankName || '',
-                bankAccount: landlord.bankAccount || '',
-                taxId: landlord.taxId || '',
-                status: landlord.status || 'ACTIVE',
-                managementFeePercent: landlord.managementFeePercent ?? '',
-                managementFeeType: landlord.managementFeeType || 'PERCENTAGE',
-                tenantPlacementFee: landlord.tenantPlacementFee ?? '',
-                tenantPlacementFeeType: landlord.tenantPlacementFeeType || 'MONTHS',
-              })
-              setShowEditModal(true)
-            }}>✏️ Edit</Button>
+            <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
             <Button variant="outline" onClick={() => {
               window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
             }}>
@@ -183,7 +262,7 @@ export default function LandlordCRMPage({ params }: Props) {
             }}>
               {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
             </Button>
-            <Button variant="primary">💬 Contact</Button>
+            <Button variant="primary" onClick={() => setShowContactModal(true)}>💬 Contact</Button>
           </div>
         </div>
       </div>
@@ -696,12 +775,91 @@ export default function LandlordCRMPage({ params }: Props) {
             <h3 className="text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
             <textarea
               rows={6}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="Enter note about this landlord..."
             />
             <div className="flex gap-3 mt-4">
-              <Button variant="outline" onClick={() => setShowNoteModal(false)} className="flex-1">Cancel</Button>
-              <Button variant="primary" className="flex-1">Save Note</Button>
+              <Button variant="outline" onClick={() => { setShowNoteModal(false); setNoteText('') }} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSaveNote} disabled={saving || !noteText.trim()} className="flex-1">
+                {saving ? 'Saving...' : 'Save Note'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Landlord Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-4">Edit Landlord</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name *</label>
+                <input value={editForm.name} onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Email *</label>
+                <input type="email" value={editForm.email} onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone *</label>
+                <input value={editForm.phone} onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">ID Number</label>
+                <input value={editForm.idNumber} onChange={(e) => setEditForm(prev => ({ ...prev, idNumber: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Address</label>
+                <input value={editForm.address} onChange={(e) => setEditForm(prev => ({ ...prev, address: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Name</label>
+                <input value={editForm.bankName} onChange={(e) => setEditForm(prev => ({ ...prev, bankName: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Account</label>
+                <input value={editForm.bankAccount} onChange={(e) => setEditForm(prev => ({ ...prev, bankAccount: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">KRA PIN</label>
+                <input value={editForm.taxId} onChange={(e) => setEditForm(prev => ({ ...prev, taxId: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSaveEdit} disabled={saving || !editForm.name || !editForm.email || !editForm.phone} className="flex-1">
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Landlord Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-4">Contact {landlord.name}</h3>
+            <p className="text-sm text-neutral-500 mb-4">{landlord.email} • {landlord.phone}</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Subject</label>
+                <input value={contactMessage.subject} onChange={(e) => setContactMessage(prev => ({ ...prev, subject: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="e.g. Monthly statement update" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Message</label>
+                <textarea rows={5} value={contactMessage.content} onChange={(e) => setContactMessage(prev => ({ ...prev, content: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="Type your message..." />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <Button variant="outline" onClick={() => setShowContactModal(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSendContact} disabled={saving || !contactMessage.subject || !contactMessage.content} className="flex-1">
+                {saving ? 'Sending...' : 'Send Message'}
+              </Button>
             </div>
           </div>
         </div>

@@ -41,7 +41,12 @@ const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`
  * Send a text message via WhatsApp using Meta Cloud API
  */
 export async function sendWhatsAppMeta(options: WhatsAppMetaOptions): Promise<boolean> {
-  if (!process.env.META_WHATSAPP_PHONE_NUMBER_ID || !process.env.META_WHATSAPP_ACCESS_TOKEN) {
+  if (process.env.ENABLE_WHATSAPP_NOTIFICATIONS === 'false') {
+    console.warn('WhatsApp notifications disabled. Message not sent.')
+    return false
+  }
+
+  if (!process.env.META_WHATSAPP_PHONE_NUMBER_ID || !process.env.META_WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_ACCESS_TOKEN.startsWith('your-')) {
     console.warn('Meta WhatsApp credentials not configured. Message not sent.')
     return false
   }
