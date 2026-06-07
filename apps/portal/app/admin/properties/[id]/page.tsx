@@ -579,66 +579,85 @@ export default function PropertyDetailPage() {
       {/* Units List */}
       <div className="bg-surface rounded-lg border border-neutral-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-neutral-900">
-            Units ({((property as any).propertyUnits)?.length ?? 0})
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-neutral-900">Units</h2>
+            <p className="text-sm text-neutral-500 mt-0.5">
+              {((property as any).propertyUnits)?.length ?? 0} set up
+              {property.totalUnits > 0 ? ` of ${property.totalUnits} total` : ''}
+            </p>
+          </div>
           <Button variant="primary" onClick={() => setShowAddUnitModal(true)}>+ Add Unit</Button>
         </div>
 
-        {!((property as any).propertyUnits)?.length ? (
-          <div className="text-center py-10 text-neutral-400">
-            <p className="text-lg font-medium">No units yet</p>
-            <p className="text-sm mt-1">Click &quot;+ Add Unit&quot; to add the first unit to this property.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-neutral-50 border-b border-neutral-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Unit</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Specs</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Rent</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Owner</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Tenant</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Actions</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-neutral-50 border-b border-neutral-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Unit</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Specs</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Rent</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Owner</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Tenant</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {((property as any).propertyUnits ?? []).map((unit: any) => (
+                <tr key={unit.id} className="hover:bg-neutral-50">
+                  <td className="px-4 py-3 font-semibold text-neutral-900">{unit.unitNumber}</td>
+                  <td className="px-4 py-3 text-neutral-600">
+                    {[unit.bedrooms && `${unit.bedrooms}bd`, unit.bathrooms && `${unit.bathrooms}ba`, unit.floor && `Flr ${unit.floor}`].filter(Boolean).join(' · ') || '—'}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    KES {unit.monthlyRent ? Number(unit.monthlyRent).toLocaleString() : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-neutral-600">{unit.landlord?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-neutral-600">
+                    {unit.tenants?.[0]?.name ?? <span className="text-neutral-400 italic">Vacant</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      unit.status === 'OCCUPIED' ? 'bg-success-100 text-success-700' :
+                      unit.status === 'VACANT' ? 'bg-neutral-100 text-neutral-600' :
+                      unit.status === 'MAINTENANCE' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-primary-100 text-primary-700'
+                    }`}>{unit.status}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/admin/units/${unit.unitNumber}`} className="text-primary-600 hover:underline text-sm">View</Link>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100">
-                {((property as any).propertyUnits).map((unit: any) => (
-                  <tr key={unit.id} className="hover:bg-neutral-50">
-                    <td className="px-4 py-3 font-semibold text-neutral-900">{unit.unitNumber}</td>
-                    <td className="px-4 py-3 text-neutral-600">
-                      {[unit.bedrooms && `${unit.bedrooms}bd`, unit.bathrooms && `${unit.bathrooms}ba`, unit.floor && `Flr ${unit.floor}`].filter(Boolean).join(' · ') || '—'}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-neutral-900">
-                      KES {unit.monthlyRent ? Number(unit.monthlyRent).toLocaleString() : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-neutral-600">{unit.landlord?.name ?? '—'}</td>
-                    <td className="px-4 py-3 text-neutral-600">
-                      {unit.tenants?.[0]?.name ?? <span className="text-neutral-400">Vacant</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        unit.status === 'OCCUPIED' ? 'bg-success-100 text-success-700' :
-                        unit.status === 'VACANT' ? 'bg-neutral-100 text-neutral-600' :
-                        unit.status === 'MAINTENANCE' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-primary-100 text-primary-700'
-                      }`}>
-                        {unit.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/admin/units/${unit.unitNumber}`} className="text-primary-600 hover:underline text-sm">
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+
+              {/* Empty slots for remaining capacity */}
+              {Array.from({ length: Math.max(0, property.totalUnits - (((property as any).propertyUnits)?.length ?? 0)) }).map((_, i) => (
+                <tr key={`slot-${i}`} className="bg-neutral-50/40">
+                  <td className="px-4 py-3 text-neutral-400 italic text-xs">Slot {(((property as any).propertyUnits)?.length ?? 0) + i + 1}</td>
+                  <td className="px-4 py-3 text-neutral-300 text-xs">—</td>
+                  <td className="px-4 py-3 text-neutral-300 text-xs">—</td>
+                  <td className="px-4 py-3 text-neutral-300 text-xs">—</td>
+                  <td className="px-4 py-3 text-neutral-300 text-xs">—</td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-400">Not set up</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => setShowAddUnitModal(true)} className="text-primary-600 hover:underline text-xs">+ Add</button>
+                  </td>
+                </tr>
+              ))}
+
+              {!((property as any).propertyUnits)?.length && !property.totalUnits && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-neutral-400">
+                    <p className="font-medium">No units yet</p>
+                    <p className="text-xs mt-1">Click &quot;+ Add Unit&quot; to add the first unit.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Add Unit Modal */}
