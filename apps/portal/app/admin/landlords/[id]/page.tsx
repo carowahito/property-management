@@ -371,7 +371,7 @@ export default function LandlordCRMPage({ params }: Props) {
                       <span className="text-sm text-neutral-600">Monthly Revenue</span>
                       <span className="text-sm font-medium text-neutral-900">KES {totalMonthlyRevenue.toLocaleString()}</span>
                     </div>
-                    <Button variant="outline" className="w-full mt-2">View All Properties</Button>
+                    <Button variant="outline" className="w-full mt-2" onClick={() => setActiveTab('properties')}>View All Properties</Button>
                   </div>
                 </div>
 
