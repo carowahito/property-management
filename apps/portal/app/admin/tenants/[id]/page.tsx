@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 import TaskManager from '@/components/crm/TaskManager'
@@ -500,11 +501,19 @@ export default function TenantCRMPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-neutral-600">🏠 Property</p>
-                  <p className="font-medium text-neutral-900">{tenant.property}</p>
+                  {tenantApiData?.property?.id ? (
+                    <Link href={`/admin/properties/${tenantApiData.property.id}`} className="font-medium text-primary-600 hover:underline">{tenant.property}</Link>
+                  ) : (
+                    <p className="font-medium text-neutral-900">{tenant.property || '-'}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-neutral-600">🚪 Unit</p>
-                  <p className="font-medium text-neutral-900">{tenant.unit}</p>
+                  {tenantApiData?.unitRef?.unitNumber ? (
+                    <Link href={`/admin/units/${tenantApiData.unitRef.unitNumber}`} className="font-medium text-primary-600 hover:underline">{tenant.unit}</Link>
+                  ) : (
+                    <p className="font-medium text-neutral-900">{tenant.unit || '-'}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-neutral-600">💵 Monthly Rent</p>

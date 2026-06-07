@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 import TaskManager from '@/components/crm/TaskManager'
@@ -497,7 +498,7 @@ export default function LandlordCRMPage({ params }: Props) {
                         {/* Property header */}
                         <div className="flex justify-between items-start p-4 bg-neutral-50">
                           <div>
-                            <h4 className="font-semibold text-neutral-900 text-lg">{property.name}</h4>
+                            <Link href={`/admin/properties/${property.id}`} className="font-semibold text-primary-600 hover:underline text-lg">{property.name}</Link>
                             <p className="text-sm text-neutral-600 mt-0.5">{property.address}</p>
                             <div className="flex gap-4 mt-2 text-sm text-neutral-600">
                               <span>Type: <strong>{property.type}</strong></span>
