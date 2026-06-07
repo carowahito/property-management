@@ -276,8 +276,8 @@ export default function LandlordCRMPage({ params }: Props) {
                   <p className="font-medium text-neutral-900">{landlord.phone}</p>
                 </div>
                 <div>
-                  <p className="text-neutral-600">🏢 Properties</p>
-                  <p className="font-medium text-neutral-900">{totalUnits} unit{totalUnits !== 1 ? 's' : ''} in {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
+                  <p className="text-neutral-600">🏠 Units</p>
+                  <p className="font-medium text-neutral-900">{totalUnits} unit{totalUnits !== 1 ? 's' : ''} across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
                 </div>
                 <div>
                   <p className="text-neutral-600">🏦 Bank</p>
@@ -338,9 +338,9 @@ export default function LandlordCRMPage({ params }: Props) {
           <p className="text-xs text-neutral-500 mt-1">KES {totalMonthlyRevenue.toLocaleString()}/mo</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <p className="text-sm text-neutral-600">Properties</p>
-          <p className="text-2xl font-bold text-primary-600 mt-2">{totalProperties}</p>
-          <p className="text-xs text-neutral-500 mt-1">{totalUnits} total units</p>
+          <p className="text-sm text-neutral-600">Units</p>
+          <p className="text-2xl font-bold text-primary-600 mt-2">{totalUnits}</p>
+          <p className="text-xs text-neutral-500 mt-1">across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
@@ -397,12 +397,12 @@ export default function LandlordCRMPage({ params }: Props) {
                   <h3 className="font-semibold text-neutral-900 mb-4">Portfolio Summary</h3>
                   <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-neutral-600">Total Properties</span>
-                      <span className="text-sm font-medium text-neutral-900">{totalProperties}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-sm text-neutral-600">Total Units</span>
                       <span className="text-sm font-medium text-neutral-900">{totalUnits}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-600">Properties</span>
+                      <span className="text-sm font-medium text-neutral-900">{totalProperties}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-neutral-600">Occupied Units</span>
