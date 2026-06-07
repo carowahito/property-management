@@ -23,9 +23,12 @@ export default function LandlordCRMPage({ params }: Props) {
   const [saving, setSaving] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [contactMessage, setContactMessage] = useState({ subject: '', content: '', method: 'EMAIL' })
+  const [isSaving, setIsSaving] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '', email: '', phone: '', idNumber: '', address: '',
-    bankName: '', bankAccount: '', taxId: '',
+    bankName: '', bankAccount: '', taxId: '', status: 'ACTIVE',
+    managementFeePercent: '', managementFeeType: 'PERCENTAGE',
+    tenantPlacementFee: '', tenantPlacementFeeType: 'MONTHS',
   })
 
   const refreshLandlord = () => {
@@ -45,6 +48,11 @@ export default function LandlordCRMPage({ params }: Props) {
       bankName: landlord?.bankName || '',
       bankAccount: landlord?.bankAccount || '',
       taxId: landlord?.taxId || '',
+      status: landlord?.status || 'ACTIVE',
+      managementFeePercent: landlord?.managementFeePercent ?? '',
+      managementFeeType: landlord?.managementFeeType || 'PERCENTAGE',
+      tenantPlacementFee: landlord?.tenantPlacementFee ?? '',
+      tenantPlacementFeeType: landlord?.tenantPlacementFeeType || 'MONTHS',
     })
     setShowEditModal(true)
   }
