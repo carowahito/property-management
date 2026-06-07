@@ -165,6 +165,9 @@ export async function GET(
 
   const unitInfo = {
     unitNumber: unit.unitNumber,
+    status:     unit.status,
+    floor:      unit.floor,
+    sizeSqm:    unit.sizeSqm,
     property:   { name: unit.property.name, address: unit.property.address, city: unit.property.city },
     landlord:   { name: unit.landlord.name, email: unit.landlord.email, phone: unit.landlord.phone },
     activeTenant: unit.tenants[0] ?? null,
@@ -172,8 +175,12 @@ export async function GET(
     bedrooms:     unit.bedrooms,
     bathrooms:    unit.bathrooms,
     agreedMonthlyRent,
+    monthlyRent:    Number(unit.monthlyRent ?? 0),
     serviceCharge:  Number(unit.serviceCharge ?? 0),
+    serviceChargeType: unit.serviceChargeType,
     managementFee:  Number(unit.managementFee ?? 0),
+    managementFeeType: unit.managementFeeType,
+    description:    unit.description,
   }
 
   const period = { from: from.toISOString(), to: to.toISOString() }

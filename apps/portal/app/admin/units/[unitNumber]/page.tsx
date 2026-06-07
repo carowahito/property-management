@@ -33,7 +33,7 @@ export default function UnitDetailPage() {
 
   const openEdit = () => {
     setForm({
-      monthlyRent: unit?.agreedMonthlyRent ?? unit?.monthlyRent ?? '',
+      monthlyRent: unit?.monthlyRent ?? unit?.agreedMonthlyRent ?? '',
       serviceCharge: unit?.serviceCharge ?? '',
       serviceChargeType: unit?.serviceChargeType ?? 'FIXED',
       managementFee: unit?.managementFee ?? '',
@@ -93,9 +93,12 @@ export default function UnitDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-            unit?.activeTenant ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-600'
+            unit?.status === 'OCCUPIED' ? 'bg-success-100 text-success-700' :
+            unit?.status === 'MAINTENANCE' ? 'bg-warning-100 text-yellow-700' :
+            unit?.status === 'RESERVED' ? 'bg-blue-100 text-blue-700' :
+            'bg-neutral-100 text-neutral-600'
           }`}>
-            {unit?.activeTenant ? 'Occupied' : 'Vacant'}
+            {unit?.status ?? 'VACANT'}
           </span>
           <Button variant="outline" onClick={openEdit}>✏️ Edit</Button>
         </div>
