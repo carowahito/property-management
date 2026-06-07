@@ -135,6 +135,7 @@ export default function TenantCRMPage({ params }: Props) {
 
   const handleSaveEdit = async () => {
     try {
+      // 1. Update tenant fields
       const res = await fetch(`/api/tenants/${tenantId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -146,13 +147,29 @@ export default function TenantCRMPage({ params }: Props) {
           status: editForm.status,
         }),
       })
-      if (res.ok) {
-        setShowEditModal(false)
-        window.location.reload()
-      } else {
+      if (!res.ok) {
         const data = await res.json()
         alert(data.error || 'Failed to save changes')
+        return
       }
+
+      // 2. Update the active lease's monthly rent if it changed
+      const newRent = editForm.rent ? parseFloat(editForm.rent.toString()) : null
+      const currentLease = tenantLeases.find((l: any) => l.status === 'ACTIVE')
+      if (currentLease && newRent !== null && newRent !== Number(currentLease.monthlyRent)) {
+        const leaseRes = await fetch(`/api/leases/${currentLease.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ monthlyRent: newRent }),
+        })
+        if (!leaseRes.ok) {
+          const err = await leaseRes.json()
+          alert(err.error || 'Tenant saved but rent update failed')
+        }
+      }
+
+      setShowEditModal(false)
+      window.location.reload()
     } catch { alert('Failed to save changes') }
   }
 
