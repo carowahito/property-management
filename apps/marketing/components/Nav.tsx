@@ -3,12 +3,13 @@ import s from '@/styles/shared.module.css'
 import { portal } from './portal'
 import { MobileMenu } from './MobileMenu'
 
-type NavKey = 'home' | 'owners' | 'tenants' | 'listings' | 'about' | 'contact'
+type NavKey = 'home' | 'owners' | 'tenants' | 'listings' | 'platform' | 'about' | 'contact'
 
 const LINKS: Array<{ key: NavKey; label: string; href: string }> = [
   { key: 'owners', label: 'Owners', href: '/owners' },
   { key: 'tenants', label: 'Tenants', href: '/tenants' },
   { key: 'listings', label: 'Listings', href: '/listings' },
+  { key: 'platform', label: 'Platform', href: '/platform' },
   { key: 'about', label: 'About', href: '/about' },
   { key: 'contact', label: 'Contact', href: '/contact' },
 ]
