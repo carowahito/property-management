@@ -65,12 +65,6 @@ function HeroSplit() {
         </div>
       </div>
 
-      <div className={styles.heroSpine} aria-hidden="true">
-        OWNERS
-        <span className={styles.or}>— or —</span>
-        TENANTS
-      </div>
-
       <div className={`${styles.heroHalf} ${styles.heroTenants}`}>
         <div className={styles.heroHalfInner}>
           <span className={styles.eyebrow}>For renters &amp; buyers</span>
