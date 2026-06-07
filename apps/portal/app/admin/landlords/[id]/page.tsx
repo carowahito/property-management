@@ -798,55 +798,6 @@ export default function LandlordCRMPage({ params }: Props) {
         </div>
       )}
 
-      {/* Edit Landlord Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Edit Landlord</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name *</label>
-                <input value={editForm.name} onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Email *</label>
-                <input type="email" value={editForm.email} onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone *</label>
-                <input value={editForm.phone} onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">ID Number</label>
-                <input value={editForm.idNumber} onChange={(e) => setEditForm(prev => ({ ...prev, idNumber: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Address</label>
-                <input value={editForm.address} onChange={(e) => setEditForm(prev => ({ ...prev, address: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Name</label>
-                <input value={editForm.bankName} onChange={(e) => setEditForm(prev => ({ ...prev, bankName: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Account</label>
-                <input value={editForm.bankAccount} onChange={(e) => setEditForm(prev => ({ ...prev, bankAccount: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">KRA PIN</label>
-                <input value={editForm.taxId} onChange={(e) => setEditForm(prev => ({ ...prev, taxId: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">Cancel</Button>
-              <Button variant="primary" onClick={handleSaveEdit} disabled={saving || !editForm.name || !editForm.email || !editForm.phone} className="flex-1">
-                {saving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Contact Landlord Modal */}
       {showContactModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
