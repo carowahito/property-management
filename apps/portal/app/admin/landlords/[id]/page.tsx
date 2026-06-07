@@ -26,6 +26,9 @@ export default function LandlordCRMPage({ params }: Props) {
   const [unitsLoading, setUnitsLoading] = useState(false)
   const [newUnit, setNewUnit] = useState({ propertyId: '', unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', status: 'VACANT' })
   const [addingUnit, setAddingUnit] = useState(false)
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null)
+  const [unitEditForm, setUnitEditForm] = useState<any>({})
+  const [savingUnit, setSavingUnit] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const [landlordId, setLandlordId] = useState<string | null>(null)
   const [landlordApiData, setLandlordApiData] = useState<any>(null)
@@ -767,17 +770,151 @@ export default function LandlordCRMPage({ params }: Props) {
                   ) : landlordUnits.length === 0 ? (
                     <p className="text-sm text-neutral-400 bg-neutral-50 rounded-lg p-3">No units assigned yet.</p>
                   ) : (
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
                       {landlordUnits.map((u: any) => (
-                        <div key={u.id} className="flex items-center justify-between bg-neutral-50 rounded-lg px-3 py-2 text-sm">
-                          <div>
-                            <span className="font-medium text-neutral-900">{u.unitNumber}</span>
-                            <span className="text-neutral-500 ml-2">{u.property?.name || ''}</span>
+                        <div key={u.id} className="border border-neutral-200 rounded-lg overflow-hidden">
+                          {/* Unit header row */}
+                          <div className="flex items-center justify-between bg-neutral-50 px-3 py-2 text-sm">
+                            <div>
+                              <span className="font-medium text-neutral-900">{u.unitNumber}</span>
+                              <span className="text-neutral-400 ml-2 text-xs">{u.property?.name || ''}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-neutral-600 text-xs">KES {Number(u.monthlyRent || 0).toLocaleString()}/mo</span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${u.status === 'OCCUPIED' ? 'bg-success-100 text-green-700' : u.status === 'VACANT' ? 'bg-yellow-100 text-yellow-700' : 'bg-neutral-100 text-neutral-600'}`}>{u.status}</span>
+                              <button
+                                className="text-xs text-primary-600 hover:text-primary-800 font-medium px-2 py-0.5 border border-primary-200 rounded"
+                                onClick={() => {
+                                  if (editingUnitId === u.id) {
+                                    setEditingUnitId(null)
+                                  } else {
+                                    setEditingUnitId(u.id)
+                                    setUnitEditForm({
+                                      monthlyRent: u.monthlyRent ?? '',
+                                      status: u.status ?? 'VACANT',
+                                      bedrooms: u.bedrooms ?? '',
+                                      bathrooms: u.bathrooms ?? '',
+                                      floor: u.floor ?? '',
+                                      serviceCharge: u.serviceCharge ?? '',
+                                      serviceChargeType: u.serviceChargeType ?? 'FIXED',
+                                      managementFee: u.managementFee ?? '',
+                                      managementFeeType: u.managementFeeType ?? 'FIXED',
+                                    })
+                                  }
+                                }}
+                              >
+                                {editingUnitId === u.id ? 'Cancel' : '✏️ Edit'}
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-neutral-600">KES {Number(u.monthlyRent || 0).toLocaleString()}/mo</span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${u.status === 'OCCUPIED' ? 'bg-success-100 text-green-700' : u.status === 'VACANT' ? 'bg-yellow-100 text-yellow-700' : 'bg-neutral-100 text-neutral-600'}`}>{u.status}</span>
-                          </div>
+
+                          {/* Inline edit form */}
+                          {editingUnitId === u.id && (
+                            <div className="p-3 bg-white border-t border-neutral-100 space-y-3">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-xs text-neutral-500 mb-1">Monthly Rent (KES)</label>
+                                  <input type="number" min="0" value={unitEditForm.monthlyRent}
+                                    onChange={e => setUnitEditForm({ ...unitEditForm, monthlyRent: e.target.value })}
+                                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-neutral-500 mb-1">Status</label>
+                                  <select value={unitEditForm.status}
+                                    onChange={e => setUnitEditForm({ ...unitEditForm, status: e.target.value })}
+                                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500">
+                                    <option value="VACANT">Vacant</option>
+                                    <option value="OCCUPIED">Occupied</option>
+                                    <option value="MAINTENANCE">Maintenance</option>
+                                    <option value="RESERVED">Reserved</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-neutral-500 mb-1">Floor</label>
+                                  <input type="number" min="0" value={unitEditForm.floor}
+                                    onChange={e => setUnitEditForm({ ...unitEditForm, floor: e.target.value })}
+                                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-neutral-500 mb-1">Bedrooms</label>
+                                  <input type="number" min="0" value={unitEditForm.bedrooms}
+                                    onChange={e => setUnitEditForm({ ...unitEditForm, bedrooms: e.target.value })}
+                                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-neutral-500 mb-1">Bathrooms</label>
+                                  <input type="number" min="0" value={unitEditForm.bathrooms}
+                                    onChange={e => setUnitEditForm({ ...unitEditForm, bathrooms: e.target.value })}
+                                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-neutral-500 mb-1">Service Charge</label>
+                                  <div className="flex gap-1">
+                                    <select value={unitEditForm.serviceChargeType}
+                                      onChange={e => setUnitEditForm({ ...unitEditForm, serviceChargeType: e.target.value })}
+                                      className="w-20 px-1 py-1.5 border border-neutral-300 rounded text-xs focus:ring-1 focus:ring-primary-500">
+                                      <option value="FIXED">KES</option>
+                                      <option value="PERCENTAGE">%</option>
+                                    </select>
+                                    <input type="number" min="0" value={unitEditForm.serviceCharge}
+                                      onChange={e => setUnitEditForm({ ...unitEditForm, serviceCharge: e.target.value })}
+                                      className="flex-1 px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
+                                  </div>
+                                </div>
+                                <div className="col-span-2">
+                                  <label className="block text-xs text-neutral-500 mb-1">Management Fee</label>
+                                  <div className="flex gap-1">
+                                    <select value={unitEditForm.managementFeeType}
+                                      onChange={e => setUnitEditForm({ ...unitEditForm, managementFeeType: e.target.value })}
+                                      className="w-20 px-1 py-1.5 border border-neutral-300 rounded text-xs focus:ring-1 focus:ring-primary-500">
+                                      <option value="FIXED">KES</option>
+                                      <option value="PERCENTAGE">%</option>
+                                    </select>
+                                    <input type="number" min="0" value={unitEditForm.managementFee}
+                                      onChange={e => setUnitEditForm({ ...unitEditForm, managementFee: e.target.value })}
+                                      className="flex-1 px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                disabled={savingUnit}
+                                className="w-full py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+                                onClick={async () => {
+                                  setSavingUnit(true)
+                                  try {
+                                    const p: any = {}
+                                    if (unitEditForm.monthlyRent !== '') p.monthlyRent = parseFloat(unitEditForm.monthlyRent)
+                                    if (unitEditForm.status) p.status = unitEditForm.status
+                                    if (unitEditForm.floor !== '') p.floor = parseInt(unitEditForm.floor)
+                                    if (unitEditForm.bedrooms !== '') p.bedrooms = parseInt(unitEditForm.bedrooms)
+                                    if (unitEditForm.bathrooms !== '') p.bathrooms = parseInt(unitEditForm.bathrooms)
+                                    if (unitEditForm.serviceCharge !== '') p.serviceCharge = parseFloat(unitEditForm.serviceCharge)
+                                    if (unitEditForm.serviceChargeType) p.serviceChargeType = unitEditForm.serviceChargeType
+                                    if (unitEditForm.managementFee !== '') p.managementFee = parseFloat(unitEditForm.managementFee)
+                                    if (unitEditForm.managementFeeType) p.managementFeeType = unitEditForm.managementFeeType
+
+                                    const res = await fetch(`/api/units/${u.unitNumber}`, {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify(p),
+                                    })
+                                    if (!res.ok) {
+                                      const err = await res.json()
+                                      alert(err.error || 'Failed to update unit')
+                                    } else {
+                                      const updated = await res.json()
+                                      setLandlordUnits(prev => prev.map(x => x.id === u.id ? { ...x, ...updated } : x))
+                                      setEditingUnitId(null)
+                                      refreshLandlord()
+                                    }
+                                  } catch { alert('Failed to update unit') }
+                                  finally { setSavingUnit(false) }
+                                }}
+                              >
+                                {savingUnit ? 'Saving…' : 'Save Unit'}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
