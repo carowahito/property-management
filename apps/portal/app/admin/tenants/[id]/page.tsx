@@ -88,11 +88,16 @@ export default function TenantCRMPage({ params }: Props) {
   }, [tenantId])
 
   // Adapt API response to shape used by this component
+  const unitData = tenantApiData?.unitRef || null
   const tenant = tenantApiData ? {
     ...tenantApiData,
     property: tenantApiData.property?.name || '',
-    unit: tenantApiData.unit || tenantApiData.unitRef?.unitNumber || '',
-    rent: Number(tenantApiData.leases?.[0]?.monthlyRent) || 0,
+    unit: tenantApiData.unit || unitData?.unitNumber || '',
+    rent: Number(tenantApiData.leases?.[0]?.monthlyRent) || Number(unitData?.monthlyRent) || 0,
+    serviceCharge: Number(unitData?.serviceCharge) || 0,
+    deposit: Number(tenantApiData.leases?.[0]?.securityDeposit) || 0,
+    landlordName: unitData?.landlord?.name || tenantApiData.property?.landlord?.name || '',
+    landlordId: unitData?.landlord?.id || tenantApiData.property?.landlord?.id || '',
     moveIn: tenantApiData.moveInDate ? tenantApiData.moveInDate.split('T')[0] : '',
   } : null
 
@@ -207,9 +212,9 @@ export default function TenantCRMPage({ params }: Props) {
     } catch { alert('Failed to record payment') }
   }
 
-  // Get related data from API response
+  // Get related data from API response — show active lease, or fall back to most recent
   const tenantLeases = tenantApiData?.leases || []
-  const currentLease = tenantLeases.find((l: any) => l.status === 'ACTIVE')
+  const currentLease = tenantLeases.find((l: any) => l.status === 'ACTIVE') || tenantLeases[0] || null
   const tenantPayments = (tenantApiData?.payments || []).map((p: any) => ({
     ...p,
     month: p.paidDate ? new Date(p.paidDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '',
@@ -519,10 +524,26 @@ export default function TenantCRMPage({ params }: Props) {
                   <p className="text-neutral-600">💵 Monthly Rent</p>
                   <p className="font-medium text-neutral-900">KES {tenant.rent?.toLocaleString()}</p>
                 </div>
+                {tenant.serviceCharge > 0 && (
+                  <div>
+                    <p className="text-neutral-600">🏷️ Service Charge</p>
+                    <p className="font-medium text-neutral-900">KES {tenant.serviceCharge?.toLocaleString()}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-neutral-600">📅 Move-in Date</p>
                   <p className="font-medium text-neutral-900">{formatDate(tenant.moveIn)}</p>
                 </div>
+                {tenant.landlordName && (
+                  <div>
+                    <p className="text-neutral-600">🏢 Landlord</p>
+                    {tenant.landlordId ? (
+                      <Link href={`/admin/landlords/${tenant.landlordId}`} className="font-medium text-primary-600 hover:underline">{tenant.landlordName}</Link>
+                    ) : (
+                      <p className="font-medium text-neutral-900">{tenant.landlordName}</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -593,8 +614,20 @@ export default function TenantCRMPage({ params }: Props) {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Lease Status</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{currentLease?.status || 'N/A'}</p>
-          <p className="text-xs text-neutral-500 mt-1">Ends {currentLease ? formatDate(currentLease.endDate) : 'N/A'}</p>
+          <p className={`text-2xl font-bold mt-2 ${
+            currentLease?.status === 'ACTIVE' ? 'text-success-600' :
+            currentLease?.status === 'EXPIRED' ? 'text-danger-600' :
+            currentLease?.status === 'TERMINATED' ? 'text-danger-600' :
+            currentLease?.status === 'PENDING' ? 'text-warning-600' :
+            'text-neutral-400'
+          }`}>{currentLease?.status || 'No Lease'}</p>
+          <p className="text-xs text-neutral-500 mt-1">
+            {currentLease
+              ? currentLease.status === 'ACTIVE'
+                ? `Ends ${formatDate(currentLease.endDate)}`
+                : `Ended ${formatDate(currentLease.endDate)}`
+              : 'No lease on record'}
+          </p>
         </div>
       </div>
 
@@ -632,15 +665,23 @@ export default function TenantCRMPage({ params }: Props) {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                {/* Current Lease */}
+                {/* Lease */}
                 <div>
-                  <h3 className="font-semibold text-neutral-900 mb-4">Current Lease</h3>
+                  <h3 className="font-semibold text-neutral-900 mb-4">
+                    {currentLease?.status === 'ACTIVE' ? 'Current Lease' : currentLease ? 'Last Lease' : 'Lease'}
+                  </h3>
                   {currentLease ? (
-                    <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-neutral-600">Lease ID</span>
-                        <span className="text-sm font-medium text-neutral-900">{currentLease.id}</span>
-                      </div>
+                    <div className={`rounded-lg p-4 space-y-3 ${currentLease.status === 'ACTIVE' ? 'bg-neutral-50' : 'bg-danger-50 border border-danger-200'}`}>
+                      {currentLease.status !== 'ACTIVE' && (
+                        <div className="flex items-center gap-2 pb-2 border-b border-danger-200">
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                            currentLease.status === 'EXPIRED' ? 'bg-danger-100 text-danger-700' :
+                            currentLease.status === 'TERMINATED' ? 'bg-danger-100 text-danger-700' :
+                            'bg-warning-100 text-warning-700'
+                          }`}>{currentLease.status}</span>
+                          <span className="text-xs text-neutral-500">Ended {formatDate(currentLease.endDate)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-sm text-neutral-600">Start Date</span>
                         <span className="text-sm font-medium text-neutral-900">{formatDate(currentLease.startDate)}</span>
@@ -651,23 +692,25 @@ export default function TenantCRMPage({ params }: Props) {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-neutral-600">Monthly Rent</span>
-                        <span className="text-sm font-medium text-neutral-900">KES {currentLease.monthlyRent.toLocaleString()}</span>
+                        <span className="text-sm font-medium text-neutral-900">KES {Number(currentLease.monthlyRent).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-neutral-600">Security Deposit</span>
+                        <span className="text-sm font-medium text-neutral-900">KES {Number(currentLease.securityDeposit).toLocaleString()}</span>
                       </div>
                       <Button
                         variant="outline"
                         className="w-full mt-2"
-                        onClick={() => {
-                          // If a current lease exists, navigate to the lease detail page
-                          if (currentLease && currentLease.id) {
-                            router.push(`/admin/leases/${currentLease.id}`)
-                          }
-                        }}
+                        onClick={() => router.push(`/admin/leases/${currentLease.id}`)}
                       >
                         View Lease Details
                       </Button>
                     </div>
                   ) : (
-                    <p className="text-neutral-500">No active lease</p>
+                    <div className="bg-neutral-50 rounded-lg p-4 text-center">
+                      <p className="text-neutral-500">No lease on record</p>
+                      <p className="text-xs text-neutral-400 mt-1">Create a lease from the onboarding wizard or leases page</p>
+                    </div>
                   )}
                 </div>
 

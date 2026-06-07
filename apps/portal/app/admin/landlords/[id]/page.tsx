@@ -28,6 +28,8 @@ export default function LandlordCRMPage({ params }: Props) {
   const [unitsLoading, setUnitsLoading] = useState(false)
   const [newUnit, setNewUnit] = useState({ propertyId: '', unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', status: 'VACANT' })
   const [addingUnit, setAddingUnit] = useState(false)
+  const [propertyUnitsForDropdown, setPropertyUnitsForDropdown] = useState<any[]>([])
+  const [useNewUnitNumber, setUseNewUnitNumber] = useState(false)
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null)
   const [unitEditForm, setUnitEditForm] = useState<any>({})
   const [savingUnit, setSavingUnit] = useState(false)
@@ -1071,7 +1073,18 @@ export default function LandlordCRMPage({ params }: Props) {
                       <label className="block text-xs text-neutral-600 mb-1">Property *</label>
                       <select
                         value={newUnit.propertyId}
-                        onChange={e => setNewUnit({ ...newUnit, propertyId: e.target.value })}
+                        onChange={async (e) => {
+                          const pid = e.target.value
+                          setNewUnit({ ...newUnit, propertyId: pid, unitNumber: '', monthlyRent: '', floor: '', bedrooms: '', bathrooms: '' })
+                          setUseNewUnitNumber(false)
+                          if (pid) {
+                            const res = await fetch(`/api/units?propertyId=${pid}`)
+                            const data = await res.json()
+                            setPropertyUnitsForDropdown(data.units || [])
+                          } else {
+                            setPropertyUnitsForDropdown([])
+                          }
+                        }}
                         className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       >
                         <option value="">Select property…</option>
@@ -1082,7 +1095,44 @@ export default function LandlordCRMPage({ params }: Props) {
                     </div>
                     <div>
                       <label className="block text-xs text-neutral-600 mb-1">Unit Number *</label>
-                      <input value={newUnit.unitNumber} onChange={e => setNewUnit({ ...newUnit, unitNumber: e.target.value })} placeholder="e.g. GWG3-A18" className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                      {!useNewUnitNumber && propertyUnitsForDropdown.length > 0 ? (
+                        <>
+                          <select
+                            value={newUnit.unitNumber}
+                            onChange={e => {
+                              const selected = propertyUnitsForDropdown.find((u: any) => u.unitNumber === e.target.value)
+                              if (selected) {
+                                setNewUnit({
+                                  ...newUnit,
+                                  unitNumber: selected.unitNumber,
+                                  monthlyRent: String(Number(selected.monthlyRent) || ''),
+                                  floor: selected.floor ? String(selected.floor) : '',
+                                  bedrooms: selected.bedrooms ? String(selected.bedrooms) : '',
+                                  bathrooms: selected.bathrooms ? String(selected.bathrooms) : '',
+                                })
+                              } else {
+                                setNewUnit({ ...newUnit, unitNumber: e.target.value })
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          >
+                            <option value="">Select unit…</option>
+                            {propertyUnitsForDropdown.map((u: any) => (
+                              <option key={u.id} value={u.unitNumber}>
+                                {u.unitNumber} — KES {Number(u.monthlyRent).toLocaleString()}/mo {u.tenants?.length > 0 ? '(occupied)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                          <button onClick={() => setUseNewUnitNumber(true)} className="text-xs text-primary-600 hover:underline mt-1">+ Enter new unit number</button>
+                        </>
+                      ) : (
+                        <>
+                          <input value={newUnit.unitNumber} onChange={e => setNewUnit({ ...newUnit, unitNumber: e.target.value })} placeholder="e.g. GWG3-A18" className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                          {propertyUnitsForDropdown.length > 0 && (
+                            <button onClick={() => setUseNewUnitNumber(false)} className="text-xs text-primary-600 hover:underline mt-1">Select existing unit</button>
+                          )}
+                        </>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs text-neutral-600 mb-1">Monthly Rent (KES) *</label>
