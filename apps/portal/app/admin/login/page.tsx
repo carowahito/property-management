@@ -160,18 +160,6 @@ function AdminLoginForm() {
           </div>
         </form>
 
-        {/* Demo Credentials */}
-        <div className="bg-neutral-800 rounded-lg shadow-xl p-6 border border-neutral-700">
-          <h3 className="text-sm font-semibold text-white mb-3">Demo Account</h3>
-          <div className="text-xs bg-neutral-700 p-3 rounded border border-neutral-600">
-            <div className="text-neutral-300 mb-1">Email: <span className="text-white font-mono">admin@propmanage.com</span></div>
-            <div className="text-neutral-300">Password: <span className="text-white font-mono">admin123</span></div>
-          </div>
-          <p className="text-xs text-neutral-400 mt-2">
-            Use the above credentials for testing. Change password after first login.
-          </p>
-        </div>
-
         {/* Back to Home */}
         <div className="text-center">
           <Link href="/" className="text-sm text-primary-400 hover:text-primary-300 font-medium">
