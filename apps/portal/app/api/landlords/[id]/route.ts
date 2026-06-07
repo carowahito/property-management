@@ -60,6 +60,31 @@ export async function GET(
           },
           orderBy: { unitNumber: 'asc' },
         },
+        messages: {
+          select: {
+            id: true,
+            type: true,
+            subject: true,
+            content: true,
+            category: true,
+            sentAt: true,
+          },
+          orderBy: { sentAt: 'desc' },
+          take: 50,
+        },
+        rentTransactions: {
+          select: {
+            id: true,
+            grossRent: true,
+            netAmount: true,
+            managementFee: true,
+            rentPeriod: true,
+            payoutStatus: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
         _count: {
           select: {
             properties: true,

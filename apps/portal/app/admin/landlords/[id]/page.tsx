@@ -229,10 +229,16 @@ export default function LandlordCRMPage({ params }: Props) {
   )
   const landlordPayouts = landlordApiData?.payouts || []
 
-  const tenantNotes: any[] = []
-  const communications: any[] = []
-  const activityLog: any[] = []
-  const documents: any[] = []
+  const allMessages: any[] = landlordApiData?.messages || []
+  const tenantNotes = allMessages.filter((m: any) => m.type === 'NOTE')
+  const communications = allMessages.filter((m: any) => m.type !== 'NOTE')
+  const rentTransactions: any[] = landlordApiData?.rentTransactions || []
+
+  const activityLog = [
+    ...allMessages.map((m: any) => ({ id: m.id, type: m.type === 'NOTE' ? 'note' : 'communication', description: `${m.type}: ${m.subject}`, date: m.sentAt, user: '' })),
+    ...landlordPayouts.map((p: any) => ({ id: p.id, type: 'payment', description: `Payout: KES ${Number(p.amount).toLocaleString()}`, date: p.paidDate, user: '' })),
+    ...rentTransactions.map((t: any) => ({ id: t.id, type: 'payment', description: `Rent collected: KES ${Number(t.grossRent).toLocaleString()}`, date: t.createdAt, user: '' })),
+  ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   // Calculate statistics from real data
   const totalProperties = landlordProperties.length
@@ -557,9 +563,43 @@ export default function LandlordCRMPage({ params }: Props) {
 
           {/* Financials Tab */}
           {activeTab === 'financials' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Rent Transactions */}
+              {rentTransactions.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-neutral-900 mb-3">Rent Transactions</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-neutral-200">
+                      <thead className="bg-neutral-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Gross Rent</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Mgmt Fee</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Net Payout</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-surface divide-y divide-neutral-200">
+                        {rentTransactions.map((tx: any) => (
+                          <tr key={tx.id} className="hover:bg-neutral-50">
+                            <td className="px-6 py-4 text-sm text-neutral-900">{tx.rentPeriod || formatDate(tx.createdAt)}</td>
+                            <td className="px-6 py-4 text-sm text-neutral-900">KES {Number(tx.grossRent).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-sm text-neutral-500">KES {Number(tx.managementFee).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-sm font-semibold text-success-600">KES {Number(tx.netAmount).toLocaleString()}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${tx.payoutStatus === 'PAID' ? 'bg-success-100 text-green-800' : 'bg-warning-100 text-yellow-800'}`}>{tx.payoutStatus}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Payouts */}
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-neutral-900">Financial History</h3>
+                <h3 className="font-semibold text-neutral-900">Payout History</h3>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -694,23 +734,23 @@ export default function LandlordCRMPage({ params }: Props) {
           {activeTab === 'communications' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-neutral-900">Communication History</h3>
-                <Button variant="primary">✉️ Send Message</Button>
+                <h3 className="font-semibold text-neutral-900">Communication History ({communications.length})</h3>
+                <Button variant="primary" onClick={() => setShowContactModal(true)}>✉️ Send Message</Button>
               </div>
-              {communications.map(comm => (
+              {communications.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
+                  <p className="text-4xl mb-2">💬</p>
+                  <p className="text-neutral-500 font-medium">No messages yet</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setShowContactModal(true)}>Send First Message</Button>
+                </div>
+              ) : communications.map((comm: any) => (
                 <div key={comm.id} className="border border-neutral-200 rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-medium text-neutral-900">{comm.subject}</h4>
-                      <p className="text-sm text-neutral-600 capitalize">{comm.type} • {formatDate(comm.date)}</p>
+                      <p className="text-sm text-neutral-600 mt-1">{comm.content}</p>
+                      <p className="text-xs text-neutral-500 mt-2 capitalize">{comm.type?.toLowerCase()} • {comm.category?.toLowerCase()} • {formatDate(comm.sentAt)}</p>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      comm.status === 'read' ? 'bg-success-100 text-green-800' :
-                      comm.status === 'delivered' ? 'bg-primary-100 text-primary-800' :
-                      'bg-neutral-100 text-neutral-800'
-                    }`}>
-                      {comm.status}
-                    </span>
                   </div>
                 </div>
               ))}
@@ -721,15 +761,20 @@ export default function LandlordCRMPage({ params }: Props) {
           {activeTab === 'notes' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-neutral-900">Notes</h3>
+                <h3 className="font-semibold text-neutral-900">Notes ({tenantNotes.length})</h3>
                 <Button variant="primary" onClick={() => setShowNoteModal(true)}>+ Add Note</Button>
               </div>
-              {tenantNotes.map(note => (
+              {tenantNotes.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
+                  <p className="text-4xl mb-2">📝</p>
+                  <p className="text-neutral-500 font-medium">No notes yet</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setShowNoteModal(true)}>Add First Note</Button>
+                </div>
+              ) : tenantNotes.map((note: any) => (
                 <div key={note.id} className="border border-neutral-200 rounded-lg p-4">
-                  <p className="text-neutral-900 mb-2">{note.note}</p>
-                  <p className="text-sm text-neutral-500">
-                    {note.author && `${note.author} • `}{formatDate(note.date)}
-                  </p>
+                  {note.subject && note.subject !== 'Note' && <p className="font-medium text-neutral-900 mb-1">{note.subject}</p>}
+                  <p className="text-neutral-700">{note.content}</p>
+                  <p className="text-xs text-neutral-500 mt-2">{formatDate(note.sentAt)}</p>
                 </div>
               ))}
             </div>
@@ -745,22 +790,35 @@ export default function LandlordCRMPage({ params }: Props) {
           )}
 
           {/* Activity Log Tab */}
-          {activeTab === 'activity' && (
-            <div className="space-y-3">
-              <h3 className="font-semibold text-neutral-900 mb-4">Activity Timeline</h3>
-              {activityLog.map(activity => (
-                <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b border-neutral-200 last:border-0">
-                  <div className="w-10 h-10 bg-neutral-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg">{getActivityIcon(activity.type)}</span>
+          {activeTab === 'activity' && (() => {
+            const activities = [
+              ...allMessages.map((m: any) => ({ id: m.id, type: m.type === 'NOTE' ? 'note' : 'communication', description: `${m.type}: ${m.subject}`, date: m.sentAt })),
+              ...landlordPayouts.map((p: any) => ({ id: p.id, type: 'payment', description: `Payout: KES ${Number(p.amount).toLocaleString()} (${p.period || 'N/A'})`, date: p.paidDate || p.createdAt })),
+              ...rentTransactions.map((t: any) => ({ id: t.id, type: 'payment', description: `Rent: KES ${Number(t.grossRent).toLocaleString()} → Net KES ${Number(t.netAmount).toLocaleString()}`, date: t.createdAt })),
+            ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+            return (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-neutral-900 mb-4">Activity Timeline</h3>
+                {activities.length === 0 ? (
+                  <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
+                    <p className="text-4xl mb-2">📋</p>
+                    <p className="text-neutral-500 font-medium">No activity yet</p>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-neutral-900">{activity.description}</p>
-                    <p className="text-sm text-neutral-500">{formatDate(activity.date)} • {activity.user}</p>
+                ) : activities.map(activity => (
+                  <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b border-neutral-200 last:border-0">
+                    <div className="w-10 h-10 bg-neutral-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">{getActivityIcon(activity.type)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-neutral-900">{activity.description}</p>
+                      <p className="text-sm text-neutral-500">{formatDate(activity.date)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )
+          })()}
         </div>
       </div>
 
