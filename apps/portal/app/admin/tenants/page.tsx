@@ -294,12 +294,36 @@ export default function TenantsPage() {
     console.log('Generating lease document...')
   }
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isFormValid()) return
-    
-    // TODO: Submit to API
-    console.log('Submitting tenant:', formData)
+
+    try {
+      const res = await fetch('/api/tenants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: formData.mobilePhone,
+          idNumber: formData.idNumber || undefined,
+          propertyId: formData.propertyId,
+          unit: formData.unit,
+          moveInDate: formData.moveInDate || undefined,
+          status: 'ACTIVE',
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error || 'Failed to add tenant')
+        return
+      }
+      queryClient.invalidateQueries({ queryKey: ['tenants'] })
+    } catch {
+      alert('Failed to add tenant')
+      return
+    }
+
     setShowAddTenantModal(false)
     // Reset form
     setFormData({

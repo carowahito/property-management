@@ -50,8 +50,14 @@ export default function VendorCRMPage({ params }: Props) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'invoices' | 'performance' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showContactModal, setShowContactModal] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [noteText, setNoteText] = useState('')
   const [vendorId, setVendorId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', specialization: '', address: '' })
+  const [contactMessage, setContactMessage] = useState({ subject: '', content: '' })
 
   useEffect(() => {
     params.then(p => setVendorId(p.id))
@@ -78,6 +84,57 @@ export default function VendorCRMPage({ params }: Props) {
         </Button>
       </div>
     </div>
+  }
+
+  const handleEditClick = () => {
+    setEditForm({
+      name: vendor.name || '', email: vendor.email || '', phone: vendor.phone || '',
+      specialization: vendor.specialization || '', address: vendor.address || '',
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSaveEdit = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/vendors/${vendorId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
+      if (res.ok) { setShowEditModal(false); window.location.reload() }
+      else { const d = await res.json(); alert(d.error || 'Failed to save') }
+    } catch { alert('Failed to save') }
+    finally { setSaving(false) }
+  }
+
+  const handleSaveNote = async () => {
+    if (!noteText.trim()) return
+    setSaving(true)
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'NOTE', stakeholderType: 'VENDOR', stakeholderId: vendorId, subject: 'Note', content: noteText, category: 'GENERAL' }),
+      })
+      setNoteText(''); setShowNoteModal(false)
+    } catch { alert('Failed to save note') }
+    finally { setSaving(false) }
+  }
+
+  const handleSendContact = async () => {
+    if (!contactMessage.subject || !contactMessage.content) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'EMAIL', stakeholderType: 'VENDOR', stakeholderId: vendorId, subject: contactMessage.subject, content: contactMessage.content, category: 'GENERAL' }),
+      })
+      if (res.ok) { setContactMessage({ subject: '', content: '' }); setShowContactModal(false) }
+      else { const d = await res.json(); alert(d.error || 'Failed to send') }
+    } catch { alert('Failed to send') }
+    finally { setSaving(false) }
   }
 
   const vendorJobs = vendor.workOrders || []
@@ -165,7 +222,7 @@ export default function VendorCRMPage({ params }: Props) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">✏️ Edit</Button>
+            <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
             <Button variant="outline" onClick={async () => {
               if (inviteSending) return
               setInviteSending(true)
@@ -190,7 +247,7 @@ export default function VendorCRMPage({ params }: Props) {
             }}>
               {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
             </Button>
-            <Button variant="primary">💬 Contact</Button>
+            <Button variant="primary" onClick={() => setShowContactModal(true)}>💬 Contact</Button>
           </div>
         </div>
       </div>
@@ -548,14 +605,69 @@ export default function VendorCRMPage({ params }: Props) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
             <h3 className="text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
-            <textarea
-              rows={6}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-warning-500 focus:border-transparent"
-              placeholder="Enter note about this vendor..."
-            />
+            <textarea rows={6} value={noteText} onChange={(e) => setNoteText(e.target.value)} className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="Enter note about this vendor..." />
             <div className="flex gap-3 mt-4">
-              <Button variant="outline" onClick={() => setShowNoteModal(false)} className="flex-1">Cancel</Button>
-              <Button variant="primary" className="flex-1">Save Note</Button>
+              <Button variant="outline" onClick={() => { setShowNoteModal(false); setNoteText('') }} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSaveNote} disabled={saving || !noteText.trim()} className="flex-1">{saving ? 'Saving...' : 'Save Note'}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Vendor Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-4">Edit Vendor</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Name *</label>
+                <input value={editForm.name} onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Email *</label>
+                <input type="email" value={editForm.email} onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone *</label>
+                <input value={editForm.phone} onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Specialization</label>
+                <input value={editForm.specialization} onChange={(e) => setEditForm(prev => ({ ...prev, specialization: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Address</label>
+                <input value={editForm.address} onChange={(e) => setEditForm(prev => ({ ...prev, address: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSaveEdit} disabled={saving || !editForm.name || !editForm.email || !editForm.phone} className="flex-1">{saving ? 'Saving...' : 'Save Changes'}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Vendor Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-4">Contact {vendor.name}</h3>
+            <p className="text-sm text-neutral-500 mb-4">{vendor.email} • {vendor.phone}</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Subject</label>
+                <input value={contactMessage.subject} onChange={(e) => setContactMessage(prev => ({ ...prev, subject: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" placeholder="e.g. New job assignment" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Message</label>
+                <textarea rows={5} value={contactMessage.content} onChange={(e) => setContactMessage(prev => ({ ...prev, content: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" placeholder="Type your message..." />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <Button variant="outline" onClick={() => setShowContactModal(false)} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSendContact} disabled={saving || !contactMessage.subject || !contactMessage.content} className="flex-1">{saving ? 'Sending...' : 'Send Message'}</Button>
             </div>
           </div>
         </div>
