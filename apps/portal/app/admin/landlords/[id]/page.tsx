@@ -191,10 +191,9 @@ export default function LandlordCRMPage({ params }: Props) {
   const totalUnits = landlordUnitsFromApi.length  // actual unit records, not property.totalUnits
   const occupiedUnits = landlordUnitsFromApi.filter((u: any) => u.status === 'OCCUPIED').length
   const paidPayouts = landlordPayouts.filter((p: any) => p.status === 'PAID')
-  // Most recent payout = monthly revenue; sum of all paid payouts = total collected
-  const latestPayout = paidPayouts.length > 0 ? Number(paidPayouts[0].amount) : 0
-  const totalMonthlyRevenue = latestPayout
   const totalCollected = paidPayouts.reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+  // Portfolio value = sum of monthly rents from actual units
+  const totalMonthlyRevenue = landlordUnitsFromApi.reduce((sum: number, u: any) => sum + Number(u.monthlyRent || 0), 0)
   const yearlyRevenue = totalMonthlyRevenue * 12
 
   const getActivityIcon = (type: string) => {
@@ -298,7 +297,7 @@ export default function LandlordCRMPage({ params }: Props) {
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Portfolio Value</p>
           <p className="text-2xl font-bold text-success-600 mt-2">KES {yearlyRevenue.toLocaleString()}</p>
-          <p className="text-xs text-neutral-500 mt-1">Annual revenue</p>
+          <p className="text-xs text-neutral-500 mt-1">KES {totalMonthlyRevenue.toLocaleString()}/mo</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Properties</p>
