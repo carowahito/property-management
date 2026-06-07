@@ -829,6 +829,7 @@ export default function LandlordCRMPage({ params }: Props) {
                                     <option value="OCCUPIED">Occupied</option>
                                     <option value="MAINTENANCE">Maintenance</option>
                                     <option value="RESERVED">Reserved</option>
+                                    <option value="ARCHIVED">Archived</option>
                                   </select>
                                 </div>
                                 <div>
@@ -878,43 +879,96 @@ export default function LandlordCRMPage({ params }: Props) {
                                   </div>
                                 </div>
                               </div>
-                              <button
-                                disabled={savingUnit}
-                                className="w-full py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
-                                onClick={async () => {
-                                  setSavingUnit(true)
-                                  try {
-                                    const p: any = {}
-                                    if (unitEditForm.monthlyRent !== '') p.monthlyRent = parseFloat(unitEditForm.monthlyRent)
-                                    if (unitEditForm.status) p.status = unitEditForm.status
-                                    if (unitEditForm.floor !== '') p.floor = parseInt(unitEditForm.floor)
-                                    if (unitEditForm.bedrooms !== '') p.bedrooms = parseInt(unitEditForm.bedrooms)
-                                    if (unitEditForm.bathrooms !== '') p.bathrooms = parseInt(unitEditForm.bathrooms)
-                                    if (unitEditForm.serviceCharge !== '') p.serviceCharge = parseFloat(unitEditForm.serviceCharge)
-                                    if (unitEditForm.serviceChargeType) p.serviceChargeType = unitEditForm.serviceChargeType
-                                    if (unitEditForm.managementFee !== '') p.managementFee = parseFloat(unitEditForm.managementFee)
-                                    if (unitEditForm.managementFeeType) p.managementFeeType = unitEditForm.managementFeeType
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  disabled={savingUnit}
+                                  className="flex-1 py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+                                  onClick={async () => {
+                                    setSavingUnit(true)
+                                    try {
+                                      const p: any = {}
+                                      if (unitEditForm.monthlyRent !== '') p.monthlyRent = parseFloat(unitEditForm.monthlyRent)
+                                      if (unitEditForm.status) p.status = unitEditForm.status
+                                      if (unitEditForm.floor !== '') p.floor = parseInt(unitEditForm.floor)
+                                      if (unitEditForm.bedrooms !== '') p.bedrooms = parseInt(unitEditForm.bedrooms)
+                                      if (unitEditForm.bathrooms !== '') p.bathrooms = parseInt(unitEditForm.bathrooms)
+                                      if (unitEditForm.serviceCharge !== '') p.serviceCharge = parseFloat(unitEditForm.serviceCharge)
+                                      if (unitEditForm.serviceChargeType) p.serviceChargeType = unitEditForm.serviceChargeType
+                                      if (unitEditForm.managementFee !== '') p.managementFee = parseFloat(unitEditForm.managementFee)
+                                      if (unitEditForm.managementFeeType) p.managementFeeType = unitEditForm.managementFeeType
+                                      const res = await fetch(`/api/units/${u.unitNumber}`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(p),
+                                      })
+                                      if (!res.ok) {
+                                        const err = await res.json()
+                                        alert(err.error || 'Failed to update unit')
+                                      } else {
+                                        const updated = await res.json()
+                                        setLandlordUnits(prev => prev.map(x => x.id === u.id ? { ...x, ...updated } : x))
+                                        setEditingUnitId(null)
+                                        refreshLandlord()
+                                      }
+                                    } catch { alert('Failed to update unit') }
+                                    finally { setSavingUnit(false) }
+                                  }}
+                                >
+                                  {savingUnit ? 'Saving…' : 'Save'}
+                                </button>
 
-                                    const res = await fetch(`/api/units/${u.unitNumber}`, {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify(p),
-                                    })
-                                    if (!res.ok) {
-                                      const err = await res.json()
-                                      alert(err.error || 'Failed to update unit')
-                                    } else {
-                                      const updated = await res.json()
-                                      setLandlordUnits(prev => prev.map(x => x.id === u.id ? { ...x, ...updated } : x))
-                                      setEditingUnitId(null)
-                                      refreshLandlord()
-                                    }
-                                  } catch { alert('Failed to update unit') }
-                                  finally { setSavingUnit(false) }
-                                }}
-                              >
-                                {savingUnit ? 'Saving…' : 'Save Unit'}
-                              </button>
+                                <button
+                                  disabled={savingUnit}
+                                  title="Archive unit — marks it as archived but keeps its history"
+                                  className="px-3 py-1.5 bg-neutral-100 text-neutral-600 rounded text-sm font-medium hover:bg-neutral-200 disabled:opacity-50"
+                                  onClick={async () => {
+                                    if (!confirm(`Archive unit ${u.unitNumber}? It will be hidden from active lists but its history is preserved.`)) return
+                                    setSavingUnit(true)
+                                    try {
+                                      const res = await fetch(`/api/units/${u.unitNumber}`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ status: 'ARCHIVED' }),
+                                      })
+                                      if (!res.ok) {
+                                        const err = await res.json()
+                                        alert(err.error || 'Failed to archive unit')
+                                      } else {
+                                        setLandlordUnits(prev => prev.map(x => x.id === u.id ? { ...x, status: 'ARCHIVED' } : x))
+                                        setEditingUnitId(null)
+                                        refreshLandlord()
+                                      }
+                                    } catch { alert('Failed to archive unit') }
+                                    finally { setSavingUnit(false) }
+                                  }}
+                                >
+                                  📦 Archive
+                                </button>
+
+                                <button
+                                  disabled={savingUnit}
+                                  title="Permanently delete this unit"
+                                  className="px-3 py-1.5 bg-danger-50 text-danger-600 rounded text-sm font-medium hover:bg-danger-100 disabled:opacity-50"
+                                  onClick={async () => {
+                                    if (!confirm(`Permanently delete unit ${u.unitNumber}? This cannot be undone.`)) return
+                                    setSavingUnit(true)
+                                    try {
+                                      const res = await fetch(`/api/units/${u.unitNumber}`, { method: 'DELETE' })
+                                      if (!res.ok) {
+                                        const err = await res.json()
+                                        alert(err.error || 'Failed to delete unit')
+                                      } else {
+                                        setLandlordUnits(prev => prev.filter(x => x.id !== u.id))
+                                        setEditingUnitId(null)
+                                        refreshLandlord()
+                                      }
+                                    } catch { alert('Failed to delete unit') }
+                                    finally { setSavingUnit(false) }
+                                  }}
+                                >
+                                  🗑 Delete
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>

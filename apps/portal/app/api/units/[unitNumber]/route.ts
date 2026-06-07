@@ -10,7 +10,7 @@ const updateUnitSchema = z.object({
   serviceChargeType: z.enum(['FIXED', 'PERCENTAGE']).optional(),
   managementFee: z.number().min(0).optional(),
   managementFeeType: z.enum(['FIXED', 'PERCENTAGE']).optional(),
-  status: z.enum(['VACANT', 'OCCUPIED', 'MAINTENANCE', 'RESERVED']).optional(),
+  status: z.enum(['VACANT', 'OCCUPIED', 'MAINTENANCE', 'RESERVED', 'ARCHIVED']).optional(),
   bedrooms: z.number().int().min(0).optional(),
   bathrooms: z.number().int().min(0).optional(),
   floor: z.number().int().optional(),
@@ -72,6 +72,32 @@ export async function GET(
     if (!unit) return NextResponse.json({ error: 'Unit not found' }, { status: 404 })
     return NextResponse.json(unit)
   } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ unitNumber: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { unitNumber } = await params
+    const unit = await prisma.unit.findUnique({ where: { unitNumber } })
+    if (!unit) return NextResponse.json({ error: 'Unit not found' }, { status: 404 })
+
+    // Block deletion if unit has an active tenant or open lease
+    const activeTenant = await prisma.tenant.findFirst({ where: { unitId: unit.id, status: 'ACTIVE' } })
+    if (activeTenant) {
+      return NextResponse.json({ error: 'Cannot delete a unit with an active tenant. Move out the tenant first.' }, { status: 409 })
+    }
+
+    await prisma.unit.delete({ where: { unitNumber } })
+    return NextResponse.json({ message: 'Unit deleted' })
+  } catch (error: any) {
+    console.error('Error deleting unit:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

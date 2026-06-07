@@ -1213,6 +1213,7 @@ enum UnitStatus {
   OCCUPIED
   MAINTENANCE
   RESERVED
+  ARCHIVED
 }
 
 enum PropertyType {
