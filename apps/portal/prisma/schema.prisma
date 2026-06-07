@@ -280,8 +280,9 @@ model LandlordDocument {
   name        String
   fileType    String
   fileSize    Int
-  storagePath String
-  url         String
+  storagePath String   @default("")
+  url         String   @default("")
+  content     String?  // base64 fallback when Supabase Storage not available
   uploadedAt  DateTime @default(now())
 
   landlord    Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
