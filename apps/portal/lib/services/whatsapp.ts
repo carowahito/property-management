@@ -15,7 +15,12 @@ interface WhatsAppOptions {
 }
 
 export async function sendWhatsApp(options: WhatsAppOptions): Promise<boolean> {
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+  if (process.env.ENABLE_WHATSAPP_NOTIFICATIONS === 'false') {
+    console.warn('WhatsApp notifications disabled. Message not sent.')
+    return false
+  }
+
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || process.env.TWILIO_ACCOUNT_SID.startsWith('your-')) {
     console.warn('Twilio credentials not configured. WhatsApp message not sent.')
     return false
   }
