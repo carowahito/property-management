@@ -4,14 +4,22 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
+type EntryPoint = 'choose' | 'new-landlord' | 'existing-property'
 type Step = 'landlord' | 'property' | 'units' | 'tenant' | 'lease' | 'done'
 
-const STEPS: { key: Step; label: string; num: number }[] = [
-  { key: 'landlord', label: 'Landlord', num: 1 },
-  { key: 'property', label: 'Property', num: 2 },
-  { key: 'units', label: 'Units', num: 3 },
-  { key: 'tenant', label: 'Tenant', num: 4 },
-  { key: 'lease', label: 'Lease', num: 5 },
+const STEPS_NEW: { key: Step; label: string }[] = [
+  { key: 'landlord', label: 'Landlord' },
+  { key: 'property', label: 'Property' },
+  { key: 'units', label: 'Units' },
+  { key: 'tenant', label: 'Tenant' },
+  { key: 'lease', label: 'Lease' },
+]
+
+const STEPS_EXISTING: { key: Step; label: string }[] = [
+  { key: 'property', label: 'Property' },
+  { key: 'units', label: 'Units' },
+  { key: 'tenant', label: 'Tenant' },
+  { key: 'lease', label: 'Lease' },
 ]
 
 const PROPERTY_TYPES = ['APARTMENT', 'HOUSE', 'CONDO', 'TOWNHOUSE', 'STUDIO'] as const
@@ -28,16 +36,23 @@ interface CreatedIds {
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const [entryPoint, setEntryPoint] = useState<EntryPoint>('choose')
   const [step, setStep] = useState<Step>('landlord')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [created, setCreated] = useState<Partial<CreatedIds>>({})
+
+  const steps = entryPoint === 'existing-property' ? STEPS_EXISTING : STEPS_NEW
 
   // --- Landlord form ---
   const [landlord, setLandlord] = useState({
     name: '', email: '', phone: '', idNumber: '', address: '',
     bankName: '', bankAccount: '', taxId: '', managementFeePercent: '10',
   })
+
+  // --- Existing landlords for property step ---
+  const [existingLandlords, setExistingLandlords] = useState<{ id: string; name: string; email: string }[]>([])
+  const [selectedLandlordId, setSelectedLandlordId] = useState('')
 
   // --- Property form ---
   const [property, setProperty] = useState({
@@ -59,26 +74,24 @@ export default function OnboardingPage() {
   // --- Tenant form ---
   const [tenant, setTenant] = useState({
     name: '', email: '', phone: '', idNumber: '',
-    emergencyContact: '', emergencyPhone: '', unitId: '',
+    emergencyContact: '', emergencyPhone: '', unitId: '', moveInDate: '',
   })
 
   // --- Lease form ---
   const [lease, setLease] = useState({
     unitId: '', startDate: '', endDate: '', monthlyRent: '',
-    securityDeposit: '', terms: '',
+    securityDeposit: '', leaseTerm: '12', terms: '',
   })
 
-  // Fetch existing properties when entering property step
+  // Fetch existing properties + landlords
   useEffect(() => {
-    if (step === 'property') {
-      fetch('/api/properties')
-        .then(res => res.json())
-        .then(data => setExistingProperties(data.properties || []))
-        .catch(() => {})
+    if (step === 'property' || entryPoint === 'existing-property') {
+      fetch('/api/properties').then(r => r.json()).then(data => setExistingProperties(data.properties || [])).catch(() => {})
+      fetch('/api/landlords').then(r => r.json()).then(data => setExistingLandlords((data.landlords || []).map((l: any) => ({ id: l.id, name: l.name, email: l.email })))).catch(() => {})
     }
-  }, [step])
+  }, [step, entryPoint])
 
-  // Filter suggestions as user types property name
+  // Filter property suggestions
   useEffect(() => {
     if (property.name.length >= 2 && !selectedExistingProperty) {
       const query = property.name.toLowerCase()
@@ -93,13 +106,20 @@ export default function OnboardingPage() {
   // Close suggestions on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false)
-      }
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) setShowSuggestions(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Auto-calculate lease end date
+  useEffect(() => {
+    if (lease.startDate && lease.leaseTerm) {
+      const start = new Date(lease.startDate)
+      start.setMonth(start.getMonth() + parseInt(lease.leaseTerm))
+      setLease(prev => ({ ...prev, endDate: start.toISOString().split('T')[0] }))
+    }
+  }, [lease.startDate, lease.leaseTerm])
 
   const selectExistingProperty = (p: typeof existingProperties[0]) => {
     setSelectedExistingProperty(p.id)
@@ -120,59 +140,35 @@ export default function OnboardingPage() {
     setError('')
     setSaving(true)
     try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || data.details?.[0]?.message || 'Something went wrong')
-        return null
-      }
+      if (!res.ok) { setError(data.error || data.details?.[0]?.message || 'Something went wrong'); return null }
       return data
-    } catch {
-      setError('Network error. Please try again.')
-      return null
-    } finally {
-      setSaving(false)
-    }
+    } catch { setError('Network error. Please try again.'); return null }
+    finally { setSaving(false) }
   }
 
   const saveLandlord = async () => {
-    const data = await save('/api/landlords', {
-      ...landlord,
-      managementFeePercent: parseFloat(landlord.managementFeePercent) || 10,
-    })
-    if (data) {
-      setCreated(prev => ({ ...prev, landlordId: data.id, landlordName: data.name }))
-      setStep('property')
-    }
+    const data = await save('/api/landlords', { ...landlord, managementFeePercent: parseFloat(landlord.managementFeePercent) || 10 })
+    if (data) { setCreated(prev => ({ ...prev, landlordId: data.id, landlordName: data.name })); setStep('property') }
   }
 
   const saveProperty = async () => {
+    const landlordId = created.landlordId || selectedLandlordId
+    if (!landlordId) { setError('Please select a landlord'); return }
+
     if (selectedExistingProperty) {
-      // Use existing property — skip creation
-      setCreated(prev => ({ ...prev, propertyId: selectedExistingProperty, propertyName: property.name, units: [] }))
+      setCreated(prev => ({ ...prev, landlordId, propertyId: selectedExistingProperty, propertyName: property.name, units: [] }))
       setStep('units')
       return
     }
-    const data = await save('/api/properties', {
-      ...property,
-      landlordId: created.landlordId,
-      totalUnits: parseInt(property.totalUnits) || 1,
-    })
-    if (data) {
-      setCreated(prev => ({ ...prev, propertyId: data.id, propertyName: data.name, units: [] }))
-      setStep('units')
-    }
+    const data = await save('/api/properties', { ...property, landlordId, totalUnits: parseInt(property.totalUnits) || 1 })
+    if (data) { setCreated(prev => ({ ...prev, landlordId, propertyId: data.id, propertyName: data.name, units: [] })); setStep('units') }
   }
 
   const addUnit = async () => {
     const data = await save('/api/units', {
-      ...unit,
-      propertyId: created.propertyId,
-      landlordId: created.landlordId,
+      ...unit, propertyId: created.propertyId, landlordId: created.landlordId,
       monthlyRent: parseFloat(unit.monthlyRent) || 0,
       floor: unit.floor ? parseInt(unit.floor) : undefined,
       bedrooms: unit.bedrooms ? parseInt(unit.bedrooms) : undefined,
@@ -180,10 +176,7 @@ export default function OnboardingPage() {
       serviceCharge: unit.serviceCharge ? parseFloat(unit.serviceCharge) : undefined,
     })
     if (data) {
-      setCreated(prev => ({
-        ...prev,
-        units: [...(prev.units || []), { id: data.id, unitNumber: data.unitNumber, monthlyRent: Number(data.monthlyRent) }],
-      }))
+      setCreated(prev => ({ ...prev, units: [...(prev.units || []), { id: data.id, unitNumber: data.unitNumber, monthlyRent: Number(data.monthlyRent) }] }))
       setUnit({ unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', serviceCharge: '', description: '' })
       setError('')
     }
@@ -192,18 +185,18 @@ export default function OnboardingPage() {
   const saveTenant = async () => {
     const selectedUnit = created.units?.find(u => u.id === tenant.unitId)
     const data = await save('/api/tenants', {
-      ...tenant,
-      propertyId: created.propertyId,
+      ...tenant, propertyId: created.propertyId,
+      unitId: tenant.unitId || undefined,
       unit: selectedUnit?.unitNumber || '',
-      moveInDate: new Date().toISOString(),
+      moveInDate: tenant.moveInDate || new Date().toISOString(),
     })
     if (data) {
       setCreated(prev => ({ ...prev, tenantId: data.id, tenantName: data.name }))
       setLease(prev => ({
-        ...prev,
-        unitId: tenant.unitId,
+        ...prev, unitId: tenant.unitId,
         monthlyRent: selectedUnit ? String(selectedUnit.monthlyRent) : '',
         securityDeposit: selectedUnit ? String(selectedUnit.monthlyRent) : '',
+        startDate: tenant.moveInDate || new Date().toISOString().split('T')[0],
       }))
       setStep('lease')
     }
@@ -212,24 +205,27 @@ export default function OnboardingPage() {
   const saveLease = async () => {
     const selectedUnit = created.units?.find(u => u.id === lease.unitId)
     const data = await save('/api/leases', {
-      tenantId: created.tenantId,
-      propertyId: created.propertyId,
-      unitId: lease.unitId || undefined,
-      unit: selectedUnit?.unitNumber || '',
-      startDate: lease.startDate,
-      endDate: lease.endDate,
+      tenantId: created.tenantId, propertyId: created.propertyId,
+      unitId: lease.unitId || undefined, unit: selectedUnit?.unitNumber || '',
+      startDate: lease.startDate, endDate: lease.endDate,
       monthlyRent: parseFloat(lease.monthlyRent) || 0,
       securityDeposit: parseFloat(lease.securityDeposit) || 0,
-      terms: lease.terms || undefined,
-      status: 'ACTIVE',
+      terms: lease.terms || undefined, status: 'ACTIVE',
     })
-    if (data) {
-      setStep('done')
-    }
+    if (data) setStep('done')
   }
 
-  const stepIndex = STEPS.findIndex(s => s.key === step)
+  const resetAll = () => {
+    setEntryPoint('choose'); setStep('landlord'); setCreated({}); setError('')
+    setLandlord({ name: '', email: '', phone: '', idNumber: '', address: '', bankName: '', bankAccount: '', taxId: '', managementFeePercent: '10' })
+    setProperty({ name: '', address: '', type: 'APARTMENT', city: 'Nairobi', totalUnits: '1', description: '' })
+    setSelectedExistingProperty(null); setSelectedLandlordId('')
+    setUnit({ unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', serviceCharge: '', description: '' })
+    setTenant({ name: '', email: '', phone: '', idNumber: '', emergencyContact: '', emergencyPhone: '', unitId: '', moveInDate: '' })
+    setLease({ unitId: '', startDate: '', endDate: '', monthlyRent: '', securityDeposit: '', leaseTerm: '12', terms: '' })
+  }
 
+  const stepIndex = steps.findIndex(s => s.key === step)
   const inputClass = 'w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm'
   const labelClass = 'block text-sm font-medium text-neutral-700 mb-1'
 
@@ -237,50 +233,64 @@ export default function OnboardingPage() {
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-neutral-900">Property Onboarding</h1>
-        <p className="text-neutral-600 mt-1">Add a landlord, their property, units, and tenants step by step.</p>
+        <p className="text-neutral-600 mt-1">Add landlords, properties, units, and tenants step by step.</p>
       </div>
 
-      {/* Progress bar */}
-      {step !== 'done' && (
+      {/* ENTRY POINT SELECTOR */}
+      {entryPoint === 'choose' && (
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => { setEntryPoint('new-landlord'); setStep('landlord') }}
+            className="bg-surface rounded-lg border-2 border-neutral-200 hover:border-primary-500 p-8 text-center transition group"
+          >
+            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-200 transition">
+              <span className="text-2xl">👤</span>
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-1">New Landlord</h3>
+            <p className="text-sm text-neutral-500">Register a new landlord and add their property, units, and tenants</p>
+          </button>
+          <button
+            onClick={() => { setEntryPoint('existing-property'); setStep('property') }}
+            className="bg-surface rounded-lg border-2 border-neutral-200 hover:border-primary-500 p-8 text-center transition group"
+          >
+            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-200 transition">
+              <span className="text-2xl">🏠</span>
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-1">Existing Property</h3>
+            <p className="text-sm text-neutral-500">Add units and tenants to a property that already exists</p>
+          </button>
+        </div>
+      )}
+
+      {/* PROGRESS BAR */}
+      {entryPoint !== 'choose' && step !== 'done' && (
         <div className="flex items-center mb-8">
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <div key={s.key} className="flex items-center flex-1">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                i < stepIndex ? 'bg-success-600 text-white' :
-                i === stepIndex ? 'bg-primary-600 text-white' :
-                'bg-neutral-200 text-neutral-500'
+                i < stepIndex ? 'bg-success-600 text-white' : i === stepIndex ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-500'
               }`}>
-                {i < stepIndex ? '✓' : s.num}
+                {i < stepIndex ? '✓' : i + 1}
               </div>
-              <span className={`ml-2 text-sm font-medium hidden sm:inline ${
-                i === stepIndex ? 'text-primary-700' : 'text-neutral-500'
-              }`}>
-                {s.label}
-              </span>
-              {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-3 ${i < stepIndex ? 'bg-success-600' : 'bg-neutral-200'}`} />
-              )}
+              <span className={`ml-2 text-sm font-medium hidden sm:inline ${i === stepIndex ? 'text-primary-700' : 'text-neutral-500'}`}>{s.label}</span>
+              {i < steps.length - 1 && <div className={`flex-1 h-0.5 mx-3 ${i < stepIndex ? 'bg-success-600' : 'bg-neutral-200'}`} />}
             </div>
           ))}
         </div>
       )}
 
       {/* Error */}
-      {error && (
-        <div className="mb-4 p-3 bg-danger-50 border border-danger-200 rounded-lg text-sm text-danger-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="mb-4 p-3 bg-danger-50 border border-danger-200 rounded-lg text-sm text-danger-700">{error}</div>}
 
-      {/* STEP 1: Landlord */}
-      {step === 'landlord' && (
+      {/* STEP: Landlord */}
+      {step === 'landlord' && entryPoint === 'new-landlord' && (
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Step 1: Add Landlord</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Add Landlord</h2>
           <p className="text-sm text-neutral-500 mb-6">The property owner. Their details are used for statements and payouts.</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Full Name *</label>
-              <input name="name" value={landlord.name} onChange={handleInput(setLandlord)} className={inputClass} placeholder="Ann Karuga" required />
+              <input name="name" value={landlord.name} onChange={handleInput(setLandlord)} className={inputClass} placeholder="Ann Karuga" />
             </div>
             <div>
               <label className={labelClass}>Email *</label>
@@ -315,7 +325,8 @@ export default function OnboardingPage() {
               <input name="managementFeePercent" type="number" min="0" max="100" value={landlord.managementFeePercent} onChange={handleInput(setLandlord)} className={inputClass} />
             </div>
           </div>
-          <div className="flex justify-end mt-6">
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={resetAll}>← Back</Button>
             <Button variant="primary" onClick={saveLandlord} disabled={saving || !landlord.name || !landlord.email || !landlord.phone}>
               {saving ? 'Saving...' : 'Save & Continue →'}
             </Button>
@@ -323,24 +334,34 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* STEP 2: Property */}
+      {/* STEP: Property */}
       {step === 'property' && (
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Step 2: Add Property</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1">
+            {entryPoint === 'existing-property' ? 'Select Property' : 'Add Property'}
+          </h2>
           <p className="text-sm text-neutral-500 mb-6">
-            The building owned by <span className="font-medium text-neutral-700">{created.landlordName}</span>.
-            If the property already exists, start typing to select it.
+            {created.landlordName
+              ? <>The building owned by <span className="font-medium text-neutral-700">{created.landlordName}</span>. If it already exists, start typing to select it.</>
+              : 'Select an existing property or create a new one. Start typing to search.'}
           </p>
+
+          {/* Landlord selector — shown when starting from existing property */}
+          {entryPoint === 'existing-property' && !created.landlordId && (
+            <div className="mb-4">
+              <label className={labelClass}>Landlord *</label>
+              <select value={selectedLandlordId} onChange={(e) => setSelectedLandlordId(e.target.value)} className={inputClass}>
+                <option value="">Select landlord...</option>
+                {existingLandlords.map(l => <option key={l.id} value={l.id}>{l.name} ({l.email})</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Selected existing property banner */}
           {selectedExistingProperty && (
             <div className="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-lg flex items-center justify-between">
-              <span className="text-sm text-primary-800">
-                Using existing property: <strong>{property.name}</strong> — {property.address}
-              </span>
-              <button onClick={clearSelectedProperty} className="text-primary-600 hover:text-primary-800 text-sm font-medium">
-                Change
-              </button>
+              <span className="text-sm text-primary-800">Using existing property: <strong>{property.name}</strong> — {property.address}</span>
+              <button onClick={clearSelectedProperty} className="text-primary-600 hover:text-primary-800 text-sm font-medium">Change</button>
             </div>
           )}
 
@@ -348,28 +369,17 @@ export default function OnboardingPage() {
             <div className="relative" ref={suggestionsRef}>
               <label className={labelClass}>Property Name *</label>
               <input
-                name="name"
-                value={property.name}
-                onChange={(e) => {
-                  setProperty(prev => ({ ...prev, name: e.target.value }))
-                  if (selectedExistingProperty) setSelectedExistingProperty(null)
-                }}
-                onFocus={() => {
-                  if (propertySuggestions.length > 0 && !selectedExistingProperty) setShowSuggestions(true)
-                }}
-                className={inputClass}
-                placeholder="Start typing to search or enter a new name..."
+                name="name" value={property.name}
+                onChange={(e) => { setProperty(prev => ({ ...prev, name: e.target.value })); if (selectedExistingProperty) setSelectedExistingProperty(null) }}
+                onFocus={() => { if (propertySuggestions.length > 0 && !selectedExistingProperty) setShowSuggestions(true) }}
+                className={inputClass} placeholder="Start typing to search or enter a new name..."
                 disabled={!!selectedExistingProperty}
               />
               {showSuggestions && (
                 <div className="absolute z-10 mt-1 w-full bg-white border border-neutral-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   <p className="px-3 py-1.5 text-xs text-neutral-500 border-b border-neutral-100">Existing properties</p>
                   {propertySuggestions.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => selectExistingProperty(p)}
-                      className="w-full text-left px-3 py-2 hover:bg-primary-50 transition text-sm"
-                    >
+                    <button key={p.id} onClick={() => selectExistingProperty(p)} className="w-full text-left px-3 py-2 hover:bg-primary-50 transition text-sm">
                       <span className="font-medium text-neutral-900">{p.name}</span>
                       <span className="text-neutral-500 ml-2">— {p.address}</span>
                     </button>
@@ -403,23 +413,20 @@ export default function OnboardingPage() {
             )}
           </div>
           <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setStep('landlord')}>← Back</Button>
-            <Button variant="primary" onClick={saveProperty} disabled={saving || !property.name || !property.address}>
+            <Button variant="outline" onClick={() => entryPoint === 'new-landlord' ? setStep('landlord') : resetAll()}>← Back</Button>
+            <Button variant="primary" onClick={saveProperty} disabled={saving || !property.name || !property.address || (entryPoint === 'existing-property' && !selectedLandlordId && !created.landlordId)}>
               {saving ? 'Saving...' : selectedExistingProperty ? 'Use This Property →' : 'Save & Continue →'}
             </Button>
           </div>
         </div>
       )}
 
-      {/* STEP 3: Units */}
+      {/* STEP: Units */}
       {step === 'units' && (
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Step 3: Add Units</h2>
-          <p className="text-sm text-neutral-500 mb-6">
-            Add units to <span className="font-medium text-neutral-700">{created.propertyName}</span>. You can add multiple units before continuing.
-          </p>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Add Units</h2>
+          <p className="text-sm text-neutral-500 mb-6">Add units to <span className="font-medium text-neutral-700">{created.propertyName}</span>. You can add multiple units before continuing.</p>
 
-          {/* Added units */}
           {created.units && created.units.length > 0 && (
             <div className="mb-6">
               <p className="text-sm font-medium text-neutral-700 mb-2">{created.units.length} unit{created.units.length !== 1 ? 's' : ''} added:</p>
@@ -444,19 +451,19 @@ export default function OnboardingPage() {
             </div>
             <div>
               <label className={labelClass}>Floor</label>
-              <input name="floor" type="number" value={unit.floor} onChange={handleInput(setUnit)} className={inputClass} placeholder="1" />
+              <input name="floor" type="number" value={unit.floor} onChange={handleInput(setUnit)} className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Bedrooms</label>
-              <input name="bedrooms" type="number" value={unit.bedrooms} onChange={handleInput(setUnit)} className={inputClass} placeholder="2" />
+              <input name="bedrooms" type="number" value={unit.bedrooms} onChange={handleInput(setUnit)} className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Bathrooms</label>
-              <input name="bathrooms" type="number" value={unit.bathrooms} onChange={handleInput(setUnit)} className={inputClass} placeholder="1" />
+              <input name="bathrooms" type="number" value={unit.bathrooms} onChange={handleInput(setUnit)} className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Service Charge (KES)</label>
-              <input name="serviceCharge" type="number" value={unit.serviceCharge} onChange={handleInput(setUnit)} className={inputClass} placeholder="3000" />
+              <input name="serviceCharge" type="number" value={unit.serviceCharge} onChange={handleInput(setUnit)} className={inputClass} />
             </div>
           </div>
           <div className="flex justify-between mt-6">
@@ -473,13 +480,11 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* STEP 4: Tenant */}
+      {/* STEP: Tenant */}
       {step === 'tenant' && (
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Step 4: Add Tenant</h2>
-          <p className="text-sm text-neutral-500 mb-6">
-            Assign a tenant to a unit in <span className="font-medium text-neutral-700">{created.propertyName}</span>.
-          </p>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Add Tenant</h2>
+          <p className="text-sm text-neutral-500 mb-6">Assign a tenant to a unit in <span className="font-medium text-neutral-700">{created.propertyName}</span>.</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Full Name *</label>
@@ -507,6 +512,10 @@ export default function OnboardingPage() {
               </select>
             </div>
             <div>
+              <label className={labelClass}>Move-in Date *</label>
+              <input name="moveInDate" type="date" value={tenant.moveInDate} onChange={handleInput(setTenant)} className={inputClass} />
+            </div>
+            <div>
               <label className={labelClass}>Emergency Contact</label>
               <input name="emergencyContact" value={tenant.emergencyContact} onChange={handleInput(setTenant)} className={inputClass} />
             </div>
@@ -527,21 +536,17 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* STEP 5: Lease */}
+      {/* STEP: Lease */}
       {step === 'lease' && (
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Step 5: Create Lease</h2>
-          <p className="text-sm text-neutral-500 mb-6">
-            Set up the lease for <span className="font-medium text-neutral-700">{created.tenantName}</span>.
-          </p>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Create Lease</h2>
+          <p className="text-sm text-neutral-500 mb-6">Set up the lease for <span className="font-medium text-neutral-700">{created.tenantName}</span>.</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Unit</label>
               <select name="unitId" value={lease.unitId} onChange={handleInput(setLease)} className={inputClass}>
                 <option value="">Select unit...</option>
-                {created.units?.map(u => (
-                  <option key={u.id} value={u.id}>{u.unitNumber}</option>
-                ))}
+                {created.units?.map(u => <option key={u.id} value={u.id}>{u.unitNumber}</option>)}
               </select>
             </div>
             <div>
@@ -553,8 +558,19 @@ export default function OnboardingPage() {
               <input name="startDate" type="date" value={lease.startDate} onChange={handleInput(setLease)} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>End Date *</label>
-              <input name="endDate" type="date" value={lease.endDate} onChange={handleInput(setLease)} className={inputClass} />
+              <label className={labelClass}>Lease Term</label>
+              <select name="leaseTerm" value={lease.leaseTerm} onChange={handleInput(setLease)} className={inputClass}>
+                <option value="6">6 months</option>
+                <option value="12">12 months (1 year)</option>
+                <option value="18">18 months</option>
+                <option value="24">24 months (2 years)</option>
+                <option value="36">36 months (3 years)</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>End Date</label>
+              <input name="endDate" type="date" value={lease.endDate} className={`${inputClass} bg-neutral-50`} readOnly />
+              <p className="text-xs text-neutral-500 mt-1">Auto-calculated from start date + term</p>
             </div>
             <div>
               <label className={labelClass}>Security Deposit (KES) *</label>
@@ -588,22 +604,8 @@ export default function OnboardingPage() {
             {created.tenantName && <span> → Tenant <strong>{created.tenantName}</strong></span>}
           </p>
           <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => {
-              setStep('landlord')
-              setCreated({})
-              setLandlord({ name: '', email: '', phone: '', idNumber: '', address: '', bankName: '', bankAccount: '', taxId: '', managementFeePercent: '10' })
-              setProperty({ name: '', address: '', type: 'APARTMENT', city: 'Nairobi', totalUnits: '1', description: '' })
-              setSelectedExistingProperty(null)
-              setUnit({ unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', serviceCharge: '', description: '' })
-              setTenant({ name: '', email: '', phone: '', idNumber: '', emergencyContact: '', emergencyPhone: '', unitId: '' })
-              setLease({ unitId: '', startDate: '', endDate: '', monthlyRent: '', securityDeposit: '', terms: '' })
-              setError('')
-            }}>
-              + Onboard Another
-            </Button>
-            <Button variant="primary" onClick={() => router.push('/admin')}>
-              Go to Dashboard
-            </Button>
+            <Button variant="outline" onClick={resetAll}>+ Onboard Another</Button>
+            <Button variant="primary" onClick={() => router.push('/admin')}>Go to Dashboard</Button>
           </div>
         </div>
       )}
