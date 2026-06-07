@@ -15,6 +15,12 @@ export default function LandlordCRMPage({ params }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'financials' | 'tenants' | 'documents' | 'communications' | 'notes' | 'tasks' | 'activity'>('overview')
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [editTab, setEditTab] = useState<'details' | 'units'>('details')
+  const [landlordUnits, setLandlordUnits] = useState<any[]>([])
+  const [propertiesList, setPropertiesList] = useState<any[]>([])
+  const [unitsLoading, setUnitsLoading] = useState(false)
+  const [newUnit, setNewUnit] = useState({ propertyId: '', unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', status: 'VACANT' })
+  const [addingUnit, setAddingUnit] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const [landlordId, setLandlordId] = useState<string | null>(null)
   const [landlordApiData, setLandlordApiData] = useState<any>(null)
@@ -54,7 +60,18 @@ export default function LandlordCRMPage({ params }: Props) {
       tenantPlacementFee: landlord?.tenantPlacementFee ?? '',
       tenantPlacementFeeType: landlord?.tenantPlacementFeeType || 'MONTHS',
     })
+    setEditTab('details')
+    setNewUnit({ propertyId: '', unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', status: 'VACANT' })
     setShowEditModal(true)
+    // Fetch units and properties for the units tab
+    setUnitsLoading(true)
+    Promise.all([
+      fetch(`/api/units?landlordId=${landlordId}`).then(r => r.json()),
+      fetch('/api/properties').then(r => r.json()),
+    ]).then(([unitsData, propsData]) => {
+      setLandlordUnits(unitsData.units || [])
+      setPropertiesList(propsData.properties || [])
+    }).finally(() => setUnitsLoading(false))
   }
 
   const handleSaveEdit = async () => {
@@ -620,7 +637,7 @@ export default function LandlordCRMPage({ params }: Props) {
       {showEditModal && editForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-neutral-900">Edit Landlord</h3>
               <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -628,7 +645,132 @@ export default function LandlordCRMPage({ params }: Props) {
                 </svg>
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Tabs */}
+            <div className="flex border-b border-neutral-200 mb-6">
+              {(['details', 'units'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setEditTab(tab)}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition -mb-px ${editTab === tab ? 'border-primary-600 text-primary-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}
+                >
+                  {tab === 'details' ? 'Details' : 'Units'}
+                </button>
+              ))}
+            </div>
+
+            {editTab === 'units' ? (
+              <div className="space-y-4">
+                {/* Existing units */}
+                <div>
+                  <p className="text-sm font-medium text-neutral-700 mb-2">Assigned Units ({landlordUnits.length})</p>
+                  {unitsLoading ? (
+                    <p className="text-sm text-neutral-400">Loading…</p>
+                  ) : landlordUnits.length === 0 ? (
+                    <p className="text-sm text-neutral-400 bg-neutral-50 rounded-lg p-3">No units assigned yet.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {landlordUnits.map((u: any) => (
+                        <div key={u.id} className="flex items-center justify-between bg-neutral-50 rounded-lg px-3 py-2 text-sm">
+                          <div>
+                            <span className="font-medium text-neutral-900">{u.unitNumber}</span>
+                            <span className="text-neutral-500 ml-2">{u.property?.name || ''}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-neutral-600">KES {Number(u.monthlyRent || 0).toLocaleString()}/mo</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${u.status === 'OCCUPIED' ? 'bg-success-100 text-green-700' : u.status === 'VACANT' ? 'bg-yellow-100 text-yellow-700' : 'bg-neutral-100 text-neutral-600'}`}>{u.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add new unit */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <p className="text-sm font-medium text-neutral-700 mb-3">Add New Unit</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-xs text-neutral-600 mb-1">Property *</label>
+                      <select
+                        value={newUnit.propertyId}
+                        onChange={e => setNewUnit({ ...newUnit, propertyId: e.target.value })}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value="">Select property…</option>
+                        {propertiesList.map((p: any) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-600 mb-1">Unit Number *</label>
+                      <input value={newUnit.unitNumber} onChange={e => setNewUnit({ ...newUnit, unitNumber: e.target.value })} placeholder="e.g. GWG3-A18" className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-600 mb-1">Monthly Rent (KES) *</label>
+                      <input type="number" min="0" value={newUnit.monthlyRent} onChange={e => setNewUnit({ ...newUnit, monthlyRent: e.target.value })} placeholder="e.g. 30000" className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-600 mb-1">Floor</label>
+                      <input type="number" min="0" value={newUnit.floor} onChange={e => setNewUnit({ ...newUnit, floor: e.target.value })} placeholder="e.g. 2" className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-600 mb-1">Bedrooms</label>
+                      <input type="number" min="0" value={newUnit.bedrooms} onChange={e => setNewUnit({ ...newUnit, bedrooms: e.target.value })} placeholder="e.g. 3" className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-600 mb-1">Bathrooms</label>
+                      <input type="number" min="0" value={newUnit.bathrooms} onChange={e => setNewUnit({ ...newUnit, bathrooms: e.target.value })} placeholder="e.g. 2" className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-600 mb-1">Status</label>
+                      <select value={newUnit.status} onChange={e => setNewUnit({ ...newUnit, status: e.target.value })} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <option value="VACANT">Vacant</option>
+                        <option value="OCCUPIED">Occupied</option>
+                        <option value="MAINTENANCE">Maintenance</option>
+                      </select>
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    className="w-full mt-3"
+                    disabled={addingUnit || !newUnit.propertyId || !newUnit.unitNumber || !newUnit.monthlyRent}
+                    onClick={async () => {
+                      setAddingUnit(true)
+                      try {
+                        const res = await fetch('/api/units', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            propertyId: newUnit.propertyId,
+                            landlordId,
+                            unitNumber: newUnit.unitNumber,
+                            monthlyRent: parseFloat(newUnit.monthlyRent),
+                            floor: newUnit.floor ? parseInt(newUnit.floor) : undefined,
+                            bedrooms: newUnit.bedrooms ? parseInt(newUnit.bedrooms) : undefined,
+                            bathrooms: newUnit.bathrooms ? parseInt(newUnit.bathrooms) : undefined,
+                            status: newUnit.status,
+                          }),
+                        })
+                        const data = await res.json()
+                        if (!res.ok) {
+                          alert(data.error || 'Failed to add unit')
+                        } else {
+                          setLandlordUnits(prev => [...prev, data])
+                          setNewUnit({ propertyId: '', unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', status: 'VACANT' })
+                          refreshLandlord()
+                        }
+                      } catch { alert('Failed to add unit') }
+                      finally { setAddingUnit(false) }
+                    }}
+                  >
+                    {addingUnit ? 'Adding…' : '+ Add Unit'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+            <><div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 { label: 'Full Name', key: 'name', type: 'text' },
                 { label: 'Email', key: 'email', type: 'email' },
@@ -643,7 +785,7 @@ export default function LandlordCRMPage({ params }: Props) {
                   <label className="block text-sm font-medium text-neutral-700 mb-1">{label}</label>
                   <input
                     type={type}
-                    value={editForm[key]}
+                    value={(editForm as any)[key]}
                     onChange={e => setEditForm({ ...editForm, [key]: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
@@ -745,7 +887,6 @@ export default function LandlordCRMPage({ params }: Props) {
                     else delete payload.managementFeePercent
                     if (payload.tenantPlacementFee !== '') payload.tenantPlacementFee = parseFloat(payload.tenantPlacementFee)
                     else delete payload.tenantPlacementFee
-                    // always send fee types
                     payload.managementFeeType = editForm.managementFeeType
                     payload.tenantPlacementFeeType = editForm.tenantPlacementFeeType
 
@@ -772,6 +913,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
+            </>) } {/* end details tab */}
           </div>
         </div>
       )}
