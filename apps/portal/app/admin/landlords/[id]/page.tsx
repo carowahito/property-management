@@ -43,10 +43,10 @@ export default function LandlordCRMPage({ params }: Props) {
 
   const landlord = landlordApiData
 
-  if (!landlord) {
+  if (!landlord || !landlord.id) {
     return <div className="flex items-center justify-center h-64">
       <div className="text-center">
-        <p className="text-neutral-500 text-lg">Landlord not found</p>
+        <p className="text-neutral-500 text-lg">{landlordApiData?.error || 'Landlord not found'}</p>
         <Button onClick={() => router.push('/admin/landlords')} className="mt-4">
           Back to Landlords
         </Button>
@@ -118,7 +118,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-neutral-600">🏢 Properties</p>
-                  <p className="font-medium text-neutral-900">{landlord.totalUnits} units in {landlord.properties.length} properties</p>
+                  <p className="font-medium text-neutral-900">{landlord.totalUnits ?? 0} units in {landlord.properties?.length ?? totalProperties} properties</p>
                 </div>
                 <div>
                   <p className="text-neutral-600">🏦 Bank</p>
