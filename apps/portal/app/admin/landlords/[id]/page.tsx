@@ -995,11 +995,11 @@ export default function LandlordCRMPage({ params }: Props) {
                     })
                     if (!res.ok) {
                       const err = await res.json()
-                      alert(err.error || 'Failed to update landlord')
+                      const detail = err.details?.map((d: any) => d.message).join(', ')
+                      alert(detail || err.error || 'Failed to update landlord')
                     } else {
-                      const updated = await res.json()
-                      setLandlordApiData(updated)
                       setShowEditModal(false)
+                      refreshLandlord()  // refetch full data with all includes
                     }
                   } catch {
                     alert('Failed to update landlord')
