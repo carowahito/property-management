@@ -1,2 +1,3 @@
-name,email,phone,idNumber,emergencyContact,emergencyPhone,propertyName,unit,moveInDate,status
-Faridah Achieng Kassim,faridahkassim592@gmail.com,+254721656564,23836035,,,Greatwall Gardens II,GWG2-A55,2025-01-30,ACTIVE
+referenceId,name,email,phone,idNumber,emergencyContact,emergencyPhone,propertyName,unit,moveInDate,moveOutDate,status
+TEN-001,Jane Doe,jane@example.com,+254712345678,12345678,John Doe,+254798765432,Greatwall Gardens II,GWG2-A01,2025-06-01,,ACTIVE
+TEN-002,James Smith,james@example.com,+254723456789,87654321,,,Sunrise Apartments,SA-B12,2025-07-15,,PENDING
