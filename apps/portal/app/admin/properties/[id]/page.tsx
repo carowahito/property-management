@@ -223,13 +223,16 @@ export default function PropertyDetailPage() {
 
   const property = data
 
-  if (!property) {
+  if (!property || !property.id) {
     return (
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <p className="text-yellow-800">Property not found.</p>
       </div>
     )
   }
+
+  const tenants = property.tenants ?? []
+  const leases = property.leases ?? []
 
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
@@ -314,10 +317,10 @@ export default function PropertyDetailPage() {
   const landlords = landlordsData?.landlords || []
   
   // Get unique landlords who own units in this property (from leases/tenants data)
-  const propertyLandlords = property ? 
+  const propertyLandlords = property ?
     Array.from(new Set(
-      property.leases
-        .map(lease => lease.tenant.id)
+      leases
+        .map(lease => lease.tenant?.id)
         .filter(Boolean)
     )).map(id => {
       return landlords.find((l: any) => l.id === id)
@@ -364,20 +367,20 @@ export default function PropertyDetailPage() {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Occupied Units</p>
-          <p className="text-3xl font-bold text-success-600 mt-2">{property.tenants.length}</p>
-          <p className="text-xs text-neutral-500 mt-1">{property.totalUnits - property.tenants.length} vacant</p>
+          <p className="text-3xl font-bold text-success-600 mt-2">{tenants.length}</p>
+          <p className="text-xs text-neutral-500 mt-1">{property.totalUnits - tenants.length} vacant</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
           <p className="text-3xl font-bold text-purple-600 mt-2">
-            {property.totalUnits > 0 ? Math.round((property.tenants.length / property.totalUnits) * 100) : 0}%
+            {property.totalUnits > 0 ? Math.round((tenants.length / property.totalUnits) * 100) : 0}%
           </p>
           <p className="text-xs text-neutral-500 mt-1">Current rate</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Monthly Revenue</p>
           <p className="text-3xl font-bold text-warning-600 mt-2">
-            KES {property.leases.reduce((sum, lease) => sum + Number(lease.monthlyRent), 0).toLocaleString()}
+            KES {leases.reduce((sum, lease) => sum + Number(lease.monthlyRent), 0).toLocaleString()}
           </p>
           <p className="text-xs text-neutral-500 mt-1">{property._count?.leases || 0} active leases</p>
         </div>
@@ -476,9 +479,9 @@ export default function PropertyDetailPage() {
 
       {/* Current Tenants */}
       <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-        <h2 className="text-xl font-bold text-neutral-900 mb-4">Current Tenants ({property.tenants.length})</h2>
-        
-        {property.tenants.length === 0 ? (
+        <h2 className="text-xl font-bold text-neutral-900 mb-4">Current Tenants ({tenants.length})</h2>
+
+        {tenants.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-neutral-500">No tenants currently</p>
           </div>
@@ -493,7 +496,7 @@ export default function PropertyDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
-                {property.tenants.map((tenant) => (
+                {tenants.map((tenant) => (
                   <tr key={tenant.id} className="hover:bg-neutral-50">
                     <td className="px-6 py-4">
                       <Link 
@@ -522,9 +525,9 @@ export default function PropertyDetailPage() {
 
       {/* Active Leases */}
       <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-        <h2 className="text-xl font-bold text-neutral-900 mb-4">Active Leases ({property.leases.filter(l => l.status === 'ACTIVE').length})</h2>
+        <h2 className="text-xl font-bold text-neutral-900 mb-4">Active Leases ({leases.filter(l => l.status === 'ACTIVE').length})</h2>
         
-        {property.leases.filter(l => l.status === 'ACTIVE').length === 0 ? (
+        {leases.filter(l => l.status === 'ACTIVE').length === 0 ? (
           <div className="text-center py-8">
             <p className="text-neutral-500">No active leases</p>
           </div>
@@ -541,7 +544,7 @@ export default function PropertyDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
-                {property.leases.filter(l => l.status === 'ACTIVE' || l.status === 'Active').map((lease) => (
+                {leases.filter(l => l.status === 'ACTIVE' || l.status === 'Active').map((lease) => (
                   <tr key={lease.id} className="hover:bg-neutral-50">
                     <td className="px-6 py-4">
                       <Link 
