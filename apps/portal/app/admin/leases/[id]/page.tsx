@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { SignaturePad } from '@/components/ui/SignaturePad'
 import Link from 'next/link'
 
 interface Props {
@@ -26,6 +27,7 @@ export default function LeaseDetailPage({ params }: Props) {
     newStartDate: '', newEndDate: '', newMonthlyRent: '', leaseTerm: '12',
   })
   const [uploading, setUploading] = useState('')
+  const [showLandlordSigPad, setShowLandlordSigPad] = useState(false)
   const docInputRef = useRef<HTMLInputElement>(null)
   const landlordSigRef = useRef<HTMLInputElement>(null)
   const tenantSigRef = useRef<HTMLInputElement>(null)
@@ -53,6 +55,38 @@ export default function LeaseDetailPage({ params }: Props) {
       else { const d = await res.json(); alert(d.error || 'Upload failed') }
     } catch { alert('Upload failed') }
     finally { setUploading('') }
+  }
+
+  const handleSignaturePadSave = async (dataUrl: string, type: 'landlordSignature' | 'tenantSignature') => {
+    setUploading(type)
+    try {
+      // Convert base64 data URL to blob
+      const res = await fetch(dataUrl)
+      const blob = await res.blob()
+      const file = new File([blob], `${type}.png`, { type: 'image/png' })
+      await handleUpload(file, type)
+      setShowLandlordSigPad(false)
+    } catch { alert('Failed to save signature') }
+    finally { setUploading('') }
+  }
+
+  const handleSendForSigning = async () => {
+    if (!lease.documentUrl && !lease.documentHtml) {
+      alert('Please upload or generate a lease document first')
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/leases/${leaseId}/send-for-signing`, { method: 'POST' })
+      if (res.ok) {
+        refreshLease()
+        alert('Lease sent for signing. The tenant can now sign from their portal.')
+      } else {
+        const d = await res.json()
+        alert(d.error || 'Failed to send for signing')
+      }
+    } catch { alert('Failed to send for signing') }
+    finally { setSaving(false) }
   }
 
   if (loading) {
@@ -391,7 +425,7 @@ export default function LeaseDetailPage({ params }: Props) {
               {/* Landlord Signature */}
               <div className="p-3 bg-neutral-50 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-neutral-700">Landlord Signature</span>
+                  <span className="text-sm font-medium text-neutral-700">Landlord / Admin Signature</span>
                   {lease.landlordSignedAt ? (
                     <span className="text-xs text-success-600 font-medium">✓ Signed {formatDate(lease.landlordSignedAt)}</span>
                   ) : (
@@ -401,12 +435,27 @@ export default function LeaseDetailPage({ params }: Props) {
                 {lease.landlordSignature && lease.landlordSignature.startsWith('http') && (
                   <img src={lease.landlordSignature} alt="Landlord signature" className="h-16 border border-neutral-200 rounded mt-1 bg-white" />
                 )}
-                <div className="flex gap-2 mt-2">
-                  <input type="file" ref={landlordSigRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'landlordSignature') }} />
-                  <button onClick={() => landlordSigRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
-                    {uploading === 'landlordSignature' ? 'Uploading...' : lease.landlordSignature ? 'Replace signature' : 'Upload signature'}
-                  </button>
-                </div>
+                {showLandlordSigPad ? (
+                  <div className="mt-2">
+                    <SignaturePad
+                      label="Draw your signature"
+                      saving={uploading === 'landlordSignature'}
+                      onSave={(dataUrl) => handleSignaturePadSave(dataUrl, 'landlordSignature')}
+                      onCancel={() => setShowLandlordSigPad(false)}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex gap-3 mt-2">
+                    <button onClick={() => setShowLandlordSigPad(true)} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
+                      Draw signature
+                    </button>
+                    <span className="text-xs text-neutral-300">|</span>
+                    <input type="file" ref={landlordSigRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'landlordSignature') }} />
+                    <button onClick={() => landlordSigRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
+                      {uploading === 'landlordSignature' ? 'Uploading...' : 'Upload image'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Tenant Signature */}
@@ -430,14 +479,24 @@ export default function LeaseDetailPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Sent for Signing */}
+              {/* Send for Signing */}
               <div className="pt-3 border-t border-neutral-200">
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Sent for Signing</span>
-                  <span className={`font-medium ${lease.sentForSigning ? 'text-success-600' : 'text-neutral-400'}`}>
-                    {lease.sentForSigning ? `✓ Sent ${formatDate(lease.sentAt)}` : '○ Not sent'}
-                  </span>
-                </div>
+                {lease.sentForSigning ? (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-600">Sent for Signing</span>
+                    <span className="font-medium text-success-600">✓ Sent {formatDate(lease.sentAt)}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-neutral-700">Send to tenant for signing</p>
+                      <p className="text-xs text-neutral-500">Tenant will be able to view and sign from their portal</p>
+                    </div>
+                    <Button variant="primary" onClick={handleSendForSigning} disabled={saving || (!lease.documentUrl && !lease.documentHtml)}>
+                      {saving ? 'Sending...' : 'Send for Signing'}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
