@@ -17,6 +17,7 @@ export default function LandlordCRMPage({ params }: Props) {
   const [landlordId, setLandlordId] = useState<string | null>(null)
   const [landlordApiData, setLandlordApiData] = useState<any>(null)
   const [isLoadingLandlord, setIsLoadingLandlord] = useState(false)
+  const [inviteSending, setInviteSending] = useState(false)
 
   useEffect(() => {
     params.then(p => setLandlordId(p.id))
@@ -137,6 +138,30 @@ export default function LandlordCRMPage({ params }: Props) {
               window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
             }}>
               📄 Statement
+            </Button>
+            <Button variant="outline" onClick={async () => {
+              if (inviteSending) return
+              setInviteSending(true)
+              try {
+                const res = await fetch('/api/invitations', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: landlord.email, name: landlord.name, role: 'LANDLORD', landlordId }),
+                })
+                const data = await res.json()
+                if (!res.ok) {
+                  alert(data.error)
+                } else {
+                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                }
+              } catch {
+                alert('Failed to send invitation')
+              } finally {
+                setInviteSending(false)
+              }
+            }}>
+              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
             </Button>
             <Button variant="primary">💬 Contact</Button>
           </div>
