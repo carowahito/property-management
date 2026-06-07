@@ -558,7 +558,7 @@ export default function PropertiesPage() {
                     <p className="text-sm text-neutral-600 mt-1">{property.address}</p>
                     <p className="text-xs text-neutral-500 mt-1">
                       Landlord: {property.landlord?.id ? (
-                        <Link href={`/admin/landlords/${property.landlord.id}`} className="text-primary-600 hover:underline">{property.landlord.name}</Link>
+                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${property.landlord!.id}` }} className="text-primary-600 hover:underline cursor-pointer">{property.landlord.name}</span>
                       ) : 'Unassigned'} • Type: {property.type}
                     </p>
                   </div>
