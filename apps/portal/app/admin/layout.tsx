@@ -85,6 +85,7 @@ export default function AdminLayout({
         { href: '/admin/inspections', label: 'Inspections', icon: '🔍' },
         { href: '/admin/move-in', label: 'Move-In', icon: '📦' },
         { href: '/admin/renewals', label: 'Renewals', icon: '🔄' },
+        { href: '/admin/portfolio-health', label: 'Portfolio Health', icon: '🏥' },
         { href: '/admin/occupancy', label: 'Occupancy', icon: '📐' },
       ]
     },

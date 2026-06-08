@@ -93,14 +93,56 @@ export async function PATCH(
     const body = await request.json()
     const validatedData = updateArrearsSchema.parse(body)
 
+    const updateData: any = { ...validatedData }
+
+    // When phone call notes are recorded, update related timestamps and lastContactAt
+    if (validatedData.phoneCallNotes) {
+      updateData.phoneCallAt = new Date()
+      updateData.lastContactAt = new Date()
+    }
+    if (validatedData.lastContactAt) {
+      updateData.lastContactAt = new Date(validatedData.lastContactAt)
+    }
+    if (validatedData.paymentPromisedDate) {
+      updateData.paymentPromisedDate = new Date(validatedData.paymentPromisedDate)
+    }
+
+    // Recalculate penalty if daysOverdue updated
+    if (validatedData.daysOverdue !== undefined) {
+      const existing = await prisma.arrearsEscalation.findUnique({
+        where: { id },
+        select: { penaltyPerDay: true },
+      })
+      const penaltyPerDay = Number(existing?.penaltyPerDay ?? 500)
+      // Penalty starts after grace period (Day 6+), tracked from first day overdue
+      updateData.penaltyAccrued = validatedData.daysOverdue * penaltyPerDay
+    }
+
+    // Set unreachableSince when first flagged
+    if (validatedData.unreachable === true) {
+      const existing = await prisma.arrearsEscalation.findUnique({
+        where: { id },
+        select: { unreachable: true, unreachableSince: true },
+      })
+      if (!existing?.unreachable) {
+        updateData.unreachableSince = new Date()
+      }
+    }
+
+    // Set abandonmentFlaggedAt when first flagged
+    if (validatedData.suspectedAbandonment === true) {
+      const existing = await prisma.arrearsEscalation.findUnique({
+        where: { id },
+        select: { suspectedAbandonment: true, abandonmentFlaggedAt: true },
+      })
+      if (!existing?.suspectedAbandonment) {
+        updateData.abandonmentFlaggedAt = new Date()
+      }
+    }
+
     const arrears = await prisma.arrearsEscalation.update({
       where: { id },
-      data: {
-        ...validatedData,
-        ...(validatedData.phoneCallNotes
-          ? { phoneCallAt: new Date() }
-          : {}),
-      },
+      data: updateData,
       include: {
         tenant: {
           select: { id: true, name: true, email: true },

@@ -201,7 +201,8 @@ model Unit {
   // A landlord can own many units: GWG2-A55, GWG2-A56, GWG2-A57, etc.
   unitNumber    String     @unique
   propertyId    String
-  landlordId    String
+  // Nullable — allows units to exist before a landlord is assigned.
+  landlordId    String?
   floor         Int?
   bedrooms      Int?
   bathrooms     Int?
@@ -218,7 +219,7 @@ model Unit {
 
   // Relations
   property              Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  landlord              Landlord               @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  landlord              Landlord?              @relation(fields: [landlordId], references: [id], onDelete: SetNull)
   tenants               Tenant[]
   leases                Lease[]
   rentTransactions      RentTransaction[]
@@ -237,7 +238,7 @@ model Unit {
 }
 
 model Landlord {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   companyId   String
   name        String
   email       String
@@ -248,12 +249,13 @@ model Landlord {
   bankAccount String?
   taxId       String?
   status      StakeholderStatus @default(ACTIVE)
+  type        LandlordType @default(INDIVIDUAL)
 
   // Commission defaults — applied to new units for this landlord
-  managementFeePercent   Decimal?  @db.Decimal(10, 2) // value: % or fixed KES amount
-  managementFeeType      String    @default("PERCENTAGE") // "PERCENTAGE" | "FIXED"
-  tenantPlacementFee     Decimal?  @db.Decimal(5, 2)  // value: months (0.5 steps) or %
-  tenantPlacementFeeType String    @default("MONTHS")  // "MONTHS" | "PERCENTAGE"
+  managementFeePercent   Decimal?  @db.Decimal(10, 2)
+  managementFeeType      String    @default("PERCENTAGE")
+  tenantPlacementFee     Decimal?  @db.Decimal(5, 2)
+  tenantPlacementFeeType String    @default("MONTHS")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -262,6 +264,7 @@ model Landlord {
   company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   properties  Property[]
   units       Unit[]
+  members     LandlordMember[]
   payouts     Payout[]
   messages    Message[]
   rentTransactions RentTransaction[]
@@ -277,6 +280,28 @@ model Landlord {
   @@index([companyId])
   @@index([status])
   @@map("landlords")
+}
+
+// Members of a joint-ownership or company landlord entity.
+// For JOINT_OWNERSHIP: each named co-owner is a member.
+// For COMPANY: optional — directors or signatories.
+model LandlordMember {
+  id                 String   @id @default(cuid())
+  landlordId         String
+  name               String
+  idNumber           String?
+  phone              String?
+  email              String?
+  nationality        String?
+  countryOfResidence String?
+  ownershipPercent   Decimal? @db.Decimal(5, 2)
+  isPrimary          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  landlord  Landlord @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+
+  @@index([landlordId])
+  @@map("landlord_members")
 }
 
 model LandlordDocument {
@@ -478,6 +503,9 @@ model Lease {
   documentUrl     String?            // Uploaded PDF URL (Supabase Storage)
   noticePeriod    Int      @default(1) // months
   rentEscalation  Decimal? @db.Decimal(5, 2) // annual % increase
+  rentDueDay      Int      @default(1)  // day of month rent is due
+  gracePeriodDays Int      @default(5)  // days before overdue (SOP 004)
+  latePenaltyPerDay Decimal @default(500) @db.Decimal(10, 2) // KES/day after grace (agent income)
   petPolicy       String?
   specialConditions String? @db.Text
 
@@ -1253,6 +1281,12 @@ enum PropertyStatus {
   ARCHIVED
 }
 
+enum LandlordType {
+  INDIVIDUAL
+  COMPANY
+  JOINT_OWNERSHIP
+}
+
 enum StakeholderStatus {
   ACTIVE
   INACTIVE
@@ -1706,16 +1740,35 @@ model ArrearsEscalation {
   amountOwed      Decimal  @db.Decimal(10, 2)
   daysOverdue     Int      @default(0)
 
+  // Penalty tracking (SOP 004 — agent income, never on landlord statements)
+  penaltyPerDay      Decimal? @db.Decimal(10, 2) // captured from lease.latePenaltyPerDay at creation
+  penaltyAccrued     Decimal  @default(0) @db.Decimal(10, 2) // running total
+
   // Escalation steps
   currentStep     ArrearsStep @default(REMINDER_SENT)
   reminderSentAt  DateTime?   // Day 1
-  notice1SentAt   DateTime?   // Day 6
+  notice1SentAt   DateTime?   // Day 6 (Arrears Notice #1 to tenant)
+  landlordNotifiedDay6At DateTime? // Day 6 landlord notification (rent overdue — no penalties)
   phoneCallAt     DateTime?   // Day 10
   phoneCallNotes  String?
-  notice2SentAt   DateTime?   // Day 14
-  landlordNotifiedAt DateTime? // Day 14
-  formalNoticeAt  DateTime?   // Day 21
+  notice2SentAt   DateTime?   // Day 14 (Arrears Notice #2 to tenant)
+  landlordNotifiedAt DateTime? // Day 14 landlord notification (arrears amount only — no penalties)
+  formalNoticeAt  DateTime?   // Day 21 (Notice to Remedy or Vacate)
   legalReferralAt DateTime?   // Day 35+
+
+  // Contact tracking (SOP 004 Steps 5–6)
+  contactAttempts    Json?    // [{date, method, outcome, notes}]
+  lastContactAt      DateTime?
+  paymentPromisedDate DateTime?
+  paymentPromisedAmount Decimal? @db.Decimal(10, 2)
+
+  // Unreachable tenant protocol (SOP 004 Step 5)
+  unreachable        Boolean  @default(false)
+  unreachableSince   DateTime?
+
+  // Suspected abandonment (SOP 004 Step 6)
+  suspectedAbandonment Boolean @default(false)
+  abandonmentFlaggedAt DateTime?
 
   // Resolution
   resolvedAt      DateTime?
@@ -1735,6 +1788,70 @@ model ArrearsEscalation {
   @@index([isActive])
   @@index([currentStep])
   @@map("arrears_escalations")
+}
+
+// ============================================
+// SOP 015 — Monthly Portfolio Health Review
+// ============================================
+
+model PortfolioHealthReview {
+  id               String   @id @default(cuid())
+  period           String   // e.g. "June 2026"
+  reviewDate       DateTime // date review was generated
+  completedAt      DateTime?
+  directorSignedOffAt DateTime?
+  directorSignedOffBy String?
+  directorNotes    String?  @db.Text
+  summary          Json     // {green, amber, red, flaggedForDirector, total}
+  tenantScores     TenantHealthScore[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("portfolio_health_reviews")
+}
+
+model TenantHealthScore {
+  id               String   @id @default(cuid())
+  reviewId         String
+  tenantId         String
+  leaseId          String
+  propertyId       String
+
+  // SOP 015 scoring matrix — 4 dimensions
+  paymentScore     String   // GREEN | AMBER | RED
+  paymentNotes     String?  // e.g. "3 late payments in 12 months"
+  arrearsScore     String   // GREEN | AMBER | RED
+  arrearsNotes     String?  // e.g. "KES 45,000 outstanding (>1 month rent)"
+  contactScore     String   // GREEN | AMBER | RED
+  contactNotes     String?  // e.g. "Last contact 72 days ago"
+  inspectionScore  String   // GREEN | AMBER | RED
+  inspectionNotes  String?  // e.g. "No inspection in 130 days"
+
+  overallRisk      String   // GREEN | AMBER | RED
+  redCount         Int      @default(0)
+  flaggedForDirector Boolean @default(false)
+  followUpTaskId   String?  // Task created for Amber/Red
+  recommendedAction String? @db.Text
+  agentNotes       String?  @db.Text
+  directorApproved Boolean  @default(false)
+  directorApprovedAt DateTime?
+
+  // Snapshot data (for audit trail)
+  latePaymentCount Int      @default(0)
+  currentBalance   Decimal  @default(0) @db.Decimal(10, 2)
+  monthlyRent      Decimal  @db.Decimal(10, 2)
+  daysSinceContact Int?
+  daysSinceInspection Int?
+
+  review           PortfolioHealthReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([reviewId])
+  @@index([tenantId])
+  @@index([flaggedForDirector])
+  @@map("tenant_health_scores")
 }
 
 enum ArrearsStep {
@@ -1775,10 +1892,37 @@ model LeaseRenewal {
   rentIncreasePercent Decimal? @db.Decimal(5, 2)
   marketComparables Json?  // Array: [{property, rent, source}]
 
+  // Step 1: Health check (SOP 015 matrix)
+  healthCheckOutcome    Json?      // {overallRisk: RED|AMBER|GREEN, redCount: n, dimensions: [{name, score}]}
+  healthCheckCompletedAt DateTime?
+  directorEscalated     Boolean   @default(false)
+  directorEscalatedAt   DateTime?
+
+  // Step 2: Rent review formula (must be read from signed tenancy agreement)
+  rentReviewBasis       String?   // CPI_LINKED | FIXED_PERCENT | NEGOTIATED
+  rentReviewFormula     String?   // formula text captured from tenancy agreement
+  landlordWrittenAuthority Boolean @default(false) // required for NEGOTIATED basis
+
+  // Step 3: CPI calculation
+  cpiReference          String?   // KNBS CPI figure reference used
+
+  // Step 4: Notice details
+  responseDeadline      DateTime? // auto-set: min 21 days from tenantNotifiedAt
+  rentEffectiveDate     DateTime? // auto-set: min 60 days from tenantNotifiedAt (rent increase only)
+
   // Tenant response
   tenantNotifiedAt DateTime?
   tenantResponse  String?  // ACCEPTED / NEGOTIATING / DECLINED
   tenantResponseAt DateTime?
+
+  // Step 6: No-response tracking
+  contactAttempts       Json?     // [{date, method, outcome, notes}]
+  noResponseNoticeAt    DateTime? // when "Notice to Confirm Intentions" was sent
+
+  // Step 7: Periodic continuation
+  periodicAuthorisedAt  DateTime?
+  periodicTerms         Json?     // {rent, noticePeriodMonths}
+  periodicReviewReminderAt DateTime?
 
   // Outcome
   status          RenewalStatus @default(PENDING)

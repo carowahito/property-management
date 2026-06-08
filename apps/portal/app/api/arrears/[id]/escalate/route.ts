@@ -77,10 +77,19 @@ export async function POST(
       updateData[timestampField] = new Date()
     }
 
-    // When escalating to OVERDUE_NOTICE_2, also record landlord notification
+    // Day 6: Arrears Notice #1 — notify landlord (rent overdue, no penalty amounts)
+    if (nextStep === 'OVERDUE_NOTICE_1') {
+      updateData.landlordNotifiedDay6At = new Date()
+    }
+
+    // Day 14: Arrears Notice #2 — notify landlord (arrears amount only, no penalties)
     if (nextStep === 'OVERDUE_NOTICE_2') {
       updateData.landlordNotifiedAt = new Date()
     }
+
+    // Recalculate accrued penalty on every escalation
+    const penaltyPerDay = Number(existing.penaltyPerDay ?? 500)
+    updateData.penaltyAccrued = existing.daysOverdue * penaltyPerDay
 
     if (validatedData.notes) {
       updateData.notes = existing.notes

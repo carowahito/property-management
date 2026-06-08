@@ -422,9 +422,30 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
   };
 
   const selectExistingUnit = (unitId: string) => {
-    // TODO: For now, we're not loading existing units from API
-    // This would require fetching units for the selected property from the API
-    console.log('Unit selection not yet implemented:', unitId);
+    const property = getSelectedProperty();
+    const unit = property?.propertyUnits?.find((u: any) => u.id === unitId);
+    if (!unit) return;
+    const newUnit: UnitDetail = {
+      unitId: unit.id,
+      unitNumber: unit.unitNumber,
+      unitType: '',
+      floor: unit.floor?.toString() || '',
+      bedrooms: unit.bedrooms?.toString() || '',
+      bathrooms: unit.bathrooms?.toString() || '',
+      squareFootage: '',
+      monthlyRent: unit.monthlyRent?.toString() || '',
+      securityDeposit: '',
+      securityDepositType: '1_month',
+      status: (unit.status || 'VACANT').toLowerCase(),
+      tenantId: '',
+      amenities: [],
+      description: '',
+      utilitiesPaidByTenant: [],
+      monthlyServiceCharge: '',
+      leaseTerm: '12_months',
+      leaseTermCustom: '',
+    };
+    setFormData(prev => ({ ...prev, landlordUnits: [...prev.landlordUnits, newUnit] }));
   };
 
   const updateLandlordUnit = (index: number, field: keyof UnitDetail, value: string | string[]) => {
@@ -929,10 +950,13 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
               >
                 <option value="">-- Select a property --</option>
                 {properties
-                  .filter((p: any) => p.type?.toLowerCase() === formData.propertyType?.toLowerCase())
+                  .filter((p: any) => {
+                    const t = (p.type || '').toUpperCase()
+                    return formData.propertyType === 'commercial' ? t === 'COMMERCIAL' : t !== 'COMMERCIAL'
+                  })
                   .map((property: any) => (
                   <option key={property.id} value={property.id}>
-                    {property.name} - {property.address} (ID: {property.id})
+                    {property.name}{property.address ? ` — ${property.address}` : ''}
                   </option>
                 ))}
                 <option value="add_new" className="text-primary-600 font-medium">
@@ -940,7 +964,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                 </option>
               </select>
               <p className="text-xs text-neutral-500 mt-1">
-                Showing {formData.propertyType} properties only. Select an existing property or add a new one.
+                Showing {formData.propertyType} properties. Select an existing property or add a new one.
               </p>
             </div>
 
@@ -963,25 +987,39 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                   </div>
 
                   {/* Existing Units to Select */}
-                  {getSelectedProperty() && getSelectedProperty()!.units.length > 0 && (
+                  {getSelectedProperty()?.propertyUnits?.length > 0 && (
                     <div className="mb-4">
-                      <label className={smallLabelClass}>Select Existing Units</label>
-                      <div className="flex flex-wrap gap-2">
-                        {getSelectedProperty()!.units.map((unit: any) => {
+                      <label className={smallLabelClass}>Select Existing Units (click to assign to this landlord)</label>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {(getSelectedProperty()!.propertyUnits as any[]).map((unit: any) => {
                           const isSelected = formData.landlordUnits.some(u => u.unitId === unit.id);
                           return (
                             <button
                               key={unit.id}
                               type="button"
-                              onClick={() => !isSelected && selectExistingUnit(unit.id)}
-                              disabled={isSelected}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setFormData(prev => ({ ...prev, landlordUnits: prev.landlordUnits.filter(u => u.unitId !== unit.id) }));
+                                } else {
+                                  selectExistingUnit(unit.id);
+                                }
+                              }}
                               className={`px-3 py-2 rounded-lg text-sm border transition ${
-                                isSelected 
-                                  ? 'bg-primary-100 border-primary-300 text-primary-700 cursor-not-allowed' 
+                                isSelected
+                                  ? 'bg-primary-100 border-primary-300 text-primary-700'
                                   : 'bg-white border-neutral-200 hover:border-primary-300 hover:bg-primary-50'
                               }`}
                             >
-                              Unit {unit.name} ({unit.type}) {isSelected && '✓'}
+                              {unit.unitNumber}
+                              <span className={`ml-1.5 text-xs ${
+                                unit.status === 'OCCUPIED' ? 'text-success-600' :
+                                unit.status === 'MAINTENANCE' ? 'text-yellow-600' :
+                                'text-neutral-400'
+                              }`}>
+                                {unit.status === 'OCCUPIED' ? '● Occupied' :
+                                 unit.status === 'MAINTENANCE' ? '● Maintenance' : '○ Vacant'}
+                              </span>
+                              {isSelected && <span className="ml-1 text-primary-600">✓</span>}
                             </button>
                           );
                         })}

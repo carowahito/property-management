@@ -3,8 +3,16 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import Link from 'next/link'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Button } from '@/components/ui/button'
+
+async function fetchLandlords() {
+  const res = await fetch('/api/landlords?limit=200')
+  if (!res.ok) throw new Error('Failed to load landlords')
+  const data = await res.json()
+  return (data.landlords ?? data) as { id: string; name: string; email: string }[]
+}
 
 const inputCls = 'w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent'
 const labelCls = 'block text-sm font-medium text-neutral-700 mb-1'
@@ -26,6 +34,12 @@ export default function UnitDetailPage() {
     },
   })
 
+  const { data: landlords = [] } = useQuery({
+    queryKey: ['landlords-list'],
+    queryFn: fetchLandlords,
+    staleTime: 60_000,
+  })
+
   if (isLoading) return <div className="flex justify-center h-64"><LoadingSpinner size="lg" /></div>
   if (error) return <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 text-red-800">Failed to load unit.</div>
 
@@ -45,6 +59,7 @@ export default function UnitDetailPage() {
       floor: unit?.floor ?? '',
       sizeSqm: unit?.sizeSqm ?? '',
       description: unit?.description ?? '',
+      landlordId: unit?.landlord?.id ?? '',
     })
     setShowEdit(true)
   }
@@ -64,6 +79,7 @@ export default function UnitDetailPage() {
       if (form.floor !== '') payload.floor = parseInt(form.floor)
       if (form.sizeSqm !== '') payload.sizeSqm = parseFloat(form.sizeSqm)
       if (form.description !== '') payload.description = form.description
+      if (form.landlordId) payload.landlordId = form.landlordId
 
       const res = await fetch(`/api/units/${unitNumber}`, {
         method: 'PATCH',
@@ -115,9 +131,37 @@ export default function UnitDetailPage() {
           <p className="text-xs text-neutral-400 mt-1">{unit?.bedrooms}bd · {unit?.bathrooms}ba{unit?.floor != null ? ` · Floor ${unit.floor}` : ''}</p>
         </div>
         <div className="bg-surface rounded-lg shadow p-5">
-          <p className="text-xs text-neutral-500 uppercase tracking-wide">Landlord</p>
-          <p className="text-lg font-semibold text-neutral-900 mt-1">{unit?.landlord?.name ?? '—'}</p>
-          <p className="text-xs text-neutral-400">{unit?.landlord?.email}</p>
+          <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">Landlord</p>
+          {unit?.landlord ? (
+            <>
+              <div className="flex items-start justify-between">
+                <div>
+                  <Link href={`/admin/landlords/${unit.landlord.id}`} className="text-base font-semibold text-primary-600 hover:underline">
+                    {unit.landlord.name}
+                  </Link>
+                  <p className="text-xs text-neutral-400">{unit.landlord.email}</p>
+                </div>
+                <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                  unit.landlord.type === 'JOINT_OWNERSHIP' ? 'bg-purple-100 text-purple-700' :
+                  unit.landlord.type === 'COMPANY' ? 'bg-blue-100 text-blue-700' :
+                  'bg-neutral-100 text-neutral-600'
+                }`}>
+                  {unit.landlord.type === 'JOINT_OWNERSHIP' ? 'Joint' :
+                   unit.landlord.type === 'COMPANY' ? 'Company' : 'Individual'}
+                </span>
+              </div>
+              {unit.landlord.members?.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-neutral-100">
+                  <p className="text-xs text-neutral-500 mb-1">Members</p>
+                  {unit.landlord.members.map((m: any) => (
+                    <p key={m.id} className="text-xs text-neutral-600">{m.name}{m.ownershipPercent ? ` · ${m.ownershipPercent}%` : ''}</p>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-neutral-400 italic">No landlord assigned</p>
+          )}
         </div>
         <div className="bg-surface rounded-lg shadow p-5 flex flex-col justify-between">
           <div>
@@ -262,6 +306,23 @@ export default function UnitDetailPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Landlord */}
+              <div className="md:col-span-2">
+                <label className={labelCls}>Landlord</label>
+                <select
+                  value={form.landlordId}
+                  onChange={e => setForm({ ...form, landlordId: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="">— No landlord assigned —</option>
+                  {landlords.map((l: any) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}{l.email ? ` (${l.email})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Monthly Rent */}
               <div className="md:col-span-2">

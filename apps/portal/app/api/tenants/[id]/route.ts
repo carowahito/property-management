@@ -17,6 +17,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Auto-expire leases whose end date has passed
+    await prisma.lease.updateMany({
+      where: { tenantId: id, status: 'ACTIVE', endDate: { lt: new Date() } },
+      data: { status: 'EXPIRED' },
+    })
+
     const tenant = await prisma.tenant.findUnique({
       where: { id: id },
       include: {
@@ -47,11 +53,8 @@ export async function GET(
             bathrooms: true,
             floor: true,
             landlord: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
+              select: { id: true, name: true, email: true, phone: true, type: true },
+              include: { members: { orderBy: { createdAt: 'asc' } } },
             },
           },
         },

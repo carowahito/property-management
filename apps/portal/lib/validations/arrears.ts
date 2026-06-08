@@ -1,5 +1,12 @@
 import { z } from 'zod'
 
+const contactAttemptSchema = z.object({
+  date: z.string(),
+  method: z.string(),
+  outcome: z.string(),
+  notes: z.string().optional(),
+})
+
 export const createArrearsSchema = z.object({
   leaseId: z.string().min(1, 'Lease is required'),
   tenantId: z.string().min(1, 'Tenant is required'),
@@ -7,6 +14,7 @@ export const createArrearsSchema = z.object({
   rentAmount: z.number().positive('Rent amount must be positive'),
   amountOwed: z.number().positive('Amount owed must be positive'),
   daysOverdue: z.number().int().min(0).default(0),
+  penaltyPerDay: z.number().min(0).optional(),
   notes: z.string().optional(),
 })
 
@@ -15,6 +23,12 @@ export const updateArrearsSchema = z.object({
   daysOverdue: z.number().int().min(0).optional(),
   phoneCallNotes: z.string().optional(),
   notes: z.string().optional(),
+  contactAttempts: z.array(contactAttemptSchema).optional(),
+  lastContactAt: z.string().optional(),
+  paymentPromisedDate: z.string().optional(),
+  paymentPromisedAmount: z.number().positive().optional(),
+  unreachable: z.boolean().optional(),
+  suspectedAbandonment: z.boolean().optional(),
 })
 
 export const escalateArrearsSchema = z.object({
@@ -37,3 +51,4 @@ export type UpdateArrearsInput = z.infer<typeof updateArrearsSchema>
 export type EscalateArrearsInput = z.infer<typeof escalateArrearsSchema>
 export type ResolveArrearsInput = z.infer<typeof resolveArrearsSchema>
 export type RecordPhoneCallInput = z.infer<typeof recordPhoneCallSchema>
+export type ContactAttempt = z.infer<typeof contactAttemptSchema>

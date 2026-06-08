@@ -43,6 +43,7 @@ export async function GET(
           orderBy: { createdAt: 'desc' },
           take: 10,
         },
+        members: { orderBy: { createdAt: 'asc' } },
         units: {
           select: {
             id: true,
@@ -133,13 +134,27 @@ export async function PATCH(
 
     const body = await request.json()
     const validatedData = updateLandlordSchema.parse(body)
+    const { members, ...landlordData } = validatedData
 
     const landlord = await prisma.landlord.update({
       where: { id: id },
-      data: validatedData,
+      data: landlordData,
     })
 
-    return NextResponse.json(landlord)
+    if (members !== undefined) {
+      await prisma.landlordMember.deleteMany({ where: { landlordId: id } })
+      if (members.length > 0) {
+        await prisma.landlordMember.createMany({
+          data: members.map(m => ({ ...m, landlordId: id })),
+        })
+      }
+    }
+
+    const result = await prisma.landlord.findUnique({
+      where: { id },
+      include: { members: true },
+    })
+    return NextResponse.json(result)
   } catch (error: any) {
     console.error('Error updating landlord:', error)
 

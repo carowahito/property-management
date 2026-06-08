@@ -17,6 +17,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Auto-expire if end date has passed
+    await prisma.lease.updateMany({
+      where: { id, status: 'ACTIVE', endDate: { lt: new Date() } },
+      data: { status: 'EXPIRED' },
+    })
+
     const lease = await prisma.lease.findUnique({
       where: { id: id },
       include: {

@@ -38,6 +38,20 @@ export async function POST(
       )
     }
 
+    if (renewal.directorEscalated) {
+      return NextResponse.json(
+        { error: 'This tenancy is escalated to the Director. Renewal cannot be executed until the Director approves (SOP 016 Step 1).' },
+        { status: 400 }
+      )
+    }
+
+    if (!renewal.landlordIntent) {
+      return NextResponse.json(
+        { error: 'Landlord instruction must be recorded before executing a renewal (SOP 016 Step 2).' },
+        { status: 400 }
+      )
+    }
+
     const newStartDate = new Date(validatedData.newStartDate)
     const newEndDate = new Date(validatedData.newEndDate)
 

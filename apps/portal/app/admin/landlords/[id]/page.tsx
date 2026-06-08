@@ -281,7 +281,8 @@ export default function LandlordCRMPage({ params }: Props) {
                   {landlord.status}
                 </span>
                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                  Landlord
+                  {landlordApiData?.type === 'JOINT_OWNERSHIP' ? 'Joint Ownership' :
+                   landlordApiData?.type === 'COMPANY' ? 'Company' : 'Individual'}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-6 text-sm">
@@ -459,6 +460,31 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
               </div>
 
+              {/* Members (Joint Ownership / Company) */}
+              {landlordApiData?.members?.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-neutral-900 mb-3">
+                    {landlordApiData.type === 'JOINT_OWNERSHIP' ? 'Joint Owners' : 'Members'}
+                  </h3>
+                  <div className="border border-neutral-200 rounded-lg divide-y divide-neutral-100">
+                    {landlordApiData.members.map((m: any) => (
+                      <div key={m.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                        <div>
+                          <span className="font-medium text-neutral-900">{m.name}</span>
+                          {m.isPrimary && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Primary</span>}
+                          {m.idNumber && <span className="text-neutral-500 ml-2">ID: {m.idNumber}</span>}
+                        </div>
+                        <div className="text-right text-neutral-500 text-xs space-y-0.5">
+                          {m.ownershipPercent && <p>{Number(m.ownershipPercent)}% share</p>}
+                          {m.phone && <p>{m.phone}</p>}
+                          {m.email && <p>{m.email}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Payout History Chart */}
               <div>
                 <h3 className="font-semibold text-neutral-900 mb-4">Payout History (Recent)</h3>
@@ -539,7 +565,9 @@ export default function LandlordCRMPage({ params }: Props) {
                             </div>
                             {propertyUnits.map((unit: any) => (
                               <div key={unit.id} className="grid grid-cols-5 gap-2 px-4 py-3 text-sm items-center">
-                                <span className="font-medium text-neutral-900">{unit.unitNumber}</span>
+                                <div>
+                                  <span className="font-medium text-neutral-900">{unit.unitNumber}</span>
+                                    </div>
                                 <span className="text-neutral-600">{unit.bedrooms ?? '—'} bed</span>
                                 <span className="text-neutral-600">{unit.bathrooms ?? '—'} bath</span>
                                 <span className="text-neutral-700 font-medium">KES {Number(unit.monthlyRent || 0).toLocaleString()}</span>
@@ -560,6 +588,7 @@ export default function LandlordCRMPage({ params }: Props) {
                   })}
                 </div>
               )}
+
             </div>
           )}
 
@@ -1035,26 +1064,30 @@ export default function LandlordCRMPage({ params }: Props) {
 
                                 <button
                                   disabled={savingUnit}
-                                  title="Permanently delete this unit"
+                                  title="Remove this unit from this landlord's portfolio (unit is not deleted)"
                                   className="px-3 py-1.5 bg-danger-50 text-danger-600 rounded text-sm font-medium hover:bg-danger-100 disabled:opacity-50"
                                   onClick={async () => {
-                                    if (!confirm(`Permanently delete unit ${u.unitNumber}? This cannot be undone.`)) return
+                                    if (!confirm(`Remove unit ${u.unitNumber} from this landlord's portfolio?\n\nThe unit will still exist in the app — it will just no longer be linked to this landlord.`)) return
                                     setSavingUnit(true)
                                     try {
-                                      const res = await fetch(`/api/units/${u.unitNumber}`, { method: 'DELETE' })
+                                      const res = await fetch(`/api/units/${u.unitNumber}`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ landlordId: null }),
+                                      })
                                       if (!res.ok) {
                                         const err = await res.json()
-                                        alert(err.error || 'Failed to delete unit')
+                                        alert(err.error || 'Failed to remove unit')
                                       } else {
                                         setLandlordUnits(prev => prev.filter(x => x.id !== u.id))
                                         setEditingUnitId(null)
                                         refreshLandlord()
                                       }
-                                    } catch { alert('Failed to delete unit') }
+                                    } catch { alert('Failed to remove unit') }
                                     finally { setSavingUnit(false) }
                                   }}
                                 >
-                                  🗑 Delete
+                                  ✂️ Remove
                                 </button>
                               </div>
                             </div>

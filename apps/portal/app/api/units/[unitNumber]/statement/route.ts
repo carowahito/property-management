@@ -47,7 +47,7 @@ export async function GET(
     where: { unitNumber },
     include: {
       property: true,
-      landlord: true,
+      landlord: { include: { members: { orderBy: { createdAt: 'asc' } } } },
       tenants: {
         where: { status: 'ACTIVE' },
         select: { id: true, name: true, email: true, phone: true, moveInDate: true },
@@ -169,7 +169,10 @@ export async function GET(
     floor:      unit.floor,
     sizeSqm:    unit.sizeSqm,
     property:   { id: unit.property.id, name: unit.property.name, address: unit.property.address, city: unit.property.city },
-    landlord:   { name: unit.landlord.name, email: unit.landlord.email, phone: unit.landlord.phone },
+    landlord:   unit.landlord ? {
+      id: unit.landlord.id, name: unit.landlord.name, email: unit.landlord.email,
+      phone: unit.landlord.phone, type: unit.landlord.type, members: unit.landlord.members,
+    } : null,
     activeTenant: unit.tenants[0] ?? null,
     activeLease,
     bedrooms:     unit.bedrooms,

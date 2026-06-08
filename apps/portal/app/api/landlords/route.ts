@@ -112,11 +112,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const { members, ...landlordData } = validatedData
     const landlord = await prisma.landlord.create({
-      data: { ...validatedData, companyId: company.id },
+      data: { ...landlordData, companyId: company.id },
     })
 
-    return NextResponse.json(landlord, { status: 201 })
+    if (members && members.length > 0) {
+      await prisma.landlordMember.createMany({
+        data: members.map(m => ({ ...m, landlordId: landlord.id })),
+      })
+    }
+
+    const result = await prisma.landlord.findUnique({
+      where: { id: landlord.id },
+      include: { members: true },
+    })
+
+    return NextResponse.json(result, { status: 201 })
   } catch (error: any) {
     console.error('Error creating landlord:', error)
 

@@ -16,6 +16,7 @@ const updateUnitSchema = z.object({
   floor: z.number().int().optional(),
   sizeSqm: z.number().min(0).optional(),
   description: z.string().optional(),
+  landlordId: z.string().nullable().optional(),
 })
 
 export async function PATCH(
@@ -33,12 +34,25 @@ export async function PATCH(
     const unit = await prisma.unit.findUnique({ where: { unitNumber } })
     if (!unit) return NextResponse.json({ error: 'Unit not found' }, { status: 404 })
 
+    const { landlordId, ...rest } = data
+
+    if (landlordId) {
+      const landlord = await prisma.landlord.findUnique({ where: { id: landlordId } })
+      if (!landlord) return NextResponse.json({ error: 'Landlord not found' }, { status: 404 })
+    }
+
+    const prismaData: Record<string, unknown> = { ...rest }
+    if (landlordId !== undefined) prismaData.landlordId = landlordId
+
     const updated = await prisma.unit.update({
       where: { unitNumber },
-      data,
+      data: prismaData as any,
       include: {
         property: { select: { id: true, name: true, address: true } },
-        landlord: { select: { id: true, name: true, email: true } },
+        landlord: {
+          select: { id: true, name: true, email: true, phone: true, type: true },
+          include: { members: { orderBy: { createdAt: 'asc' } } },
+        },
       },
     })
 
@@ -65,7 +79,10 @@ export async function GET(
       where: { unitNumber },
       include: {
         property: { select: { id: true, name: true, address: true } },
-        landlord: { select: { id: true, name: true, email: true } },
+        landlord: {
+          select: { id: true, name: true, email: true, phone: true, type: true },
+          include: { members: { orderBy: { createdAt: 'asc' } } },
+        },
       },
     })
 

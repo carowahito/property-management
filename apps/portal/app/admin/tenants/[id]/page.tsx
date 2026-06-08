@@ -534,14 +534,46 @@ export default function TenantCRMPage({ params }: Props) {
                   <p className="text-neutral-600">📅 Move-in Date</p>
                   <p className="font-medium text-neutral-900">{formatDate(tenant.moveIn)}</p>
                 </div>
+                {currentLease?.startDate && (
+                  <div>
+                    <p className="text-neutral-600">🗓️ Lease Start</p>
+                    <p className="font-medium text-neutral-900">{formatDate(currentLease.startDate)}</p>
+                  </div>
+                )}
+                {currentLease?.endDate && (
+                  <div>
+                    <p className="text-neutral-600">🗓️ Lease End</p>
+                    <p className={`font-medium ${
+                      currentLease.status === 'EXPIRED' || currentLease.status === 'TERMINATED'
+                        ? 'text-red-600'
+                        : new Date(currentLease.endDate) < new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+                          ? 'text-amber-600'
+                          : 'text-neutral-900'
+                    }`}>
+                      {formatDate(currentLease.endDate)}
+                      {currentLease.status === 'EXPIRED' && <span className="ml-1 text-xs">(Expired)</span>}
+                      {currentLease.status === 'TERMINATED' && <span className="ml-1 text-xs">(Terminated)</span>}
+                    </p>
+                  </div>
+                )}
                 {tenant.landlordName && (
                   <div>
                     <p className="text-neutral-600">🏢 Landlord</p>
-                    {tenant.landlordId ? (
-                      <Link href={`/admin/landlords/${tenant.landlordId}`} className="font-medium text-primary-600 hover:underline">{tenant.landlordName}</Link>
-                    ) : (
-                      <p className="font-medium text-neutral-900">{tenant.landlordName}</p>
-                    )}
+                    <div className="space-y-1">
+                      {tenant.landlordId ? (
+                        <Link href={`/admin/landlords/${tenant.landlordId}`} className="font-medium text-primary-600 hover:underline block">
+                          {tenant.landlordName}
+                        </Link>
+                      ) : (
+                        <p className="font-medium text-neutral-900">{tenant.landlordName}</p>
+                      )}
+                      {tenantApiData?.unitRef?.landlord?.type && tenantApiData.unitRef.landlord.type !== 'INDIVIDUAL' && (
+                        <span className="text-xs text-neutral-500">
+                          {tenantApiData.unitRef.landlord.type === 'JOINT_OWNERSHIP' ? 'Joint Ownership' : 'Company'}
+                          {tenantApiData.unitRef.landlord.members?.length > 0 && ` · ${tenantApiData.unitRef.landlord.members.length} members`}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

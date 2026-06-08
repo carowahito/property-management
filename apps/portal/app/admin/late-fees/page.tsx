@@ -9,6 +9,13 @@ import { EmptyState } from '@/components/ui/empty-state';
 
 // ── Types ────────────────────────────────────────────────────────
 
+interface ContactAttempt {
+  date: string;
+  method: string;
+  outcome: string;
+  notes?: string;
+}
+
 interface ArrearsRecord {
   id: string;
   leaseId: string;
@@ -17,15 +24,26 @@ interface ArrearsRecord {
   rentAmount: number;
   amountOwed: number;
   daysOverdue: number;
+  penaltyPerDay: number | null;
+  penaltyAccrued: number;
   currentStep: string;
   reminderSentAt: string | null;
   notice1SentAt: string | null;
+  landlordNotifiedDay6At: string | null;
   phoneCallAt: string | null;
   phoneCallNotes: string | null;
   notice2SentAt: string | null;
   landlordNotifiedAt: string | null;
   formalNoticeAt: string | null;
   legalReferralAt: string | null;
+  contactAttempts: ContactAttempt[] | null;
+  lastContactAt: string | null;
+  paymentPromisedDate: string | null;
+  paymentPromisedAmount: number | null;
+  unreachable: boolean;
+  unreachableSince: string | null;
+  suspectedAbandonment: boolean;
+  abandonmentFlaggedAt: string | null;
   resolvedAt: string | null;
   resolution: string | null;
   notes: string | null;
@@ -136,9 +154,15 @@ export default function ArrearsManagementPage() {
   const [filterStep, setFilterStep] = useState<string>('all');
   const [sortBy, setSortBy] = useState('daysOverdue');
 
+  // Scan state
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
+
   // Modal state
   const [phoneCallModalOpen, setPhoneCallModalOpen] = useState(false);
   const [phoneCallNotes, setPhoneCallNotes] = useState('');
+  const [paymentPromisedDate, setPaymentPromisedDate] = useState('');
+  const [paymentPromisedAmount, setPaymentPromisedAmount] = useState('');
   const [resolveModalOpen, setResolveModalOpen] = useState(false);
   const [resolution, setResolution] = useState('PAID');
   const [resolveNotes, setResolveNotes] = useState('');
@@ -170,6 +194,49 @@ export default function ArrearsManagementPage() {
 
   // ── Actions ────────────────────────────────────────────────────
 
+  async function handleScan() {
+    setScanning(true);
+    setScanResult(null);
+    try {
+      const res = await fetch('/api/arrears/scan', { method: 'POST' });
+      const data = await res.json();
+      setScanResult(data.message || 'Scan complete');
+      fetchArrears();
+    } catch {
+      setScanResult('Scan failed');
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  async function handleFlagUnreachable(record: ArrearsRecord) {
+    setActionLoading(true);
+    try {
+      await fetch(`/api/arrears/${record.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unreachable: !record.unreachable }),
+      });
+      fetchArrears();
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleFlagAbandonment(record: ArrearsRecord) {
+    setActionLoading(true);
+    try {
+      await fetch(`/api/arrears/${record.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suspectedAbandonment: !record.suspectedAbandonment }),
+      });
+      fetchArrears();
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handleEscalate(record: ArrearsRecord) {
     setActionLoading(true);
     try {
@@ -191,6 +258,8 @@ export default function ArrearsManagementPage() {
   function openPhoneCallModal(record: ArrearsRecord) {
     setSelectedArrears(record);
     setPhoneCallNotes('');
+    setPaymentPromisedDate('');
+    setPaymentPromisedAmount('');
     setPhoneCallModalOpen(true);
   }
 
@@ -198,10 +267,29 @@ export default function ArrearsManagementPage() {
     if (!selectedArrears || !phoneCallNotes.trim()) return;
     setActionLoading(true);
     try {
+      const payload: any = {
+        phoneCallNotes,
+        lastContactAt: new Date().toISOString(),
+      };
+      if (paymentPromisedDate) payload.paymentPromisedDate = paymentPromisedDate;
+      if (paymentPromisedAmount) payload.paymentPromisedAmount = Number(paymentPromisedAmount);
+
+      // Also append to contact attempts log
+      const existing = selectedArrears.contactAttempts || [];
+      payload.contactAttempts = [
+        ...existing,
+        {
+          date: new Date().toISOString(),
+          method: 'Phone call',
+          outcome: phoneCallNotes,
+          notes: paymentPromisedDate ? `Payment promised by ${paymentPromisedDate}` : undefined,
+        },
+      ];
+
       const res = await fetch(`/api/arrears/${selectedArrears.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneCallNotes }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         setPhoneCallModalOpen(false);
@@ -252,10 +340,19 @@ export default function ArrearsManagementPage() {
             Arrears Escalation &amp; Management
           </h1>
           <p className="text-neutral-600 mt-1">
-            Track overdue rent and manage the escalation pipeline
+            Track overdue rent and manage the escalation pipeline (SOP 004)
           </p>
         </div>
+        <Button variant="primary" size="lg" onClick={handleScan} disabled={scanning}>
+          {scanning ? 'Scanning...' : 'Scan for Arrears'}
+        </Button>
       </div>
+
+      {scanResult && (
+        <div className="bg-success-50 border border-success-200 text-success-800 px-4 py-3 rounded-lg text-sm">
+          {scanResult}
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -387,7 +484,10 @@ export default function ArrearsManagementPage() {
                     Property / Unit
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
-                    Amount Owed
+                    Rent Owed
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                    Penalty Accrued
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Days Overdue
@@ -413,8 +513,19 @@ export default function ArrearsManagementPage() {
                       >
                         {record.tenant.name}
                       </Link>
-                      <div className="text-xs text-neutral-500">
-                        {record.tenant.phone}
+                      <div className="text-xs text-neutral-500">{record.tenant.phone}</div>
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {record.unreachable && (
+                          <Badge variant="danger" size="sm">Unreachable</Badge>
+                        )}
+                        {record.suspectedAbandonment && (
+                          <Badge variant="danger" size="sm">Abandonment</Badge>
+                        )}
+                        {record.paymentPromisedDate && (
+                          <Badge variant="warning" size="sm">
+                            Promise: {new Date(record.paymentPromisedDate).toLocaleDateString()}
+                          </Badge>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm">
@@ -432,6 +543,20 @@ export default function ArrearsManagementPage() {
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-neutral-900">
                       KES {Number(record.amountOwed).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {record.penaltyAccrued > 0 ? (
+                        <span className="text-danger-600 font-semibold">
+                          KES {Number(record.penaltyAccrued).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-neutral-400">—</span>
+                      )}
+                      {record.penaltyPerDay && (
+                        <div className="text-xs text-neutral-400">
+                          KES {Number(record.penaltyPerDay).toLocaleString()}/day
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -479,7 +604,16 @@ export default function ArrearsManagementPage() {
                           size="sm"
                           onClick={() => openPhoneCallModal(record)}
                         >
-                          Phone Call
+                          Log Call
+                        </Button>
+                        <Button
+                          variant={record.unreachable ? 'danger' : 'ghost'}
+                          size="sm"
+                          onClick={() => handleFlagUnreachable(record)}
+                          disabled={actionLoading}
+                          title={record.unreachable ? 'Clear unreachable flag' : 'Flag as unreachable (14 days no contact)'}
+                        >
+                          {record.unreachable ? 'Unreachable ✓' : 'Unreachable'}
                         </Button>
                         <Button
                           variant="success"
@@ -515,30 +649,69 @@ export default function ArrearsManagementPage() {
           {selectedArrears && (
             <div className="space-y-4">
               <div className="bg-neutral-50 rounded-lg p-3 text-sm">
+                <p><span className="font-medium">Tenant:</span> {selectedArrears.tenant.name}</p>
+                <p><span className="font-medium">Phone:</span> {selectedArrears.tenant.phone}</p>
                 <p>
-                  <span className="font-medium">Tenant:</span>{' '}
-                  {selectedArrears.tenant.name}
-                </p>
-                <p>
-                  <span className="font-medium">Phone:</span>{' '}
-                  {selectedArrears.tenant.phone}
-                </p>
-                <p>
-                  <span className="font-medium">Amount Owed:</span> KES{' '}
-                  {Number(selectedArrears.amountOwed).toLocaleString()}
+                  <span className="font-medium">Rent Owed:</span> KES {Number(selectedArrears.amountOwed).toLocaleString()}
+                  {selectedArrears.penaltyAccrued > 0 && (
+                    <> + KES {Number(selectedArrears.penaltyAccrued).toLocaleString()} penalty (agent income)</>
+                  )}
                 </p>
               </div>
+
+              {/* Previous contact attempts */}
+              {selectedArrears.contactAttempts && selectedArrears.contactAttempts.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-neutral-600 mb-1">Previous Contact Attempts</p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {selectedArrears.contactAttempts.map((a, i) => (
+                      <div key={i} className="text-xs bg-neutral-50 rounded p-2 flex gap-2">
+                        <span className="text-neutral-400">{new Date(a.date).toLocaleDateString()}</span>
+                        <span className="font-medium">{a.method}</span>
+                        <span className="text-neutral-600">{a.outcome}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Call Notes
+                  Call Notes / Outcome <span className="text-danger-500">*</span>
                 </label>
                 <textarea
                   value={phoneCallNotes}
                   onChange={(e) => setPhoneCallNotes(e.target.value)}
-                  rows={4}
+                  rows={3}
                   className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
                   placeholder="Summarize the phone call outcome..."
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Payment Promised By
+                  </label>
+                  <input
+                    type="date"
+                    value={paymentPromisedDate}
+                    onChange={(e) => setPaymentPromisedDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Promised Amount (KES)
+                  </label>
+                  <input
+                    type="number"
+                    value={paymentPromisedAmount}
+                    onChange={(e) => setPaymentPromisedAmount(e.target.value)}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                  />
+                </div>
               </div>
             </div>
           )}

@@ -9,6 +9,25 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { formatDate } from '@/lib/utils'
 
+interface HealthCheckDimension {
+  name: string
+  score: 'GREEN' | 'AMBER' | 'RED'
+  notes?: string
+}
+
+interface HealthCheckOutcome {
+  overallRisk: 'GREEN' | 'AMBER' | 'RED'
+  redCount: number
+  dimensions: HealthCheckDimension[]
+}
+
+interface ContactAttempt {
+  date: string
+  method: string
+  outcome: string
+  notes?: string
+}
+
 interface LeaseRenewal {
   id: string
   leaseId: string
@@ -19,14 +38,36 @@ interface LeaseRenewal {
   alertDate: string
   alertSentAt: string | null
   agentActionAt: string | null
+  // Step 1
+  healthCheckOutcome: HealthCheckOutcome | null
+  healthCheckCompletedAt: string | null
+  directorEscalated: boolean
+  directorEscalatedAt: string | null
+  // Step 2
   landlordIntent: string | null
   landlordDecisionAt: string | null
+  rentReviewBasis: string | null
+  rentReviewFormula: string | null
+  landlordWrittenAuthority: boolean
+  // Step 3
   proposedRent: string | null
   rentIncreasePercent: string | null
+  cpiReference: string | null
   marketComparables: { property: string; rent: number; source: string }[] | null
+  // Step 4
+  responseDeadline: string | null
+  rentEffectiveDate: string | null
   tenantNotifiedAt: string | null
   tenantResponse: string | null
   tenantResponseAt: string | null
+  // Step 6
+  contactAttempts: ContactAttempt[] | null
+  noResponseNoticeAt: string | null
+  // Step 7
+  periodicAuthorisedAt: string | null
+  periodicTerms: { rent: number; noticePeriodMonths: number } | null
+  periodicReviewReminderAt: string | null
+  // Outcome
   status: string
   newLeaseId: string | null
   renewalNotes: string | null
@@ -130,6 +171,26 @@ export default function RenewalsPage() {
   const [comparables, setComparables] = useState<{ property: string; rent: string; source: string }[]>([
     { property: '', rent: '', source: '' },
   ])
+
+  // Step 1 — health check
+  const [healthDimensions, setHealthDimensions] = useState<HealthCheckDimension[]>([
+    { name: 'Payment record (12 months)', score: 'GREEN', notes: '' },
+    { name: 'Current arrears balance', score: 'GREEN', notes: '' },
+    { name: 'Last confirmed contact', score: 'GREEN', notes: '' },
+    { name: 'Last physical inspection', score: 'GREEN', notes: '' },
+  ])
+
+  // Step 2 — rent review basis
+  const [rentReviewBasis, setRentReviewBasis] = useState('')
+  const [rentReviewFormula, setRentReviewFormula] = useState('')
+  const [landlordWrittenAuthority, setLandlordWrittenAuthority] = useState(false)
+
+  // Step 3 — CPI reference
+  const [cpiReference, setCpiReference] = useState('')
+
+  // Step 6 — contact attempts
+  const [newContactAttempt, setNewContactAttempt] = useState({ method: '', outcome: '', notes: '' })
+
   const [saving, setSaving] = useState(false)
 
   // Renew modal
@@ -189,6 +250,21 @@ export default function RenewalsPage() {
           }))
         : [{ property: '', rent: '', source: '' }]
     )
+    setHealthDimensions(
+      renewal.healthCheckOutcome?.dimensions && renewal.healthCheckOutcome.dimensions.length > 0
+        ? renewal.healthCheckOutcome.dimensions.map((d) => ({ ...d, notes: d.notes || '' }))
+        : [
+            { name: 'Payment record (12 months)', score: 'GREEN', notes: '' },
+            { name: 'Current arrears balance', score: 'GREEN', notes: '' },
+            { name: 'Last confirmed contact', score: 'GREEN', notes: '' },
+            { name: 'Last physical inspection', score: 'GREEN', notes: '' },
+          ]
+    )
+    setRentReviewBasis(renewal.rentReviewBasis || '')
+    setRentReviewFormula(renewal.rentReviewFormula || '')
+    setLandlordWrittenAuthority(renewal.landlordWrittenAuthority || false)
+    setCpiReference(renewal.cpiReference || '')
+    setNewContactAttempt({ method: '', outcome: '', notes: '' })
     setDetailOpen(true)
   }
 
@@ -202,6 +278,10 @@ export default function RenewalsPage() {
       if (proposedRent) payload.proposedRent = Number(proposedRent)
       if (tenantResponse) payload.tenantResponse = tenantResponse
       if (renewalNotes) payload.renewalNotes = renewalNotes
+      if (rentReviewBasis) payload.rentReviewBasis = rentReviewBasis
+      if (rentReviewFormula) payload.rentReviewFormula = rentReviewFormula
+      if (landlordWrittenAuthority) payload.landlordWrittenAuthority = landlordWrittenAuthority
+      if (cpiReference) payload.cpiReference = cpiReference
 
       const validComparables = comparables.filter(
         (c) => c.property.trim() && c.rent.trim()
@@ -214,6 +294,16 @@ export default function RenewalsPage() {
         }))
       }
 
+      // Health check — only include if user has interacted with it
+      const redCount = healthDimensions.filter((d) => d.score === 'RED').length
+      const overallRisk: 'GREEN' | 'AMBER' | 'RED' =
+        redCount >= 2 ? 'RED' : healthDimensions.some((d) => d.score === 'RED') || healthDimensions.some((d) => d.score === 'AMBER') ? 'AMBER' : 'GREEN'
+      payload.healthCheckOutcome = {
+        overallRisk,
+        redCount,
+        dimensions: healthDimensions,
+      }
+
       const res = await fetch(`/api/lease-renewals/${selectedRenewal.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -223,6 +313,34 @@ export default function RenewalsPage() {
       if (res.ok) {
         setDetailOpen(false)
         fetchRenewals()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Save failed')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAddContactAttempt = async () => {
+    if (!selectedRenewal || !newContactAttempt.method || !newContactAttempt.outcome) return
+    setSaving(true)
+    try {
+      const existing = selectedRenewal.contactAttempts || []
+      const updated = [
+        ...existing,
+        { date: new Date().toISOString(), ...newContactAttempt },
+      ]
+      const res = await fetch(`/api/lease-renewals/${selectedRenewal.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactAttempts: updated }),
+      })
+      if (res.ok) {
+        setNewContactAttempt({ method: '', outcome: '', notes: '' })
+        fetchRenewals()
+        const updated = await res.json()
+        setSelectedRenewal(updated)
       }
     } finally {
       setSaving(false)
@@ -254,7 +372,44 @@ export default function RenewalsPage() {
   }
 
   const handleExtendMonthToMonth = () => {
-    handleSaveDetail({ status: 'MONTH_TO_MONTH' })
+    if (!selectedRenewal) return
+    handleSaveDetail({
+      status: 'MONTH_TO_MONTH',
+      periodicAuthorisedAt: new Date().toISOString(),
+      periodicTerms: {
+        rent: Number(selectedRenewal.currentRent),
+        noticePeriodMonths: 1,
+      },
+    })
+  }
+
+  function getSlaWarnings(renewal: LeaseRenewal): string[] {
+    const warnings: string[] = []
+    const now = new Date()
+    const alertDate = new Date(renewal.alertDate)
+    const daysSinceAlert = Math.floor((now.getTime() - alertDate.getTime()) / 86400000)
+    const daysLeft = getDaysUntilExpiry(renewal.leaseEndDate)
+
+    if (!renewal.healthCheckCompletedAt && daysSinceAlert > 5) {
+      warnings.push('SLA breach: Health check not completed within 5 days of alert')
+    }
+    if (!renewal.landlordDecisionAt && daysSinceAlert > 10) {
+      warnings.push('SLA breach: Landlord instructions not recorded within 10 days of alert')
+    }
+    if (!renewal.tenantNotifiedAt && daysLeft <= 75 && daysLeft > 0) {
+      warnings.push('SLA breach: Renewal notice must be issued — lease expires in ≤75 days')
+    }
+    if (!renewal.newLeaseId && renewal.status === 'ACCEPTED' && daysLeft <= 14 && daysLeft > 0) {
+      warnings.push('SLA breach: New lease must be executed — expires in ≤14 days')
+    }
+    if (
+      renewal.responseDeadline &&
+      !renewal.tenantResponse &&
+      new Date(renewal.responseDeadline) < now
+    ) {
+      warnings.push('Response deadline passed — initiate no-response protocol (Step 6)')
+    }
+    return warnings
   }
 
   const addComparable = () => {
@@ -543,6 +698,32 @@ export default function RenewalsPage() {
             </ModalHeader>
 
             <ModalBody className="space-y-6">
+              {/* SLA Warnings */}
+              {(() => {
+                const warnings = getSlaWarnings(selectedRenewal)
+                if (warnings.length === 0) return null
+                return (
+                  <div className="bg-danger-50 border border-danger-200 rounded-lg p-3 space-y-1">
+                    {warnings.map((w, i) => (
+                      <p key={i} className="text-xs text-danger-700 font-medium">{w}</p>
+                    ))}
+                  </div>
+                )
+              })()}
+
+              {/* Director Escalation Banner */}
+              {selectedRenewal.directorEscalated && (
+                <div className="bg-danger-100 border-2 border-danger-400 rounded-lg p-4">
+                  <p className="text-sm font-bold text-danger-800">
+                    Director Escalation Required
+                  </p>
+                  <p className="text-xs text-danger-700 mt-1">
+                    This tenancy scored Red on 2+ health dimensions. Renewal offer is blocked until the Director approves.
+                    {selectedRenewal.directorEscalatedAt && ` Escalated: ${formatDate(selectedRenewal.directorEscalatedAt)}`}
+                  </p>
+                </div>
+              )}
+
               {/* Current Terms */}
               <div className="grid grid-cols-2 gap-4 bg-neutral-50 rounded-lg p-4">
                 <div>
@@ -612,23 +793,117 @@ export default function RenewalsPage() {
                 </div>
               </div>
 
-              {/* Landlord Intent */}
+              {/* Step 1: Health Check */}
               <div>
-                <h4 className="text-sm font-semibold text-neutral-700 mb-2">
-                  Landlord Intent
-                </h4>
-                <Select
-                  value={landlordIntent}
-                  onChange={(e) => setLandlordIntent(e.target.value)}
-                  options={INTENT_OPTIONS}
-                  placeholder="Select landlord intent"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-neutral-700">
+                    Step 1 — Health Check (SOP 015)
+                  </h4>
+                  {selectedRenewal.healthCheckCompletedAt && (
+                    <Badge variant="success" size="sm">
+                      Completed {formatDate(selectedRenewal.healthCheckCompletedAt)}
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {healthDimensions.map((dim, i) => (
+                    <div key={i} className="grid grid-cols-12 gap-2 items-start">
+                      <div className="col-span-5 text-xs text-neutral-600 pt-1">{dim.name}</div>
+                      <div className="col-span-3">
+                        <select
+                          value={dim.score}
+                          onChange={(e) => {
+                            const updated = [...healthDimensions]
+                            updated[i] = { ...updated[i], score: e.target.value as 'GREEN' | 'AMBER' | 'RED' }
+                            setHealthDimensions(updated)
+                          }}
+                          className="w-full rounded border border-neutral-300 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        >
+                          <option value="GREEN">Green</option>
+                          <option value="AMBER">Amber</option>
+                          <option value="RED">Red</option>
+                        </select>
+                      </div>
+                      <div className="col-span-4">
+                        <input
+                          type="text"
+                          value={dim.notes || ''}
+                          onChange={(e) => {
+                            const updated = [...healthDimensions]
+                            updated[i] = { ...updated[i], notes: e.target.value }
+                            setHealthDimensions(updated)
+                          }}
+                          placeholder="Notes"
+                          className="w-full rounded border border-neutral-300 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {(() => {
+                  const redCount = healthDimensions.filter((d) => d.score === 'RED').length
+                  if (redCount >= 2) {
+                    return (
+                      <p className="text-xs text-danger-700 font-semibold mt-2">
+                        {redCount} Red dimensions — renewal offer will be blocked and Director escalation will be set on save.
+                      </p>
+                    )
+                  }
+                  return null
+                })()}
               </div>
 
-              {/* Rent Review Section */}
+              {/* Step 2: Landlord Consultation */}
               <div>
                 <h4 className="text-sm font-semibold text-neutral-700 mb-2">
-                  Rent Review
+                  Step 2 — Landlord Consultation
+                </h4>
+                <div className="space-y-3">
+                  <Select
+                    value={landlordIntent}
+                    onChange={(e) => setLandlordIntent(e.target.value)}
+                    options={INTENT_OPTIONS}
+                    placeholder="Select landlord intent"
+                  />
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-600 mb-1">
+                      Rent Review Basis (from signed tenancy agreement)
+                    </label>
+                    <select
+                      value={rentReviewBasis}
+                      onChange={(e) => setRentReviewBasis(e.target.value)}
+                      className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    >
+                      <option value="">Select basis...</option>
+                      <option value="CPI_LINKED">CPI-Linked (KNBS)</option>
+                      <option value="FIXED_PERCENT">Fixed Percentage</option>
+                      <option value="NEGOTIATED">Negotiated</option>
+                    </select>
+                  </div>
+                  <Input
+                    label="Formula / Rate (from tenancy agreement)"
+                    value={rentReviewFormula}
+                    onChange={(e) => setRentReviewFormula(e.target.value)}
+                    placeholder="e.g. 5% per annum or CPI + 2%"
+                  />
+                  {rentReviewBasis === 'NEGOTIATED' && (
+                    <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={landlordWrittenAuthority}
+                        onChange={(e) => setLandlordWrittenAuthority(e.target.checked)}
+                        className="rounded border-neutral-300"
+                      />
+                      Written landlord authority confirmed (required for negotiated reviews)
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Step 3: Rent Review */}
+              <div>
+                <h4 className="text-sm font-semibold text-neutral-700 mb-2">
+                  Step 3 — Rent Review Calculation
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   <Input
@@ -655,6 +930,36 @@ export default function RenewalsPage() {
                     ).toFixed(1)}
                     %
                   </p>
+                )}
+                {(rentReviewBasis === 'CPI_LINKED' || selectedRenewal.rentReviewBasis === 'CPI_LINKED') && (
+                  <div className="mt-3">
+                    <Input
+                      label="KNBS CPI Reference (figure and date used)"
+                      value={cpiReference}
+                      onChange={(e) => setCpiReference(e.target.value)}
+                      placeholder="e.g. KNBS CPI Apr 2026: 143.2"
+                    />
+                  </div>
+                )}
+                {selectedRenewal.tenantNotifiedAt && (
+                  <div className="mt-3 grid grid-cols-2 gap-3 bg-primary-50 rounded p-3 text-xs">
+                    <div>
+                      <p className="text-neutral-500 font-medium uppercase">Response Deadline</p>
+                      <p className="font-semibold text-neutral-800">
+                        {selectedRenewal.responseDeadline
+                          ? formatDate(selectedRenewal.responseDeadline)
+                          : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-neutral-500 font-medium uppercase">Rent Effective Date</p>
+                      <p className="font-semibold text-neutral-800">
+                        {selectedRenewal.rentEffectiveDate
+                          ? formatDate(selectedRenewal.rentEffectiveDate)
+                          : '—'}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -748,6 +1053,75 @@ export default function RenewalsPage() {
                   placeholder="Select tenant response"
                 />
               </div>
+
+              {/* Step 6: No-Response Contact Attempts */}
+              {(['TENANT_NOTIFIED', 'PENDING', 'ACCEPTED', 'MONTH_TO_MONTH'].includes(selectedRenewal.status) ||
+                (selectedRenewal.contactAttempts && selectedRenewal.contactAttempts.length > 0)) && (
+                <div>
+                  <h4 className="text-sm font-semibold text-neutral-700 mb-2">
+                    Step 6 — Contact Attempts Log
+                  </h4>
+                  {selectedRenewal.contactAttempts && selectedRenewal.contactAttempts.length > 0 && (
+                    <div className="space-y-1 mb-3">
+                      {selectedRenewal.contactAttempts.map((a, i) => (
+                        <div key={i} className="text-xs bg-neutral-50 rounded p-2 flex gap-3">
+                          <span className="text-neutral-500">{formatDate(a.date)}</span>
+                          <span className="font-medium text-neutral-700">{a.method}</span>
+                          <span className="text-neutral-600">{a.outcome}</span>
+                          {a.notes && <span className="text-neutral-400">{a.notes}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      value={newContactAttempt.method}
+                      onChange={(e) => setNewContactAttempt({ ...newContactAttempt, method: e.target.value })}
+                      placeholder="Method (call/email/WhatsApp)"
+                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={newContactAttempt.outcome}
+                      onChange={(e) => setNewContactAttempt({ ...newContactAttempt, outcome: e.target.value })}
+                      placeholder="Outcome"
+                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+                    />
+                    <button
+                      onClick={handleAddContactAttempt}
+                      disabled={!newContactAttempt.method || !newContactAttempt.outcome || saving}
+                      className="rounded-md bg-primary-600 text-white text-xs px-3 py-1.5 hover:bg-primary-700 disabled:opacity-40"
+                    >
+                      Log Attempt
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 7: Periodic Continuation */}
+              {(selectedRenewal.status === 'MONTH_TO_MONTH' || selectedRenewal.periodicAuthorisedAt) && (
+                <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-warning-800 mb-1">
+                    Step 7 — Periodic Tenancy
+                  </h4>
+                  <div className="text-xs text-warning-700 space-y-1">
+                    {selectedRenewal.periodicAuthorisedAt && (
+                      <p>Authorised: {formatDate(selectedRenewal.periodicAuthorisedAt)}</p>
+                    )}
+                    {selectedRenewal.periodicTerms && (
+                      <p>
+                        Terms: KES {selectedRenewal.periodicTerms.rent.toLocaleString()} /mo —{' '}
+                        {selectedRenewal.periodicTerms.noticePeriodMonths} month notice period
+                      </p>
+                    )}
+                    {selectedRenewal.periodicReviewReminderAt && (
+                      <p>3-month review reminder: {formatDate(selectedRenewal.periodicReviewReminderAt)}</p>
+                    )}
+                    <p className="font-semibold">Periodic tenancies must not run indefinitely — pursue formal renewal.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Notes */}
               <div>

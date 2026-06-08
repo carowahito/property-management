@@ -19,6 +19,15 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
+    // Auto-expire leases whose end date has passed — keeps status correct without a cron job
+    await prisma.lease.updateMany({
+      where: {
+        status: 'ACTIVE',
+        endDate: { lt: new Date() },
+      },
+      data: { status: 'EXPIRED' },
+    })
+
     const where: any = {}
 
     if (status && status !== 'all') where.status = status

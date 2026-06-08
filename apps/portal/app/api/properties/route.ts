@@ -46,6 +46,18 @@ export async function GET(request: NextRequest) {
               phone: true,
             },
           },
+          propertyUnits: {
+            select: {
+              id: true,
+              unitNumber: true,
+              status: true,
+              monthlyRent: true,
+              bedrooms: true,
+              bathrooms: true,
+              floor: true,
+            },
+            orderBy: { unitNumber: 'asc' },
+          },
           _count: {
             select: {
               tenants: true,

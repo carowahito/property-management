@@ -49,8 +49,12 @@ export default function AdminLandlordsPage() {
   const createLandlordMutation = useMutation({
     mutationFn: async (formData: any) => {
       // Validate required fields
-      if (!formData.firstName || !formData.lastName) {
+      const isCompany = formData.ownershipType === 'company'
+      if (!isCompany && (!formData.firstName || !formData.lastName)) {
         throw new Error('First name and last name are required');
+      }
+      if (isCompany && !formData.companyName) {
+        throw new Error('Company name is required');
       }
       if (!formData.email) {
         throw new Error('Email is required');
@@ -59,19 +63,66 @@ export default function AdminLandlordsPage() {
         throw new Error('Phone number is required');
       }
 
+      // Map ownershipType → API type
+      const typeMap: Record<string, string> = { individual: 'INDIVIDUAL', company: 'COMPANY', joint: 'JOINT_OWNERSHIP' }
+      const landlordType = typeMap[formData.ownershipType] ?? 'INDIVIDUAL'
+
+      // For company, use company name as the landlord name
+      const landlordName = formData.ownershipType === 'company'
+        ? (formData.companyName?.trim() || `${formData.firstName.trim()} ${formData.lastName.trim()}`)
+        : `${formData.firstName.trim()} ${formData.lastName.trim()}`
+
+      // Build members for joint ownership
+      const members: Array<Record<string, unknown>> = []
+      if (formData.ownershipType === 'joint' && formData.additionalOwners?.length > 0) {
+        // The primary person in Section A is also a member
+        members.push({
+          name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          idNumber: formData.idNumber?.trim() || undefined,
+          phone: formData.phoneNumber?.trim() || undefined,
+          email: formData.email?.trim() || undefined,
+          isPrimary: true,
+        })
+        for (const owner of formData.additionalOwners) {
+          if (owner.firstName || owner.lastName) {
+            members.push({
+              name: `${owner.firstName} ${owner.lastName}`.trim(),
+              idNumber: owner.idNumber || undefined,
+              nationality: owner.nationality || undefined,
+              countryOfResidence: owner.countryOfResidence || undefined,
+              isPrimary: false,
+            })
+          }
+        }
+      }
+
+      // For company, store the contact person as a member
+      if (formData.ownershipType === 'company' && formData.contactPersonName?.trim()) {
+        members.push({
+          name: formData.contactPersonName.trim(),
+          phone: formData.contactPersonPhone?.trim() || undefined,
+          email: formData.contactPersonEmail?.trim() || undefined,
+          isPrimary: true,
+        })
+      }
+
       // Extract only the fields that the API accepts
       const landlordData: Record<string, unknown> = {
-        name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        name: landlordName,
         email: formData.email.trim().toLowerCase(),
         phone: formData.phoneNumber.trim(),
-        idNumber: formData.idNumber?.trim() || undefined,
+        idNumber: formData.ownershipType === 'company'
+          ? (formData.companyRegNumber?.trim() || undefined)
+          : (formData.idNumber?.trim() || undefined),
         address: (formData.postalAddress || formData.physicalAddress)?.trim() || undefined,
         bankName: formData.bankName?.trim() || undefined,
         bankAccount: formData.bankAccountNumber?.trim() || undefined,
         taxId: formData.kraPin?.trim() || undefined,
         status: 'ACTIVE',
+        type: landlordType,
         managementFeePercent: formData.monthlyManagementFeePercent ? parseFloat(formData.monthlyManagementFeePercent) : undefined,
         tenantPlacementFee: formData.tenantPlacementFeeMonths ? parseFloat(formData.tenantPlacementFeeMonths) : undefined,
+        members: members.length > 0 ? members : undefined,
       };
 
       // Remove undefined values
@@ -99,7 +150,40 @@ export default function AdminLandlordsPage() {
         throw new Error(error.error || JSON.stringify(error.details) || 'Failed to create landlord');
       }
 
-      return response.json();
+      const landlord = await response.json();
+
+      // Assign units to the new landlord
+      const landlordUnits = formData.landlordUnits ?? [];
+      for (const unit of landlordUnits) {
+        if (!unit.unitNumber) continue;
+
+        if (String(unit.unitId).startsWith('new_')) {
+          // Create a brand-new unit
+          await fetch('/api/units', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              propertyId: formData.selectedPropertyId,
+              landlordId: landlord.id,
+              unitNumber: unit.unitNumber,
+              monthlyRent: unit.monthlyRent ? parseFloat(unit.monthlyRent) : undefined,
+              floor: unit.floor ? parseInt(unit.floor) : undefined,
+              bedrooms: unit.bedrooms ? parseInt(unit.bedrooms) : undefined,
+              bathrooms: unit.bathrooms ? parseInt(unit.bathrooms) : undefined,
+              status: (unit.status || 'vacant').toUpperCase(),
+            }),
+          });
+        } else {
+          // Existing unit — assign it to this landlord
+          await fetch(`/api/units/${unit.unitNumber}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ landlordId: landlord.id }),
+          });
+        }
+      }
+
+      return landlord;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['landlords'] });
