@@ -48,13 +48,9 @@ export async function GET(request: NextRequest) {
           },
           propertyUnits: {
             select: {
-              id: true,
-              unitNumber: true,
-              status: true,
-              monthlyRent: true,
-              bedrooms: true,
-              bathrooms: true,
-              floor: true,
+              landlord: {
+                select: { id: true, name: true },
+              },
             },
             orderBy: { unitNumber: 'asc' },
           },
@@ -63,6 +59,7 @@ export async function GET(request: NextRequest) {
               tenants: true,
               leases: true,
               maintenanceRequests: true,
+              propertyUnits: true,
             },
           },
         },
@@ -73,8 +70,17 @@ export async function GET(request: NextRequest) {
       prisma.property.count({ where }),
     ])
 
+    // Enrich with unique landlords from units
+    const enriched = properties.map((p: any) => {
+      const unitLandlords = p.propertyUnits
+        ?.map((u: any) => u.landlord)
+        .filter((l: any) => l)
+        .filter((l: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.id === l.id) === i) || []
+      return { ...p, propertyUnits: undefined, unitLandlords }
+    })
+
     return NextResponse.json({
-      properties,
+      properties: enriched,
       pagination: {
         page,
         limit,
