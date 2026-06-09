@@ -45,6 +45,8 @@ export async function GET(
                 name: true,
                 email: true,
                 phone: true,
+                type: true,
+                members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
               },
             },
           },
@@ -60,6 +62,8 @@ export async function GET(
                 name: true,
                 email: true,
                 phone: true,
+                type: true,
+                members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
               }
             }
           }

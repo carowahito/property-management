@@ -318,11 +318,17 @@ export default function LandlordCRMPage({ params }: Props) {
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
             <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {landlord.name.split(' ').map((n: string) => n[0]).join('')}
+              {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0
+                ? [landlord.name, ...landlordApiData.members.map((m: any) => m.name)].map((n: string) => n.split(' ')[0][0]).join('')
+                : landlord.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-neutral-900">{landlord.name}</h1>
+                <h1 className="text-3xl font-bold text-neutral-900">
+                  {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0
+                    ? [landlord.name, ...landlordApiData.members.map((m: any) => m.name)].join(' & ')
+                    : landlord.name}
+                </h1>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   landlord.status === 'Active' ? 'bg-success-100 text-green-800' : 'bg-neutral-100 text-neutral-800'
                 }`}>
@@ -333,13 +339,6 @@ export default function LandlordCRMPage({ params }: Props) {
                    landlordApiData?.type === 'COMPANY' ? 'Company' : 'Individual'}
                 </span>
               </div>
-              {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0 && (
-                <p className="text-sm text-neutral-600 mb-3">
-                  Co-owners: <span className="font-semibold text-neutral-800">
-                    {landlordApiData.members.map((m: any) => m.name).join(' & ')}
-                  </span>
-                </p>
-              )}
               {landlordApiData?.type === 'COMPANY' && landlordApiData?.members?.length > 0 && (
                 <p className="text-sm text-neutral-600 mb-3">
                   Contact person: <span className="font-semibold text-neutral-800">
@@ -508,11 +507,24 @@ export default function LandlordCRMPage({ params }: Props) {
                     {landlordApiData.type === 'JOINT_OWNERSHIP' ? 'Joint Owners' : 'Members'}
                   </h3>
                   <div className="border border-neutral-200 rounded-lg divide-y divide-neutral-100">
+                    {landlordApiData.type === 'JOINT_OWNERSHIP' && (
+                      <div className="flex items-center justify-between px-4 py-3 text-sm">
+                        <div>
+                          <span className="font-medium text-neutral-900">{landlord.name}</span>
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Primary</span>
+                          {landlord.idNumber && <span className="text-neutral-500 ml-2">ID: {landlord.idNumber}</span>}
+                        </div>
+                        <div className="text-right text-neutral-500 text-xs space-y-0.5">
+                          {landlord.phone && <p>{landlord.phone}</p>}
+                          {landlord.email && <p>{landlord.email}</p>}
+                        </div>
+                      </div>
+                    )}
                     {landlordApiData.members.map((m: any) => (
                       <div key={m.id} className="flex items-center justify-between px-4 py-3 text-sm">
                         <div>
                           <span className="font-medium text-neutral-900">{m.name}</span>
-                          {m.isPrimary && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Primary</span>}
+                          {m.isPrimary && landlordApiData.type !== 'JOINT_OWNERSHIP' && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Primary</span>}
                           {m.idNumber && <span className="text-neutral-500 ml-2">ID: {m.idNumber}</span>}
                         </div>
                         <div className="text-right text-neutral-500 text-xs space-y-0.5">

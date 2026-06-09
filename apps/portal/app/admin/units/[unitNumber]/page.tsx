@@ -139,6 +139,11 @@ export default function UnitDetailPage() {
                   <Link href={`/admin/landlords/${unit.landlord.id}`} className="text-base font-semibold text-primary-600 hover:underline">
                     {unit.landlord.name}
                   </Link>
+                  {unit.landlord.type === 'JOINT_OWNERSHIP' && unit.landlord.members?.length > 0 && (
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      & {unit.landlord.members.map((m: any) => m.name).join(' & ')}
+                    </p>
+                  )}
                   <p className="text-xs text-neutral-400">{unit.landlord.email}</p>
                 </div>
                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
@@ -150,7 +155,7 @@ export default function UnitDetailPage() {
                    unit.landlord.type === 'COMPANY' ? 'Company' : 'Individual'}
                 </span>
               </div>
-              {unit.landlord.members?.length > 0 && (
+              {unit.landlord.type !== 'JOINT_OWNERSHIP' && unit.landlord.members?.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-neutral-100">
                   <p className="text-xs text-neutral-500 mb-1">Members</p>
                   {unit.landlord.members.map((m: any) => (

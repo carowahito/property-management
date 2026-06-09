@@ -420,6 +420,9 @@ export default function PropertyDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-neutral-900 truncate">{landlord.name}</p>
+                  {landlord.type === 'JOINT_OWNERSHIP' && landlord.members?.length > 0 && (
+                    <p className="text-xs text-neutral-500 truncate">& {landlord.members.map((m: any) => m.name).join(' & ')}</p>
+                  )}
                   <p className="text-xs text-neutral-600 truncate">{landlord.email}</p>
                   <p className="text-xs text-neutral-500 mt-1">
                     {((property as any).propertyUnits ?? []).filter((u: any) => u.landlord?.id === landlord.id).length} unit{((property as any).propertyUnits ?? []).filter((u: any) => u.landlord?.id === landlord.id).length !== 1 ? 's' : ''} here
@@ -444,12 +447,15 @@ export default function PropertyDetailPage() {
               </div>
               <div>
                 <p className="text-xs text-neutral-500 uppercase tracking-wide">Primary Contact</p>
-                <Link 
+                <Link
                   href={`/admin/landlords/${property.landlordId}`}
                   className="text-lg font-semibold text-primary-600 hover:text-primary-800 hover:underline"
                 >
                   {property.landlord.name}
                 </Link>
+                {(property.landlord as any).type === 'JOINT_OWNERSHIP' && (property.landlord as any).members?.length > 0 && (
+                  <p className="text-sm text-neutral-500">& {(property.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
+                )}
               </div>
             </div>
           ) : (
@@ -616,7 +622,16 @@ export default function PropertyDetailPage() {
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     KES {unit.monthlyRent ? Number(unit.monthlyRent).toLocaleString() : '—'}
                   </td>
-                  <td className="px-4 py-3 text-neutral-600">{unit.landlord?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-neutral-600">
+                    {unit.landlord ? (
+                      <>
+                        {unit.landlord.name}
+                        {unit.landlord.type === 'JOINT_OWNERSHIP' && unit.landlord.members?.length > 0 && (
+                          <span className="text-xs text-neutral-400 block">& {unit.landlord.members.map((m: any) => m.name).join(' & ')}</span>
+                        )}
+                      </>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 text-neutral-600">
                     {unit.tenants?.[0]?.name ?? <span className="text-neutral-400 italic">Vacant</span>}
                   </td>

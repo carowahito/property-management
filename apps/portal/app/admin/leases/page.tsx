@@ -286,8 +286,8 @@ export default function AdminLeasesPage() {
                             <Link href={`/admin/landlords/${lease.property.landlord.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                               {lease.property.landlord.name}
                             </Link>
-                            {lease.property.landlord.type === 'JOINT_OWNERSHIP' && lease.property.landlord.members?.length > 0 && (
-                              <p className="text-xs text-neutral-400">& {lease.property.landlord.members.map((m: any) => m.name).join(' & ')}</p>
+                            {(lease.property.landlord as any).type === 'JOINT_OWNERSHIP' && (lease.property.landlord as any).members?.length > 0 && (
+                              <p className="text-xs text-neutral-400">& {(lease.property.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
                             )}
                           </div>
                         ) : (
@@ -419,11 +419,17 @@ export default function AdminLeasesPage() {
                     </div>
                     <div className="p-4 bg-neutral-50 rounded-lg">
                       <p className="text-sm text-neutral-600">Landlord</p>
-                      <Link href={`/admin/landlords/${selectedLease.property.landlord.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
-                        {selectedLease.property.landlord.name}
-                      </Link>
-                      {selectedLease.property.landlord.type === 'JOINT_OWNERSHIP' && selectedLease.property.landlord.members?.length > 0 && (
-                        <p className="text-xs text-neutral-500">& {selectedLease.property.landlord.members.map((m: any) => m.name).join(' & ')}</p>
+                      {selectedLease.property.landlord ? (
+                        <>
+                          <Link href={`/admin/landlords/${selectedLease.property.landlord.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
+                            {selectedLease.property.landlord.name}
+                          </Link>
+                          {(selectedLease.property.landlord as any).type === 'JOINT_OWNERSHIP' && (selectedLease.property.landlord as any).members?.length > 0 && (
+                            <p className="text-xs text-neutral-500">& {(selectedLease.property.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="font-semibold text-neutral-900">—</p>
                       )}
                       <p className="text-xs text-neutral-500">Property Owner</p>
                     </div>
