@@ -230,8 +230,8 @@ export default function LeaseDetailPage({ params }: Props) {
           unit: lease.unit || '',
           startDate: renewForm.newStartDate,
           endDate: renewForm.newEndDate,
-          monthlyRent: parseFloat(renewForm.newMonthlyRent) || lease.monthlyRent,
-          securityDeposit: lease.securityDeposit,
+          monthlyRent: Number(parseFloat(renewForm.newMonthlyRent) || lease.monthlyRent || 0),
+          securityDeposit: Number(lease.securityDeposit ?? 0),
           status: 'ACTIVE',
         }),
       })
