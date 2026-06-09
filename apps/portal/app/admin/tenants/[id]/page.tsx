@@ -36,6 +36,7 @@ export default function TenantCRMPage({ params }: Props) {
     date: '',
     method: 'Bank Transfer',
     status: 'Paid',
+    reference: '',
   })
   const [paymentFilters, setPaymentFilters] = useState({
     month: '',
@@ -181,29 +182,33 @@ export default function TenantCRMPage({ params }: Props) {
 
   const handleRecordPayment = async () => {
     if (!paymentForm.amount || !paymentForm.date) return
+    if (!currentLease?.id) {
+      alert('This tenant has no active lease. Please create a lease before recording a payment.')
+      return
+    }
     const methodMap: Record<string, string> = {
       'Bank Transfer': 'BANK_TRANSFER', 'M-Pesa': 'MPESA', 'Cash': 'CASH', 'Cheque': 'CHEQUE', 'Card': 'CARD'
     }
     try {
-      const lease = tenantLeases[0]
       const res = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId,
-          leaseId: lease?.id,
+          leaseId: currentLease.id,
           amount: parseFloat(paymentForm.amount),
           type: 'RENT',
           method: methodMap[paymentForm.method] || 'BANK_TRANSFER',
           dueDate: paymentForm.date,
           paidDate: paymentForm.date,
           status: paymentForm.status === 'Paid' ? 'PAID' : 'PENDING',
+          reference: paymentForm.reference || undefined,
           notes: paymentForm.month ? `${paymentForm.month} rent` : undefined,
         }),
       })
       if (res.ok) {
         setShowRecordPaymentModal(false)
-        setPaymentForm({ month: '', amount: '', date: '', method: 'Bank Transfer', status: 'Paid' })
+        setPaymentForm({ month: '', amount: '', date: '', method: 'Bank Transfer', status: 'Paid', reference: '' })
         window.location.reload()
       } else {
         const data = await res.json()
@@ -595,7 +600,14 @@ export default function TenantCRMPage({ params }: Props) {
                 const res = await fetch('/api/invitations', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: tenant.email, name: tenant.name, role: 'TENANT', tenantId }),
+                  body: JSON.stringify({
+                    email: tenant.email,
+                    name: tenant.name,
+                    role: 'TENANT',
+                    tenantId,
+                    leaseStartDate: currentLease?.startDate ?? null,
+                    leaseEndDate: currentLease?.endDate ?? null,
+                  }),
                 })
                 const data = await res.json()
                 if (!res.ok) {
@@ -905,7 +917,9 @@ export default function TenantCRMPage({ params }: Props) {
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Amount</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Reference</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Receipt</th>
                     </tr>
                   </thead>
                   <tbody className="bg-surface divide-y divide-neutral-200">
@@ -918,6 +932,9 @@ export default function TenantCRMPage({ params }: Props) {
                             {payment.paidDate ? formatDate(payment.paidDate as string) : '-'}
                           </td>
                           <td className="px-6 py-4 text-sm text-neutral-900">{payment.method}</td>
+                          <td className="px-6 py-4 text-sm text-neutral-500 font-mono">
+                            {payment.reference || <span className="text-neutral-300">—</span>}
+                          </td>
                           <td className="px-6 py-4">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               payment.status === 'COMPLETED' || payment.status === 'Paid' ? 'bg-success-100 text-green-800' :
@@ -928,11 +945,20 @@ export default function TenantCRMPage({ params }: Props) {
                               {payment.status === 'COMPLETED' ? 'Paid' : payment.status}
                             </span>
                           </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => window.open(`/api/payments/${payment.id}/receipt`, '_blank')}
+                              className="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center gap-1"
+                              title="View receipt"
+                            >
+                              🧾 Receipt
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-neutral-500">
+                        <td colSpan={7} className="px-6 py-8 text-center text-sm text-neutral-500">
                           No payments found matching the selected filters
                         </td>
                       </tr>
@@ -1567,7 +1593,7 @@ export default function TenantCRMPage({ params }: Props) {
                   </select>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">
                     Payment Status *
                   </label>
@@ -1582,6 +1608,20 @@ export default function TenantCRMPage({ params }: Props) {
                     <option value="Overdue">Overdue</option>
                     <option value="Partial">Partial</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Transaction Reference
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentForm.reference}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., QGH7K2M9P4"
+                  />
+                  <p className="mt-1 text-xs text-neutral-400">M-Pesa code, bank ref, cheque no., etc.</p>
                 </div>
               </div>
             </div>

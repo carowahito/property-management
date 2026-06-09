@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { email, name, role, tenantId, landlordId, vendorId } = await req.json()
+  const { email, name, role, tenantId, landlordId, vendorId, leaseStartDate, leaseEndDate } = await req.json()
 
   if (!email || !name || !role) {
     return NextResponse.json({ error: 'Email, name, and role are required' }, { status: 400 })
@@ -54,10 +54,15 @@ export async function POST(req: NextRequest) {
     where: { email, companyId: adminUser.companyId, status: 'PENDING' },
   })
 
+  const leaseDates = {
+    leaseStartDate: leaseStartDate ? new Date(leaseStartDate) : null,
+    leaseEndDate: leaseEndDate ? new Date(leaseEndDate) : null,
+  }
+
   const invitation = existing
     ? await prisma.invitation.update({
         where: { id: existing.id },
-        data: { token, expiresAt, name, role },
+        data: { token, expiresAt, name, role, ...leaseDates },
       })
     : await prisma.invitation.create({
         data: {
@@ -70,6 +75,7 @@ export async function POST(req: NextRequest) {
           tenantId: role === 'TENANT' ? tenantId : null,
           landlordId: role === 'LANDLORD' ? landlordId : null,
           vendorId: role === 'VENDOR' ? vendorId : null,
+          ...leaseDates,
         },
       })
 

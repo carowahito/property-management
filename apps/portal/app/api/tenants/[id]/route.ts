@@ -53,8 +53,14 @@ export async function GET(
             bathrooms: true,
             floor: true,
             landlord: {
-              select: { id: true, name: true, email: true, phone: true, type: true },
-              include: { members: { orderBy: { createdAt: 'asc' } } },
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                type: true,
+                members: { orderBy: { createdAt: 'asc' } },
+              },
             },
           },
         },

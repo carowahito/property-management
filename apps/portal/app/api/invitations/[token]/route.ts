@@ -30,5 +30,7 @@ export async function GET(
     email: invitation.email,
     name: invitation.name,
     role: invitation.role,
+    leaseStartDate: invitation.leaseStartDate,
+    leaseEndDate: invitation.leaseEndDate,
   })
 }
