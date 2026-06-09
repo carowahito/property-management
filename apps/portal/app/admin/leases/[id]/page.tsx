@@ -32,6 +32,7 @@ export default function LeaseDetailPage({ params }: Props) {
   const docInputRef = useRef<HTMLInputElement>(null)
   const landlordSigRef = useRef<HTMLInputElement>(null)
   const tenantSigRef = useRef<HTMLInputElement>(null)
+  const renewStartRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { params.then(p => setLeaseId(p.id)) }, [params])
 
@@ -198,6 +199,21 @@ export default function LeaseDetailPage({ params }: Props) {
       d.setMonth(d.getMonth() + parseInt(term))
       setRenewForm(prev => ({ ...prev, newEndDate: d.toISOString().split('T')[0] }))
     }
+  }
+
+  const openRenewDatePicker = () => {
+    const el = renewStartRef.current as unknown as HTMLInputElement | null
+    if (!el) return
+    // Modern browsers expose showPicker() for input[type=date]
+    // @ts-ignore
+    if (typeof el.showPicker === 'function') {
+      try { // some browsers may throw when not supported
+        // @ts-ignore
+        el.showPicker()
+        return
+      } catch {}
+    }
+    el.focus()
   }
 
   const handleRenew = async () => {
@@ -613,7 +629,14 @@ export default function LeaseDetailPage({ params }: Props) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">New Start Date *</label>
-                  <input type="date" value={renewForm.newStartDate} onChange={(e) => { setRenewForm(prev => ({ ...prev, newStartDate: e.target.value })); updateRenewEndDate(e.target.value, renewForm.leaseTerm) }} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                  <div className="flex items-center gap-2">
+                    <input ref={renewStartRef} type="date" value={renewForm.newStartDate} onChange={(e) => { setRenewForm(prev => ({ ...prev, newStartDate: e.target.value })); updateRenewEndDate(e.target.value, renewForm.leaseTerm) }} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                    <button type="button" onClick={openRenewDatePicker} title="Choose date" className="p-2 border border-neutral-300 rounded-lg bg-white hover:bg-neutral-50">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-neutral-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M6 2a1 1 0 011 1v1h6V3a1 1 0 112 0v1h1a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h1V3a1 1 0 011-1zM4 9h12v6H4V9z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term</label>
