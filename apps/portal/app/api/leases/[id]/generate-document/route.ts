@@ -97,40 +97,35 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
   <p class="doc-ref">This agreement is entered into by the parties identified in Section A below and is governed by the laws of Kenya.</p>
 
   <!-- SECTION A: PARTIES -->
-  <div class="section-hdr">A &nbsp;&nbsp; Parties</div>
+  <div class="section-hdr">A &nbsp;&nbsp; Parties to this Agreement</div>
 
   <div class="parties-wrap">
-    <div class="party-block">
-      <div class="party-title">Landlord / Managing Agent</div>
-      <div class="prow"><span class="plabel">Name:</span><span>{{landlord_name}}</span></div>
-      <div class="prow"><span class="plabel">Email:</span><span>{{landlord_email}}</span></div>
+    <div class="party-block" style="border-right:1px solid #c8d5e0;">
+      <div class="party-title">Landlord / Agent (Property Manager)</div>
+      <div class="prow"><span class="plabel">Name:</span><span>Tochi Property</span></div>
+      <div class="prow"><span class="plabel">Email:</span><span>info@tochiproperty.com</span></div>
       <div class="prow"><span class="plabel">Mobile:</span><span>{{landlord_phone}}</span></div>
-      <div class="prow"><span class="plabel">Managed by:</span><span>Tochi Property</span></div>
-      <div class="prow"><span class="plabel">Agent Email:</span><span>info@tochiproperty.com</span></div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ddd;">
+        <div class="prow"><span class="plabel" style="color:#888;font-size:8pt;">On behalf of:</span><span style="font-size:8.5pt;color:#555;">{{landlord_name}}</span></div>
+      </div>
     </div>
-    <div class="party-block">
-      <div class="party-title">Property</div>
-      <div class="prow"><span class="plabel">Name:</span><span>{{property_name}}</span></div>
-      <div class="prow"><span class="plabel">Address:</span><span>{{property_address}}</span></div>
-      <div class="prow"><span class="plabel">Unit / Apt:</span><span>{{unit_number}}</span></div>
-      <div class="prow"><span class="plabel">Type:</span><span>{{property_type}}</span></div>
-    </div>
-  </div>
-
-  <div class="tenants-row">
-    <div class="party-block">
-      <div class="party-title">Tenant 1</div>
-      <div class="prow"><span class="plabel">Full Name:</span><span>{{tenant_name}}</span></div>
-      <div class="prow"><span class="plabel">ID / Passport No.:</span><span>{{tenant_id_number}}</span></div>
-      <div class="prow"><span class="plabel">Email Address:</span><span>{{tenant_email}}</span></div>
-      <div class="prow"><span class="plabel">Mobile Number:</span><span>{{tenant_phone}}</span></div>
-    </div>
-    <div class="party-block">
-      <div class="party-title">Tenant 2 &nbsp;<span style="font-weight:400;color:#999;font-size:8pt;">(if applicable)</span></div>
-      <div class="prow"><span class="plabel">Full Name:</span><span>{{tenant2_name}}</span></div>
-      <div class="prow"><span class="plabel">ID / Passport No.:</span><span>{{tenant2_id_number}}</span></div>
-      <div class="prow"><span class="plabel">Email Address:</span><span>{{tenant2_email}}</span></div>
-      <div class="prow"><span class="plabel">Mobile Number:</span><span>{{tenant2_phone}}</span></div>
+    <div class="party-block" style="padding:0;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;height:100%;">
+        <div style="padding:11px 14px;border-right:1px solid #c8d5e0;">
+          <div class="party-title">Tenant 1</div>
+          <div class="prow"><span class="plabel">Full Name</span><span>{{tenant_name}}</span></div>
+          <div class="prow"><span class="plabel">National ID / Passport No.</span><span>{{tenant_id_number}}</span></div>
+          <div class="prow"><span class="plabel">Email Address</span><span>{{tenant_email}}</span></div>
+          <div class="prow"><span class="plabel">Mobile Number</span><span>{{tenant_phone}}</span></div>
+        </div>
+        <div style="padding:11px 14px;">
+          <div class="party-title">Tenant 2 &nbsp;<span style="font-weight:400;color:#999;font-size:8pt;">(if applicable)</span></div>
+          <div class="prow"><span class="plabel">Full Name</span><span>{{tenant2_name}}</span></div>
+          <div class="prow"><span class="plabel">National ID / Passport No.</span><span>{{tenant2_id_number}}</span></div>
+          <div class="prow"><span class="plabel">Email Address</span><span>{{tenant2_email}}</span></div>
+          <div class="prow"><span class="plabel">Mobile Number</span><span>{{tenant2_phone}}</span></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -154,6 +149,8 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
   <!-- SECTION C: AGREEMENT -->
   <div class="section-hdr">C &nbsp;&nbsp; Agreement</div>
 
+  <p style="font-size:9pt;margin-bottom:14px;">This Agreement is entered into between Tochi Property (the &ldquo;Agent/Landlord&rdquo;) and {{tenant_name}}{{tenant2_agreement_and}} (the &ldquo;Tenant(s)&rdquo;), for the lease of the property described in Section B above. Both parties agree to be bound by the terms and conditions set out below.</p>
+
   <div class="clause">
     <div class="clause-num">1. &nbsp; Rent &amp; Payment</div>
     <div class="sub-clause"><span class="sub-num">1.1 Amount &amp; Due Date.</span> The Tenant agrees to pay a monthly rent of <strong>{{monthly_rent}}</strong>, due on the <strong>{{rent_due_day_ordinal}}</strong> of each calendar month.</div>
@@ -174,8 +171,22 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
     <div class="sub-clause"><span class="sub-num">2.1 Amount.</span> A security deposit of <strong>{{security_deposit}}</strong> is payable at or before the commencement date of this agreement.</div>
     <div class="sub-clause"><span class="sub-num">2.2 Holding.</span> The deposit is held by Tochi Property on behalf of the Landlord in a designated account and does not attract interest.</div>
     <div class="sub-clause"><span class="sub-num">2.3 No Commutation.</span> The security deposit may not be used by the Tenant in lieu of rent at any time during the tenancy.</div>
-    <div class="sub-clause"><span class="sub-num">2.4 Permitted Deductions.</span> The Landlord/Agent may deduct from the deposit: (i) unpaid rent or service charges; (ii) costs of repairing damage beyond fair wear and tear; (iii) cleaning costs if the property is not returned in a clean condition; and (iv) any other amounts lawfully owed under this agreement.</div>
-    <div class="sub-clause"><span class="sub-num">2.5 Non-Permitted Deductions.</span> No deduction shall be made for fair wear and tear resulting from normal residential use of the Premises.</div>
+    <div class="sub-clause"><span class="sub-num">2.4 Permitted Deductions.</span> At end of tenancy, deductions from the deposit are only permitted for:
+      <ul class="blist">
+        <li>Unpaid rent or other charges confirmed in writing;</li>
+        <li>Damage to the property or its contents beyond fair wear and tear, evidenced by comparison of the move-in and move-out inspection reports;</li>
+        <li>Professional cleaning costs where the property is left in a condition below its move-in standard (cleaning invoice required);</li>
+        <li>Replacement of lost or damaged inventory items as evidenced by the signed inventory list at move-in;</li>
+        <li>Any breach of this tenancy agreement that results in a quantifiable financial loss.</li>
+      </ul>
+    </div>
+    <div class="sub-clause"><span class="sub-num">2.5 Non-Permitted Deductions.</span> The following shall NOT be deducted from the deposit:
+      <ul class="blist">
+        <li>Normal fair wear and tear (light scuffs, minor marks, faded paint);</li>
+        <li>Pre-existing damage documented on the move-in inspection report;</li>
+        <li>Structural repairs or maintenance that are the Landlord&rsquo;s responsibility.</li>
+      </ul>
+    </div>
     <div class="sub-clause"><span class="sub-num">2.6 Refund Timeline.</span> The deposit (less any lawful deductions) shall be refunded within <strong>10 business days</strong> after the Tenant vacates, completes the move-out inspection, and returns all keys and access devices.</div>
     <div class="sub-clause"><span class="sub-num">2.7 Disputed Deductions.</span> If the Tenant disputes any proposed deduction, the parties shall follow the dispute resolution process in Clause 13.</div>
   </div>
@@ -220,26 +231,34 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
   <div class="clause">
     <div class="clause-num">8. &nbsp; Move-Out Process &amp; Clearance to Vacate</div>
     <div class="sub-clause"><span class="sub-num">8.1 Pre-Move-Out Inspection.</span> Tochi Property will conduct a pre-move-out inspection approximately <strong>two (2) weeks</strong> before the Tenant's intended vacate date to identify repairs or cleaning that must be addressed.</div>
-    <div class="sub-clause"><span class="sub-num">8.2 Final Inspection.</span> A final move-out inspection will be carried out on or after the vacate date. The Tenant is encouraged to be present.</div>
-    <div class="sub-clause"><span class="sub-num">8.3 Statement of Repair Costs.</span> Following the final inspection, Tochi Property will provide an itemised statement of any proposed deductions from the security deposit, with supporting evidence.</div>
-    <div class="sub-clause"><span class="sub-num">8.4 Clearance to Vacate.</span> A Clearance to Vacate will be issued once all obligations are settled, including return of all keys and access devices, completion of agreed repairs, and payment of outstanding rent or charges.</div>
+    <div class="sub-clause"><span class="sub-num">8.2 Final Inspection.</span> On the move-out day, a Final Inspection shall be conducted with the Tenant, the Agent, and Tochi Property&rsquo;s appointed contractor present. The inspection shall assess and cost all repairs or remedial works required.</div>
+    <div class="sub-clause"><span class="sub-num">8.3 Statement of Repairs Costs.</span> The Agent and their appointed contractor shall jointly produce a Statement of Repairs Costs. The Tenant must sign this statement before vacating. The statement shall form the basis for any deposit deductions.</div>
+    <div class="sub-clause"><span class="sub-num">8.4 Clearance to Vacate.</span> A Clearance to Vacate shall be issued to the Tenant once:
+      <ul class="blist">
+        <li>All keys have been returned;</li>
+        <li>The Statement of Repairs Costs has been signed;</li>
+        <li>Any repair costs exceeding the deposit amount held have been settled in full by the Tenant;</li>
+        <li>All rent and outstanding charges have been paid.</li>
+      </ul>
+      No Clearance to Vacate will be issued until all conditions above are met.
+    </div>
   </div>
 
   <div class="clause">
     <div class="clause-num">9. &nbsp; Tenant Obligations</div>
-    <p style="margin:5px 0 7px 0;font-size:9pt;">The Tenant agrees to:</p>
+    <p style="margin:5px 0 7px 0;font-size:9pt;">The Tenant(s) agree to the following:</p>
     <ol class="alist">
-      <li>Pay rent in full on or before the due date each month;</li>
-      <li>Keep the Premises, fixtures, fittings, and appliances in a clean and good state of repair throughout the tenancy;</li>
-      <li>Not sublet, assign, or part with possession of all or any part of the Premises without prior written consent of the Landlord/Agent;</li>
-      <li>Use the Premises for residential purposes only and not conduct any business, trade, profession, or unlawful activity therein;</li>
-      <li>Promptly report in writing to Tochi Property any damage, defect, or maintenance issue at the Premises;</li>
-      <li>Permit Tochi Property and/or the Landlord to access the Premises on <strong>24 hours'</strong> written notice (or immediately in an emergency) for inspection, repair, or valuation;</li>
-      <li>Not make any structural alteration, addition, or improvement to the Premises without prior written consent of the Landlord;</li>
-      <li>Comply with all applicable laws, by-laws, regulations, and the rules of any estate management, body corporate, or residents' association;</li>
-      <li>Not cause nuisance, annoyance, or unreasonable disturbance to neighbours or other occupants of the building or estate;</li>
-      <li>On vacating, leave the Premises clean and tidy, in the same condition as at commencement (fair wear and tear excepted), and return all keys and access devices;</li>
-      <li>Not keep any pet or animal at the Premises without prior written consent from the Landlord. <strong>{{pet_policy}}</strong></li>
+      <li>Keep the property clean and in good condition throughout the tenancy.</li>
+      <li>Keep outdoor areas, common areas, and parking spaces clean and free from obstruction.</li>
+      <li>Refrain from making loud noises or disturbances that interfere with the peace and quiet of neighbouring occupants.</li>
+      <li>Not paint or make any structural alterations to the property without prior written consent from the Agent/Landlord.</li>
+      <li>Park vehicles only in designated spaces and maintain those spaces free from oil drippings and grease.</li>
+      <li>Not keep or store on the property any flammable, hazardous, or explosive materials.</li>
+      <li>Not alter, replace, or add any lock or locking system without the prior written consent of the Agent/Landlord.</li>
+      <li>Not keep pets on the property without prior written consent from the Agent/Landlord. <strong>{{pet_policy}}</strong></li>
+      <li>Pay for the repair of all damage caused by the Tenant, their guests, or household members, including broken windows and damaged fittings.</li>
+      <li>Pay for all utilities serving the property (electricity, water, internet) as applicable.</li>
+      <li>Report any maintenance issue or defect to the Agent promptly in writing.</li>
     </ol>
   </div>
 
@@ -260,9 +279,7 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
 
   <div class="clause">
     <div class="clause-num">12. &nbsp; Breach &amp; Eviction</div>
-    <div class="sub-clause"><span class="sub-num">12.1 Notice to Remedy.</span> In the event of a breach (including non-payment of rent), Tochi Property will issue a formal Notice to Remedy, requiring the Tenant to rectify the breach within <strong>14 days</strong> of the notice date.</div>
-    <div class="sub-clause"><span class="sub-num">12.2 Vacate Notice.</span> If the breach is not remedied within the stipulated period, or in the event of repeated breaches, the Landlord/Agent may issue a Notice to Vacate requiring the Tenant to leave within <strong>30 days</strong> (or as required by applicable Kenyan law).</div>
-    <div class="sub-clause"><span class="sub-num">12.3 Recovery of Costs.</span> The Landlord is entitled to recover from the Tenant all costs, including legal fees and expenses, incurred as a result of any breach of this agreement.</div>
+    <div class="sub-clause">Violation of any material term of this Agreement, or non-payment of rent when due, shall constitute grounds for eviction proceedings under applicable Kenyan law. The Agent/Landlord reserves the right to issue a formal Notice to Remedy or Vacate where a breach remains uncured for more than <strong>fourteen (14) days</strong> after written notice is given to the Tenant.</div>
   </div>
 
   <div class="clause">
@@ -424,6 +441,8 @@ export async function POST(
       tenant2_id_number: (lease as any).tenant2IdNumber || '—',
       tenant2_email: (lease as any).tenant2Email || '—',
       tenant2_phone: (lease as any).tenant2Phone || '—',
+      // Used in Section C preamble: " and [Tenant 2 Name]" or empty string
+      tenant2_agreement_and: (lease as any).tenant2Name ? ` and ${(lease as any).tenant2Name}` : '',
 
       // Property
       property_name: lease.property.name,
