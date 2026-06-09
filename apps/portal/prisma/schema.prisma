@@ -512,6 +512,16 @@ model Lease {
   petPolicy       String?
   specialConditions String? @db.Text
 
+  // Second tenant (optional co-tenant)
+  tenant2Name     String?
+  tenant2IdNumber String?
+  tenant2Email    String?
+  tenant2Phone    String?
+
+  // Payment methods (customisable per lease)
+  mpesaTill       String?  // e.g. "Till No. 1234567 — Tochi Property"
+  bankDetails     String?  // e.g. "Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
+
   // Signing
   sentForSigning  Boolean  @default(false)
   sentAt          DateTime?

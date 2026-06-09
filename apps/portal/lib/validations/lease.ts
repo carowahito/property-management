@@ -38,12 +38,23 @@ export const updateLeaseSchema = z.object({
   templateId: z.string().optional(),
   noticePeriod: z.number().int().positive().optional(),
   rentEscalation: z.number().min(0).max(100).optional(),
+  rentDueDay: z.number().int().min(1).max(31).optional(),
+  gracePeriodDays: z.number().int().min(0).optional(),
+  latePenaltyPerDay: z.number().min(0).optional(),
   petPolicy: z.string().optional(),
   specialConditions: z.string().optional(),
   unitId: z.string().optional(),
   sentForSigning: z.boolean().optional(),
   tenantSignedAt: z.string().optional(),
   landlordSignedAt: z.string().optional(),
+  // Second tenant
+  tenant2Name: z.string().optional(),
+  tenant2IdNumber: z.string().optional(),
+  tenant2Email: z.string().optional(),
+  tenant2Phone: z.string().optional(),
+  // Payment methods
+  mpesaTill: z.string().optional(),
+  bankDetails: z.string().optional(),
 })
 
 export type CreateLeaseInput = z.infer<typeof createLeaseSchema>

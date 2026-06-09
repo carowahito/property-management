@@ -234,12 +234,12 @@ export default function LeaseDocumentPage({ params }: { params: Promise<{ id: st
             {selectedTemplateId !== lease.templateId && (
               <Button variant="outline" onClick={assignTemplate}>Assign</Button>
             )}
-            <Button onClick={generateDocument} disabled={generating || !lease.templateId}>
+            <Button onClick={generateDocument} disabled={generating}>
               {generating ? 'Generating...' : 'Generate Document'}
             </Button>
           </div>
-          {!lease.templateId && selectedTemplateId && (
-            <p className="text-xs text-neutral-500 mt-2">Click &quot;Assign&quot; first, then &quot;Generate Document&quot;</p>
+          {!lease.templateId && (
+            <p className="text-xs text-neutral-500 mt-2">No template assigned — a standard residential tenancy agreement will be used automatically.</p>
           )}
         </div>
       )}
