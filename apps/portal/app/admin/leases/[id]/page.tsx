@@ -219,6 +219,25 @@ export default function LeaseDetailPage({ params }: Props) {
   const handleRenew = async () => {
     setSaving(true)
     try {
+      // Client-side validation
+      if (!renewForm.newStartDate || !renewForm.newEndDate) {
+        alert('Please enter a start and end date for the renewal')
+        setSaving(false)
+        return
+      }
+      const s = new Date(renewForm.newStartDate)
+      const e = new Date(renewForm.newEndDate)
+      if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) {
+        alert('End date must be after start date')
+        setSaving(false)
+        return
+      }
+      const monthly = Number(parseFloat(renewForm.newMonthlyRent) || lease.monthlyRent || 0)
+      if (!monthly || monthly <= 0) {
+        alert('Please enter a valid monthly rent')
+        setSaving(false)
+        return
+      }
       // Create new lease for same tenant/property/unit
       const res = await fetch('/api/leases', {
         method: 'POST',
