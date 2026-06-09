@@ -19,6 +19,7 @@ export default function TenantCRMPage({ params }: Props) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
+  const [showInvitePreview, setShowInvitePreview] = useState(false)
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
@@ -95,7 +96,7 @@ export default function TenantCRMPage({ params }: Props) {
     setIsLoadingTenant(true)
     fetch(`/api/tenants/${tenantId}`)
       .then(r => r.json())
-      .then(data => { setTenantApiData(data); setIsLoadingTenant(false) })
+      .then(data => { if (data && !data.error) setTenantApiData(data); setIsLoadingTenant(false) })
       .catch(() => setIsLoadingTenant(false))
   }, [tenantId])
 
@@ -243,9 +244,18 @@ export default function TenantCRMPage({ params }: Props) {
     vendorName: '',
   }))
 
-  const tenantNotes: any[] = []
-  const communications: any[] = []
-  const activityLog: any[] = []
+  const allMessages: any[] = tenantApiData?.messages || []
+  const tenantNotes = allMessages
+    .filter((m: any) => m.type === 'IN_APP' || m.type === 'SYSTEM')
+    .map((m: any) => ({ id: m.id, note: m.content, subject: m.subject, date: m.sentAt, author: '' }))
+  const communications = allMessages
+    .filter((m: any) => m.type !== 'IN_APP' && m.type !== 'SYSTEM')
+    .map((m: any) => ({ id: m.id, subject: m.subject, type: m.type?.toLowerCase(), category: m.category, status: m.status?.toLowerCase(), date: m.sentAt ? m.sentAt.split('T')[0] : '', content: m.content }))
+  const activityLog = [
+    ...allMessages.map((m: any) => ({ id: m.id, type: (m.type === 'IN_APP' || m.type === 'SYSTEM') ? 'note' : 'communication', description: `${m.type}: ${m.subject}`, date: m.sentAt, user: '' })),
+    ...tenantPayments.map((p: any) => ({ id: p.id, type: 'payment', description: `Payment: KES ${Number(p.amount).toLocaleString()} — ${p.month}`, date: p.paidDate, user: '' })),
+    ...tenantMaintenance.map((m: any) => ({ id: m.id, type: 'maintenance', description: `${m.title} (${m.status})`, date: m.createdAt, user: '' })),
+  ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
   const documents: any[] = []
 
   // Filter payments based on filters
@@ -664,36 +674,8 @@ export default function TenantCRMPage({ params }: Props) {
             }}>
               📄 Statement
             </Button>
-            <Button variant="outline" onClick={async () => {
-              if (inviteSending) return
-              setInviteSending(true)
-              try {
-                const res = await fetch('/api/invitations', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    email: tenant.email,
-                    name: tenant.name,
-                    role: 'TENANT',
-                    tenantId,
-                    leaseStartDate: currentLease?.startDate ?? null,
-                    leaseEndDate: currentLease?.endDate ?? null,
-                  }),
-                })
-                const data = await res.json()
-                if (!res.ok) {
-                  alert(data.error)
-                } else {
-                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
-                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
-                }
-              } catch {
-                alert('Failed to send invitation')
-              } finally {
-                setInviteSending(false)
-              }
-            }}>
-              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
+            <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
+              ✉️ Invite
             </Button>
             <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>
               💬 Contact
@@ -1298,8 +1280,9 @@ export default function TenantCRMPage({ params }: Props) {
                       <option value="">All Methods</option>
                       <option value="email">Email</option>
                       <option value="sms">SMS</option>
-                      <option value="in-app">In-App</option>
-                      <option value="phone">Phone</option>
+                      <option value="in_app">In-App</option>
+                      <option value="whatsapp">WhatsApp</option>
+                      <option value="system">System</option>
                     </select>
                   </div>
 
@@ -1313,12 +1296,13 @@ export default function TenantCRMPage({ params }: Props) {
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">All Categories</option>
-                      <option value="Rent Reminder">Rent Reminder</option>
-                      <option value="Payment Confirmation">Payment Confirmation</option>
-                      <option value="Maintenance">Maintenance</option>
-                      <option value="Lease">Lease</option>
-                      <option value="Announcement">Announcement</option>
-                      <option value="Other">Other</option>
+                      <option value="RENT_REMINDER">Rent Reminder</option>
+                      <option value="PAYMENT">Payment</option>
+                      <option value="MAINTENANCE">Maintenance</option>
+                      <option value="LEASE">Lease</option>
+                      <option value="ANNOUNCEMENT">Announcement</option>
+                      <option value="SUPPORT">Support</option>
+                      <option value="OTHER">Other</option>
                     </select>
                   </div>
 
@@ -1356,15 +1340,15 @@ export default function TenantCRMPage({ params }: Props) {
               {filteredCommunications.length > 0 ? (
                 filteredCommunications.map(comm => (
                   <div key={comm.id} className="border border-neutral-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h4 className="font-medium text-neutral-900">{comm.subject}</h4>
-                        <p className="text-sm text-neutral-600 mt-1">
-                          <span className="capitalize">{comm.type}</span> • {formatDate(comm.date)}
-                          {comm.category && <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-800 rounded text-xs font-medium">{comm.category}</span>}
+                        <p className="text-sm text-neutral-600 mt-1">{comm.content}</p>
+                        <p className="text-xs text-neutral-500 mt-2 capitalize">
+                          {comm.type} • {comm.category?.toLowerCase()?.replace('_', ' ')} • {formatDate(comm.date)}
                         </p>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-3 ${
                         comm.status === 'read' ? 'bg-success-100 text-green-800' :
                         comm.status === 'delivered' ? 'bg-primary-100 text-primary-800' :
                         comm.status === 'sent' ? 'bg-neutral-100 text-neutral-800' :
@@ -1390,8 +1374,15 @@ export default function TenantCRMPage({ params }: Props) {
                 <h3 className="font-semibold text-neutral-900">Notes</h3>
                 <Button variant="primary" onClick={() => setShowNoteModal(true)}>+ Add Note</Button>
               </div>
-              {tenantNotes.map(note => (
+              {tenantNotes.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
+                  <p className="text-4xl mb-2">📝</p>
+                  <p className="text-neutral-500 font-medium">No notes yet</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setShowNoteModal(true)}>Add First Note</Button>
+                </div>
+              ) : tenantNotes.map(note => (
                 <div key={note.id} className="border border-neutral-200 rounded-lg p-4">
+                  {note.subject && note.subject !== 'Note' && <p className="font-medium text-neutral-900 mb-1">{note.subject}</p>}
                   <p className="text-neutral-900 mb-2">{note.note}</p>
                   <p className="text-sm text-neutral-500">
                     {note.author && `${note.author} • `}{formatDate(note.date)}
@@ -1721,6 +1712,124 @@ export default function TenantCRMPage({ params }: Props) {
                 disabled={!paymentForm.month || !paymentForm.amount || !paymentForm.date}
               >
                 Record Payment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Preview Modal */}
+      {showInvitePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full">
+            <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-900">Invitation Preview</h2>
+              <button
+                onClick={() => setShowInvitePreview(false)}
+                className="text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {/* Invitation details */}
+              <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Recipient</span>
+                  <span className="text-sm font-medium text-neutral-900">{tenant.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Email</span>
+                  <span className="text-sm font-medium text-neutral-900">{tenant.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Role</span>
+                  <span className="text-sm font-medium text-primary-700">Tenant</span>
+                </div>
+                {tenant.property && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-neutral-600">Property</span>
+                    <span className="text-sm font-medium text-neutral-900">{tenant.property}{tenant.unit ? ` — ${tenant.unit}` : ''}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Expires</span>
+                  <span className="text-sm font-medium text-neutral-900">7 days from now</span>
+                </div>
+              </div>
+
+              {/* Email preview */}
+              <div>
+                <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Email Preview</p>
+                <div className="border border-neutral-200 rounded-lg p-4 bg-white">
+                  <p className="text-sm text-neutral-900 font-medium mb-2">
+                    Hi {tenant.name.split(' ')[0]},
+                  </p>
+                  <p className="text-sm text-neutral-700 mb-2">
+                    You&apos;ve been invited to join the tenant portal. Click the link below to set up your account and access your property information, payments, and maintenance requests.
+                  </p>
+                  <div className="bg-primary-50 border border-primary-200 rounded px-3 py-2 text-center">
+                    <span className="text-sm text-primary-700 font-medium">Set Up Your Account</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-3">
+                    This invitation expires in 7 days. If you did not expect this invitation, you can ignore this email.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs text-primary-800">
+                    A secure invite link will be generated and copied to your clipboard. You can share it manually or the tenant will receive it via email once email sending is configured.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowInvitePreview(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                disabled={inviteSending}
+                onClick={async () => {
+                  setInviteSending(true)
+                  try {
+                    const res = await fetch('/api/invitations', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: tenant.email,
+                        name: tenant.name,
+                        role: 'TENANT',
+                        tenantId,
+                        leaseStartDate: currentLease?.startDate ?? null,
+                        leaseEndDate: currentLease?.endDate ?? null,
+                      }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok) {
+                      alert(data.error)
+                    } else {
+                      const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                      setShowInvitePreview(false)
+                      alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                    }
+                  } catch {
+                    alert('Failed to send invitation')
+                  } finally {
+                    setInviteSending(false)
+                  }
+                }}
+              >
+                {inviteSending ? 'Sending...' : 'Send Invitation'}
               </Button>
             </div>
           </div>

@@ -54,6 +54,7 @@ export default function VendorCRMPage({ params }: Props) {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
+  const [showInvitePreview, setShowInvitePreview] = useState(false)
   const [saving, setSaving] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [vendorId, setVendorId] = useState<string | null>(null)
@@ -246,29 +247,8 @@ export default function VendorCRMPage({ params }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
-            <Button variant="outline" onClick={async () => {
-              if (inviteSending) return
-              setInviteSending(true)
-              try {
-                const res = await fetch('/api/invitations', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: vendor.email, name: vendor.name, role: 'VENDOR', vendorId }),
-                })
-                const data = await res.json()
-                if (!res.ok) {
-                  alert(data.error)
-                } else {
-                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
-                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
-                }
-              } catch {
-                alert('Failed to send invitation')
-              } finally {
-                setInviteSending(false)
-              }
-            }}>
-              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
+            <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
+              ✉️ Invite
             </Button>
             <Button variant="primary" onClick={() => setShowContactModal(true)}>💬 Contact</Button>
             <ArchiveDeleteButtons
@@ -765,6 +745,113 @@ export default function VendorCRMPage({ params }: Props) {
               <Button variant="outline" className="flex-1" onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }}>Cancel</Button>
               <Button variant="primary" className="flex-1" disabled={!serviceAgreementFile || uploadingServiceAgreement} onClick={handleUploadServiceAgreement}>
                 {uploadingServiceAgreement ? 'Uploading…' : 'Upload Agreement'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Preview Modal */}
+      {showInvitePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full">
+            <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-900">Invitation Preview</h2>
+              <button
+                onClick={() => setShowInvitePreview(false)}
+                className="text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Recipient</span>
+                  <span className="text-sm font-medium text-neutral-900">{vendor.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Email</span>
+                  <span className="text-sm font-medium text-neutral-900">{vendor.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Role</span>
+                  <span className="text-sm font-medium text-warning-700">Vendor</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Specialization</span>
+                  <span className="text-sm font-medium text-neutral-900">{vendor.specialization}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Expires</span>
+                  <span className="text-sm font-medium text-neutral-900">7 days from now</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Email Preview</p>
+                <div className="border border-neutral-200 rounded-lg p-4 bg-white">
+                  <p className="text-sm text-neutral-900 font-medium mb-2">
+                    Hi {vendor.name.split(' ')[0]},
+                  </p>
+                  <p className="text-sm text-neutral-700 mb-2">
+                    You&apos;ve been invited to join the vendor portal. Click the link below to set up your account and access your work orders, invoices, and project details.
+                  </p>
+                  <div className="bg-warning-50 border border-warning-200 rounded px-3 py-2 text-center">
+                    <span className="text-sm text-warning-700 font-medium">Set Up Your Account</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-3">
+                    This invitation expires in 7 days. If you did not expect this invitation, you can ignore this email.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs text-primary-800">
+                    A secure invite link will be generated and copied to your clipboard. You can share it manually or the vendor will receive it via email once email sending is configured.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowInvitePreview(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                disabled={inviteSending}
+                onClick={async () => {
+                  setInviteSending(true)
+                  try {
+                    const res = await fetch('/api/invitations', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: vendor.email, name: vendor.name, role: 'VENDOR', vendorId }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok) {
+                      alert(data.error)
+                    } else {
+                      const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                      setShowInvitePreview(false)
+                      alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                    }
+                  } catch {
+                    alert('Failed to send invitation')
+                  } finally {
+                    setInviteSending(false)
+                  }
+                }}
+              >
+                {inviteSending ? 'Sending...' : 'Send Invitation'}
               </Button>
             </div>
           </div>
