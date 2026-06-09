@@ -466,11 +466,11 @@ export default function RenewalsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">
+          <h1 className="text-xl md:text-2xl font-bold text-neutral-900">
             Lease Renewals & Rent Review
           </h1>
           <p className="text-neutral-600 mt-1">
@@ -494,24 +494,24 @@ export default function RenewalsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white shadow rounded-lg p-5 border-l-4 border-danger-500">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white shadow rounded-lg p-4 md:p-5 border-l-4 border-danger-500">
           <p className="text-sm text-neutral-600">Due in 30 Days</p>
           <p className="text-2xl font-bold text-danger-600">{stats.due30}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-5 border-l-4 border-warning-500">
+        <div className="bg-white shadow rounded-lg p-4 md:p-5 border-l-4 border-warning-500">
           <p className="text-sm text-neutral-600">Due in 60 Days</p>
           <p className="text-2xl font-bold text-warning-600">{stats.due60}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-5 border-l-4 border-primary-500">
+        <div className="bg-white shadow rounded-lg p-4 md:p-5 border-l-4 border-primary-500">
           <p className="text-sm text-neutral-600">Due in 90 Days</p>
           <p className="text-2xl font-bold text-primary-600">{stats.due90}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-5 border-l-4 border-neutral-400">
+        <div className="bg-white shadow rounded-lg p-4 md:p-5 border-l-4 border-neutral-400">
           <p className="text-sm text-neutral-600">Pending Action</p>
           <p className="text-2xl font-bold text-neutral-900">{stats.pendingAction}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-5 border-l-4 border-success-500">
+        <div className="bg-white shadow rounded-lg p-4 md:p-5 border-l-4 border-success-500">
           <p className="text-sm text-neutral-600">Renewed This Month</p>
           <p className="text-2xl font-bold text-success-600">{stats.renewedThisMonth}</p>
         </div>
@@ -553,28 +553,28 @@ export default function RenewalsPage() {
             <table className="min-w-full divide-y divide-neutral-200">
               <thead className="bg-neutral-50">
                 <tr>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Tenant
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">
                     Property / Unit
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">
                     Current Rent
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">
                     Lease End
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Expiry
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">
                     Proposed Rent
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Status
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                  <th className="px-3 md:px-5 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                     Actions
                   </th>
                 </tr>
@@ -597,7 +597,7 @@ export default function RenewalsPage() {
                           : ''
                       }`}
                     >
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-3 md:px-5 py-2 md:py-4 text-sm">
                         <Link
                           href={`/admin/tenants/${renewal.tenant.id}`}
                           className="text-primary-600 hover:text-primary-800 font-medium hover:underline"
@@ -605,7 +605,7 @@ export default function RenewalsPage() {
                           {renewal.tenant.name}
                         </Link>
                       </td>
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-3 md:px-5 py-2 md:py-4 text-sm hidden md:table-cell">
                         <Link
                           href={`/admin/properties/${renewal.property.id}`}
                           className="text-primary-600 hover:text-primary-800 hover:underline"
@@ -618,16 +618,16 @@ export default function RenewalsPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-neutral-900">
+                      <td className="px-3 md:px-5 py-2 md:py-4 text-sm font-semibold text-neutral-900 hidden md:table-cell">
                         KES {Number(renewal.currentRent).toLocaleString()}
                       </td>
-                      <td className="px-5 py-4 text-sm text-neutral-900">
+                      <td className="px-3 md:px-5 py-2 md:py-4 text-sm text-neutral-900 hidden md:table-cell">
                         {formatDate(renewal.leaseEndDate)}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-3 md:px-5 py-2 md:py-4">
                         {getUrgencyBadge(daysLeft)}
                       </td>
-                      <td className="px-5 py-4 text-sm">
+                      <td className="px-3 md:px-5 py-2 md:py-4 text-sm hidden md:table-cell">
                         {renewal.proposedRent ? (
                           <span className="font-semibold text-neutral-900">
                             KES {Number(renewal.proposedRent).toLocaleString()}
@@ -641,8 +641,8 @@ export default function RenewalsPage() {
                           <span className="text-neutral-400">-</span>
                         )}
                       </td>
-                      <td className="px-5 py-4">{getStatusBadge(renewal.status)}</td>
-                      <td className="px-5 py-4">
+                      <td className="px-3 md:px-5 py-2 md:py-4">{getStatusBadge(renewal.status)}</td>
+                      <td className="px-3 md:px-5 py-2 md:py-4">
                         <button
                           onClick={() => openDetail(renewal)}
                           className="text-sm text-primary-600 hover:text-primary-800 font-medium"
@@ -725,7 +725,7 @@ export default function RenewalsPage() {
               )}
 
               {/* Current Terms */}
-              <div className="grid grid-cols-2 gap-4 bg-neutral-50 rounded-lg p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-50 rounded-lg p-4">
                 <div>
                   <p className="text-xs text-neutral-500 uppercase font-medium">
                     Current Rent
@@ -940,7 +940,7 @@ export default function RenewalsPage() {
                 <h4 className="text-sm font-semibold text-neutral-700 mb-2">
                   Step 3 — Rent Review Calculation
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input
                     label="Current Rent (KES)"
                     value={Number(selectedRenewal.currentRent).toLocaleString()}
@@ -977,7 +977,7 @@ export default function RenewalsPage() {
                   </div>
                 )}
                 {selectedRenewal.tenantNotifiedAt && (
-                  <div className="mt-3 grid grid-cols-2 gap-3 bg-primary-50 rounded p-3 text-xs">
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-primary-50 rounded p-3 text-xs">
                     <div>
                       <p className="text-neutral-500 font-medium uppercase">Response Deadline</p>
                       <p className="font-semibold text-neutral-800">
@@ -1108,7 +1108,7 @@ export default function RenewalsPage() {
                       ))}
                     </div>
                   )}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <input
                       type="text"
                       value={newContactAttempt.method}

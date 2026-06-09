@@ -122,30 +122,30 @@ export default function AdminLeasesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-neutral-900">Leases</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Leases</h1>
         <p className="text-neutral-600 mt-2">Manage all lease agreements and terms across all properties</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Active Leases</p>
           <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.activeLeases}</p>
           <p className="text-xs text-neutral-500 mt-2">{stats.totalLeases} total leases</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Expiring Soon</p>
           <p className="text-3xl font-bold text-warning-600 mt-2">{stats.expiringSoon}</p>
           <p className="text-xs text-warning-600 mt-2">Within 90 days</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Total Payments</p>
           <p className="text-3xl font-bold text-neutral-900 mt-2">{leases.reduce((sum, l) => sum + l._count.payments, 0)}</p>
           <p className="text-xs text-primary-600 mt-2">All lease payments</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Total Annual Value</p>
           <p className="text-3xl font-bold text-success-600 mt-2">KES {stats.totalAnnualValue.toLocaleString()}</p>
           <p className="text-xs text-neutral-500 mt-2">Combined rental value</p>
@@ -153,8 +153,8 @@ export default function AdminLeasesPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-3 md:p-4">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4">
           <div className="flex-1">
             <input
               type="text"
@@ -164,7 +164,7 @@ export default function AdminLeasesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setStatusFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
@@ -225,31 +225,31 @@ export default function AdminLeasesPage() {
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
                   Lease ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Tenant
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
                   Landlord
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                   Property / Unit
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Monthly Rent
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                   Start Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                   End Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -271,16 +271,16 @@ export default function AdminLeasesPage() {
 
                   return (
                     <tr key={lease.id} className="hover:bg-neutral-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-medium text-neutral-900 hidden lg:table-cell">
                         {lease.id.substring(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-900">
                         <Link href={`/admin/tenants/${lease.tenant.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                           {lease.tenant.name}
                         </Link>
                         <p className="text-xs text-neutral-500">{lease._count.payments} payments</p>
                       </td>
-                      <td className="px-6 py-4 text-sm text-neutral-900">
+                      <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900 hidden lg:table-cell">
                         {lease.property.landlord ? (
                           <div>
                             <Link href={`/admin/landlords/${lease.property.landlord.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
@@ -291,22 +291,22 @@ export default function AdminLeasesPage() {
                             )}
                           </div>
                         ) : (
-                          <span className="text-neutral-400">—</span>
+                          <span className="text-neutral-400">--</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm hidden md:table-cell">
                         <Link href={`/admin/properties/${lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                           {lease.property.name}
                         </Link>
                         <p className="text-xs text-neutral-500">{lease.unitRef?.unitNumber || lease.unit || 'N/A'}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
                         KES {Number(lease.monthlyRent).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-500 hidden md:table-cell">
                         {formatDate(lease.startDate)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-500 hidden md:table-cell">
                         {formatDate(lease.endDate)}
                         {isExpiringSoon && (
                           <p className="text-xs text-warning-600 font-medium mt-1">
@@ -314,7 +314,7 @@ export default function AdminLeasesPage() {
                           </p>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-1">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             lease.status === 'ACTIVE'
@@ -341,7 +341,7 @@ export default function AdminLeasesPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-3">
                           <Link href={`/admin/leases/${lease.id}`} className="text-primary-600 hover:text-primary-900">
                             View
@@ -367,9 +367,9 @@ export default function AdminLeasesPage() {
       {selectedLease && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="flex items-start justify-between mb-4">
-                <h2 className="text-2xl font-bold text-neutral-900">Lease Agreement Details</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-neutral-900">Lease Agreement Details</h2>
                 <button
                   onClick={() => setSelectedLease(null)}
                   className="text-neutral-400 hover:text-neutral-600"
@@ -380,9 +380,9 @@ export default function AdminLeasesPage() {
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 {/* Lease Info */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-neutral-600">Lease ID</p>
                     <p className="text-lg font-semibold text-neutral-900">{selectedLease.id}</p>
@@ -409,15 +409,15 @@ export default function AdminLeasesPage() {
                 {/* Parties */}
                 <div className="border-t border-neutral-200 pt-4">
                   <h3 className="font-semibold text-neutral-900 mb-3">Parties</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-neutral-50 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-3 md:p-4 bg-neutral-50 rounded-lg">
                       <p className="text-sm text-neutral-600">Tenant</p>
                       <Link href={`/admin/tenants/${selectedLease.tenant.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
                         {selectedLease.tenant.name}
                       </Link>
                       <p className="text-xs text-neutral-500">{selectedLease._count.payments} payments</p>
                     </div>
-                    <div className="p-4 bg-neutral-50 rounded-lg">
+                    <div className="p-3 md:p-4 bg-neutral-50 rounded-lg">
                       <p className="text-sm text-neutral-600">Landlord</p>
                       {selectedLease.property.landlord ? (
                         <>
@@ -439,7 +439,7 @@ export default function AdminLeasesPage() {
                 {/* Property Details */}
                 <div className="border-t border-neutral-200 pt-4">
                   <h3 className="font-semibold text-neutral-900 mb-3">Property Details</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-neutral-600">Property</p>
                       <Link href={`/admin/properties/${selectedLease.property.id}`} className="text-lg font-semibold text-primary-600 hover:text-primary-800 hover:underline">
@@ -456,18 +456,18 @@ export default function AdminLeasesPage() {
                 {/* Financial Terms */}
                 <div className="border-t border-neutral-200 pt-4">
                   <h3 className="font-semibold text-neutral-900 mb-3">Financial Terms</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="p-4 bg-primary-50 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="p-3 md:p-4 bg-primary-50 rounded-lg">
                       <p className="text-sm text-neutral-600">Monthly Rent</p>
-                      <p className="text-2xl font-bold text-neutral-900">KES {Number(selectedLease.monthlyRent).toLocaleString()}</p>
+                      <p className="text-xl md:text-2xl font-bold text-neutral-900">KES {Number(selectedLease.monthlyRent).toLocaleString()}</p>
                     </div>
-                    <div className="p-4 bg-success-50 rounded-lg">
+                    <div className="p-3 md:p-4 bg-success-50 rounded-lg">
                       <p className="text-sm text-neutral-600">Security Deposit</p>
-                      <p className="text-2xl font-bold text-neutral-900">KES {Number(selectedLease.securityDeposit).toLocaleString()}</p>
+                      <p className="text-xl md:text-2xl font-bold text-neutral-900">KES {Number(selectedLease.securityDeposit).toLocaleString()}</p>
                     </div>
-                    <div className="p-4 bg-neutral-50 rounded-lg">
+                    <div className="p-3 md:p-4 bg-neutral-50 rounded-lg">
                       <p className="text-sm text-neutral-600">Annual Value</p>
-                      <p className="text-2xl font-bold text-neutral-900">KES {(Number(selectedLease.monthlyRent) * 12).toLocaleString()}</p>
+                      <p className="text-xl md:text-2xl font-bold text-neutral-900">KES {(Number(selectedLease.monthlyRent) * 12).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -475,7 +475,7 @@ export default function AdminLeasesPage() {
                 {/* Lease Term */}
                 <div className="border-t border-neutral-200 pt-4">
                   <h3 className="font-semibold text-neutral-900 mb-3">Lease Term</h3>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <p className="text-sm text-neutral-600">Start Date</p>
                       <p className="text-lg font-semibold text-neutral-900">

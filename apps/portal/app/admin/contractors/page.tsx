@@ -155,10 +155,10 @@ export default function ContractorsPage() {
   const contractors = data?.contractors || [];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Contractor Directory</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Contractor Directory</h1>
           <p className="text-neutral-600 mt-1">Manage contractors and service providers</p>
         </div>
         <Button variant="primary" size="lg" onClick={() => setShowAddForm(!showAddForm)}>
@@ -171,14 +171,14 @@ export default function ContractorsPage() {
 
       {/* Add Contractor Form */}
       {showAddForm && (
-        <div className="bg-surface shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-4 md:p-6">
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Add New Contractor</h2>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               createMutation.mutate(formData);
             }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Name *</label>
@@ -272,7 +272,7 @@ export default function ContractorsPage() {
 
       {/* Filter */}
       <div className="bg-surface shadow rounded-lg p-4">
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 md:gap-4">
           <select
             value={filterTrade}
             onChange={(e) => setFilterTrade(e.target.value)}
@@ -289,32 +289,32 @@ export default function ContractorsPage() {
       </div>
 
       {/* Contractors List */}
-      <div className="bg-surface shadow rounded-lg overflow-hidden">
+      <div className="bg-surface shadow rounded-lg overflow-hidden overflow-x-auto">
         <table className="min-w-full divide-y divide-neutral-200">
           <thead className="bg-neutral-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                 Trade
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                 Phone
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                 Rating
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                 Jobs
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                 Vetted
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                 Active
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+              <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -329,7 +329,7 @@ export default function ContractorsPage() {
             ) : (
               contractors.map((contractor) => (
                 <tr key={contractor.id} className="hover:bg-neutral-50">
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-2 md:py-4">
                     <div className="text-sm font-medium text-neutral-900">{contractor.name}</div>
                     {contractor.email && (
                       <div className="text-xs text-neutral-500">{contractor.email}</div>
@@ -340,21 +340,21 @@ export default function ContractorsPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-primary-100 text-primary-800 capitalize">
                       {contractor.trade}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                  <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-900 hidden md:table-cell">
                     {contractor.phone}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap hidden md:table-cell">
                     <StarRating rating={contractor.rating} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                  <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-900 hidden md:table-cell">
                     {contractor.totalJobs}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
                     <button
                       onClick={() =>
                         toggleMutation.mutate({
@@ -372,7 +372,7 @@ export default function ContractorsPage() {
                       {contractor.isVetted ? 'Vetted' : 'Not Vetted'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
                     <button
                       onClick={() =>
                         toggleMutation.mutate({
@@ -390,7 +390,7 @@ export default function ContractorsPage() {
                       {contractor.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                  <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-500">
                     <button
                       onClick={() =>
                         toggleMutation.mutate({

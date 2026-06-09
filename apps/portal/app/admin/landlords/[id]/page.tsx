@@ -314,17 +314,17 @@ export default function LandlordCRMPage({ params }: Props) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0">
               {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0
                 ? [landlord.name, ...landlordApiData.members.map((m: any) => m.name)].map((n: string) => n.split(' ')[0][0]).join('')
                 : landlord.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-neutral-900">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-neutral-900">
                   {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0
                     ? [landlord.name, ...landlordApiData.members.map((m: any) => m.name)].join(' & ')
                     : landlord.name}
@@ -346,7 +346,7 @@ export default function LandlordCRMPage({ params }: Props) {
                   </span>
                 </p>
               )}
-              <div className="grid grid-cols-3 gap-6 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 text-sm">
                 <div>
                   <p className="text-neutral-600">📧 Email</p>
                   <p className="font-medium text-neutral-900">{landlord.email}</p>
@@ -374,7 +374,7 @@ export default function LandlordCRMPage({ params }: Props) {
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
             <Button variant="outline" onClick={() => {
               window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
@@ -398,25 +398,25 @@ export default function LandlordCRMPage({ params }: Props) {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <button onClick={() => setActiveTab('financials')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button onClick={() => setActiveTab('financials')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Portfolio Value</p>
-          <p className="text-2xl font-bold text-success-600 mt-2">KES {yearlyRevenue.toLocaleString()}</p>
+          <p className="text-xl md:text-2xl font-bold text-success-600 mt-2">KES {yearlyRevenue.toLocaleString()}</p>
           <p className="text-xs text-neutral-500 mt-1">KES {totalMonthlyRevenue.toLocaleString()}/mo</p>
         </button>
-        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Units</p>
-          <p className="text-2xl font-bold text-primary-600 mt-2">{totalUnits}</p>
+          <p className="text-xl md:text-2xl font-bold text-primary-600 mt-2">{totalUnits}</p>
           <p className="text-xs text-neutral-500 mt-1">across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
         </button>
-        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
-          <p className="text-2xl font-bold text-primary-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
+          <p className="text-xl md:text-2xl font-bold text-primary-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
           <p className="text-xs text-neutral-500 mt-1">{occupiedUnits}/{totalUnits} units occupied</p>
         </button>
-        <button onClick={() => setActiveTab('tenants')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+        <button onClick={() => setActiveTab('tenants')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Active Tenants</p>
-          <p className="text-2xl font-bold text-warning-600 mt-2">{landlordTenants.length}</p>
+          <p className="text-xl md:text-2xl font-bold text-warning-600 mt-2">{landlordTenants.length}</p>
           <p className="text-xs text-neutral-500 mt-1">Across all properties</p>
         </button>
       </div>
@@ -424,7 +424,7 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Tabs */}
       <div className="bg-surface rounded-lg border border-neutral-200">
         <div className="border-b border-neutral-200">
-          <div className="flex space-x-1 p-1 overflow-x-auto">
+          <div className="flex flex-nowrap space-x-1 p-1 overflow-x-auto">
             {[
               { id: 'overview', label: 'Overview', icon: '📊' },
               { id: 'properties', label: 'Properties', icon: '🏠' },
@@ -454,11 +454,11 @@ export default function LandlordCRMPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Portfolio Summary */}
                 <div>
                   <h3 className="font-semibold text-neutral-900 mb-4">Portfolio Summary</h3>
@@ -488,7 +488,7 @@ export default function LandlordCRMPage({ params }: Props) {
                   <h3 className="font-semibold text-neutral-900 mb-4">Recent Activity</h3>
                   <div className="space-y-2">
                     {activityLog.slice(0, 5).map(activity => (
-                      <div key={activity.id} className="flex items-start space-x-3 p-3 bg-neutral-50 rounded-lg">
+                      <div key={activity.id} className="flex items-start space-x-2 md:space-x-3 p-3 bg-neutral-50 rounded-lg">
                         <span className="text-xl">{getActivityIcon(activity.type)}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-neutral-900">{activity.description}</p>
@@ -601,7 +601,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Properties Tab */}
           {activeTab === 'properties' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">
                   Properties ({landlordProperties.length})
                 </h3>
@@ -620,11 +620,11 @@ export default function LandlordCRMPage({ params }: Props) {
                     return (
                       <div key={property.id} className="border border-neutral-200 rounded-lg overflow-hidden">
                         {/* Property header */}
-                        <div className="flex justify-between items-start p-4 bg-neutral-50">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-2 p-4 bg-neutral-50">
                           <div>
                             <Link href={`/admin/properties/${property.id}`} className="font-semibold text-primary-600 hover:underline text-lg">{property.name}</Link>
                             <p className="text-sm text-neutral-600 mt-0.5">{property.address}</p>
-                            <div className="flex gap-4 mt-2 text-sm text-neutral-600">
+                            <div className="flex flex-wrap gap-2 md:gap-4 mt-2 text-sm text-neutral-600">
                               <span>Type: <strong>{property.type}</strong></span>
                               <span>Units (this landlord): <strong>{propertyUnits.length}</strong></span>
                               <span>Occupied: <strong>{occupiedCount}/{propertyUnits.length}</strong></span>
@@ -637,8 +637,8 @@ export default function LandlordCRMPage({ params }: Props) {
                         </div>
                         {/* Units under this property */}
                         {propertyUnits.length > 0 && (
-                          <div className="divide-y divide-neutral-100">
-                            <div className="grid grid-cols-5 gap-2 px-4 py-2 bg-neutral-100 text-xs font-medium text-neutral-500 uppercase">
+                          <div className="divide-y divide-neutral-100 overflow-x-auto">
+                            <div className="grid grid-cols-5 gap-2 px-3 md:px-4 py-2 bg-neutral-100 text-xs font-medium text-neutral-500 uppercase min-w-[500px]">
                               <span>Unit</span>
                               <span>Bedrooms</span>
                               <span>Bathrooms</span>
@@ -646,7 +646,7 @@ export default function LandlordCRMPage({ params }: Props) {
                               <span>Status</span>
                             </div>
                             {propertyUnits.map((unit: any) => (
-                              <div key={unit.id} className="grid grid-cols-5 gap-2 px-4 py-3 text-sm items-center">
+                              <div key={unit.id} className="grid grid-cols-5 gap-2 px-3 md:px-4 py-2 md:py-3 text-sm items-center min-w-[500px]">
                                 <div>
                                   <span className="font-medium text-neutral-900">{unit.unitNumber}</span>
                                     </div>
@@ -685,21 +685,21 @@ export default function LandlordCRMPage({ params }: Props) {
                     <table className="min-w-full divide-y divide-neutral-200">
                       <thead className="bg-neutral-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Gross Rent</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Mgmt Fee</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Net Payout</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Gross Rent</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Mgmt Fee</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Net Payout</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
                         </tr>
                       </thead>
                       <tbody className="bg-surface divide-y divide-neutral-200">
                         {rentTransactions.map((tx: any) => (
                           <tr key={tx.id} className="hover:bg-neutral-50">
-                            <td className="px-6 py-4 text-sm text-neutral-900">{tx.rentPeriod || formatDate(tx.createdAt)}</td>
-                            <td className="px-6 py-4 text-sm text-neutral-900">KES {Number(tx.grossRent).toLocaleString()}</td>
-                            <td className="px-6 py-4 text-sm text-neutral-500">KES {Number(tx.managementFee).toLocaleString()}</td>
-                            <td className="px-6 py-4 text-sm font-semibold text-success-600">KES {Number(tx.netAmount).toLocaleString()}</td>
-                            <td className="px-6 py-4">
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{tx.rentPeriod || formatDate(tx.createdAt)}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">KES {Number(tx.grossRent).toLocaleString()}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-500">KES {Number(tx.managementFee).toLocaleString()}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm font-semibold text-success-600">KES {Number(tx.netAmount).toLocaleString()}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${tx.payoutStatus === 'PAID' ? 'bg-success-100 text-green-800' : 'bg-warning-100 text-yellow-800'}`}>{tx.payoutStatus}</span>
                             </td>
                           </tr>
@@ -711,9 +711,9 @@ export default function LandlordCRMPage({ params }: Props) {
               )}
 
               {/* Payouts */}
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Payout History</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -734,21 +734,21 @@ export default function LandlordCRMPage({ params }: Props) {
                 <table className="min-w-full divide-y divide-neutral-200">
                   <thead className="bg-neutral-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Payout</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date Paid</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Payout</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date Paid</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
                     </tr>
                   </thead>
                   <tbody className="bg-surface divide-y divide-neutral-200">
                     {landlordPayouts.length > 0 ? landlordPayouts.map((payout: any) => (
                       <tr key={payout.id} className="hover:bg-neutral-50">
-                        <td className="px-6 py-4 text-sm text-neutral-900">{payout.period || '—'}</td>
-                        <td className="px-6 py-4 text-sm font-semibold text-success-600">KES {Number(payout.amount).toLocaleString()}</td>
-                        <td className="px-6 py-4 text-sm text-neutral-900">{payout.method || '—'}</td>
-                        <td className="px-6 py-4 text-sm text-neutral-900">{payout.paidDate ? formatDate(payout.paidDate) : '—'}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{payout.period || '—'}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm font-semibold text-success-600">KES {Number(payout.amount).toLocaleString()}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{payout.method || '—'}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{payout.paidDate ? formatDate(payout.paidDate) : '—'}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             payout.status === 'PAID' ? 'bg-success-100 text-green-800' :
                             payout.status === 'PENDING' ? 'bg-warning-100 text-yellow-800' :
@@ -760,7 +760,7 @@ export default function LandlordCRMPage({ params }: Props) {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-neutral-500">No payout records yet</td>
+                        <td colSpan={5} className="px-3 md:px-6 py-8 text-center text-sm text-neutral-500">No payout records yet</td>
                       </tr>
                     )}
                   </tbody>
@@ -803,7 +803,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Documents Tab */}
           {activeTab === 'documents' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Documents ({docsList.length})</h3>
                 <Button variant="primary" onClick={() => setShowUploadModal(true)}>📤 Upload Document</Button>
               </div>
@@ -846,7 +846,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Communications Tab */}
           {activeTab === 'communications' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Communication History ({communications.length})</h3>
                 <Button variant="primary" onClick={() => setShowContactModal(true)}>✉️ Send Message</Button>
               </div>
@@ -873,7 +873,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Notes Tab */}
           {activeTab === 'notes' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Notes ({tenantNotes.length})</h3>
                 <Button variant="primary" onClick={() => setShowNoteModal(true)}>+ Add Note</Button>
               </div>
@@ -919,7 +919,7 @@ export default function LandlordCRMPage({ params }: Props) {
                     <p className="text-neutral-500 font-medium">No activity yet</p>
                   </div>
                 ) : activities.map(activity => (
-                  <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b border-neutral-200 last:border-0">
+                  <div key={activity.id} className="flex items-start space-x-2 md:space-x-4 pb-4 border-b border-neutral-200 last:border-0">
                     <div className="w-10 h-10 bg-neutral-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-lg">{getActivityIcon(activity.type)}</span>
                     </div>
@@ -938,9 +938,9 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Edit Landlord Modal */}
       {showEditModal && editForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-surface rounded-lg max-w-2xl w-full mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto p-4 md:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-neutral-900">Edit Landlord</h3>
+              <h3 className="text-lg md:text-xl font-bold text-neutral-900">Edit Landlord</h3>
               <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1012,7 +1012,7 @@ export default function LandlordCRMPage({ params }: Props) {
                           {/* Inline edit form */}
                           {editingUnitId === u.id && (
                             <div className="p-3 bg-white border-t border-neutral-100 space-y-3">
-                              <div className="grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Monthly Rent (KES)</label>
                                   <input type="number" min="0" value={unitEditForm.monthlyRent}
@@ -1063,7 +1063,7 @@ export default function LandlordCRMPage({ params }: Props) {
                                       className="flex-1 px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                   </div>
                                 </div>
-                                <div className="col-span-2">
+                                <div className="sm:col-span-2">
                                   <label className="block text-xs text-neutral-500 mb-1">Management Fee</label>
                                   <div className="flex gap-1">
                                     <select value={unitEditForm.managementFeeType}
@@ -1183,8 +1183,8 @@ export default function LandlordCRMPage({ params }: Props) {
                 {/* Add new unit */}
                 <div className="border-t border-neutral-200 pt-4">
                   <p className="text-sm font-medium text-neutral-700 mb-3">Add New Unit</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
                       <label className="block text-xs text-neutral-600 mb-1">Property *</label>
                       <select
                         value={newUnit.propertyId}
@@ -1384,8 +1384,8 @@ export default function LandlordCRMPage({ params }: Props) {
                               Remove
                             </button>
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="col-span-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div className="sm:col-span-2">
                               <label className="block text-xs text-neutral-500 mb-1">Full Name *</label>
                               <input
                                 type="text"
@@ -1437,7 +1437,7 @@ export default function LandlordCRMPage({ params }: Props) {
                                 placeholder="email@example.com"
                               />
                             </div>
-                            <div className="col-span-2 flex items-center gap-2">
+                            <div className="sm:col-span-2 flex items-center gap-2">
                               <input
                                 type="checkbox"
                                 id={`primary-${idx}`}
@@ -1600,8 +1600,8 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Add Note Modal */}
       {showNoteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
+          <div className="bg-surface rounded-lg max-w-2xl w-full mx-4 sm:mx-auto p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
             <textarea
               rows={6}
               value={noteText}
@@ -1622,8 +1622,8 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Contact Landlord Modal */}
       {showContactModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Contact {landlord.name}</h3>
+          <div className="bg-surface rounded-lg max-w-2xl w-full mx-4 sm:mx-auto p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold text-neutral-900 mb-4">Contact {landlord.name}</h3>
             <p className="text-sm text-neutral-500 mb-4">{landlord.email} • {landlord.phone}</p>
             <div className="space-y-4">
               <div>
@@ -1648,7 +1648,7 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Upload Service Agreement Modal */}
       {showServiceAgreementModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-md w-full p-6">
+          <div className="bg-surface rounded-lg max-w-md w-full mx-4 sm:mx-auto p-4 md:p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-neutral-900">Upload Management Agreement</h3>
               <button onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }} className="text-neutral-400 hover:text-neutral-600">
@@ -1689,7 +1689,7 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Upload Document Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-md w-full p-6">
+          <div className="bg-surface rounded-lg max-w-md w-full mx-4 sm:mx-auto p-4 md:p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-neutral-900">Upload Document</h3>
               <button onClick={() => { setShowUploadModal(false); setUploadFile(null) }} className="text-neutral-400 hover:text-neutral-600">
@@ -1738,9 +1738,9 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Invite Preview Modal */}
       {showInvitePreview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-lg w-full">
-            <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-neutral-900">Invitation Preview</h2>
+          <div className="bg-surface rounded-lg max-w-lg w-full mx-4 sm:mx-auto">
+            <div className="border-b border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg md:text-xl font-bold text-neutral-900">Invitation Preview</h2>
               <button
                 onClick={() => setShowInvitePreview(false)}
                 className="text-neutral-400 hover:text-neutral-600"
@@ -1751,7 +1751,7 @@ export default function LandlordCRMPage({ params }: Props) {
               </button>
             </div>
 
-            <div className="px-6 py-5 space-y-4">
+            <div className="px-4 md:px-6 py-5 space-y-4">
               <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-neutral-600">Recipient</span>
@@ -1809,7 +1809,7 @@ export default function LandlordCRMPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="bg-neutral-50 border-t border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-end gap-3">
               <Button variant="outline" onClick={() => setShowInvitePreview(false)}>
                 Cancel
               </Button>
