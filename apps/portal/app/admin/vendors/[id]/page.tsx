@@ -280,7 +280,7 @@ export default function VendorCRMPage({ params }: Props) {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Active Jobs</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{totalJobs - completedJobs}</p>
+          <p className="text-2xl font-bold text-primary-600 mt-2">{totalJobs - completedJobs}</p>
           <p className="text-xs text-neutral-500 mt-1">Currently assigned</p>
         </div>
       </div>
@@ -501,7 +501,7 @@ export default function VendorCRMPage({ params }: Props) {
                     </div>
                     <div>
                       <p className="text-sm text-neutral-600">Customer Satisfaction</p>
-                      <p className="text-2xl font-bold text-purple-600">94%</p>
+                      <p className="text-2xl font-bold text-primary-600">94%</p>
                     </div>
                   </div>
                 </div>

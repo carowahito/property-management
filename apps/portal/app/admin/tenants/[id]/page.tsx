@@ -1667,7 +1667,7 @@ export default function TenantCRMPage({ params }: Props) {
                       type="button"
                       onClick={() => handleImproveWithAI('subject')}
                       disabled={!messageForm.subject || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -1696,7 +1696,7 @@ export default function TenantCRMPage({ params }: Props) {
                     type="button"
                     onClick={() => handleImproveWithAI('message')}
                     disabled={!messageForm.message || isImprovingText}
-                    className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                    className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />

@@ -14,6 +14,8 @@ interface Landlord {
   email: string
   phone: string
   status: string
+  type: string
+  members: Array<{ name: string; isPrimary: boolean; ownershipPercent: number | null }>
   _count: {
     properties: number
     units: number
@@ -277,7 +279,7 @@ export default function AdminLandlordsPage() {
         </div>
         <div className='bg-surface shadow rounded-lg p-6'>
           <p className='text-sm text-neutral-600'>Total Units</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.totalUnits}</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalUnits}</p>
         </div>
       </div>
 
@@ -340,6 +342,16 @@ export default function AdminLandlordsPage() {
                         <Link href={`/admin/landlords/${landlord.id}`} className='text-sm font-medium text-primary-600 hover:text-primary-800'>
                           {landlord.name}
                         </Link>
+                        {landlord.type === 'JOINT_OWNERSHIP' && landlord.members?.length > 0 && (
+                          <p className='text-xs text-primary-600 mt-0.5'>
+                            Joint: {landlord.members.map(m => m.name).join(' & ')}
+                          </p>
+                        )}
+                        {landlord.type === 'COMPANY' && landlord.members?.length > 0 && (
+                          <p className='text-xs text-neutral-400 mt-0.5'>
+                            Contact: {landlord.members.find(m => m.isPrimary)?.name || landlord.members[0].name}
+                          </p>
+                        )}
                         <p className='text-sm text-neutral-500'>{landlord._count.payouts} payouts</p>
                       </div>
                     </div>

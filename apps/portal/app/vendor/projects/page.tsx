@@ -101,7 +101,7 @@ export default function VendorProjects() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'Upgrade': return 'bg-purple-100 text-purple-800'
+      case 'Upgrade': return 'bg-primary-100 text-primary-800'
       case 'Renovation': return 'bg-yellow-100 text-yellow-800'
       case 'Installation': return 'bg-primary-100 text-primary-800'
       case 'Maintenance': return 'bg-neutral-100 text-neutral-800'

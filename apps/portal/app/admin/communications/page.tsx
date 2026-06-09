@@ -132,7 +132,7 @@ export default function CommunicationsPage() {
     switch (category) {
       case 'rent-reminder': return 'bg-warning-100 text-orange-800'
       case 'maintenance': return 'bg-primary-100 text-primary-800'
-      case 'lease': return 'bg-purple-100 text-purple-800'
+      case 'lease': return 'bg-primary-100 text-primary-800'
       case 'payment': return 'bg-success-100 text-green-800'
       case 'announcement': return 'bg-yellow-100 text-yellow-800'
       case 'support': return 'bg-indigo-100 text-indigo-800'
@@ -237,7 +237,7 @@ export default function CommunicationsPage() {
                   onClick={() => setCategoryFilter(category)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
                     categoryFilter === category
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
@@ -567,7 +567,7 @@ export default function CommunicationsPage() {
                       type="button"
                       onClick={() => handleImproveWithAI('subject')}
                       disabled={!composeSubject || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -591,7 +591,7 @@ export default function CommunicationsPage() {
                       type="button"
                       onClick={() => handleImproveWithAI('message')}
                       disabled={!composeMessage || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />

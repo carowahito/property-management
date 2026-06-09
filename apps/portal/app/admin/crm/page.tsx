@@ -215,7 +215,7 @@ export default function CRMContactsPage() {
       case 'INACTIVE':
         return 'bg-neutral-100 text-neutral-800'
       case 'CONVERTED':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-primary-100 text-primary-800'
       default:
         return 'bg-neutral-100 text-neutral-800'
     }
@@ -269,7 +269,7 @@ export default function CRMContactsPage() {
         </div>
         <div className="bg-surface shadow rounded-lg p-4">
           <p className="text-xs text-neutral-600">Landlords</p>
-          <p className="text-2xl font-bold text-purple-600">{stats.landlords}</p>
+          <p className="text-2xl font-bold text-primary-600">{stats.landlords}</p>
         </div>
         <div className="bg-surface shadow rounded-lg p-4">
           <p className="text-xs text-neutral-600">Vendors</p>
@@ -387,7 +387,7 @@ export default function CRMContactsPage() {
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       contact.contactType === 'Tenant' ? 'bg-success-100 text-green-800' :
-                      contact.contactType === 'Landlord' ? 'bg-purple-100 text-purple-800' :
+                      contact.contactType === 'Landlord' ? 'bg-primary-100 text-primary-800' :
                       'bg-warning-100 text-orange-800'
                     }`}>
                       {contact.contactType}

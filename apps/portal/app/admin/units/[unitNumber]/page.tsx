@@ -142,7 +142,7 @@ export default function UnitDetailPage() {
                   <p className="text-xs text-neutral-400">{unit.landlord.email}</p>
                 </div>
                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                  unit.landlord.type === 'JOINT_OWNERSHIP' ? 'bg-purple-100 text-purple-700' :
+                  unit.landlord.type === 'JOINT_OWNERSHIP' ? 'bg-primary-100 text-primary-700' :
                   unit.landlord.type === 'COMPANY' ? 'bg-blue-100 text-blue-700' :
                   'bg-neutral-100 text-neutral-600'
                 }`}>

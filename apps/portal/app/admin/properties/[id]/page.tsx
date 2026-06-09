@@ -381,7 +381,7 @@ export default function PropertyDetailPage() {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
-          <p className="text-3xl font-bold text-purple-600 mt-2">
+          <p className="text-3xl font-bold text-primary-600 mt-2">
             {property.totalUnits > 0 ? Math.round((tenants.length / property.totalUnits) * 100) : 0}%
           </p>
           <p className="text-xs text-neutral-500 mt-1">Current rate</p>
@@ -938,7 +938,7 @@ export default function PropertyDetailPage() {
                         type="button"
                         onClick={handleImproveWithAI}
                         disabled={!newUnit.description || isImprovingText}
-                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                        className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />

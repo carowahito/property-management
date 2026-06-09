@@ -95,7 +95,7 @@ export default function SubleaseManagementPage() {
       approved: 'bg-success-100 text-success-800',
       declined: 'bg-danger-100 text-danger-800',
       active: 'bg-primary-100 text-primary-800',
-      completed: 'bg-purple-100 text-purple-800',
+      completed: 'bg-primary-100 text-primary-800',
     }
     return badges[status] || badges.draft
   }

@@ -1531,7 +1531,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2 mt-8">Pricing & Commission</h4>
             
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
-              <h5 className="font-medium text-purple-800">
+              <h5 className="font-medium text-primary-800">
                 {formData.propertyType === 'residential' ? '🏠 Residential Properties' : '🏢 Commercial Properties'}
               </h5>
               
@@ -1584,7 +1584,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                             value="percent_annual"
                             checked={formData.commercialLeasingFeeType === 'percent_annual'}
                             onChange={handleInputChange}
-                            className="h-4 w-4 text-purple-600"
+                            className="h-4 w-4 text-primary-600"
                           />
                           <span className="text-sm">% of annual rent</span>
                         </label>
@@ -1595,7 +1595,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                             value="months_rent"
                             checked={formData.commercialLeasingFeeType === 'months_rent'}
                             onChange={handleInputChange}
-                            className="h-4 w-4 text-purple-600"
+                            className="h-4 w-4 text-primary-600"
                           />
                           <span className="text-sm">Month(s) rent</span>
                         </label>

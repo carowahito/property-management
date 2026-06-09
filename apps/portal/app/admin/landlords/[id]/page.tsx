@@ -45,9 +45,13 @@ export default function LandlordCRMPage({ params }: Props) {
   const [editForm, setEditForm] = useState({
     name: '', email: '', phone: '', idNumber: '', address: '',
     bankName: '', bankAccount: '', taxId: '', status: 'ACTIVE',
+    type: 'INDIVIDUAL',
     managementFeePercent: '', managementFeeType: 'PERCENTAGE',
     tenantPlacementFee: '', tenantPlacementFeeType: 'MONTHS',
   })
+  const [editMembers, setEditMembers] = useState<Array<{
+    name: string; idNumber: string; phone: string; email: string; ownershipPercent: string; isPrimary: boolean
+  }>>([])
 
   const fetchDocuments = () => {
     if (!landlordId) return
@@ -95,11 +99,22 @@ export default function LandlordCRMPage({ params }: Props) {
       bankAccount: landlord?.bankAccount || '',
       taxId: landlord?.taxId || '',
       status: landlord?.status || 'ACTIVE',
+      type: landlordApiData?.type || 'INDIVIDUAL',
       managementFeePercent: landlord?.managementFeePercent ?? '',
       managementFeeType: landlord?.managementFeeType || 'PERCENTAGE',
       tenantPlacementFee: landlord?.tenantPlacementFee ?? '',
       tenantPlacementFeeType: landlord?.tenantPlacementFeeType || 'MONTHS',
     })
+    setEditMembers(
+      (landlordApiData?.members || []).map((m: any) => ({
+        name: m.name || '',
+        idNumber: m.idNumber || '',
+        phone: m.phone || '',
+        email: m.email || '',
+        ownershipPercent: m.ownershipPercent != null ? String(m.ownershipPercent) : '',
+        isPrimary: m.isPrimary || false,
+      }))
+    )
     setEditTab('details')
     setNewUnit({ propertyId: '', unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', status: 'VACANT' })
     setShowEditModal(true)
@@ -198,7 +213,7 @@ export default function LandlordCRMPage({ params }: Props) {
 
   if (!landlordId || isLoadingLandlord) {
     return <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
     </div>
   }
 
@@ -280,11 +295,25 @@ export default function LandlordCRMPage({ params }: Props) {
                 }`}>
                   {landlord.status}
                 </span>
-                <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
                   {landlordApiData?.type === 'JOINT_OWNERSHIP' ? 'Joint Ownership' :
                    landlordApiData?.type === 'COMPANY' ? 'Company' : 'Individual'}
                 </span>
               </div>
+              {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0 && (
+                <p className="text-sm text-neutral-600 mb-3">
+                  Co-owners: <span className="font-semibold text-neutral-800">
+                    {landlordApiData.members.map((m: any) => m.name).join(' & ')}
+                  </span>
+                </p>
+              )}
+              {landlordApiData?.type === 'COMPANY' && landlordApiData?.members?.length > 0 && (
+                <p className="text-sm text-neutral-600 mb-3">
+                  Contact person: <span className="font-semibold text-neutral-800">
+                    {(landlordApiData.members.find((m: any) => m.isPrimary) || landlordApiData.members[0])?.name}
+                  </span>
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-6 text-sm">
                 <div>
                   <p className="text-neutral-600">📧 Email</p>
@@ -371,7 +400,7 @@ export default function LandlordCRMPage({ params }: Props) {
         </button>
         <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
+          <p className="text-2xl font-bold text-primary-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
           <p className="text-xs text-neutral-500 mt-1">{occupiedUnits}/{totalUnits} units occupied</p>
         </button>
         <button onClick={() => setActiveTab('tenants')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
@@ -404,7 +433,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'text-neutral-600 hover:bg-neutral-100'
                 }`}
               >
@@ -1252,6 +1281,130 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
               ))}
 
+              {/* Ownership Type */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Ownership Type</label>
+                <select
+                  value={editForm.type}
+                  onChange={e => setEditForm({ ...editForm, type: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="INDIVIDUAL">Individual</option>
+                  <option value="JOINT_OWNERSHIP">Joint Ownership</option>
+                  <option value="COMPANY">Company</option>
+                </select>
+              </div>
+
+              {/* Members editor — for joint ownership and company */}
+              {editForm.type !== 'INDIVIDUAL' && (
+                <div className="md:col-span-2 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-neutral-700">
+                      {editForm.type === 'JOINT_OWNERSHIP' ? 'Joint Owners' : 'Company Members'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEditMembers(prev => [...prev, { name: '', idNumber: '', phone: '', email: '', ownershipPercent: '', isPrimary: false }])}
+                      className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+                    >
+                      + Add {editForm.type === 'JOINT_OWNERSHIP' ? 'Owner' : 'Member'}
+                    </button>
+                  </div>
+                  {editMembers.length === 0 ? (
+                    <p className="text-sm text-neutral-400 bg-neutral-50 rounded-lg p-3">
+                      No {editForm.type === 'JOINT_OWNERSHIP' ? 'owners' : 'members'} yet. Click &ldquo;Add&rdquo; above to add one.
+                    </p>
+                  ) : (
+                    <div className="space-y-3 max-h-72 overflow-y-auto">
+                      {editMembers.map((member, idx) => (
+                        <div key={idx} className="border border-neutral-200 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-neutral-500">
+                              {editForm.type === 'JOINT_OWNERSHIP' ? `Owner ${idx + 1}` : `Member ${idx + 1}`}
+                              {member.isPrimary && <span className="ml-2 bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-xs">Primary</span>}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setEditMembers(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-xs text-danger-600 hover:text-danger-800 font-medium"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="col-span-2">
+                              <label className="block text-xs text-neutral-500 mb-1">Full Name *</label>
+                              <input
+                                type="text"
+                                value={member.name}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, name: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="Full name"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">ID Number</label>
+                              <input
+                                type="text"
+                                value={member.idNumber}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, idNumber: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="National ID"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">Ownership %</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={member.ownershipPercent}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, ownershipPercent: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="e.g. 50"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">Phone</label>
+                              <input
+                                type="text"
+                                value={member.phone}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, phone: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="+254..."
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">Email</label>
+                              <input
+                                type="email"
+                                value={member.email}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, email: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="email@example.com"
+                              />
+                            </div>
+                            <div className="col-span-2 flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id={`primary-${idx}`}
+                                checked={member.isPrimary}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx
+                                  ? { ...m, isPrimary: e.target.checked }
+                                  : { ...m, isPrimary: false }
+                                ))}
+                                className="w-4 h-4 text-primary-600 border-neutral-300 rounded"
+                              />
+                              <label htmlFor={`primary-${idx}`} className="text-xs text-neutral-700">Primary contact</label>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Management Fee */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Management Fee</label>
@@ -1349,6 +1502,19 @@ export default function LandlordCRMPage({ params }: Props) {
                     else delete payload.tenantPlacementFee
                     payload.managementFeeType = editForm.managementFeeType
                     payload.tenantPlacementFeeType = editForm.tenantPlacementFeeType
+                    payload.type = editForm.type
+                    payload.members = editForm.type !== 'INDIVIDUAL'
+                      ? editMembers
+                          .filter(m => m.name.trim())
+                          .map(m => ({
+                            name: m.name.trim(),
+                            idNumber: m.idNumber.trim() || undefined,
+                            phone: m.phone.trim() || undefined,
+                            email: m.email.trim() || undefined,
+                            ownershipPercent: m.ownershipPercent ? parseFloat(m.ownershipPercent) : undefined,
+                            isPrimary: m.isPrimary,
+                          }))
+                      : []
 
                     const res = await fetch(`/api/landlords/${landlordId}`, {
                       method: 'PATCH',

@@ -107,7 +107,7 @@ export default function AdminVendorsPage() {
         </div>
         <div className='bg-surface shadow rounded-lg p-6'>
           <p className='text-sm text-neutral-600'>Completed Jobs</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.totalCompletedJobs}</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalCompletedJobs}</p>
         </div>
         <div className='bg-surface shadow rounded-lg p-6'>
           <p className='text-sm text-neutral-600'>Average Rating</p>
@@ -199,7 +199,7 @@ export default function AdminVendorsPage() {
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         vendor.vendorType === 'company'
-                          ? 'bg-purple-100 text-purple-800'
+                          ? 'bg-primary-100 text-primary-800'
                           : 'bg-neutral-100 text-neutral-800'
                       }`}
                     >

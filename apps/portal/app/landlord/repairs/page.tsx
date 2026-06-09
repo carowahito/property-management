@@ -245,7 +245,7 @@ export default function LandlordRepairs() {
     switch (status) {
       case 'in-progress': return 'bg-warning-100 text-warning-800'
       case 'completed': return 'bg-success-100 text-success-800'
-      case 'verified': return 'bg-purple-100 text-purple-800'
+      case 'verified': return 'bg-primary-100 text-primary-800'
       default: return 'bg-neutral-100 text-neutral-800'
     }
   }
@@ -255,7 +255,7 @@ export default function LandlordRepairs() {
       case 'Before': return 'bg-danger-100 text-danger-800'
       case 'During': return 'bg-primary-100 text-primary-800'
       case 'After': return 'bg-success-100 text-success-800'
-      case 'Completion': return 'bg-purple-100 text-purple-800'
+      case 'Completion': return 'bg-primary-100 text-primary-800'
       default: return 'bg-neutral-100 text-neutral-800'
     }
   }

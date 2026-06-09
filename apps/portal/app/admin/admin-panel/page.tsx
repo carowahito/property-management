@@ -111,7 +111,7 @@ export default function AdminPanelPage() {
   const getColorClasses = (color: string) => {
     switch (color) {
       case 'blue': return 'bg-primary-100 text-primary-800 hover:bg-primary-200'
-      case 'purple': return 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+      case 'purple': return 'bg-primary-100 text-primary-800 hover:bg-purple-200'
       case 'red': return 'bg-danger-100 text-danger-800 hover:bg-danger-200'
       case 'green': return 'bg-success-100 text-success-800 hover:bg-success-200'
       case 'orange': return 'bg-warning-100 text-warning-800 hover:bg-warning-200'
@@ -175,8 +175,8 @@ export default function AdminPanelPage() {
               <p className="text-3xl font-bold text-neutral-900">{systemStats.storageUsed}</p>
               <p className="text-xs text-neutral-600 mt-1">of {systemStats.storageLimit}</p>
             </div>
-            <div className="bg-purple-100 p-4 rounded-xl">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-primary-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
               </svg>
             </div>
@@ -279,7 +279,7 @@ export default function AdminPanelPage() {
         
         <button className="p-4 bg-white border-2 border-dashed border-neutral-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-center group">
           <span className="text-3xl mb-2 block">⚙️</span>
-          <p className="font-medium text-neutral-900 group-hover:text-purple-600">Configure Integration</p>
+          <p className="font-medium text-neutral-900 group-hover:text-primary-600">Configure Integration</p>
         </button>
         
         <button className="p-4 bg-white border-2 border-dashed border-neutral-300 rounded-lg hover:border-success-500 hover:bg-success-50 transition text-center group">

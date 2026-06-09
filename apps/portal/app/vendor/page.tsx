@@ -50,7 +50,7 @@ export default function VendorDashboard() {
         <div className="bg-surface shadow rounded-lg p-6 border-l-4 border-purple-500">
           <p className="text-sm text-neutral-600">Pending Payments</p>
           <p className="text-3xl font-bold text-neutral-900">KES {(vendor.pendingPayments / 1000).toFixed(0)}K</p>
-          <Link href="/vendor/payments" className="text-sm text-purple-600 hover:text-purple-800 mt-2 inline-block">
+          <Link href="/vendor/payments" className="text-sm text-primary-600 hover:text-primary-800 mt-2 inline-block">
             View details →
           </Link>
         </div>

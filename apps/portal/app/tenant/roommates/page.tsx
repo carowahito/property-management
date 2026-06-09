@@ -67,7 +67,7 @@ export default function RoommatesPage() {
 
   const getRelationshipBadge = (type: string) => {
     const colors: Record<string, string> = {
-      spouse: 'bg-purple-100 text-purple-800',
+      spouse: 'bg-primary-100 text-primary-800',
       partner: 'bg-pink-100 text-pink-800',
       roommate: 'bg-primary-100 text-primary-800',
       family: 'bg-success-100 text-success-800',
