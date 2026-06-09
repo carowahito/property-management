@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { updateLeaseSchema } from '@/lib/validations/lease'
+import { runLeaseLifecycle } from '@/lib/services/lease-lifecycle'
 
 export async function GET(
   request: NextRequest,
@@ -17,11 +18,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Auto-expire if end date has passed
-    await prisma.lease.updateMany({
-      where: { id, status: 'ACTIVE', endDate: { lt: new Date() } },
-      data: { status: 'EXPIRED' },
-    })
+    // Auto-expire lapsed leases and promote signed PENDING leases
+    await runLeaseLifecycle()
 
     const lease = await prisma.lease.findUnique({
       where: { id: id },

@@ -26,11 +26,7 @@ export async function POST(
       return NextResponse.json({ error: 'Lease not found' }, { status: 404 })
     }
 
-    if (!lease.documentHtml) {
-      return NextResponse.json({ error: 'Lease document has not been generated yet' }, { status: 400 })
-    }
-
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
     if (role === 'tenant') {
       updateData.tenantSignedAt = new Date()
       updateData.tenantSignature = signature || 'DIGITALLY_SIGNED'
@@ -39,17 +35,25 @@ export async function POST(
       updateData.landlordSignature = signature || 'DIGITALLY_SIGNED'
     }
 
+    // Just record the signature — no status change.
+    // PENDING leases auto-promote to ACTIVE only when the previous
+    // lease lapses (handled by the auto-expire + promote logic in
+    // the leases list/detail GET routes).
     const updated = await prisma.lease.update({
       where: { id },
       data: updateData,
       include: {
-        tenant: { select: { name: true, email: true } },
-        property: { select: { name: true, address: true } },
+        tenant: { select: { id: true, name: true, email: true } },
+        property: { select: { id: true, name: true, address: true } },
       },
     })
 
+    const tenantSigned = role === 'tenant' || !!lease.tenantSignedAt
+    const landlordSigned = role === 'landlord' || !!lease.landlordSignedAt
+
     return NextResponse.json({
       message: `Lease signed by ${role} successfully`,
+      bothSigned: tenantSigned && landlordSigned,
       lease: updated,
     })
   } catch (error) {

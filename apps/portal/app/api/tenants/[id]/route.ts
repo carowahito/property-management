@@ -99,6 +99,19 @@ export async function GET(
           orderBy: { createdAt: 'desc' },
           take: 5,
         },
+        messages: {
+          select: {
+            id: true,
+            type: true,
+            category: true,
+            subject: true,
+            content: true,
+            status: true,
+            sentAt: true,
+          },
+          orderBy: { sentAt: 'desc' },
+          take: 50,
+        },
         _count: {
           select: {
             leases: true,

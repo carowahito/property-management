@@ -62,15 +62,10 @@ export async function POST(
       )
     }
 
-    // Use a transaction to create new lease and update renewal
+    // Create new lease as PENDING — it only becomes ACTIVE once signed.
+    // The old lease stays ACTIVE until the new one is signed and takes over.
     const result = await prisma.$transaction(async (tx) => {
-      // Mark the old lease as expired
-      await tx.lease.update({
-        where: { id: renewal.leaseId },
-        data: { status: 'EXPIRED' },
-      })
-
-      // Create the new lease
+      // Create the new lease in PENDING status (awaiting signatures)
       const newLease = await tx.lease.create({
         data: {
           tenantId: renewal.tenantId,
@@ -81,11 +76,14 @@ export async function POST(
           endDate: newEndDate,
           monthlyRent: validatedData.newMonthlyRent,
           securityDeposit: validatedData.securityDeposit ?? renewal.lease.securityDeposit,
-          status: 'ACTIVE',
+          status: 'PENDING',
           terms: validatedData.terms ?? renewal.lease.terms,
           templateId: renewal.lease.templateId,
           noticePeriod: renewal.lease.noticePeriod,
           rentEscalation: renewal.lease.rentEscalation,
+          rentDueDay: renewal.lease.rentDueDay,
+          gracePeriodDays: renewal.lease.gracePeriodDays,
+          latePenaltyPerDay: renewal.lease.latePenaltyPerDay,
           petPolicy: renewal.lease.petPolicy,
           specialConditions: renewal.lease.specialConditions,
         },
@@ -99,11 +97,11 @@ export async function POST(
         },
       })
 
-      // Update the renewal record
+      // Link renewal to the new lease but keep status as ACCEPTED
+      // (RENEWED only after the new lease is actually signed)
       const updatedRenewal = await tx.leaseRenewal.update({
         where: { id },
         data: {
-          status: 'RENEWED',
           newLeaseId: newLease.id,
         },
       })
@@ -112,7 +110,7 @@ export async function POST(
     })
 
     return NextResponse.json({
-      message: 'Lease renewed successfully',
+      message: 'New lease created as PENDING — it will become active once signed by both parties.',
       newLease: result.newLease,
       renewal: result.updatedRenewal,
     })

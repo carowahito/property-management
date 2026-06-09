@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createLeaseSchema } from '@/lib/validations/lease'
+import { runLeaseLifecycle } from '@/lib/services/lease-lifecycle'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,14 +20,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // Auto-expire leases whose end date has passed — keeps status correct without a cron job
-    await prisma.lease.updateMany({
-      where: {
-        status: 'ACTIVE',
-        endDate: { lt: new Date() },
-      },
-      data: { status: 'EXPIRED' },
-    })
+    // Auto-expire lapsed leases and promote signed PENDING leases
+    await runLeaseLifecycle()
 
     const where: any = {}
 
@@ -116,29 +111,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
 
-    // Check for overlapping active leases
-    const overlappingLease = await prisma.lease.findFirst({
-      where: {
-        tenantId: validatedData.tenantId,
-        status: 'ACTIVE',
-        OR: [
-          {
-            startDate: {
-              lte: new Date(validatedData.endDate),
+    // Check for overlapping active leases (skip for PENDING — renewal leases
+    // are allowed to overlap with the current active lease)
+    if (validatedData.status !== 'PENDING') {
+      const overlappingLease = await prisma.lease.findFirst({
+        where: {
+          tenantId: validatedData.tenantId,
+          status: 'ACTIVE',
+          OR: [
+            {
+              startDate: {
+                lte: new Date(validatedData.endDate),
+              },
+              endDate: {
+                gte: new Date(validatedData.startDate),
+              },
             },
-            endDate: {
-              gte: new Date(validatedData.startDate),
-            },
-          },
-        ],
-      },
-    })
+          ],
+        },
+      })
 
-    if (overlappingLease) {
-      return NextResponse.json(
-        { error: 'Tenant already has an active lease during this period' },
-        { status: 400 }
-      )
+      if (overlappingLease) {
+        return NextResponse.json(
+          { error: 'Tenant already has an active lease during this period' },
+          { status: 400 }
+        )
+      }
     }
 
     const lease = await prisma.lease.create({

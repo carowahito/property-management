@@ -761,6 +761,41 @@ export default function RenewalsPage() {
                 </div>
               </div>
 
+              {/* New Lease Status */}
+              {selectedRenewal.newLeaseId && (
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-primary-800">
+                        Renewal Lease Generated
+                      </p>
+                      <p className="text-xs text-primary-600 mt-1">
+                        Once signed by both parties, this lease will auto-activate when the current lease expires.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/admin/leases/${selectedRenewal.newLeaseId}`}
+                        className="text-xs font-medium text-primary-700 hover:text-primary-900 underline"
+                      >
+                        View Lease
+                      </Link>
+                      <button
+                        onClick={() =>
+                          window.open(
+                            `/api/leases/${selectedRenewal.newLeaseId}/generate-pdf`,
+                            '_blank'
+                          )
+                        }
+                        className="text-xs font-medium text-primary-700 hover:text-primary-900 underline"
+                      >
+                        Download PDF
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Timeline */}
               <div>
                 <h4 className="text-sm font-semibold text-neutral-700 mb-3">
@@ -1159,21 +1194,37 @@ export default function RenewalsPage() {
                   >
                     Notify Tenant
                   </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      setRenewForm({
-                        newMonthlyRent: proposedRent || String(Number(selectedRenewal.currentRent)),
-                        newStartDate: selectedRenewal.leaseEndDate.split('T')[0],
-                        newEndDate: '',
-                      })
-                      setRenewModalOpen(true)
-                    }}
-                    disabled={saving}
-                  >
-                    Execute Renewal
-                  </Button>
+                  {!selectedRenewal.newLeaseId && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setRenewForm({
+                          newMonthlyRent: proposedRent || String(Number(selectedRenewal.currentRent)),
+                          newStartDate: selectedRenewal.leaseEndDate.split('T')[0],
+                          newEndDate: '',
+                        })
+                        setRenewModalOpen(true)
+                      }}
+                      disabled={saving}
+                    >
+                      Generate Renewal Lease
+                    </Button>
+                  )}
+                  {selectedRenewal.newLeaseId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        window.open(
+                          `/api/leases/${selectedRenewal.newLeaseId}/generate-pdf`,
+                          '_blank'
+                        )
+                      }}
+                    >
+                      Download Agreement
+                    </Button>
+                  )}
                 </>
               )}
               <Button
@@ -1193,7 +1244,7 @@ export default function RenewalsPage() {
       <Modal open={renewModalOpen} onClose={() => setRenewModalOpen(false)}>
         <ModalHeader>
           <h3 className="text-lg font-semibold text-neutral-900">
-            Execute Lease Renewal
+            Generate Renewal Lease
           </h3>
           <button
             onClick={() => setRenewModalOpen(false)}
@@ -1216,7 +1267,7 @@ export default function RenewalsPage() {
         </ModalHeader>
         <ModalBody className="space-y-4">
           <p className="text-sm text-neutral-600">
-            This will create a new lease and mark the current one as expired.
+            This creates a new lease in <strong>Pending</strong> status. Once signed by both parties, it will auto-activate when the current lease expires.
           </p>
           <Input
             label="New Monthly Rent (KES)"
@@ -1262,7 +1313,7 @@ export default function RenewalsPage() {
               !renewForm.newEndDate
             }
           >
-            {saving ? 'Creating...' : 'Create New Lease'}
+            {saving ? 'Creating...' : 'Create Pending Lease'}
           </Button>
         </ModalFooter>
       </Modal>
