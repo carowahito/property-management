@@ -608,8 +608,11 @@ export async function generateLeasePDF(data: LeaseData): Promise<Buffer> {
     doc.moveDown(1)
 
     // Signature blocks — two columns
-    ensureSpace(doc, 220)
+    ensureSpace(doc, 280)
     const sigTop = doc.y
+    // Disable auto-pagination for the entire signature + post-processing
+    // phase to prevent pdfkit from creating empty trailing pages.
+    doc.page.margins.bottom = 0
     const sigColW = CW / 2 - 10
     const sigLeftX = ML
     const sigRightX = ML + sigColW + 20
@@ -701,38 +704,35 @@ export async function generateLeasePDF(data: LeaseData): Promise<Buffer> {
         .text(cRight, cx + wLeft + wDot, closingY, { lineBreak: false })
     }
 
-    // Record which page has actual content before post-processing
-    const lastContentPageIndex = doc.bufferedPageRange().count - 1
-
     // ═══════════════════════════════════════════════════════════
-    // POST-PROCESS: headers & footers on every page
+    // POST-PROCESS: stamp headers & footers on every page
+    // Disable auto-pagination entirely during this phase so that
+    // writing into margin areas cannot create extra pages.
     // ═══════════════════════════════════════════════════════════
     const range = doc.bufferedPageRange()
-    const totalPages = lastContentPageIndex + 1
+    const totalPages = range.count
 
     for (let i = 0; i < totalPages; i++) {
       doc.switchToPage(i)
+      // Kill auto-pagination on this page
+      doc.page.margins.top = 0
+      doc.page.margins.bottom = 0
 
-      // ── Header ──
       const hy = 30
-      doc.save()
       doc.font('Helvetica-Bold').fontSize(14).fillColor(NAVY)
-        .text('TOCHI PROPERTY', ML, hy, { width: CW })
+        .text('TOCHI PROPERTY', ML, hy, { width: CW, lineBreak: false })
       doc.font('Helvetica-Oblique').fontSize(10).fillColor(GOLD)
-        .text('Your Property. Our Pride.', ML, hy + 3, { width: CW, align: 'right' })
-      // gold rule
+        .text('Your Property. Our Pride.', ML, hy + 3, { width: CW, align: 'right', lineBreak: false })
+      doc.save()
       doc.moveTo(ML, hy + 22).lineTo(PW - MR, hy + 22)
         .strokeColor(GOLD).lineWidth(1.5).stroke()
       doc.restore()
 
-      // ── Footer ──
       const fy = PH - 45
-      doc.save()
       doc.font('Helvetica').fontSize(8).fillColor('#888888')
-        .text(`${data.companyName} \u00B7 ${data.companyEmail} \u00B7 ${data.companyWebsite}`, ML, fy, { width: CW })
+        .text(`${data.companyName} \u00B7 ${data.companyEmail} \u00B7 ${data.companyWebsite}`, ML, fy, { width: CW, lineBreak: false })
       doc.font('Helvetica').fontSize(8).fillColor('#888888')
-        .text(`Page ${i + 1} of ${totalPages}`, ML, fy, { width: CW, align: 'right' })
-      doc.restore()
+        .text(`Page ${i + 1} of ${totalPages}`, ML, fy, { width: CW, align: 'right', lineBreak: false })
     }
 
     doc.end()

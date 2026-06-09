@@ -504,9 +504,20 @@ export default function LeaseDetailPage({ params }: Props) {
                 <div className="flex justify-between"><span className="text-neutral-600">Name</span><Link href={`/admin/properties/${lease.property.id}`} className="font-medium text-primary-600 hover:underline">{lease.property.name}</Link></div>
                 <div className="flex justify-between"><span className="text-neutral-600">Address</span><span className="font-medium">{lease.property.address}</span></div>
                 <div className="flex justify-between"><span className="text-neutral-600">Type</span><span className="font-medium">{lease.property.type}</span></div>
-                {(lease.unitRef?.landlord || lease.property.landlord) && (
-                  <div className="flex justify-between"><span className="text-neutral-600">Landlord</span><span className="font-medium">{lease.unitRef?.landlord?.name || lease.property.landlord?.name}</span></div>
-                )}
+                {(lease.unitRef?.landlord || lease.property.landlord) && (() => {
+                  const ll = lease.unitRef?.landlord || lease.property.landlord
+                  return (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-600">Landlord</span>
+                      <span className="font-medium text-right">
+                        {ll.name}
+                        {ll.type === 'JOINT_OWNERSHIP' && ll.members?.length > 0 && (
+                          <span className="text-xs text-neutral-400 block">& {ll.members.map((m: any) => m.name).join(' & ')}</span>
+                        )}
+                      </span>
+                    </div>
+                  )
+                })()}
               </div>
             ) : <p className="text-sm text-neutral-500">No property assigned</p>}
           </div>
@@ -582,14 +593,14 @@ export default function LeaseDetailPage({ params }: Props) {
                 )}
               </div>
 
-              {/* Tenant Signature */}
+              {/* Tenant Signature (read-only — tenant signs from their own portal) */}
               <div className="p-3 bg-neutral-50 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-neutral-700">Tenant Signature</span>
                   {lease.tenantSignedAt ? (
                     <span className="text-xs text-success-600 font-medium">✓ Signed {formatDate(lease.tenantSignedAt)}</span>
                   ) : (
-                    <span className="text-xs text-neutral-400">Not signed</span>
+                    <span className="text-xs text-neutral-400">Awaiting tenant</span>
                   )}
                 </div>
                 {lease.tenantSignature && lease.tenantSignature.startsWith('http') && (
@@ -601,12 +612,9 @@ export default function LeaseDetailPage({ params }: Props) {
                     <span className="text-xs font-medium text-success-700">Digitally Signed</span>
                   </div>
                 )}
-                <div className="flex gap-2 mt-2">
-                  <input type="file" ref={tenantSigRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'tenantSignature') }} />
-                  <button onClick={() => tenantSigRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
-                    {uploading === 'tenantSignature' ? 'Uploading...' : lease.tenantSignedAt ? 'Replace signature' : 'Upload signature'}
-                  </button>
-                </div>
+                {!lease.tenantSignedAt && (
+                  <p className="text-xs text-neutral-400 mt-2">Tenant will sign from their portal after you send for signing.</p>
+                )}
               </div>
 
               {/* Send for Signing */}

@@ -15,7 +15,10 @@ interface Lease {
   endDate: string
   status: string
   unit: string | null
+  unitRef?: { unitNumber: string } | null
   renewal?: boolean
+  tenantSignedAt: string | null
+  landlordSignedAt: string | null
   tenant: {
     id: string
     name: string
@@ -26,7 +29,7 @@ interface Lease {
     landlord: {
       id: string
       name: string
-    }
+    } | null
   }
   _count: {
     payments: number
@@ -53,7 +56,7 @@ async function fetchLeases(): Promise<LeasesResponse> {
 
 export default function AdminLeasesPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'EXPIRED' | 'TERMINATED'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'TERMINATED'>('all')
   const [selectedLease, setSelectedLease] = useState<Lease | null>(null)
 
   const { data, isLoading, error } = useQuery({
@@ -100,7 +103,7 @@ export default function AdminLeasesPage() {
   const filteredLeases = leases.filter(lease => {
     const matchesSearch =
       lease.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lease.property.landlord.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lease.property.landlord?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       lease.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (lease.unit && lease.unit.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -181,6 +184,16 @@ export default function AdminLeasesPage() {
               }`}
             >
               Active ({stats.activeLeases})
+            </button>
+            <button
+              onClick={() => setStatusFilter('PENDING')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                statusFilter === 'PENDING'
+                  ? 'bg-yellow-500 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              }`}
+            >
+              Pending ({leases.filter(l => l.status === 'PENDING').length})
             </button>
             <button
               onClick={() => setStatusFilter('EXPIRED')}
@@ -267,16 +280,25 @@ export default function AdminLeasesPage() {
                         </Link>
                         <p className="text-xs text-neutral-500">{lease._count.payments} payments</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                        <Link href={`/admin/landlords/${lease.property.landlord.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                          {lease.property.landlord.name}
-                        </Link>
+                      <td className="px-6 py-4 text-sm text-neutral-900">
+                        {lease.property.landlord ? (
+                          <div>
+                            <Link href={`/admin/landlords/${lease.property.landlord.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
+                              {lease.property.landlord.name}
+                            </Link>
+                            {lease.property.landlord.type === 'JOINT_OWNERSHIP' && lease.property.landlord.members?.length > 0 && (
+                              <p className="text-xs text-neutral-400">& {lease.property.landlord.members.map((m: any) => m.name).join(' & ')}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-neutral-400">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <Link href={`/admin/properties/${lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                           {lease.property.name}
                         </Link>
-                        <p className="text-xs text-neutral-500">{lease.unit || 'N/A'}</p>
+                        <p className="text-xs text-neutral-500">{lease.unitRef?.unitNumber || lease.unit || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
                         KES {Number(lease.monthlyRent).toLocaleString()}
@@ -297,6 +319,8 @@ export default function AdminLeasesPage() {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             lease.status === 'ACTIVE'
                               ? 'bg-success-100 text-green-800'
+                              : lease.status === 'PENDING'
+                              ? 'bg-yellow-100 text-yellow-800'
                               : lease.status === 'EXPIRED'
                               ? 'bg-warning-100 text-orange-800'
                               : lease.status === 'TERMINATED'
@@ -305,6 +329,11 @@ export default function AdminLeasesPage() {
                           }`}>
                             {lease.status}
                           </span>
+                          {lease.status === 'PENDING' && (
+                            <span className="text-xs text-neutral-500">
+                              {lease.landlordSignedAt && lease.tenantSignedAt ? 'Both signed' : lease.landlordSignedAt ? 'Awaiting tenant' : lease.tenantSignedAt ? 'Awaiting landlord' : 'Awaiting signatures'}
+                            </span>
+                          )}
                           {isExpiringSoon && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-orange-800">
                               Expiring Soon
@@ -313,12 +342,17 @@ export default function AdminLeasesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => setSelectedLease(lease)}
-                          className="text-primary-600 hover:text-primary-900"
-                        >
-                          View Details
-                        </button>
+                        <div className="flex gap-3">
+                          <Link href={`/admin/leases/${lease.id}`} className="text-primary-600 hover:text-primary-900">
+                            View
+                          </Link>
+                          <button
+                            onClick={() => window.open(`/api/leases/${lease.id}/generate-pdf`, '_blank')}
+                            className="text-primary-600 hover:text-primary-900"
+                          >
+                            PDF
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -388,6 +422,9 @@ export default function AdminLeasesPage() {
                       <Link href={`/admin/landlords/${selectedLease.property.landlord.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
                         {selectedLease.property.landlord.name}
                       </Link>
+                      {selectedLease.property.landlord.type === 'JOINT_OWNERSHIP' && selectedLease.property.landlord.members?.length > 0 && (
+                        <p className="text-xs text-neutral-500">& {selectedLease.property.landlord.members.map((m: any) => m.name).join(' & ')}</p>
+                      )}
                       <p className="text-xs text-neutral-500">Property Owner</p>
                     </div>
                   </div>
