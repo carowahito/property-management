@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     // tooltip formatter callsites are tightened.
     ignoreBuildErrors: true,
   },
+  serverExternalPackages: ['pdfkit'],
 };
 
 export default nextConfig;

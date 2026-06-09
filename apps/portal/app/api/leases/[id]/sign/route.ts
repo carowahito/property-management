@@ -29,10 +29,21 @@ export async function POST(
     const updateData: Record<string, unknown> = {}
     if (role === 'tenant') {
       updateData.tenantSignedAt = new Date()
-      updateData.tenantSignature = signature || 'DIGITALLY_SIGNED'
+      // Only set signature if provided or no existing URL signature
+      const existing = lease.tenantSignature
+      if (signature) {
+        updateData.tenantSignature = signature
+      } else if (!existing || !existing.startsWith('http')) {
+        updateData.tenantSignature = 'DIGITALLY_SIGNED'
+      }
     } else {
       updateData.landlordSignedAt = new Date()
-      updateData.landlordSignature = signature || 'DIGITALLY_SIGNED'
+      const existing = lease.landlordSignature
+      if (signature) {
+        updateData.landlordSignature = signature
+      } else if (!existing || !existing.startsWith('http')) {
+        updateData.landlordSignature = 'DIGITALLY_SIGNED'
+      }
     }
 
     // Just record the signature — no status change.

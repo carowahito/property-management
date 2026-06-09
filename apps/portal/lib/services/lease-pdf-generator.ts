@@ -48,6 +48,11 @@ export interface LeaseData {
   emergencyPhone?: string
   signatoryName?: string
   signatoryTitle?: string
+
+  landlordSignature?: string | null
+  landlordSignedAt?: Date | null
+  tenantSignature?: string | null
+  tenantSignedAt?: Date | null
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -188,11 +193,14 @@ function para(doc: PDFKit.PDFDocument, text: string) {
 function bullet(doc: PDFKit.PDFDocument, text: string) {
   const x = ML + 20
   const bx = ML + 8
-  const startY = doc.y
   ensureSpace(doc, 16)
-  doc.font('Helvetica').fontSize(10).fillColor(DARK)
+  const bulletY = doc.y + 5
   // bullet dot
-  doc.circle(bx + 2, doc.y + 5, 2).fill(DARK)
+  doc.save()
+  doc.circle(bx + 2, bulletY, 2).fill(DARK)
+  doc.restore()
+  // text
+  doc.font('Helvetica').fontSize(10).fillColor(DARK)
   doc.text(text, x, doc.y, { width: CW - 20 })
   doc.moveDown(0.15)
 }
@@ -203,8 +211,23 @@ function ensureSpace(doc: PDFKit.PDFDocument, needed: number) {
   }
 }
 
+// ─── Fetch signature image as buffer ─────────────────────────
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    return Buffer.from(await res.arrayBuffer())
+  } catch { return null }
+}
+
 // ─── Build the full document ─────────────────────────────────
 export async function generateLeasePDF(data: LeaseData): Promise<Buffer> {
+  // Pre-fetch signature images before entering the sync PDF builder
+  const landlordSigImg = data.landlordSignature?.startsWith('http')
+    ? await fetchImageBuffer(data.landlordSignature) : null
+  const tenantSigImg = data.tenantSignature?.startsWith('http')
+    ? await fetchImageBuffer(data.tenantSignature) : null
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -262,20 +285,14 @@ export async function generateLeasePDF(data: LeaseData): Promise<Buffer> {
     doc.font('Helvetica-Bold').fontSize(10).fillColor(DARK).text('TENANT(S)')
     doc.moveDown(0.4)
 
-    const tc1 = 120
-    const tc2 = Math.floor((CW - tc1) / 2)
-    const tc3 = CW - tc1 - tc2
+    const tc1 = 140
+    const tc2 = CW - tc1
     ty = drawTable(doc, doc.y, [
-      [
-        { text: '', bg: NAVY, color: '#FFFFFF', bold: true },
-        { text: 'Tenant 1', bg: NAVY, color: '#FFFFFF', bold: true },
-        { text: 'Tenant 2 (if applicable)', bg: NAVY, color: '#FFFFFF', bold: true },
-      ],
-      [{ text: 'Full Name', bold: true }, { text: data.tenantName }, { text: 'N/A' }],
-      [{ text: 'National ID /\nPassport No.', bold: true }, { text: data.tenantIdNumber }, { text: 'N/A' }],
-      [{ text: 'Email Address', bold: true }, { text: data.tenantEmail }, { text: 'N/A' }],
-      [{ text: 'Mobile Number', bold: true }, { text: data.tenantPhone }, { text: 'N/A' }],
-    ], [tc1, tc2, tc3])
+      [{ text: 'Full Name', bold: true }, { text: data.tenantName }],
+      [{ text: 'National ID /\nPassport No.', bold: true }, { text: data.tenantIdNumber }],
+      [{ text: 'Email Address', bold: true }, { text: data.tenantEmail }],
+      [{ text: 'Mobile Number', bold: true }, { text: data.tenantPhone }],
+    ], [tc1, tc2])
     doc.x = ML
     doc.y = ty + 12
 
@@ -607,18 +624,37 @@ export async function generateLeasePDF(data: LeaseData): Promise<Buffer> {
       .text('TENANT(S)', sigRightX + 6, sigTop + 5, { width: sigColW - 12 })
 
     let sy = sigTop + 32
+    const lineLen = sigColW - 20
+    const sigImgH = 50
+
+    // --- Names first (matching template) ---
     const sigName = data.signatoryName
       ? `${data.companyName} \u2014 ${data.signatoryName}, ${data.signatoryTitle || ''}`
       : data.companyName
     doc.font('Helvetica').fontSize(10).fillColor(DARK)
-      .text(sigName, sigLeftX, sy, { width: sigColW })
-    doc.text(data.tenantName, sigRightX, sy, { width: sigColW })
+      .text(sigName, sigLeftX, sy, { width: sigColW, lineBreak: false })
+    doc.text(data.tenantName, sigRightX, sy, { width: sigColW, lineBreak: false })
 
-    sy += 35
-    // Signature lines
-    const lineLen = sigColW - 20
+    // --- Signature images (between name and signature line) ---
+    sy += 20
+    if (landlordSigImg) {
+      doc.image(landlordSigImg, sigLeftX, sy, { fit: [lineLen, sigImgH] })
+    } else if (data.landlordSignedAt) {
+      doc.font('Helvetica-Oblique').fontSize(8).fillColor('#666666')
+        .text('Digitally Signed', sigLeftX, sy + sigImgH - 14, { width: lineLen, lineBreak: false })
+    }
+    if (tenantSigImg) {
+      doc.image(tenantSigImg, sigRightX, sy, { fit: [lineLen, sigImgH] })
+    } else if (data.tenantSignedAt) {
+      doc.font('Helvetica-Oblique').fontSize(8).fillColor('#666666')
+        .text('Digitally Signed', sigRightX, sy + sigImgH - 14, { width: lineLen, lineBreak: false })
+    }
+    sy += sigImgH + 4
+
+    // --- Fields: Signature, Full Name, Date, Witness ---
     const fields = ['Signature', 'Full Name', 'Date', 'Witness Name & Signature']
-    for (const field of fields) {
+    for (let fi = 0; fi < fields.length; fi++) {
+      const field = fields[fi]
       doc.save()
         .moveTo(sigLeftX, sy).lineTo(sigLeftX + lineLen, sy)
         .strokeColor(DARK).lineWidth(0.5).stroke()
@@ -628,25 +664,51 @@ export async function generateLeasePDF(data: LeaseData): Promise<Buffer> {
         .strokeColor(DARK).lineWidth(0.5).stroke()
         .restore()
 
+      let leftVal = field
+      let rightVal = field
+      if (fi === 1) {
+        leftVal = data.landlordSignedAt ? sigName : field
+        rightVal = data.tenantSignedAt ? data.tenantName : field
+      }
+      if (fi === 2) {
+        leftVal = data.landlordSignedAt ? fmtDate(data.landlordSignedAt) : field
+        rightVal = data.tenantSignedAt ? fmtDate(data.tenantSignedAt) : field
+      }
+
       doc.font('Helvetica').fontSize(9).fillColor(DARK)
-        .text(field, sigLeftX, sy + 4, { width: lineLen })
-      doc.text(field, sigRightX, sy + 4, { width: lineLen })
+        .text(leftVal, sigLeftX, sy + 4, { width: lineLen, lineBreak: false })
+      doc.text(rightVal, sigRightX, sy + 4, { width: lineLen, lineBreak: false })
       sy += 38
     }
 
     // Final footer line
-    doc.moveDown(2)
-    ensureSpace(doc, 30)
-    doc.font('Helvetica-Bold').fontSize(10).fillColor(NAVY)
-      .text('TOCHI PROPERTY', { align: 'center', continued: true })
-    doc.font('Helvetica').fillColor(DARK).text('  \u00B7  ', { continued: true })
-    doc.font('Helvetica-Oblique').fillColor(GOLD).text('Your Property. Our Pride.', { align: 'center' })
+    const closingY = sy + 20
+    if (closingY < PH - 70) {
+      // Measure and center the full closing text
+      doc.font('Helvetica-Bold').fontSize(10)
+      const cLeft = 'TOCHI PROPERTY'
+      const cDot = '  \u00B7  '
+      const cRight = 'Your Property. Our Pride.'
+      const wLeft = doc.widthOfString(cLeft)
+      const wDot = doc.font('Helvetica').widthOfString(cDot)
+      const wRight = doc.font('Helvetica-Oblique').widthOfString(cRight)
+      const cx = ML + (CW - wLeft - wDot - wRight) / 2
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(NAVY)
+        .text(cLeft, cx, closingY, { lineBreak: false })
+      doc.font('Helvetica').fillColor(DARK)
+        .text(cDot, cx + wLeft, closingY, { lineBreak: false })
+      doc.font('Helvetica-Oblique').fillColor(GOLD)
+        .text(cRight, cx + wLeft + wDot, closingY, { lineBreak: false })
+    }
+
+    // Record which page has actual content before post-processing
+    const lastContentPageIndex = doc.bufferedPageRange().count - 1
 
     // ═══════════════════════════════════════════════════════════
     // POST-PROCESS: headers & footers on every page
     // ═══════════════════════════════════════════════════════════
     const range = doc.bufferedPageRange()
-    const totalPages = range.count
+    const totalPages = lastContentPageIndex + 1
 
     for (let i = 0; i < totalPages; i++) {
       doc.switchToPage(i)

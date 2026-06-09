@@ -78,6 +78,11 @@ export async function GET(
       emergencyPhone: request.nextUrl.searchParams.get('emergencyPhone') || company.phone || undefined,
       signatoryName: request.nextUrl.searchParams.get('signatoryName') || undefined,
       signatoryTitle: request.nextUrl.searchParams.get('signatoryTitle') || undefined,
+
+      landlordSignature: lease.landlordSignature,
+      landlordSignedAt: lease.landlordSignedAt,
+      tenantSignature: lease.tenantSignature,
+      tenantSignedAt: lease.tenantSignedAt,
     }
 
     const pdfBuffer = await generateLeasePDF(data)

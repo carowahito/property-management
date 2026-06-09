@@ -17,9 +17,10 @@ export default function LeaseDetailPage({ params }: Props) {
   const [lease, setLease] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [showRenewModal, setShowRenewModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editStep, setEditStep] = useState<'edit' | 'confirm'>('edit')
+  const [isRenewMode, setIsRenewMode] = useState(false)
+  const [pendingLease, setPendingLease] = useState<any>(null)
   const [changeLog, setChangeLog] = useState<{label: string; from: string; to: string}[]>([])
   const [editForm, setEditForm] = useState({
     monthlyRent: '', securityDeposit: '', status: '', terms: '',
@@ -29,9 +30,6 @@ export default function LeaseDetailPage({ params }: Props) {
     tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '',
     mpesaTill: '', bankDetails: '',
   })
-  const [renewForm, setRenewForm] = useState({
-    newStartDate: '', newEndDate: '', newMonthlyRent: '', leaseTerm: '12',
-  })
   const [uploading, setUploading] = useState('')
   const [showLandlordSigPad, setShowLandlordSigPad] = useState(false)
   const docInputRef = useRef<HTMLInputElement>(null)
@@ -40,12 +38,20 @@ export default function LeaseDetailPage({ params }: Props) {
 
   useEffect(() => { params.then(p => setLeaseId(p.id)) }, [params])
 
-  const refreshLease = () => {
+  const refreshLease = async () => {
     if (!leaseId) return
-    fetch(`/api/leases/${leaseId}`)
-      .then(r => r.json())
-      .then(data => { setLease(data); setLoading(false) })
-      .catch(() => setLoading(false))
+    try {
+      const res = await fetch(`/api/leases/${leaseId}`)
+      const data = await res.json()
+      setLease(data)
+      // Fetch pending lease for same tenant+unit (if any)
+      if (data.tenantId && data.unitId) {
+        const pendingRes = await fetch(`/api/leases?tenantId=${data.tenantId}&status=PENDING&limit=1`)
+        const pendingData = await pendingRes.json()
+        const match = (pendingData.leases || []).find((l: any) => l.id !== leaseId && (l.unitId === data.unitId || l.unitRef?.id === data.unitId))
+        setPendingLease(match || null)
+      }
+    } catch {} finally { setLoading(false) }
   }
 
   useEffect(() => { refreshLease() }, [leaseId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -57,7 +63,9 @@ export default function LeaseDetailPage({ params }: Props) {
     formData.append('type', type)
     try {
       const res = await fetch(`/api/leases/${leaseId}/upload`, { method: 'POST', body: formData })
-      if (res.ok) { refreshLease() }
+      if (res.ok) {
+        refreshLease()
+      }
       else { const d = await res.json(); alert(d.error || 'Upload failed') }
     } catch { alert('Upload failed') }
     finally { setUploading('') }
@@ -77,10 +85,6 @@ export default function LeaseDetailPage({ params }: Props) {
   }
 
   const handleSendForSigning = async () => {
-    if (!lease.documentUrl && !lease.documentHtml) {
-      alert('Please upload or generate a lease document first')
-      return
-    }
     setSaving(true)
     try {
       const res = await fetch(`/api/leases/${leaseId}/send-for-signing`, { method: 'POST' })
@@ -165,6 +169,7 @@ export default function LeaseDetailPage({ params }: Props) {
       mpesaTill: lease.mpesaTill || '',
       bankDetails: lease.bankDetails || '',
     })
+    setIsRenewMode(false)
     setEditStep('edit')
     setShowEditModal(true)
   }
@@ -253,13 +258,41 @@ export default function LeaseDetailPage({ params }: Props) {
         mpesaTill: editForm.mpesaTill || undefined,
         bankDetails: editForm.bankDetails || undefined,
       }
-      const res = await fetch(`/api/leases/${leaseId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) { refreshLease(); setShowEditModal(false); setEditStep('edit') }
-      else { const d = await res.json(); alert(d.error || 'Failed to save') }
+
+      if (isRenewMode) {
+        // Create a new PENDING lease
+        const res = await fetch('/api/leases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantId: lease.tenantId,
+            propertyId: lease.propertyId,
+            unitId: lease.unitId || undefined,
+            unit: lease.unit || '',
+            ...body,
+            status: 'PENDING',
+          }),
+        })
+        if (res.ok) {
+          const newLease = await res.json()
+          setShowEditModal(false)
+          setEditStep('edit')
+          setIsRenewMode(false)
+          router.push(`/admin/leases/${newLease.id}`)
+        } else {
+          const d = await res.json()
+          alert(d.error || 'Failed to create renewal lease')
+        }
+      } else {
+        // Patch existing lease
+        const res = await fetch(`/api/leases/${leaseId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        if (res.ok) { refreshLease(); setShowEditModal(false); setEditStep('edit') }
+        else { const d = await res.json(); alert(d.error || 'Failed to save') }
+      }
     } catch { alert('Failed to save') }
     finally { setSaving(false) }
   }
@@ -269,74 +302,29 @@ export default function LeaseDetailPage({ params }: Props) {
     newStart.setDate(newStart.getDate() + 1)
     const newEnd = new Date(newStart)
     newEnd.setFullYear(newEnd.getFullYear() + 1)
-    setRenewForm({
-      newStartDate: newStart.toISOString().split('T')[0],
-      newEndDate: newEnd.toISOString().split('T')[0],
-      newMonthlyRent: String(lease.monthlyRent || ''),
-      leaseTerm: '12',
+    const escalatedRent = lease.rentEscalation > 0
+      ? Math.round(lease.monthlyRent * (1 + lease.rentEscalation / 100))
+      : lease.monthlyRent
+    setEditForm({
+      monthlyRent: String(escalatedRent),
+      securityDeposit: String(lease.securityDeposit || ''),
+      status: 'PENDING',
+      startDate: newStart.toISOString().split('T')[0],
+      endDate: newEnd.toISOString().split('T')[0],
+      terms: lease.terms || '',
+      noticePeriod: String(lease.noticePeriod ?? 1),
+      petPolicy: lease.petPolicy || '',
+      specialConditions: lease.specialConditions || '',
+      gracePeriodDays: String(lease.gracePeriodDays ?? 5),
+      latePenaltyPerDay: String(lease.latePenaltyPerDay ?? 500),
+      rentEscalation: lease.rentEscalation != null ? String(lease.rentEscalation) : '',
+      rentDueDay: String(lease.rentDueDay ?? 1),
+      tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '',
+      mpesaTill: lease.mpesaTill || '', bankDetails: lease.bankDetails || '',
     })
-    setShowRenewModal(true)
-  }
-
-  // Auto-calc renewal end date
-  const updateRenewEndDate = (startDate: string, term: string) => {
-    if (startDate && term) {
-      const d = new Date(startDate)
-      d.setMonth(d.getMonth() + parseInt(term))
-      setRenewForm(prev => ({ ...prev, newEndDate: d.toISOString().split('T')[0] }))
-    }
-  }
-
-
-
-  const handleRenew = async () => {
-    setSaving(true)
-    try {
-      // Client-side validation
-      if (!renewForm.newStartDate || !renewForm.newEndDate) {
-        alert('Please enter a start and end date for the renewal')
-        setSaving(false)
-        return
-      }
-      const s = new Date(renewForm.newStartDate)
-      const e = new Date(renewForm.newEndDate)
-      if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) {
-        alert('End date must be after start date')
-        setSaving(false)
-        return
-      }
-      const monthly = Number(parseFloat(renewForm.newMonthlyRent) || lease.monthlyRent || 0)
-      if (!monthly || monthly <= 0) {
-        alert('Please enter a valid monthly rent')
-        setSaving(false)
-        return
-      }
-      // Create new lease as PENDING — it only activates once signed and the old lease expires
-      const res = await fetch('/api/leases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantId: lease.tenantId,
-          propertyId: lease.propertyId,
-          unitId: lease.unitId || undefined,
-          unit: lease.unit || '',
-          startDate: renewForm.newStartDate,
-          endDate: renewForm.newEndDate,
-          monthlyRent: Number(parseFloat(renewForm.newMonthlyRent) || lease.monthlyRent || 0),
-          securityDeposit: Number(lease.securityDeposit ?? 0),
-          status: 'PENDING',
-        }),
-      })
-      if (res.ok) {
-        const newLease = await res.json()
-        setShowRenewModal(false)
-        router.push(`/admin/leases/${newLease.id}`)
-      } else {
-        const d = await res.json()
-        alert(d.error || 'Failed to create renewal lease')
-      }
-    } catch { alert('Failed to renew lease') }
-    finally { setSaving(false) }
+    setIsRenewMode(true)
+    setEditStep('edit')
+    setShowEditModal(true)
   }
 
   const handleGenerateDocument = async () => {
@@ -356,9 +344,9 @@ export default function LeaseDetailPage({ params }: Props) {
         <div className="p-4 bg-danger-50 border border-danger-200 rounded-lg flex items-center justify-between">
           <div>
             <p className="font-semibold text-danger-800">Lease has expired</p>
-            <p className="text-sm text-danger-700">This lease expired on {formatDate(lease.endDate)}. Renew or terminate it.</p>
+            <p className="text-sm text-danger-700">This lease expired on {formatDate(lease.endDate)}.{pendingLease ? ' A renewal lease is pending.' : ' Renew or terminate it.'}</p>
           </div>
-          <Button variant="primary" onClick={handleRenewClick}>Renew Lease</Button>
+          {!pendingLease && <Button variant="primary" onClick={handleRenewClick}>Renew Lease</Button>}
         </div>
       )}
 
@@ -367,13 +355,17 @@ export default function LeaseDetailPage({ params }: Props) {
           <div>
             <p className="font-semibold text-warning-800">Lease expiring in {remainingMonths} month{remainingMonths !== 1 ? 's' : ''}</p>
             <p className="text-sm text-warning-700">
-              Tenant notice required {lease.noticePeriod || 3} months before expiry ({formatDate(threeMonthsBeforeExpiry.toISOString())}).
-              {now < threeMonthsBeforeExpiry
-                ? ` You have ${Math.ceil((threeMonthsBeforeExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))} days to notify the tenant.`
-                : ' Notice period has begun — act now.'}
+              {pendingLease ? 'A renewal lease has been generated and is pending signatures.' : (
+                <>
+                  Tenant notice required {lease.noticePeriod || 3} months before expiry ({formatDate(threeMonthsBeforeExpiry.toISOString())}).
+                  {now < threeMonthsBeforeExpiry
+                    ? ` You have ${Math.ceil((threeMonthsBeforeExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))} days to notify the tenant.`
+                    : ' Notice period has begun — act now.'}
+                </>
+              )}
             </p>
           </div>
-          <Button variant="primary" onClick={handleRenewClick}>Renew Lease</Button>
+          {!pendingLease && <Button variant="primary" onClick={handleRenewClick}>Renew Lease</Button>}
         </div>
       )}
 
@@ -399,11 +391,31 @@ export default function LeaseDetailPage({ params }: Props) {
             <Button variant="outline" onClick={() => window.open(`/api/leases/${leaseId}/generate-pdf?download=true`, '_blank')}>
               Download Agreement
             </Button>
-            {lease.status === 'ACTIVE' && (
-              <Button variant="primary" onClick={handleRenewClick}>🔄 Renew</Button>
+            {lease.status === 'ACTIVE' && !pendingLease && (
+              <Button variant="primary" onClick={handleRenewClick}>Renew</Button>
             )}
           </div>
         </div>
+
+        {/* Pending Renewal Lease Row */}
+        {pendingLease && (
+          <div className="mt-4 pt-4 border-t border-neutral-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-50 text-yellow-700">PENDING</span>
+              <span className="text-sm text-neutral-700">
+                Renewal lease: {formatDate(pendingLease.startDate)} — {formatDate(pendingLease.endDate)} &middot; {formatCurrency(pendingLease.monthlyRent)}/mo
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Link href={`/admin/leases/${pendingLease.id}`}>
+                <Button variant="outline" size="sm">Edit Pending Lease</Button>
+              </Link>
+              <Button variant="outline" size="sm" onClick={() => window.open(`/api/leases/${pendingLease.id}/generate-pdf`, '_blank')}>
+                View Document
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick Stats */}
@@ -537,8 +549,15 @@ export default function LeaseDetailPage({ params }: Props) {
                     <span className="text-xs text-neutral-400">Not signed</span>
                   )}
                 </div>
+                {/* Show signature image or digital badge */}
                 {lease.landlordSignature && lease.landlordSignature.startsWith('http') && (
                   <img src={lease.landlordSignature} alt="Landlord signature" className="h-16 border border-neutral-200 rounded mt-1 bg-white" />
+                )}
+                {lease.landlordSignature === 'DIGITALLY_SIGNED' && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-success-50 border border-success-200 rounded-lg">
+                    <svg className="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    <span className="text-xs font-medium text-success-700">Digitally Signed</span>
+                  </div>
                 )}
                 {showLandlordSigPad ? (
                   <div className="mt-2">
@@ -552,12 +571,12 @@ export default function LeaseDetailPage({ params }: Props) {
                 ) : (
                   <div className="flex gap-3 mt-2">
                     <button onClick={() => setShowLandlordSigPad(true)} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
-                      Draw signature
+                      {lease.landlordSignedAt ? 'Redraw signature' : 'Draw signature'}
                     </button>
                     <span className="text-xs text-neutral-300">|</span>
                     <input type="file" ref={landlordSigRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'landlordSignature') }} />
                     <button onClick={() => landlordSigRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
-                      {uploading === 'landlordSignature' ? 'Uploading...' : 'Upload image'}
+                      {uploading === 'landlordSignature' ? 'Uploading...' : lease.landlordSignedAt ? 'Replace image' : 'Upload image'}
                     </button>
                   </div>
                 )}
@@ -576,10 +595,16 @@ export default function LeaseDetailPage({ params }: Props) {
                 {lease.tenantSignature && lease.tenantSignature.startsWith('http') && (
                   <img src={lease.tenantSignature} alt="Tenant signature" className="h-16 border border-neutral-200 rounded mt-1 bg-white" />
                 )}
+                {lease.tenantSignature === 'DIGITALLY_SIGNED' && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-success-50 border border-success-200 rounded-lg">
+                    <svg className="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    <span className="text-xs font-medium text-success-700">Digitally Signed</span>
+                  </div>
+                )}
                 <div className="flex gap-2 mt-2">
                   <input type="file" ref={tenantSigRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'tenantSignature') }} />
                   <button onClick={() => tenantSigRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
-                    {uploading === 'tenantSignature' ? 'Uploading...' : lease.tenantSignature ? 'Replace signature' : 'Upload signature'}
+                    {uploading === 'tenantSignature' ? 'Uploading...' : lease.tenantSignedAt ? 'Replace signature' : 'Upload signature'}
                   </button>
                 </div>
               </div>
@@ -597,7 +622,7 @@ export default function LeaseDetailPage({ params }: Props) {
                       <p className="text-sm font-medium text-neutral-700">Send to tenant for signing</p>
                       <p className="text-xs text-neutral-500">Tenant will be able to view and sign from their portal</p>
                     </div>
-                    <Button variant="primary" onClick={handleSendForSigning} disabled={saving || (!lease.documentUrl && !lease.documentHtml)}>
+                    <Button variant="primary" onClick={handleSendForSigning} disabled={saving}>
                       {saving ? 'Sending...' : 'Send for Signing'}
                     </Button>
                   </div>
@@ -645,8 +670,8 @@ export default function LeaseDetailPage({ params }: Props) {
           <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6">
             {editStep === 'edit' ? (
               <>
-                <h3 className="text-xl font-bold text-neutral-900 mb-1">Edit Lease</h3>
-                <p className="text-sm text-neutral-500 mb-5">Changes will require confirmation before saving.</p>
+                <h3 className="text-xl font-bold text-neutral-900 mb-1">{isRenewMode ? 'Renew Lease' : 'Edit Lease'}</h3>
+                <p className="text-sm text-neutral-500 mb-5">{isRenewMode ? 'Review and adjust terms for the new lease. It will be created as Pending.' : 'Changes will require confirmation before saving.'}</p>
                 <div className="space-y-5">
 
                   {/* Lease Status & Dates */}
@@ -805,54 +830,6 @@ export default function LeaseDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Renew Modal */}
-      {showRenewModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-lg w-full p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-2">Renew Lease</h3>
-            <p className="text-sm text-neutral-500 mb-4">
-              Create a new lease for {lease.tenant?.name} at {lease.unit || lease.property?.name}. It will stay <strong>Pending</strong> until signed by both parties, then auto-activate when the current lease expires.
-            </p>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">New Start Date *</label>
-                  <input type="date" value={renewForm.newStartDate} onChange={(e) => { setRenewForm(prev => ({ ...prev, newStartDate: e.target.value })); updateRenewEndDate(e.target.value, renewForm.leaseTerm) }} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term</label>
-                  <select value={renewForm.leaseTerm} onChange={(e) => { setRenewForm(prev => ({ ...prev, leaseTerm: e.target.value })); updateRenewEndDate(renewForm.newStartDate, e.target.value) }} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm">
-                    <option value="6">6 months</option>
-                    <option value="12">12 months</option>
-                    <option value="18">18 months</option>
-                    <option value="24">24 months</option>
-                    <option value="36">36 months</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date</label>
-                  <input type="date" value={renewForm.newEndDate} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-neutral-50" readOnly />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">New Monthly Rent (KES)</label>
-                  <input type="number" value={renewForm.newMonthlyRent} onChange={(e) => setRenewForm(prev => ({ ...prev, newMonthlyRent: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
-                  {lease.rentEscalation > 0 && (
-                    <p className="text-xs text-neutral-500 mt-1">Previous: {formatCurrency(lease.monthlyRent)} (+{lease.rentEscalation}% = {formatCurrency(lease.monthlyRent * (1 + lease.rentEscalation / 100))})</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowRenewModal(false)} className="flex-1">Cancel</Button>
-              <Button variant="primary" onClick={handleRenew} disabled={saving || !renewForm.newStartDate || !renewForm.newEndDate || !renewForm.newMonthlyRent} className="flex-1">
-                {saving ? 'Creating...' : 'Create Pending Lease'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

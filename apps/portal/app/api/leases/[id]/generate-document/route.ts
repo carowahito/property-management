@@ -78,7 +78,7 @@ export async function POST(
 <style>
   @page { size: A4; margin: 60px 55px; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #333; line-height: 1.6; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #333; line-height: 1.7; }
   .page { max-width: 750px; margin: 0 auto; padding: 40px 0; }
   .header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #C49A3C; padding-bottom: 8px; margin-bottom: 24px; }
   .header-name { font-size: 14pt; font-weight: bold; color: #1B3A5C; }
@@ -86,16 +86,16 @@ export async function POST(
   h1 { font-size: 18pt; text-align: center; color: #333; margin-bottom: 4px; }
   .subtitle { text-align: center; font-size: 11pt; margin-bottom: 24px; }
   .section-title { font-size: 13pt; font-weight: bold; color: #1B3A5C; border-bottom: 2px solid #C49A3C; padding-bottom: 4px; margin: 20px 0 12px; }
-  .clause-title { font-size: 11pt; font-weight: bold; color: #1B3A5C; margin: 16px 0 8px; }
-  .sub-clause { margin-bottom: 6px; }
+  .clause-title { font-size: 11pt; font-weight: bold; color: #1B3A5C; margin: 22px 0 10px; }
+  .sub-clause { margin-bottom: 10px; }
   .sub-num { font-weight: bold; }
   table.terms { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 9pt; }
   table.terms th { background: #1B3A5C; color: #fff; padding: 6px 8px; text-align: left; font-weight: bold; }
   table.terms td { padding: 6px 8px; border: 1px solid #ccc; vertical-align: top; }
   table.terms td:first-child { font-weight: bold; }
-  .bullet-list { margin: 6px 0 6px 24px; }
-  .bullet-list li { margin-bottom: 4px; }
-  .obligation { margin-left: 20px; margin-bottom: 4px; }
+  .bullet-list { margin: 8px 0 10px 24px; }
+  .bullet-list li { margin-bottom: 6px; }
+  .obligation { margin-left: 20px; margin-bottom: 8px; }
   .obl-label { font-weight: bold; }
   .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
   .sig-box-header { background: #1B3A5C; color: #fff; font-weight: bold; font-size: 10pt; padding: 5px 8px; }
@@ -131,11 +131,10 @@ export async function POST(
 
 <p class="bold" style="margin-bottom:6px;">TENANT(S)</p>
 <table class="terms">
-  <tr><th></th><th>Tenant 1</th><th>Tenant 2 (if applicable)</th></tr>
-  <tr><td>Full Name</td><td>${lease.tenant.name}</td><td>N/A</td></tr>
-  <tr><td>National ID / Passport No.</td><td>${lease.tenant.idNumber || 'N/A'}</td><td>N/A</td></tr>
-  <tr><td>Email Address</td><td>${lease.tenant.email}</td><td>N/A</td></tr>
-  <tr><td>Mobile Number</td><td>${lease.tenant.phone}</td><td>N/A</td></tr>
+  <tr><td>Full Name</td><td>${lease.tenant.name}</td></tr>
+  <tr><td>National ID / Passport No.</td><td>${lease.tenant.idNumber || 'N/A'}</td></tr>
+  <tr><td>Email Address</td><td>${lease.tenant.email}</td></tr>
+  <tr><td>Mobile Number</td><td>${lease.tenant.phone}</td></tr>
 </table>
 
 <!-- B. KEY TERMS -->
