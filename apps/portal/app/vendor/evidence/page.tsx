@@ -129,7 +129,7 @@ export default function VendorEvidence() {
       case 'During': return 'bg-primary-100 text-primary-800'
       case 'After': return 'bg-success-100 text-success-800'
       case 'Issue': return 'bg-warning-100 text-warning-800'
-      case 'Completion': return 'bg-purple-100 text-purple-800'
+      case 'Completion': return 'bg-primary-100 text-primary-800'
       default: return 'bg-neutral-100 text-neutral-800'
     }
   }
@@ -172,7 +172,7 @@ export default function VendorEvidence() {
         </div>
         <div className="bg-surface shadow rounded-lg p-4">
           <p className="text-sm text-neutral-600">Videos</p>
-          <p className="text-2xl font-bold text-purple-600">{totalVideos}</p>
+          <p className="text-2xl font-bold text-primary-600">{totalVideos}</p>
         </div>
       </div>
 

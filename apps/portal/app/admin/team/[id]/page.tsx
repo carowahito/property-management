@@ -81,7 +81,7 @@ export default function TeamMemberDetailPage({ params }: Props) {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'Admin': return 'bg-danger-100 text-red-800'
-      case 'Manager': return 'bg-purple-100 text-purple-800'
+      case 'Manager': return 'bg-primary-100 text-primary-800'
       case 'Sales': return 'bg-primary-100 text-primary-800'
       case 'Customer Care': return 'bg-success-100 text-green-800'
       case 'Caretaker': return 'bg-warning-100 text-orange-800'
@@ -186,7 +186,7 @@ export default function TeamMemberDetailPage({ params }: Props) {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Conversion Rate</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{performance.conversionRate}%</p>
+          <p className="text-2xl font-bold text-primary-600 mt-2">{performance.conversionRate}%</p>
           <p className="text-xs text-neutral-500 mt-1">Lead to tenant</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
@@ -404,11 +404,11 @@ export default function TeamMemberDetailPage({ params }: Props) {
 
                 <div className="border border-neutral-200 rounded-lg p-6">
                   <h4 className="text-sm text-neutral-600 mb-2">Viewings</h4>
-                  <p className="text-3xl font-bold text-purple-600">{performance.viewingsCompleted}/{performance.viewingsScheduled}</p>
+                  <p className="text-3xl font-bold text-primary-600">{performance.viewingsCompleted}/{performance.viewingsScheduled}</p>
                   <p className="text-sm text-neutral-500 mt-1">Completed this month</p>
                   <div className="mt-4 flex items-center">
                     <div className="flex-1 bg-neutral-200 rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{ width: '80%' }}></div>
+                      <div className="bg-primary-600 h-2 rounded-full" style={{ width: '80%' }}></div>
                     </div>
                     <span className="ml-2 text-sm text-neutral-600">80% completion</span>
                   </div>

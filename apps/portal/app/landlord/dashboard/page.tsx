@@ -224,7 +224,7 @@ export default function LandlordDashboard() {
             </Link>
             <Link
               href="/landlord/maintenance"
-              className="p-4 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium text-center"
+              className="p-4 bg-purple-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors text-sm font-medium text-center"
             >
               Maintenance Requests
             </Link>

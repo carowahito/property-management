@@ -381,7 +381,7 @@ export default function PropertyDetailPage() {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
-          <p className="text-3xl font-bold text-purple-600 mt-2">
+          <p className="text-3xl font-bold text-primary-600 mt-2">
             {property.totalUnits > 0 ? Math.round((tenants.length / property.totalUnits) * 100) : 0}%
           </p>
           <p className="text-xs text-neutral-500 mt-1">Current rate</p>
@@ -420,6 +420,9 @@ export default function PropertyDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-neutral-900 truncate">{landlord.name}</p>
+                  {landlord.type === 'JOINT_OWNERSHIP' && landlord.members?.length > 0 && (
+                    <p className="text-xs text-neutral-500 truncate">& {landlord.members.map((m: any) => m.name).join(' & ')}</p>
+                  )}
                   <p className="text-xs text-neutral-600 truncate">{landlord.email}</p>
                   <p className="text-xs text-neutral-500 mt-1">
                     {((property as any).propertyUnits ?? []).filter((u: any) => u.landlord?.id === landlord.id).length} unit{((property as any).propertyUnits ?? []).filter((u: any) => u.landlord?.id === landlord.id).length !== 1 ? 's' : ''} here
@@ -444,12 +447,15 @@ export default function PropertyDetailPage() {
               </div>
               <div>
                 <p className="text-xs text-neutral-500 uppercase tracking-wide">Primary Contact</p>
-                <Link 
+                <Link
                   href={`/admin/landlords/${property.landlordId}`}
                   className="text-lg font-semibold text-primary-600 hover:text-primary-800 hover:underline"
                 >
                   {property.landlord.name}
                 </Link>
+                {(property.landlord as any).type === 'JOINT_OWNERSHIP' && (property.landlord as any).members?.length > 0 && (
+                  <p className="text-sm text-neutral-500">& {(property.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
+                )}
               </div>
             </div>
           ) : (
@@ -616,7 +622,16 @@ export default function PropertyDetailPage() {
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     KES {unit.monthlyRent ? Number(unit.monthlyRent).toLocaleString() : '—'}
                   </td>
-                  <td className="px-4 py-3 text-neutral-600">{unit.landlord?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-neutral-600">
+                    {unit.landlord ? (
+                      <>
+                        {unit.landlord.name}
+                        {unit.landlord.type === 'JOINT_OWNERSHIP' && unit.landlord.members?.length > 0 && (
+                          <span className="text-xs text-neutral-400 block">& {unit.landlord.members.map((m: any) => m.name).join(' & ')}</span>
+                        )}
+                      </>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 text-neutral-600">
                     {unit.tenants?.[0]?.name ?? <span className="text-neutral-400 italic">Vacant</span>}
                   </td>
@@ -938,7 +953,7 @@ export default function PropertyDetailPage() {
                         type="button"
                         onClick={handleImproveWithAI}
                         disabled={!newUnit.description || isImprovingText}
-                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                        className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />

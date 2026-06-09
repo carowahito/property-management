@@ -509,18 +509,18 @@ export default function PropertiesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Properties</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Properties</h1>
           <p className="text-neutral-600 mt-2">Manage and monitor all your properties</p>
         </div>
         <Button variant="primary" size="lg" onClick={() => setShowAddModal(true)}>+ Add Property</Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-surface rounded-lg border border-neutral-200 p-6">
+          <div key={idx} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
             <p className="text-sm text-neutral-600 font-medium">{stat.label}</p>
             <p className="text-3xl font-bold text-neutral-900 mt-2">{stat.value}</p>
             <p className="text-xs text-neutral-500 mt-2">{stat.change}</p>
@@ -528,7 +528,7 @@ export default function PropertiesPage() {
         ))}
       </div>
 
-      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">All Properties</h2>
 
         {properties.length === 0 ? (
@@ -539,12 +539,12 @@ export default function PropertiesPage() {
         ) : (
           <div className="space-y-4">
             {properties.map((property) => (
-              <div key={property.id} className="flex items-center gap-2 p-4 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition">
+              <div key={property.id} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 md:p-4 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition">
                 <Link
                   href={`/admin/properties/${property.id}`}
-                  className="flex-1 flex items-center justify-between"
+                  className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-neutral-900">{property.name}</p>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -560,9 +560,19 @@ export default function PropertiesPage() {
                       {(property as any).unitLandlords?.length > 1 ? (
                         <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/properties/${property.id}` }} className="text-primary-600 hover:underline cursor-pointer">{(property as any).unitLandlords.length} landlords</span>
                       ) : (property as any).unitLandlords?.length === 1 ? (
-                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${(property as any).unitLandlords[0].id}` }} className="text-primary-600 hover:underline cursor-pointer">{(property as any).unitLandlords[0].name}</span>
+                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${(property as any).unitLandlords[0].id}` }} className="text-primary-600 hover:underline cursor-pointer">
+                          {(property as any).unitLandlords[0].name}
+                          {(property as any).unitLandlords[0].type === 'JOINT_OWNERSHIP' && (property as any).unitLandlords[0].members?.length > 0 && (
+                            <span className="text-neutral-400"> & {(property as any).unitLandlords[0].members.map((m: any) => m.name).join(' & ')}</span>
+                          )}
+                        </span>
                       ) : property.landlord?.id ? (
-                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${property.landlord!.id}` }} className="text-primary-600 hover:underline cursor-pointer">{property.landlord.name}</span>
+                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/admin/landlords/${property.landlord!.id}` }} className="text-primary-600 hover:underline cursor-pointer">
+                          {property.landlord.name}
+                          {(property.landlord as any).type === 'JOINT_OWNERSHIP' && (property.landlord as any).members?.length > 0 && (
+                            <span className="text-neutral-400"> & {(property.landlord as any).members.map((m: any) => m.name).join(' & ')}</span>
+                          )}
+                        </span>
                       ) : 'Unassigned'} • {property.type}
                     </p>
                   </div>
@@ -595,7 +605,7 @@ export default function PropertiesPage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-surface border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-surface border-b border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-neutral-900">Add New Property</h2>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -607,7 +617,7 @@ export default function PropertiesPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
               {/* Basic Information */}
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-4">Basic Information</h3>
@@ -868,7 +878,7 @@ export default function PropertiesPage() {
                         type="button"
                         onClick={handleImproveWithAI}
                         disabled={!newProperty.description || isImprovingText}
-                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                        className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -1134,7 +1144,7 @@ export default function PropertiesPage() {
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-2">Property Amenities</h3>
                 <p className="text-sm text-neutral-600 mb-4">Select all amenities available at this property</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                   {commonAmenities.map((amenity) => (
                     <label
                       key={amenity}
@@ -1197,7 +1207,7 @@ export default function PropertiesPage() {
                             unit.status === 'vacant' ? 'bg-success-100 text-success-700' :
                             unit.status === 'occupied' ? 'bg-primary-100 text-primary-700' :
                             unit.status === 'maintenance' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-purple-100 text-purple-700'
+                            'bg-primary-100 text-primary-700'
                           }`}>
                             {unitStatuses.find(s => s.value === unit.status)?.label || 'Vacant'}
                           </span>
@@ -1403,7 +1413,7 @@ export default function PropertiesPage() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-end gap-3">
               <Button
                 variant="outline"
                 onClick={() => setShowAddModal(false)}

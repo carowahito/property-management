@@ -174,7 +174,7 @@ export default function LandlordQuotes() {
       case 'submitted': return 'bg-primary-100 text-primary-800'
       case 'accepted': return 'bg-success-100 text-success-800'
       case 'rejected': return 'bg-danger-100 text-danger-800'
-      case 'completed': return 'bg-purple-100 text-purple-800'
+      case 'completed': return 'bg-primary-100 text-primary-800'
       default: return 'bg-neutral-100 text-neutral-800'
     }
   }
@@ -319,7 +319,7 @@ export default function LandlordQuotes() {
                         <span className="text-success-600">Accepted: {new Date(quote.acceptedDate).toLocaleDateString()}</span>
                       )}
                       {quote.completedDate && (
-                        <span className="text-purple-600">Completed: {new Date(quote.completedDate).toLocaleDateString()}</span>
+                        <span className="text-primary-600">Completed: {new Date(quote.completedDate).toLocaleDateString()}</span>
                       )}
                     </div>
                   </div>

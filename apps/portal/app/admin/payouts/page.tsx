@@ -128,7 +128,7 @@ export default function PayoutsPage() {
         </div>
         <div className='bg-surface shadow rounded-lg p-6'>
           <p className='text-sm text-neutral-600'>Total Value</p>
-          <p className='text-3xl font-bold text-purple-600'>
+          <p className='text-3xl font-bold text-primary-600'>
             KES {filteredPayouts.reduce((sum, p) => sum + Number(p.amount), 0).toLocaleString()}
           </p>
         </div>

@@ -20,6 +20,8 @@ export const updateVendorSchema = z.object({
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'ARCHIVED']).optional(),
   address: z.string().optional(),
   licenseNumber: z.string().optional(),
+  serviceAgreementUrl: z.string().optional(),
+  serviceAgreementName: z.string().optional(),
 })
 
 export type CreateVendorInput = z.infer<typeof createVendorSchema>

@@ -28,6 +28,8 @@ export async function GET(
             phone: true,
             bankName: true,
             bankAccount: true,
+            type: true,
+            members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
           },
         },
         tenants: {
@@ -67,7 +69,7 @@ export async function GET(
             managementFee: true,
             status: true,
             description: true,
-            landlord: { select: { id: true, name: true } },
+            landlord: { select: { id: true, name: true, type: true, members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } } } },
             tenants: { where: { status: 'ACTIVE' }, select: { id: true, name: true } },
           },
           orderBy: { unitNumber: 'asc' },

@@ -416,11 +416,11 @@ export default function InspectionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Property Inspections</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Property Inspections</h1>
           <p className="text-neutral-600 mt-1">
             Schedule and track property inspection activities
           </p>
@@ -431,27 +431,27 @@ export default function InspectionsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white shadow rounded-lg p-6 border border-neutral-200">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="bg-white shadow rounded-lg p-4 md:p-6 border border-neutral-200">
           <p className="text-sm text-neutral-600">Scheduled</p>
           <p className="text-3xl font-bold text-primary-600">{stats.scheduled}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6 border border-neutral-200">
+        <div className="bg-white shadow rounded-lg p-4 md:p-6 border border-neutral-200">
           <p className="text-sm text-neutral-600">In Progress</p>
           <p className="text-3xl font-bold text-warning-600">{stats.inProgress}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6 border border-neutral-200">
+        <div className="bg-white shadow rounded-lg p-4 md:p-6 border border-neutral-200">
           <p className="text-sm text-neutral-600">Completed</p>
           <p className="text-3xl font-bold text-success-600">{stats.completed}</p>
         </div>
-        <div className="bg-white shadow rounded-lg p-6 border border-neutral-200">
+        <div className="bg-white shadow rounded-lg p-4 md:p-6 border border-neutral-200">
           <p className="text-sm text-neutral-600">Overdue</p>
           <p className="text-3xl font-bold text-danger-600">{stats.overdue}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-4 border border-neutral-200 flex items-center gap-4 flex-wrap">
+      <div className="bg-white shadow rounded-lg p-4 border border-neutral-200 flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4 flex-wrap">
         <Select
           label="Type"
           value={filterType}
@@ -467,7 +467,7 @@ export default function InspectionsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden border border-neutral-200">
+      <div className="bg-white shadow rounded-lg overflow-hidden overflow-x-auto border border-neutral-200">
         {loading ? (
           <div className="p-12 text-center text-neutral-500">Loading inspections...</div>
         ) : inspections.length === 0 ? (
@@ -484,25 +484,25 @@ export default function InspectionsPage() {
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                   Property / Unit
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">
                   Tenant
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                   Scheduled Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">
                   Condition
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">
                   Actions
                 </th>
               </tr>
@@ -514,7 +514,7 @@ export default function InspectionsPage() {
                   new Date(inspection.scheduledDate) < now
                 return (
                   <tr key={inspection.id} className="hover:bg-neutral-50">
-                    <td className="px-6 py-4">
+                    <td className="px-3 md:px-6 py-2 md:py-4">
                       <div className="text-sm font-medium text-neutral-900">
                         {inspection.property?.name}
                       </div>
@@ -524,13 +524,13 @@ export default function InspectionsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-neutral-900">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900 hidden md:table-cell">
                       {inspection.tenant?.name || '--'}
                     </td>
-                    <td className="px-6 py-4 text-sm text-neutral-900">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900 hidden md:table-cell">
                       {formatType(inspection.type)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-neutral-900">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900">
                       <span className={isOverdue ? 'text-danger-600 font-semibold' : ''}>
                         {new Date(inspection.scheduledDate).toLocaleDateString()}
                       </span>
@@ -540,12 +540,12 @@ export default function InspectionsPage() {
                         </Badge>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 md:px-6 py-2 md:py-4">
                       <Badge variant={statusBadgeVariant(inspection.status)}>
                         {inspection.status.replace('_', ' ')}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 md:px-6 py-2 md:py-4 hidden md:table-cell">
                       {inspection.overallCondition ? (
                         <Badge variant={conditionBadgeVariant(inspection.overallCondition)}>
                           {inspection.overallCondition}
@@ -559,7 +559,7 @@ export default function InspectionsPage() {
                         </Badge>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm space-x-2">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => openDetail(inspection)}>
                         {inspection.status === 'COMPLETED' ? 'View' : 'Open'}
                       </Button>

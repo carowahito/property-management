@@ -205,7 +205,7 @@ export default function BillingPage() {
           <p className="text-3xl font-bold text-neutral-900">2.4 GB</p>
           <div className="mt-4 flex items-center">
             <div className="flex-1 bg-neutral-200 rounded-full h-2">
-              <div className="bg-purple-600 h-2 rounded-full" style={{ width: '24%' }}></div>
+              <div className="bg-primary-600 h-2 rounded-full" style={{ width: '24%' }}></div>
             </div>
             <span className="ml-2 text-sm text-neutral-600">24% used</span>
           </div>

@@ -10,7 +10,7 @@ function InviteForm() {
   const router = useRouter()
   const token = searchParams.get('token')
 
-  const [inviteData, setInviteData] = useState<{ email: string; name: string; role: string } | null>(null)
+  const [inviteData, setInviteData] = useState<{ email: string; name: string; role: string; leaseStartDate?: string | null; leaseEndDate?: string | null } | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -154,6 +154,26 @@ function InviteForm() {
             You&apos;ve been invited as a <span className="text-primary-400 font-medium">{inviteData?.role?.toLowerCase()}</span>. Set your password to get started.
           </p>
         </div>
+
+        {inviteData?.leaseStartDate && inviteData?.leaseEndDate && (
+          <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-5">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Lease Details</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-neutral-500 mb-1">Start Date</p>
+                <p className="text-sm font-medium text-white">
+                  {new Date(inviteData.leaseStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-neutral-500 mb-1">End Date</p>
+                <p className="text-sm font-medium text-white">
+                  {new Date(inviteData.leaseEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form className="mt-8 space-y-6 bg-neutral-800 p-8 rounded-lg shadow-xl border border-neutral-700" onSubmit={handleSubmit}>
           {error && (

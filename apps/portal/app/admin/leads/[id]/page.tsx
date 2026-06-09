@@ -52,7 +52,7 @@ export default function LeadCRMPage({ params }: Props) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'NEW': return 'bg-primary-100 text-primary-800'
-      case 'CONTACTED': return 'bg-purple-100 text-purple-800'
+      case 'CONTACTED': return 'bg-primary-100 text-primary-800'
       case 'QUALIFIED': return 'bg-success-100 text-green-800'
       case 'CONVERTED': return 'bg-emerald-100 text-emerald-800'
       case 'LOST': return 'bg-danger-100 text-red-800'
@@ -123,7 +123,7 @@ export default function LeadCRMPage({ params }: Props) {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Communications</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{communications.length}</p>
+          <p className="text-2xl font-bold text-primary-600 mt-2">{communications.length}</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Last Contact</p>

@@ -162,7 +162,7 @@ export default function AIReportsPage() {
                       </div>
                       <div className="bg-purple-50 rounded-lg p-4">
                         <p className="text-sm text-neutral-600">Occupancy</p>
-                        <p className="text-xl font-bold text-purple-600">
+                        <p className="text-xl font-bold text-primary-600">
                           {report.data.operational?.occupancyRate}%
                         </p>
                       </div>

@@ -19,6 +19,7 @@ export default function TenantCRMPage({ params }: Props) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
+  const [showInvitePreview, setShowInvitePreview] = useState(false)
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
@@ -36,6 +37,7 @@ export default function TenantCRMPage({ params }: Props) {
     date: '',
     method: 'Bank Transfer',
     status: 'Paid',
+    reference: '',
   })
   const [paymentFilters, setPaymentFilters] = useState({
     month: '',
@@ -68,6 +70,17 @@ export default function TenantCRMPage({ params }: Props) {
   })
   const [attachments, setAttachments] = useState<File[]>([])
   const [isImprovingText, setIsImprovingText] = useState(false)
+  const [showGenerateLeaseModal, setShowGenerateLeaseModal] = useState(false)
+  const [generateLeaseForm, setGenerateLeaseForm] = useState({
+    startDate: '',
+    endDate: '',
+    monthlyRent: '',
+    securityDeposit: '',
+  })
+  const [isGeneratingLease, setIsGeneratingLease] = useState(false)
+  const [showUploadLeaseModal, setShowUploadLeaseModal] = useState(false)
+  const [isUploadingLease, setIsUploadingLease] = useState(false)
+  const [leaseUploadFile, setLeaseUploadFile] = useState<File | null>(null)
 
   const [tenantApiData, setTenantApiData] = useState<any>(null)
   const [isLoadingTenant, setIsLoadingTenant] = useState(false)
@@ -83,7 +96,7 @@ export default function TenantCRMPage({ params }: Props) {
     setIsLoadingTenant(true)
     fetch(`/api/tenants/${tenantId}`)
       .then(r => r.json())
-      .then(data => { setTenantApiData(data); setIsLoadingTenant(false) })
+      .then(data => { if (data && !data.error) setTenantApiData(data); setIsLoadingTenant(false) })
       .catch(() => setIsLoadingTenant(false))
   }, [tenantId])
 
@@ -181,29 +194,33 @@ export default function TenantCRMPage({ params }: Props) {
 
   const handleRecordPayment = async () => {
     if (!paymentForm.amount || !paymentForm.date) return
+    if (!currentLease?.id) {
+      alert('This tenant has no active lease. Please create a lease before recording a payment.')
+      return
+    }
     const methodMap: Record<string, string> = {
       'Bank Transfer': 'BANK_TRANSFER', 'M-Pesa': 'MPESA', 'Cash': 'CASH', 'Cheque': 'CHEQUE', 'Card': 'CARD'
     }
     try {
-      const lease = tenantLeases[0]
       const res = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId,
-          leaseId: lease?.id,
+          leaseId: currentLease.id,
           amount: parseFloat(paymentForm.amount),
           type: 'RENT',
           method: methodMap[paymentForm.method] || 'BANK_TRANSFER',
           dueDate: paymentForm.date,
           paidDate: paymentForm.date,
           status: paymentForm.status === 'Paid' ? 'PAID' : 'PENDING',
+          reference: paymentForm.reference || undefined,
           notes: paymentForm.month ? `${paymentForm.month} rent` : undefined,
         }),
       })
       if (res.ok) {
         setShowRecordPaymentModal(false)
-        setPaymentForm({ month: '', amount: '', date: '', method: 'Bank Transfer', status: 'Paid' })
+        setPaymentForm({ month: '', amount: '', date: '', method: 'Bank Transfer', status: 'Paid', reference: '' })
         window.location.reload()
       } else {
         const data = await res.json()
@@ -227,9 +244,18 @@ export default function TenantCRMPage({ params }: Props) {
     vendorName: '',
   }))
 
-  const tenantNotes: any[] = []
-  const communications: any[] = []
-  const activityLog: any[] = []
+  const allMessages: any[] = tenantApiData?.messages || []
+  const tenantNotes = allMessages
+    .filter((m: any) => m.type === 'IN_APP' || m.type === 'SYSTEM')
+    .map((m: any) => ({ id: m.id, note: m.content, subject: m.subject, date: m.sentAt, author: '' }))
+  const communications = allMessages
+    .filter((m: any) => m.type !== 'IN_APP' && m.type !== 'SYSTEM')
+    .map((m: any) => ({ id: m.id, subject: m.subject, type: m.type?.toLowerCase(), category: m.category, status: m.status?.toLowerCase(), date: m.sentAt ? m.sentAt.split('T')[0] : '', content: m.content }))
+  const activityLog = [
+    ...allMessages.map((m: any) => ({ id: m.id, type: (m.type === 'IN_APP' || m.type === 'SYSTEM') ? 'note' : 'communication', description: `${m.type}: ${m.subject}`, date: m.sentAt, user: '' })),
+    ...tenantPayments.map((p: any) => ({ id: p.id, type: 'payment', description: `Payment: KES ${Number(p.amount).toLocaleString()} — ${p.month}`, date: p.paidDate, user: '' })),
+    ...tenantMaintenance.map((m: any) => ({ id: m.id, type: 'maintenance', description: `${m.title} (${m.status})`, date: m.createdAt, user: '' })),
+  ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
   const documents: any[] = []
 
   // Filter payments based on filters
@@ -449,6 +475,66 @@ export default function TenantCRMPage({ params }: Props) {
     }
   }
 
+  const handleGenerateLease = async () => {
+    const propertyId = tenantApiData?.property?.id
+    if (!propertyId) {
+      alert('No property found for this tenant. Please assign the tenant to a unit first.')
+      return
+    }
+    if (!generateLeaseForm.startDate || !generateLeaseForm.endDate || !generateLeaseForm.monthlyRent || !generateLeaseForm.securityDeposit) {
+      alert('Please fill in all required fields.')
+      return
+    }
+    setIsGeneratingLease(true)
+    try {
+      const res = await fetch('/api/leases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          propertyId,
+          unitId: unitData?.id || undefined,
+          startDate: generateLeaseForm.startDate,
+          endDate: generateLeaseForm.endDate,
+          monthlyRent: parseFloat(generateLeaseForm.monthlyRent),
+          securityDeposit: parseFloat(generateLeaseForm.securityDeposit),
+        }),
+      })
+      if (res.ok) {
+        setShowGenerateLeaseModal(false)
+        setGenerateLeaseForm({ startDate: '', endDate: '', monthlyRent: '', securityDeposit: '' })
+        window.location.reload()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to create lease')
+      }
+    } catch { alert('Failed to create lease') }
+    finally { setIsGeneratingLease(false) }
+  }
+
+  const handleUploadLease = async () => {
+    if (!leaseUploadFile || !currentLease?.id) return
+    setIsUploadingLease(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', leaseUploadFile)
+      fd.append('type', 'document')
+      const res = await fetch(`/api/leases/${currentLease.id}/upload`, {
+        method: 'POST',
+        body: fd,
+      })
+      if (res.ok) {
+        setShowUploadLeaseModal(false)
+        setLeaseUploadFile(null)
+        window.location.reload()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Upload failed')
+      }
+    } catch { alert('Upload failed') }
+    finally { setIsUploadingLease(false) }
+  }
+
   // Calculate statistics
   const totalPaid = tenantPayments.filter((p: any) => p.status === 'Paid').reduce((sum: number, p: any) => sum + Number(p.amount), 0)
   const totalOverdue = tenantPayments.filter((p: any) => p.status === 'Overdue').reduce((sum: number, p: any) => sum + Number(p.amount), 0)
@@ -479,15 +565,15 @@ export default function TenantCRMPage({ params }: Props) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
               {tenant.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-neutral-900">{tenant.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-neutral-900">{tenant.name}</h1>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(tenant.status)}`}>
                   {tenant.status}
                 </span>
@@ -495,7 +581,7 @@ export default function TenantCRMPage({ params }: Props) {
                   Tenant
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-6 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 text-sm">
                 <div>
                   <p className="text-neutral-600">📧 Email</p>
                   <p className="font-medium text-neutral-900">{tenant.email}</p>
@@ -567,11 +653,13 @@ export default function TenantCRMPage({ params }: Props) {
                       ) : (
                         <p className="font-medium text-neutral-900">{tenant.landlordName}</p>
                       )}
-                      {tenantApiData?.unitRef?.landlord?.type && tenantApiData.unitRef.landlord.type !== 'INDIVIDUAL' && (
-                        <span className="text-xs text-neutral-500">
-                          {tenantApiData.unitRef.landlord.type === 'JOINT_OWNERSHIP' ? 'Joint Ownership' : 'Company'}
-                          {tenantApiData.unitRef.landlord.members?.length > 0 && ` · ${tenantApiData.unitRef.landlord.members.length} members`}
-                        </span>
+                      {tenantApiData?.unitRef?.landlord?.type === 'JOINT_OWNERSHIP' && tenantApiData.unitRef.landlord.members?.length > 0 && (
+                        <p className="text-xs text-neutral-500">
+                          & {tenantApiData.unitRef.landlord.members.map((m: any) => m.name).join(' & ')}
+                        </p>
+                      )}
+                      {tenantApiData?.unitRef?.landlord?.type === 'COMPANY' && (
+                        <span className="text-xs text-neutral-500">Company</span>
                       )}
                     </div>
                   </div>
@@ -579,7 +667,7 @@ export default function TenantCRMPage({ params }: Props) {
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleEditClick}>
               ✏️ Edit
             </Button>
@@ -588,29 +676,8 @@ export default function TenantCRMPage({ params }: Props) {
             }}>
               📄 Statement
             </Button>
-            <Button variant="outline" onClick={async () => {
-              if (inviteSending) return
-              setInviteSending(true)
-              try {
-                const res = await fetch('/api/invitations', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: tenant.email, name: tenant.name, role: 'TENANT', tenantId }),
-                })
-                const data = await res.json()
-                if (!res.ok) {
-                  alert(data.error)
-                } else {
-                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
-                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
-                }
-              } catch {
-                alert('Failed to send invitation')
-              } finally {
-                setInviteSending(false)
-              }
-            }}>
-              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
+            <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
+              ✉️ Invite
             </Button>
             <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>
               💬 Contact
@@ -628,25 +695,25 @@ export default function TenantCRMPage({ params }: Props) {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Total Paid</p>
-          <p className="text-2xl font-bold text-success-600 mt-2">KES {totalPaid.toLocaleString()}</p>
+          <p className="text-xl md:text-2xl font-bold text-success-600 mt-2">KES {totalPaid.toLocaleString()}</p>
           <p className="text-xs text-neutral-500 mt-1">{onTimePayments} payments</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Payment Rate</p>
-          <p className="text-2xl font-bold text-primary-600 mt-2">{paymentRate}%</p>
+          <p className="text-xl md:text-2xl font-bold text-primary-600 mt-2">{paymentRate}%</p>
           <p className="text-xs text-neutral-500 mt-1">On-time payments</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Maintenance Requests</p>
-          <p className="text-2xl font-bold text-warning-600 mt-2">{tenantMaintenance.length}</p>
+          <p className="text-xl md:text-2xl font-bold text-warning-600 mt-2">{tenantMaintenance.length}</p>
           <p className="text-xs text-neutral-500 mt-1">Total requests</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Lease Status</p>
-          <p className={`text-2xl font-bold mt-2 ${
+          <p className={`text-xl md:text-2xl font-bold mt-2 ${
             currentLease?.status === 'ACTIVE' ? 'text-success-600' :
             currentLease?.status === 'EXPIRED' ? 'text-danger-600' :
             currentLease?.status === 'TERMINATED' ? 'text-danger-600' :
@@ -666,7 +733,7 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Tabs */}
       <div className="bg-surface rounded-lg border border-neutral-200">
         <div className="border-b border-neutral-200">
-          <div className="flex space-x-1 p-1 overflow-x-auto">
+          <div className="flex flex-nowrap whitespace-nowrap space-x-1 p-1 overflow-x-auto">
             {[
               { id: 'overview', label: 'Overview', icon: '📊' },
               { id: 'payments', label: 'Payments', icon: '💰' },
@@ -692,11 +759,11 @@ export default function TenantCRMPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Lease */}
                 <div>
                   <h3 className="font-semibold text-neutral-900 mb-4">
@@ -737,11 +804,25 @@ export default function TenantCRMPage({ params }: Props) {
                       >
                         View Lease Details
                       </Button>
+                      {!currentLease.documentUrl && (
+                        <Button
+                          variant="outline"
+                          className="w-full mt-2"
+                          onClick={() => setShowUploadLeaseModal(true)}
+                        >
+                          Upload Signed Lease
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div className="bg-neutral-50 rounded-lg p-4 text-center">
-                      <p className="text-neutral-500">No lease on record</p>
-                      <p className="text-xs text-neutral-400 mt-1">Create a lease from the onboarding wizard or leases page</p>
+                      <p className="text-neutral-500 mb-3">No lease on record</p>
+                      <Button
+                        className="w-full"
+                        onClick={() => setShowGenerateLeaseModal(true)}
+                      >
+                        + Generate Lease
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -767,7 +848,7 @@ export default function TenantCRMPage({ params }: Props) {
               <div>
                 <h3 className="font-semibold text-neutral-900 mb-4">Payment History (Last 6 Months)</h3>
                 <div className="bg-neutral-50 rounded-lg p-4">
-                  <div className="grid grid-cols-6 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {tenantPayments.slice(0, 6).map((payment: any, idx: number) => (
                       <div key={idx} className="text-center">
                         <div className={`h-20 rounded flex items-end justify-center pb-2 ${
@@ -790,9 +871,9 @@ export default function TenantCRMPage({ params }: Props) {
           {/* Payments Tab */}
           {activeTab === 'payments' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Payment History</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => {
                     window.open(`/api/tenants/${tenantId}/statement?format=html`, '_blank')
                   }}>
@@ -803,7 +884,7 @@ export default function TenantCRMPage({ params }: Props) {
               </div>
 
               {/* Filters */}
-              <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+              <div className="bg-neutral-50 rounded-lg p-3 md:p-4 border border-neutral-200">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-medium text-neutral-900">Filters</h4>
                   <button
@@ -901,24 +982,29 @@ export default function TenantCRMPage({ params }: Props) {
                 <table className="min-w-full divide-y divide-neutral-200">
                   <thead className="bg-neutral-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Month</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Month</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Amount</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Reference</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Receipt</th>
                     </tr>
                   </thead>
                   <tbody className="bg-surface divide-y divide-neutral-200">
                     {filteredPayments.length > 0 ? (
                       filteredPayments.map((payment: any) => (
                         <tr key={payment.id} className="hover:bg-neutral-50">
-                          <td className="px-6 py-4 text-sm text-neutral-900">{payment.month}</td>
-                          <td className="px-6 py-4 text-sm font-semibold text-neutral-900">KES {payment.amount.toLocaleString()}</td>
-                          <td className="px-6 py-4 text-sm text-neutral-500">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900">{payment.month}</td>
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-sm font-semibold text-neutral-900">KES {payment.amount.toLocaleString()}</td>
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-500">
                             {payment.paidDate ? formatDate(payment.paidDate as string) : '-'}
                           </td>
-                          <td className="px-6 py-4 text-sm text-neutral-900">{payment.method}</td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900">{payment.method}</td>
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-500 font-mono">
+                            {payment.reference || <span className="text-neutral-300">—</span>}
+                          </td>
+                          <td className="px-3 md:px-6 py-2 md:py-4">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               payment.status === 'COMPLETED' || payment.status === 'Paid' ? 'bg-success-100 text-green-800' :
                               payment.status === 'PENDING' || payment.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -928,11 +1014,20 @@ export default function TenantCRMPage({ params }: Props) {
                               {payment.status === 'COMPLETED' ? 'Paid' : payment.status}
                             </span>
                           </td>
+                          <td className="px-3 md:px-6 py-2 md:py-4">
+                            <button
+                              onClick={() => window.open(`/api/payments/${payment.id}/receipt`, '_blank')}
+                              className="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center gap-1"
+                              title="View receipt"
+                            >
+                              🧾 Receipt
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-neutral-500">
+                        <td colSpan={7} className="px-3 md:px-6 py-8 text-center text-sm text-neutral-500">
                           No payments found matching the selected filters
                         </td>
                       </tr>
@@ -949,7 +1044,7 @@ export default function TenantCRMPage({ params }: Props) {
               <h3 className="font-semibold text-neutral-900 mb-4">Maintenance Requests</h3>
 
               {/* Filters */}
-              <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+              <div className="bg-neutral-50 rounded-lg p-3 md:p-4 border border-neutral-200">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-medium text-neutral-900">Filters</h4>
                   <button
@@ -1058,7 +1153,7 @@ export default function TenantCRMPage({ params }: Props) {
                       {request.status}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm mt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mt-3">
                     <div>
                       <p className="text-neutral-600">Priority</p>
                       <p className="font-medium">{request.priority}</p>
@@ -1080,13 +1175,13 @@ export default function TenantCRMPage({ params }: Props) {
           {/* Documents Tab */}
           {activeTab === 'documents' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Documents</h3>
                 <Button variant="primary">📤 Upload Document</Button>
               </div>
 
               {/* Search */}
-              <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+              <div className="bg-neutral-50 rounded-lg p-3 md:p-4 border border-neutral-200">
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Search Documents
                 </label>
@@ -1140,13 +1235,13 @@ export default function TenantCRMPage({ params }: Props) {
           {/* Communications Tab */}
           {activeTab === 'communications' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Communication History</h3>
                 <Button variant="primary" onClick={() => setShowSendMessageModal(true)}>✉️ Send Message</Button>
               </div>
 
               {/* Filters */}
-              <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+              <div className="bg-neutral-50 rounded-lg p-3 md:p-4 border border-neutral-200">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-medium text-neutral-900">Filters</h4>
                   <button
@@ -1187,8 +1282,9 @@ export default function TenantCRMPage({ params }: Props) {
                       <option value="">All Methods</option>
                       <option value="email">Email</option>
                       <option value="sms">SMS</option>
-                      <option value="in-app">In-App</option>
-                      <option value="phone">Phone</option>
+                      <option value="in_app">In-App</option>
+                      <option value="whatsapp">WhatsApp</option>
+                      <option value="system">System</option>
                     </select>
                   </div>
 
@@ -1202,12 +1298,13 @@ export default function TenantCRMPage({ params }: Props) {
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">All Categories</option>
-                      <option value="Rent Reminder">Rent Reminder</option>
-                      <option value="Payment Confirmation">Payment Confirmation</option>
-                      <option value="Maintenance">Maintenance</option>
-                      <option value="Lease">Lease</option>
-                      <option value="Announcement">Announcement</option>
-                      <option value="Other">Other</option>
+                      <option value="RENT_REMINDER">Rent Reminder</option>
+                      <option value="PAYMENT">Payment</option>
+                      <option value="MAINTENANCE">Maintenance</option>
+                      <option value="LEASE">Lease</option>
+                      <option value="ANNOUNCEMENT">Announcement</option>
+                      <option value="SUPPORT">Support</option>
+                      <option value="OTHER">Other</option>
                     </select>
                   </div>
 
@@ -1245,15 +1342,15 @@ export default function TenantCRMPage({ params }: Props) {
               {filteredCommunications.length > 0 ? (
                 filteredCommunications.map(comm => (
                   <div key={comm.id} className="border border-neutral-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h4 className="font-medium text-neutral-900">{comm.subject}</h4>
-                        <p className="text-sm text-neutral-600 mt-1">
-                          <span className="capitalize">{comm.type}</span> • {formatDate(comm.date)}
-                          {comm.category && <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-800 rounded text-xs font-medium">{comm.category}</span>}
+                        <p className="text-sm text-neutral-600 mt-1">{comm.content}</p>
+                        <p className="text-xs text-neutral-500 mt-2 capitalize">
+                          {comm.type} • {comm.category?.toLowerCase()?.replace('_', ' ')} • {formatDate(comm.date)}
                         </p>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-3 ${
                         comm.status === 'read' ? 'bg-success-100 text-green-800' :
                         comm.status === 'delivered' ? 'bg-primary-100 text-primary-800' :
                         comm.status === 'sent' ? 'bg-neutral-100 text-neutral-800' :
@@ -1275,12 +1372,19 @@ export default function TenantCRMPage({ params }: Props) {
           {/* Notes Tab */}
           {activeTab === 'notes' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Notes</h3>
                 <Button variant="primary" onClick={() => setShowNoteModal(true)}>+ Add Note</Button>
               </div>
-              {tenantNotes.map(note => (
+              {tenantNotes.length === 0 ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
+                  <p className="text-4xl mb-2">📝</p>
+                  <p className="text-neutral-500 font-medium">No notes yet</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setShowNoteModal(true)}>Add First Note</Button>
+                </div>
+              ) : tenantNotes.map(note => (
                 <div key={note.id} className="border border-neutral-200 rounded-lg p-4">
+                  {note.subject && note.subject !== 'Note' && <p className="font-medium text-neutral-900 mb-1">{note.subject}</p>}
                   <p className="text-neutral-900 mb-2">{note.note}</p>
                   <p className="text-sm text-neutral-500">
                     {note.author && `${note.author} • `}{formatDate(note.date)}
@@ -1304,7 +1408,7 @@ export default function TenantCRMPage({ params }: Props) {
             <div className="space-y-3">
               <h3 className="font-semibold text-neutral-900 mb-4">Activity Timeline</h3>
               {activityLog.map(activity => (
-                <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b border-neutral-200 last:border-0">
+                <div key={activity.id} className="flex items-start space-x-2 md:space-x-4 pb-4 border-b border-neutral-200 last:border-0">
                   <div className="w-10 h-10 bg-neutral-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-lg">{getActivityIcon(activity.type)}</span>
                   </div>
@@ -1322,8 +1426,8 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Add Note Modal */}
       {showNoteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
+          <div className="bg-surface rounded-lg max-w-full sm:max-w-2xl w-full mx-4 sm:mx-auto p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
             <textarea
               rows={6}
               className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -1340,9 +1444,9 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Edit Tenant Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-surface border-b border-neutral-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
-              <h2 className="text-xl font-bold text-neutral-900">Edit Tenant Information</h2>
+          <div className="bg-surface rounded-lg max-w-full sm:max-w-3xl w-full mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-surface border-b border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-between rounded-t-lg">
+              <h2 className="text-lg md:text-xl font-bold text-neutral-900">Edit Tenant Information</h2>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-neutral-400 hover:text-neutral-600"
@@ -1353,7 +1457,7 @@ export default function TenantCRMPage({ params }: Props) {
               </button>
             </div>
 
-            <div className="px-6 py-4 space-y-6">
+            <div className="px-4 md:px-6 py-4 space-y-6">
               {/* Personal Information */}
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-4">Personal Information</h3>
@@ -1474,7 +1578,7 @@ export default function TenantCRMPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-end gap-3">
               <Button variant="outline" onClick={() => setShowEditModal(false)}>
                 Cancel
               </Button>
@@ -1493,9 +1597,9 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Record Payment Modal */}
       {showRecordPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full">
-            <div className="bg-surface border-b border-neutral-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
-              <h2 className="text-xl font-bold text-neutral-900">Record Payment</h2>
+          <div className="bg-surface rounded-lg max-w-full sm:max-w-2xl w-full mx-4 sm:mx-auto">
+            <div className="bg-surface border-b border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-between rounded-t-lg">
+              <h2 className="text-lg md:text-xl font-bold text-neutral-900">Record Payment</h2>
               <button
                 onClick={() => setShowRecordPaymentModal(false)}
                 className="text-neutral-400 hover:text-neutral-600"
@@ -1506,8 +1610,8 @@ export default function TenantCRMPage({ params }: Props) {
               </button>
             </div>
 
-            <div className="px-6 py-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="px-4 md:px-6 py-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">
                     Month *
@@ -1567,7 +1671,7 @@ export default function TenantCRMPage({ params }: Props) {
                   </select>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">
                     Payment Status *
                   </label>
@@ -1583,10 +1687,24 @@ export default function TenantCRMPage({ params }: Props) {
                     <option value="Partial">Partial</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Transaction Reference
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentForm.reference}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., QGH7K2M9P4"
+                  />
+                  <p className="mt-1 text-xs text-neutral-400">M-Pesa code, bank ref, cheque no., etc.</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="bg-neutral-50 border-t border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-end gap-3">
               <Button variant="outline" onClick={() => setShowRecordPaymentModal(false)}>
                 Cancel
               </Button>
@@ -1602,13 +1720,131 @@ export default function TenantCRMPage({ params }: Props) {
         </div>
       )}
 
+      {/* Invite Preview Modal */}
+      {showInvitePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-full sm:max-w-lg w-full mx-4 sm:mx-auto">
+            <div className="border-b border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg md:text-xl font-bold text-neutral-900">Invitation Preview</h2>
+              <button
+                onClick={() => setShowInvitePreview(false)}
+                className="text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-4 md:px-6 py-5 space-y-4">
+              {/* Invitation details */}
+              <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Recipient</span>
+                  <span className="text-sm font-medium text-neutral-900">{tenant.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Email</span>
+                  <span className="text-sm font-medium text-neutral-900">{tenant.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Role</span>
+                  <span className="text-sm font-medium text-primary-700">Tenant</span>
+                </div>
+                {tenant.property && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-neutral-600">Property</span>
+                    <span className="text-sm font-medium text-neutral-900">{tenant.property}{tenant.unit ? ` — ${tenant.unit}` : ''}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Expires</span>
+                  <span className="text-sm font-medium text-neutral-900">7 days from now</span>
+                </div>
+              </div>
+
+              {/* Email preview */}
+              <div>
+                <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Email Preview</p>
+                <div className="border border-neutral-200 rounded-lg p-4 bg-white">
+                  <p className="text-sm text-neutral-900 font-medium mb-2">
+                    Hi {tenant.name.split(' ')[0]},
+                  </p>
+                  <p className="text-sm text-neutral-700 mb-2">
+                    You&apos;ve been invited to join the tenant portal. Click the link below to set up your account and access your property information, payments, and maintenance requests.
+                  </p>
+                  <div className="bg-primary-50 border border-primary-200 rounded px-3 py-2 text-center">
+                    <span className="text-sm text-primary-700 font-medium">Set Up Your Account</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-3">
+                    This invitation expires in 7 days. If you did not expect this invitation, you can ignore this email.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs text-primary-800">
+                    A secure invite link will be generated and copied to your clipboard. You can share it manually or the tenant will receive it via email once email sending is configured.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 border-t border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowInvitePreview(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                disabled={inviteSending}
+                onClick={async () => {
+                  setInviteSending(true)
+                  try {
+                    const res = await fetch('/api/invitations', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: tenant.email,
+                        name: tenant.name,
+                        role: 'TENANT',
+                        tenantId,
+                        leaseStartDate: currentLease?.startDate ?? null,
+                        leaseEndDate: currentLease?.endDate ?? null,
+                      }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok) {
+                      alert(data.error)
+                    } else {
+                      const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                      setShowInvitePreview(false)
+                      alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                    }
+                  } catch {
+                    alert('Failed to send invitation')
+                  } finally {
+                    setInviteSending(false)
+                  }
+                }}
+              >
+                {inviteSending ? 'Sending...' : 'Send Invitation'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Send Message Modal */}
       {showSendMessageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-surface border-b border-neutral-200 px-6 py-4 flex items-center justify-between rounded-t-lg">
+          <div className="bg-surface rounded-lg max-w-full sm:max-w-2xl w-full mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-surface border-b border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-between rounded-t-lg">
               <div>
-                <h2 className="text-xl font-bold text-neutral-900">Send Message</h2>
+                <h2 className="text-lg md:text-xl font-bold text-neutral-900">Send Message</h2>
                 <p className="text-sm text-neutral-600 mt-1">To: {tenant.name} ({tenant.email} / {tenant.phone})</p>
               </div>
               <button
@@ -1621,7 +1857,7 @@ export default function TenantCRMPage({ params }: Props) {
               </button>
             </div>
 
-            <div className="px-6 py-4 space-y-4">
+            <div className="px-4 md:px-6 py-4 space-y-4">
               {/* Communication Method */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -1667,7 +1903,7 @@ export default function TenantCRMPage({ params }: Props) {
                       type="button"
                       onClick={() => handleImproveWithAI('subject')}
                       disabled={!messageForm.subject || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -1696,7 +1932,7 @@ export default function TenantCRMPage({ params }: Props) {
                     type="button"
                     onClick={() => handleImproveWithAI('message')}
                     disabled={!messageForm.message || isImprovingText}
-                    className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                    className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -1808,7 +2044,7 @@ export default function TenantCRMPage({ params }: Props) {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="sticky bottom-0 bg-neutral-50 border-t border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-end gap-3">
               <Button variant="outline" onClick={() => setShowSendMessageModal(false)}>
                 Cancel
               </Button>
@@ -1823,6 +2059,119 @@ export default function TenantCRMPage({ params }: Props) {
                 {messageForm.method === 'email' && '📧 Send Email'}
                 {messageForm.method === 'sms' && '💬 Send SMS'}
                 {messageForm.method === 'whatsapp' && '� Send WhatsApp'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Lease Modal */}
+      {showGenerateLeaseModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-neutral-200">
+              <h3 className="text-lg font-semibold text-neutral-900">Generate Lease</h3>
+              <button onClick={() => setShowGenerateLeaseModal(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-4 md:px-6 py-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    value={generateLeaseForm.startDate}
+                    onChange={e => setGenerateLeaseForm(f => ({ ...f, startDate: e.target.value }))}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date *</label>
+                  <input
+                    type="date"
+                    value={generateLeaseForm.endDate}
+                    onChange={e => setGenerateLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 25000"
+                  value={generateLeaseForm.monthlyRent}
+                  onChange={e => setGenerateLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 50000"
+                  value={generateLeaseForm.securityDeposit}
+                  onChange={e => setGenerateLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+            </div>
+            <div className="px-4 md:px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowGenerateLeaseModal(false)}>Cancel</Button>
+              <Button onClick={handleGenerateLease} disabled={isGeneratingLease}>
+                {isGeneratingLease ? 'Creating...' : 'Create Lease'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Signed Lease Modal */}
+      {showUploadLeaseModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-neutral-200">
+              <h3 className="text-lg font-semibold text-neutral-900">Upload Signed Lease</h3>
+              <button onClick={() => setShowUploadLeaseModal(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-4 md:px-6 py-5 space-y-4">
+              <p className="text-sm text-neutral-600">Upload the signed lease document (PDF or image, max 10 MB).</p>
+              <div
+                className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary-400 transition-colors"
+                onClick={() => document.getElementById('lease-file-input')?.click()}
+              >
+                {leaseUploadFile ? (
+                  <div>
+                    <p className="text-sm font-medium text-neutral-800">{leaseUploadFile.name}</p>
+                    <p className="text-xs text-neutral-500 mt-1">{(leaseUploadFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                ) : (
+                  <div>
+                    <svg className="w-10 h-10 text-neutral-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    <p className="text-sm text-neutral-500">Click to select file</p>
+                    <p className="text-xs text-neutral-400 mt-1">PDF, PNG, JPG up to 10 MB</p>
+                  </div>
+                )}
+                <input
+                  id="lease-file-input"
+                  type="file"
+                  accept=".pdf,image/*"
+                  className="hidden"
+                  onChange={e => setLeaseUploadFile(e.target.files?.[0] || null)}
+                />
+              </div>
+            </div>
+            <div className="px-4 md:px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => { setShowUploadLeaseModal(false); setLeaseUploadFile(null) }}>Cancel</Button>
+              <Button onClick={handleUploadLease} disabled={!leaseUploadFile || isUploadingLease}>
+                {isUploadingLease ? 'Uploading...' : 'Upload Document'}
               </Button>
             </div>
           </div>

@@ -54,11 +54,15 @@ export default function VendorCRMPage({ params }: Props) {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
+  const [showInvitePreview, setShowInvitePreview] = useState(false)
   const [saving, setSaving] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [vendorId, setVendorId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', specialization: '', address: '' })
   const [contactMessage, setContactMessage] = useState({ subject: '', content: '' })
+  const [showServiceAgreementModal, setShowServiceAgreementModal] = useState(false)
+  const [serviceAgreementFile, setServiceAgreementFile] = useState<File | null>(null)
+  const [uploadingServiceAgreement, setUploadingServiceAgreement] = useState(false)
 
   useEffect(() => {
     params.then(p => setVendorId(p.id))
@@ -136,6 +140,25 @@ export default function VendorCRMPage({ params }: Props) {
       else { const d = await res.json(); alert(d.error || 'Failed to send') }
     } catch { alert('Failed to send') }
     finally { setSaving(false) }
+  }
+
+  const handleUploadServiceAgreement = async () => {
+    if (!serviceAgreementFile || !vendorId) return
+    setUploadingServiceAgreement(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', serviceAgreementFile)
+      const res = await fetch(`/api/vendors/${vendorId}/service-agreement`, { method: 'POST', body: fd })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+      } else {
+        setServiceAgreementFile(null)
+        setShowServiceAgreementModal(false)
+        window.location.reload()
+      }
+    } catch { alert('Upload failed') }
+    finally { setUploadingServiceAgreement(false) }
   }
 
   const vendorJobs = vendor.workOrders || []
@@ -224,29 +247,8 @@ export default function VendorCRMPage({ params }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
-            <Button variant="outline" onClick={async () => {
-              if (inviteSending) return
-              setInviteSending(true)
-              try {
-                const res = await fetch('/api/invitations', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: vendor.email, name: vendor.name, role: 'VENDOR', vendorId }),
-                })
-                const data = await res.json()
-                if (!res.ok) {
-                  alert(data.error)
-                } else {
-                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
-                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
-                }
-              } catch {
-                alert('Failed to send invitation')
-              } finally {
-                setInviteSending(false)
-              }
-            }}>
-              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
+            <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
+              ✉️ Invite
             </Button>
             <Button variant="primary" onClick={() => setShowContactModal(true)}>💬 Contact</Button>
             <ArchiveDeleteButtons
@@ -280,7 +282,7 @@ export default function VendorCRMPage({ params }: Props) {
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Active Jobs</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{totalJobs - completedJobs}</p>
+          <p className="text-2xl font-bold text-primary-600 mt-2">{totalJobs - completedJobs}</p>
           <p className="text-xs text-neutral-500 mt-1">Currently assigned</p>
         </div>
       </div>
@@ -359,6 +361,32 @@ export default function VendorCRMPage({ params }: Props) {
                     ))}
                   </div>
                 </div>
+              </div>
+
+              {/* Service Agreement */}
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-4">Service Agreement</h3>
+                {(vendor as any).serviceAgreementUrl ? (
+                  <div className="bg-neutral-50 rounded-lg p-4 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-neutral-900 truncate">{(vendor as any).serviceAgreementName || 'Service Agreement'}</p>
+                      {(vendor as any).serviceAgreementDate && (
+                        <p className="text-xs text-neutral-500 mt-0.5">{formatDate((vendor as any).serviceAgreementDate)}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button variant="outline" size="sm" onClick={() => window.open((vendor as any).serviceAgreementUrl, '_blank')}>View</Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowServiceAgreementModal(true)}>Replace</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-neutral-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-neutral-500 mb-3">No service agreement on file</p>
+                    <Button variant="outline" className="w-full" onClick={() => setShowServiceAgreementModal(true)}>
+                      Upload Service Agreement
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Performance Chart */}
@@ -501,7 +529,7 @@ export default function VendorCRMPage({ params }: Props) {
                     </div>
                     <div>
                       <p className="text-sm text-neutral-600">Customer Satisfaction</p>
-                      <p className="text-2xl font-bold text-purple-600">94%</p>
+                      <p className="text-2xl font-bold text-primary-600">94%</p>
                     </div>
                   </div>
                 </div>
@@ -677,6 +705,154 @@ export default function VendorCRMPage({ params }: Props) {
             <div className="flex gap-3 mt-4">
               <Button variant="outline" onClick={() => setShowContactModal(false)} className="flex-1">Cancel</Button>
               <Button variant="primary" onClick={handleSendContact} disabled={saving || !contactMessage.subject || !contactMessage.content} className="flex-1">{saving ? 'Sending...' : 'Send Message'}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Service Agreement Upload Modal */}
+      {showServiceAgreementModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-neutral-900">Upload Service Agreement</h3>
+              <button onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-neutral-500 mb-4">Upload the signed service agreement with this vendor.</p>
+            <label className="block">
+              <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${serviceAgreementFile ? 'border-primary-400 bg-primary-50' : 'border-neutral-300 hover:border-primary-400'}`}>
+                {serviceAgreementFile ? (
+                  <>
+                    <p className="text-3xl mb-2">📄</p>
+                    <p className="font-medium text-neutral-900 text-sm">{serviceAgreementFile.name}</p>
+                    <p className="text-xs text-neutral-500 mt-1">{(serviceAgreementFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-3xl mb-2">📁</p>
+                    <p className="text-sm text-neutral-600">Click or drag a file here</p>
+                    <p className="text-xs text-neutral-400 mt-1">PDF, JPG, PNG, DOCX — max 10 MB</p>
+                  </>
+                )}
+              </div>
+              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={e => setServiceAgreementFile(e.target.files?.[0] ?? null)} />
+            </label>
+            <div className="flex gap-3 mt-5">
+              <Button variant="outline" className="flex-1" onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }}>Cancel</Button>
+              <Button variant="primary" className="flex-1" disabled={!serviceAgreementFile || uploadingServiceAgreement} onClick={handleUploadServiceAgreement}>
+                {uploadingServiceAgreement ? 'Uploading…' : 'Upload Agreement'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Preview Modal */}
+      {showInvitePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full">
+            <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-900">Invitation Preview</h2>
+              <button
+                onClick={() => setShowInvitePreview(false)}
+                className="text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Recipient</span>
+                  <span className="text-sm font-medium text-neutral-900">{vendor.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Email</span>
+                  <span className="text-sm font-medium text-neutral-900">{vendor.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Role</span>
+                  <span className="text-sm font-medium text-warning-700">Vendor</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Specialization</span>
+                  <span className="text-sm font-medium text-neutral-900">{vendor.specialization}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Expires</span>
+                  <span className="text-sm font-medium text-neutral-900">7 days from now</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Email Preview</p>
+                <div className="border border-neutral-200 rounded-lg p-4 bg-white">
+                  <p className="text-sm text-neutral-900 font-medium mb-2">
+                    Hi {vendor.name.split(' ')[0]},
+                  </p>
+                  <p className="text-sm text-neutral-700 mb-2">
+                    You&apos;ve been invited to join the vendor portal. Click the link below to set up your account and access your work orders, invoices, and project details.
+                  </p>
+                  <div className="bg-warning-50 border border-warning-200 rounded px-3 py-2 text-center">
+                    <span className="text-sm text-warning-700 font-medium">Set Up Your Account</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-3">
+                    This invitation expires in 7 days. If you did not expect this invitation, you can ignore this email.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs text-primary-800">
+                    A secure invite link will be generated and copied to your clipboard. You can share it manually or the vendor will receive it via email once email sending is configured.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowInvitePreview(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                disabled={inviteSending}
+                onClick={async () => {
+                  setInviteSending(true)
+                  try {
+                    const res = await fetch('/api/invitations', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: vendor.email, name: vendor.name, role: 'VENDOR', vendorId }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok) {
+                      alert(data.error)
+                    } else {
+                      const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                      setShowInvitePreview(false)
+                      alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                    }
+                  } catch {
+                    alert('Failed to send invitation')
+                  } finally {
+                    setInviteSending(false)
+                  }
+                }}
+              >
+                {inviteSending ? 'Sending...' : 'Send Invitation'}
+              </Button>
             </div>
           </div>
         </div>

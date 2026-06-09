@@ -92,7 +92,7 @@ export default function LeadsPage() {
       case 'NEW':
         return 'bg-primary-100 text-primary-800'
       case 'CONTACTED':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-primary-100 text-primary-800'
       case 'QUALIFIED':
         return 'bg-success-100 text-green-800'
       case 'CONVERTED':

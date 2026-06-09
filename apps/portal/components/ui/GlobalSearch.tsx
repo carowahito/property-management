@@ -22,7 +22,7 @@ interface SearchResults {
 const TYPE_CONFIG = {
   landlord:  { label: 'Landlords',  icon: '🏢', color: 'bg-success-100 text-success-700' },
   property:  { label: 'Properties', icon: '🏠', color: 'bg-primary-100 text-primary-700' },
-  unit:      { label: 'Units',      icon: '🔑', color: 'bg-purple-100 text-purple-700' },
+  unit:      { label: 'Units',      icon: '🔑', color: 'bg-primary-100 text-primary-700' },
   tenant:    { label: 'Tenants',    icon: '👤', color: 'bg-warning-100 text-warning-700' },
 }
 

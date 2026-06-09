@@ -78,7 +78,7 @@ export default function TemplatesPage() {
         </div>
         <div className='bg-surface shadow rounded-lg p-6'>
           <p className='text-sm text-neutral-600'>All Templates</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.totalTemplates}</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalTemplates}</p>
         </div>
       </div>
 

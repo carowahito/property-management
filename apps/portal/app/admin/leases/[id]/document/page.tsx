@@ -164,9 +164,10 @@ export default function LeaseDocumentPage({ params }: { params: Promise<{ id: st
           <p className="text-sm text-neutral-500 mt-1">{lease.tenant.name} — {lease.property.name}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => window.open(`/api/leases/${id}/generate-pdf`, '_blank')}>Download PDF</Button>
           {lease.documentHtml && (
             <>
-              <Button variant="outline" onClick={handlePrint}>Print / PDF</Button>
+              <Button variant="outline" onClick={handlePrint}>Print</Button>
               {!lease.sentForSigning && (
                 <Button onClick={sendForSigning} disabled={sending}>
                   {sending ? 'Sending...' : 'Send for Signing'}
@@ -213,34 +214,14 @@ export default function LeaseDocumentPage({ params }: { params: Promise<{ id: st
         )}
       </div>
 
-      {/* Template Assignment & Generation */}
+      {/* Generate Document */}
       {!lease.documentHtml && (
         <div className="bg-surface border border-border rounded-lg p-5">
           <h2 className="font-semibold text-neutral-900 mb-3">Generate Lease Document</h2>
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Select Template</label>
-              <select
-                value={selectedTemplateId}
-                onChange={(e) => setSelectedTemplateId(e.target.value)}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-              >
-                <option value="">Choose a template...</option>
-                {templates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.type.replace(/_/g, ' ')})</option>
-                ))}
-              </select>
-            </div>
-            {selectedTemplateId !== lease.templateId && (
-              <Button variant="outline" onClick={assignTemplate}>Assign</Button>
-            )}
-            <Button onClick={generateDocument} disabled={generating || !lease.templateId}>
-              {generating ? 'Generating...' : 'Generate Document'}
-            </Button>
-          </div>
-          {!lease.templateId && selectedTemplateId && (
-            <p className="text-xs text-neutral-500 mt-2">Click &quot;Assign&quot; first, then &quot;Generate Document&quot;</p>
-          )}
+          <p className="text-sm text-neutral-600 mb-3">Generate the tenancy agreement using the Tochi Property standard template with all lease data auto-filled.</p>
+          <Button onClick={generateDocument} disabled={generating}>
+            {generating ? 'Generating...' : 'Generate Document'}
+          </Button>
         </div>
       )}
 

@@ -180,9 +180,9 @@ export default function AdminDashboard() {
               <div className='font-medium text-success-900'>Tenant Management</div>
               <div className='text-sm text-success-700'>Add or manage tenant information</div>
             </a>
-            <a href='/admin/payments' className='block p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition'>
+            <a href='/admin/payments' className='block p-3 bg-purple-50 rounded-lg hover:bg-primary-100 transition'>
               <div className='font-medium text-purple-900'>Collect Payments</div>
-              <div className='text-sm text-purple-700'>Track rent and payment collection</div>
+              <div className='text-sm text-primary-700'>Track rent and payment collection</div>
             </a>
             <a href='/admin/maintenance' className='block p-3 bg-warning-50 rounded-lg hover:bg-warning-100 transition'>
               <div className='font-medium text-warning-900'>Maintenance Requests</div>

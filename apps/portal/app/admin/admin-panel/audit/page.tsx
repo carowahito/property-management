@@ -51,7 +51,7 @@ export default function AuditLogsPage() {
   const getModuleColor = (module: string) => {
     const colors: Record<string, string> = {
       'Leads': 'bg-primary-100 text-primary-800',
-      'Enquiries': 'bg-purple-100 text-purple-800',
+      'Enquiries': 'bg-primary-100 text-primary-800',
       'Team': 'bg-success-100 text-success-800',
       'Properties': 'bg-warning-100 text-warning-800',
       'Settings': 'bg-danger-100 text-danger-800',

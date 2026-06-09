@@ -21,6 +21,9 @@ export default function LandlordCRMPage({ params }: Props) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [docsList, setDocsList] = useState<any[]>([])
+  const [showServiceAgreementModal, setShowServiceAgreementModal] = useState(false)
+  const [serviceAgreementFile, setServiceAgreementFile] = useState<File | null>(null)
+  const [uploadingServiceAgreement, setUploadingServiceAgreement] = useState(false)
   const [docsLoading, setDocsLoading] = useState(false)
   const [editTab, setEditTab] = useState<'details' | 'units'>('details')
   const [landlordUnits, setLandlordUnits] = useState<any[]>([])
@@ -38,6 +41,7 @@ export default function LandlordCRMPage({ params }: Props) {
   const [landlordApiData, setLandlordApiData] = useState<any>(null)
   const [isLoadingLandlord, setIsLoadingLandlord] = useState(false)
   const [inviteSending, setInviteSending] = useState(false)
+  const [showInvitePreview, setShowInvitePreview] = useState(false)
   const [saving, setSaving] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [contactMessage, setContactMessage] = useState({ subject: '', content: '', method: 'EMAIL' })
@@ -45,9 +49,13 @@ export default function LandlordCRMPage({ params }: Props) {
   const [editForm, setEditForm] = useState({
     name: '', email: '', phone: '', idNumber: '', address: '',
     bankName: '', bankAccount: '', taxId: '', status: 'ACTIVE',
+    type: 'INDIVIDUAL',
     managementFeePercent: '', managementFeeType: 'PERCENTAGE',
     tenantPlacementFee: '', tenantPlacementFeeType: 'MONTHS',
   })
+  const [editMembers, setEditMembers] = useState<Array<{
+    name: string; idNumber: string; phone: string; email: string; ownershipPercent: string; isPrimary: boolean
+  }>>([])
 
   const fetchDocuments = () => {
     if (!landlordId) return
@@ -77,6 +85,27 @@ export default function LandlordCRMPage({ params }: Props) {
     finally { setUploading(false) }
   }
 
+  const handleUploadServiceAgreement = async () => {
+    if (!serviceAgreementFile || !landlordId) return
+    setUploadingServiceAgreement(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', serviceAgreementFile)
+      const res = await fetch(`/api/landlords/${landlordId}/documents`, { method: 'POST', body: fd })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+      } else {
+        setServiceAgreementFile(null)
+        setShowServiceAgreementModal(false)
+        fetch(`/api/landlords/${landlordId}/documents`)
+          .then(r => r.json())
+          .then(d => setDocsList(d.documents || []))
+      }
+    } catch { alert('Upload failed') }
+    finally { setUploadingServiceAgreement(false) }
+  }
+
   const refreshLandlord = () => {
     if (!landlordId) return
     fetch(`/api/landlords/${landlordId}`)
@@ -95,11 +124,22 @@ export default function LandlordCRMPage({ params }: Props) {
       bankAccount: landlord?.bankAccount || '',
       taxId: landlord?.taxId || '',
       status: landlord?.status || 'ACTIVE',
+      type: landlordApiData?.type || 'INDIVIDUAL',
       managementFeePercent: landlord?.managementFeePercent ?? '',
       managementFeeType: landlord?.managementFeeType || 'PERCENTAGE',
       tenantPlacementFee: landlord?.tenantPlacementFee ?? '',
       tenantPlacementFeeType: landlord?.tenantPlacementFeeType || 'MONTHS',
     })
+    setEditMembers(
+      (landlordApiData?.members || []).map((m: any) => ({
+        name: m.name || '',
+        idNumber: m.idNumber || '',
+        phone: m.phone || '',
+        email: m.email || '',
+        ownershipPercent: m.ownershipPercent != null ? String(m.ownershipPercent) : '',
+        isPrimary: m.isPrimary || false,
+      }))
+    )
     setEditTab('details')
     setNewUnit({ propertyId: '', unitNumber: '', floor: '', bedrooms: '', bathrooms: '', monthlyRent: '', status: 'VACANT' })
     setShowEditModal(true)
@@ -196,9 +236,17 @@ export default function LandlordCRMPage({ params }: Props) {
       .catch(() => setIsLoadingLandlord(false))
   }, [landlordId])
 
+  useEffect(() => {
+    if (!landlordId) return
+    fetch(`/api/landlords/${landlordId}/documents`)
+      .then(r => r.json())
+      .then(d => setDocsList(d.documents || []))
+      .catch(() => {})
+  }, [landlordId])
+
   if (!landlordId || isLoadingLandlord) {
     return <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
     </div>
   }
 
@@ -232,12 +280,12 @@ export default function LandlordCRMPage({ params }: Props) {
   const landlordPayouts = landlordApiData?.payouts || []
 
   const allMessages: any[] = landlordApiData?.messages || []
-  const tenantNotes = allMessages.filter((m: any) => m.type === 'NOTE')
-  const communications = allMessages.filter((m: any) => m.type !== 'NOTE')
+  const tenantNotes = allMessages.filter((m: any) => m.type === 'IN_APP' || m.type === 'SYSTEM')
+  const communications = allMessages.filter((m: any) => m.type !== 'IN_APP' && m.type !== 'SYSTEM')
   const rentTransactions: any[] = landlordApiData?.rentTransactions || []
 
   const activityLog = [
-    ...allMessages.map((m: any) => ({ id: m.id, type: m.type === 'NOTE' ? 'note' : 'communication', description: `${m.type}: ${m.subject}`, date: m.sentAt, user: '' })),
+    ...allMessages.map((m: any) => ({ id: m.id, type: (m.type === 'IN_APP' || m.type === 'SYSTEM') ? 'note' : 'communication', description: `${m.type}: ${m.subject}`, date: m.sentAt, user: '' })),
     ...landlordPayouts.map((p: any) => ({ id: p.id, type: 'payment', description: `Payout: KES ${Number(p.amount).toLocaleString()}`, date: p.paidDate, user: '' })),
     ...rentTransactions.map((t: any) => ({ id: t.id, type: 'payment', description: `Rent collected: KES ${Number(t.grossRent).toLocaleString()}`, date: t.createdAt, user: '' })),
   ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -266,26 +314,39 @@ export default function LandlordCRMPage({ params }: Props) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {landlord.name.split(' ').map((n: string) => n[0]).join('')}
+      <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0">
+              {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0
+                ? [landlord.name, ...landlordApiData.members.map((m: any) => m.name)].map((n: string) => n.split(' ')[0][0]).join('')
+                : landlord.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-neutral-900">{landlord.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-neutral-900">
+                  {landlordApiData?.type === 'JOINT_OWNERSHIP' && landlordApiData?.members?.length > 0
+                    ? [landlord.name, ...landlordApiData.members.map((m: any) => m.name)].join(' & ')
+                    : landlord.name}
+                </h1>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   landlord.status === 'Active' ? 'bg-success-100 text-green-800' : 'bg-neutral-100 text-neutral-800'
                 }`}>
                   {landlord.status}
                 </span>
-                <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
                   {landlordApiData?.type === 'JOINT_OWNERSHIP' ? 'Joint Ownership' :
                    landlordApiData?.type === 'COMPANY' ? 'Company' : 'Individual'}
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-6 text-sm">
+              {landlordApiData?.type === 'COMPANY' && landlordApiData?.members?.length > 0 && (
+                <p className="text-sm text-neutral-600 mb-3">
+                  Contact person: <span className="font-semibold text-neutral-800">
+                    {(landlordApiData.members.find((m: any) => m.isPrimary) || landlordApiData.members[0])?.name}
+                  </span>
+                </p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 text-sm">
                 <div>
                   <p className="text-neutral-600">📧 Email</p>
                   <p className="font-medium text-neutral-900">{landlord.email}</p>
@@ -313,36 +374,15 @@ export default function LandlordCRMPage({ params }: Props) {
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
             <Button variant="outline" onClick={() => {
               window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
             }}>
               📄 Statement
             </Button>
-            <Button variant="outline" onClick={async () => {
-              if (inviteSending) return
-              setInviteSending(true)
-              try {
-                const res = await fetch('/api/invitations', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: landlord.email, name: landlord.name, role: 'LANDLORD', landlordId }),
-                })
-                const data = await res.json()
-                if (!res.ok) {
-                  alert(data.error)
-                } else {
-                  const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
-                  alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
-                }
-              } catch {
-                alert('Failed to send invitation')
-              } finally {
-                setInviteSending(false)
-              }
-            }}>
-              {inviteSending ? '⏳ Sending...' : '✉️ Invite'}
+            <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
+              ✉️ Invite
             </Button>
             <Button variant="primary" onClick={() => setShowContactModal(true)}>💬 Contact</Button>
             <ArchiveDeleteButtons
@@ -358,25 +398,25 @@ export default function LandlordCRMPage({ params }: Props) {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <button onClick={() => setActiveTab('financials')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button onClick={() => setActiveTab('financials')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Portfolio Value</p>
-          <p className="text-2xl font-bold text-success-600 mt-2">KES {yearlyRevenue.toLocaleString()}</p>
+          <p className="text-xl md:text-2xl font-bold text-success-600 mt-2">KES {yearlyRevenue.toLocaleString()}</p>
           <p className="text-xs text-neutral-500 mt-1">KES {totalMonthlyRevenue.toLocaleString()}/mo</p>
         </button>
-        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Units</p>
-          <p className="text-2xl font-bold text-primary-600 mt-2">{totalUnits}</p>
+          <p className="text-xl md:text-2xl font-bold text-primary-600 mt-2">{totalUnits}</p>
           <p className="text-xs text-neutral-500 mt-1">across {totalProperties} {totalProperties !== 1 ? 'properties' : 'property'}</p>
         </button>
-        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+        <button onClick={() => setActiveTab('properties')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
+          <p className="text-xl md:text-2xl font-bold text-primary-600 mt-2">{totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0}%</p>
           <p className="text-xs text-neutral-500 mt-1">{occupiedUnits}/{totalUnits} units occupied</p>
         </button>
-        <button onClick={() => setActiveTab('tenants')} className="bg-surface rounded-lg border border-neutral-200 p-6 text-left hover:border-primary-300 transition">
+        <button onClick={() => setActiveTab('tenants')} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 text-left hover:border-primary-300 transition">
           <p className="text-sm text-neutral-600">Active Tenants</p>
-          <p className="text-2xl font-bold text-warning-600 mt-2">{landlordTenants.length}</p>
+          <p className="text-xl md:text-2xl font-bold text-warning-600 mt-2">{landlordTenants.length}</p>
           <p className="text-xs text-neutral-500 mt-1">Across all properties</p>
         </button>
       </div>
@@ -384,7 +424,7 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Tabs */}
       <div className="bg-surface rounded-lg border border-neutral-200">
         <div className="border-b border-neutral-200">
-          <div className="flex space-x-1 p-1 overflow-x-auto">
+          <div className="flex flex-nowrap space-x-1 p-1 overflow-x-auto">
             {[
               { id: 'overview', label: 'Overview', icon: '📊' },
               { id: 'properties', label: 'Properties', icon: '🏠' },
@@ -404,7 +444,7 @@ export default function LandlordCRMPage({ params }: Props) {
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'text-neutral-600 hover:bg-neutral-100'
                 }`}
               >
@@ -414,11 +454,11 @@ export default function LandlordCRMPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Portfolio Summary */}
                 <div>
                   <h3 className="font-semibold text-neutral-900 mb-4">Portfolio Summary</h3>
@@ -448,7 +488,7 @@ export default function LandlordCRMPage({ params }: Props) {
                   <h3 className="font-semibold text-neutral-900 mb-4">Recent Activity</h3>
                   <div className="space-y-2">
                     {activityLog.slice(0, 5).map(activity => (
-                      <div key={activity.id} className="flex items-start space-x-3 p-3 bg-neutral-50 rounded-lg">
+                      <div key={activity.id} className="flex items-start space-x-2 md:space-x-3 p-3 bg-neutral-50 rounded-lg">
                         <span className="text-xl">{getActivityIcon(activity.type)}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-neutral-900">{activity.description}</p>
@@ -467,11 +507,24 @@ export default function LandlordCRMPage({ params }: Props) {
                     {landlordApiData.type === 'JOINT_OWNERSHIP' ? 'Joint Owners' : 'Members'}
                   </h3>
                   <div className="border border-neutral-200 rounded-lg divide-y divide-neutral-100">
+                    {landlordApiData.type === 'JOINT_OWNERSHIP' && (
+                      <div className="flex items-center justify-between px-4 py-3 text-sm">
+                        <div>
+                          <span className="font-medium text-neutral-900">{landlord.name}</span>
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Primary</span>
+                          {landlord.idNumber && <span className="text-neutral-500 ml-2">ID: {landlord.idNumber}</span>}
+                        </div>
+                        <div className="text-right text-neutral-500 text-xs space-y-0.5">
+                          {landlord.phone && <p>{landlord.phone}</p>}
+                          {landlord.email && <p>{landlord.email}</p>}
+                        </div>
+                      </div>
+                    )}
                     {landlordApiData.members.map((m: any) => (
                       <div key={m.id} className="flex items-center justify-between px-4 py-3 text-sm">
                         <div>
                           <span className="font-medium text-neutral-900">{m.name}</span>
-                          {m.isPrimary && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Primary</span>}
+                          {m.isPrimary && landlordApiData.type !== 'JOINT_OWNERSHIP' && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Primary</span>}
                           {m.idNumber && <span className="text-neutral-500 ml-2">ID: {m.idNumber}</span>}
                         </div>
                         <div className="text-right text-neutral-500 text-xs space-y-0.5">
@@ -484,6 +537,35 @@ export default function LandlordCRMPage({ params }: Props) {
                   </div>
                 </div>
               )}
+
+              {/* Service Agreement */}
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-4">Management Agreement</h3>
+                {(() => {
+                  const agreementDoc = docsList.find(d => /agreement|service/i.test(d.name))
+                  return agreementDoc ? (
+                    <div className="bg-neutral-50 rounded-lg p-4 flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-neutral-900 truncate">{agreementDoc.name}</p>
+                        <p className="text-xs text-neutral-500 mt-0.5">{formatDate(agreementDoc.uploadedAt)}</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        {agreementDoc.url && (
+                          <Button variant="outline" size="sm" onClick={() => window.open(agreementDoc.url, '_blank')}>View</Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => setShowServiceAgreementModal(true)}>Replace</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-neutral-50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-neutral-500 mb-3">No management agreement on file</p>
+                      <Button variant="outline" className="w-full" onClick={() => setShowServiceAgreementModal(true)}>
+                        Upload Agreement
+                      </Button>
+                    </div>
+                  )
+                })()}
+              </div>
 
               {/* Payout History Chart */}
               <div>
@@ -519,7 +601,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Properties Tab */}
           {activeTab === 'properties' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">
                   Properties ({landlordProperties.length})
                 </h3>
@@ -538,11 +620,11 @@ export default function LandlordCRMPage({ params }: Props) {
                     return (
                       <div key={property.id} className="border border-neutral-200 rounded-lg overflow-hidden">
                         {/* Property header */}
-                        <div className="flex justify-between items-start p-4 bg-neutral-50">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-2 p-4 bg-neutral-50">
                           <div>
                             <Link href={`/admin/properties/${property.id}`} className="font-semibold text-primary-600 hover:underline text-lg">{property.name}</Link>
                             <p className="text-sm text-neutral-600 mt-0.5">{property.address}</p>
-                            <div className="flex gap-4 mt-2 text-sm text-neutral-600">
+                            <div className="flex flex-wrap gap-2 md:gap-4 mt-2 text-sm text-neutral-600">
                               <span>Type: <strong>{property.type}</strong></span>
                               <span>Units (this landlord): <strong>{propertyUnits.length}</strong></span>
                               <span>Occupied: <strong>{occupiedCount}/{propertyUnits.length}</strong></span>
@@ -555,8 +637,8 @@ export default function LandlordCRMPage({ params }: Props) {
                         </div>
                         {/* Units under this property */}
                         {propertyUnits.length > 0 && (
-                          <div className="divide-y divide-neutral-100">
-                            <div className="grid grid-cols-5 gap-2 px-4 py-2 bg-neutral-100 text-xs font-medium text-neutral-500 uppercase">
+                          <div className="divide-y divide-neutral-100 overflow-x-auto">
+                            <div className="grid grid-cols-5 gap-2 px-3 md:px-4 py-2 bg-neutral-100 text-xs font-medium text-neutral-500 uppercase min-w-[500px]">
                               <span>Unit</span>
                               <span>Bedrooms</span>
                               <span>Bathrooms</span>
@@ -564,7 +646,7 @@ export default function LandlordCRMPage({ params }: Props) {
                               <span>Status</span>
                             </div>
                             {propertyUnits.map((unit: any) => (
-                              <div key={unit.id} className="grid grid-cols-5 gap-2 px-4 py-3 text-sm items-center">
+                              <div key={unit.id} className="grid grid-cols-5 gap-2 px-3 md:px-4 py-2 md:py-3 text-sm items-center min-w-[500px]">
                                 <div>
                                   <span className="font-medium text-neutral-900">{unit.unitNumber}</span>
                                     </div>
@@ -603,21 +685,21 @@ export default function LandlordCRMPage({ params }: Props) {
                     <table className="min-w-full divide-y divide-neutral-200">
                       <thead className="bg-neutral-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Gross Rent</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Mgmt Fee</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Net Payout</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Gross Rent</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Mgmt Fee</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Net Payout</th>
+                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
                         </tr>
                       </thead>
                       <tbody className="bg-surface divide-y divide-neutral-200">
                         {rentTransactions.map((tx: any) => (
                           <tr key={tx.id} className="hover:bg-neutral-50">
-                            <td className="px-6 py-4 text-sm text-neutral-900">{tx.rentPeriod || formatDate(tx.createdAt)}</td>
-                            <td className="px-6 py-4 text-sm text-neutral-900">KES {Number(tx.grossRent).toLocaleString()}</td>
-                            <td className="px-6 py-4 text-sm text-neutral-500">KES {Number(tx.managementFee).toLocaleString()}</td>
-                            <td className="px-6 py-4 text-sm font-semibold text-success-600">KES {Number(tx.netAmount).toLocaleString()}</td>
-                            <td className="px-6 py-4">
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{tx.rentPeriod || formatDate(tx.createdAt)}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">KES {Number(tx.grossRent).toLocaleString()}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-500">KES {Number(tx.managementFee).toLocaleString()}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3 text-sm font-semibold text-success-600">KES {Number(tx.netAmount).toLocaleString()}</td>
+                            <td className="px-3 md:px-6 py-2 md:py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${tx.payoutStatus === 'PAID' ? 'bg-success-100 text-green-800' : 'bg-warning-100 text-yellow-800'}`}>{tx.payoutStatus}</span>
                             </td>
                           </tr>
@@ -629,9 +711,9 @@ export default function LandlordCRMPage({ params }: Props) {
               )}
 
               {/* Payouts */}
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Payout History</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -652,21 +734,21 @@ export default function LandlordCRMPage({ params }: Props) {
                 <table className="min-w-full divide-y divide-neutral-200">
                   <thead className="bg-neutral-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Payout</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date Paid</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Period</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Payout</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date Paid</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
                     </tr>
                   </thead>
                   <tbody className="bg-surface divide-y divide-neutral-200">
                     {landlordPayouts.length > 0 ? landlordPayouts.map((payout: any) => (
                       <tr key={payout.id} className="hover:bg-neutral-50">
-                        <td className="px-6 py-4 text-sm text-neutral-900">{payout.period || '—'}</td>
-                        <td className="px-6 py-4 text-sm font-semibold text-success-600">KES {Number(payout.amount).toLocaleString()}</td>
-                        <td className="px-6 py-4 text-sm text-neutral-900">{payout.method || '—'}</td>
-                        <td className="px-6 py-4 text-sm text-neutral-900">{payout.paidDate ? formatDate(payout.paidDate) : '—'}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{payout.period || '—'}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm font-semibold text-success-600">KES {Number(payout.amount).toLocaleString()}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{payout.method || '—'}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3 text-sm text-neutral-900">{payout.paidDate ? formatDate(payout.paidDate) : '—'}</td>
+                        <td className="px-3 md:px-6 py-2 md:py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             payout.status === 'PAID' ? 'bg-success-100 text-green-800' :
                             payout.status === 'PENDING' ? 'bg-warning-100 text-yellow-800' :
@@ -678,7 +760,7 @@ export default function LandlordCRMPage({ params }: Props) {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-neutral-500">No payout records yet</td>
+                        <td colSpan={5} className="px-3 md:px-6 py-8 text-center text-sm text-neutral-500">No payout records yet</td>
                       </tr>
                     )}
                   </tbody>
@@ -721,7 +803,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Documents Tab */}
           {activeTab === 'documents' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Documents ({docsList.length})</h3>
                 <Button variant="primary" onClick={() => setShowUploadModal(true)}>📤 Upload Document</Button>
               </div>
@@ -764,7 +846,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Communications Tab */}
           {activeTab === 'communications' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Communication History ({communications.length})</h3>
                 <Button variant="primary" onClick={() => setShowContactModal(true)}>✉️ Send Message</Button>
               </div>
@@ -791,7 +873,7 @@ export default function LandlordCRMPage({ params }: Props) {
           {/* Notes Tab */}
           {activeTab === 'notes' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Notes ({tenantNotes.length})</h3>
                 <Button variant="primary" onClick={() => setShowNoteModal(true)}>+ Add Note</Button>
               </div>
@@ -837,7 +919,7 @@ export default function LandlordCRMPage({ params }: Props) {
                     <p className="text-neutral-500 font-medium">No activity yet</p>
                   </div>
                 ) : activities.map(activity => (
-                  <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b border-neutral-200 last:border-0">
+                  <div key={activity.id} className="flex items-start space-x-2 md:space-x-4 pb-4 border-b border-neutral-200 last:border-0">
                     <div className="w-10 h-10 bg-neutral-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-lg">{getActivityIcon(activity.type)}</span>
                     </div>
@@ -856,9 +938,9 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Edit Landlord Modal */}
       {showEditModal && editForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-surface rounded-lg max-w-2xl w-full mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto p-4 md:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-neutral-900">Edit Landlord</h3>
+              <h3 className="text-lg md:text-xl font-bold text-neutral-900">Edit Landlord</h3>
               <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -930,7 +1012,7 @@ export default function LandlordCRMPage({ params }: Props) {
                           {/* Inline edit form */}
                           {editingUnitId === u.id && (
                             <div className="p-3 bg-white border-t border-neutral-100 space-y-3">
-                              <div className="grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Monthly Rent (KES)</label>
                                   <input type="number" min="0" value={unitEditForm.monthlyRent}
@@ -981,7 +1063,7 @@ export default function LandlordCRMPage({ params }: Props) {
                                       className="flex-1 px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                   </div>
                                 </div>
-                                <div className="col-span-2">
+                                <div className="sm:col-span-2">
                                   <label className="block text-xs text-neutral-500 mb-1">Management Fee</label>
                                   <div className="flex gap-1">
                                     <select value={unitEditForm.managementFeeType}
@@ -1101,8 +1183,8 @@ export default function LandlordCRMPage({ params }: Props) {
                 {/* Add new unit */}
                 <div className="border-t border-neutral-200 pt-4">
                   <p className="text-sm font-medium text-neutral-700 mb-3">Add New Unit</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
                       <label className="block text-xs text-neutral-600 mb-1">Property *</label>
                       <select
                         value={newUnit.propertyId}
@@ -1252,6 +1334,130 @@ export default function LandlordCRMPage({ params }: Props) {
                 </div>
               ))}
 
+              {/* Ownership Type */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Ownership Type</label>
+                <select
+                  value={editForm.type}
+                  onChange={e => setEditForm({ ...editForm, type: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="INDIVIDUAL">Individual</option>
+                  <option value="JOINT_OWNERSHIP">Joint Ownership</option>
+                  <option value="COMPANY">Company</option>
+                </select>
+              </div>
+
+              {/* Members editor — for joint ownership and company */}
+              {editForm.type !== 'INDIVIDUAL' && (
+                <div className="md:col-span-2 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-neutral-700">
+                      {editForm.type === 'JOINT_OWNERSHIP' ? 'Joint Owners' : 'Company Members'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEditMembers(prev => [...prev, { name: '', idNumber: '', phone: '', email: '', ownershipPercent: '', isPrimary: false }])}
+                      className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+                    >
+                      + Add {editForm.type === 'JOINT_OWNERSHIP' ? 'Owner' : 'Member'}
+                    </button>
+                  </div>
+                  {editMembers.length === 0 ? (
+                    <p className="text-sm text-neutral-400 bg-neutral-50 rounded-lg p-3">
+                      No {editForm.type === 'JOINT_OWNERSHIP' ? 'owners' : 'members'} yet. Click &ldquo;Add&rdquo; above to add one.
+                    </p>
+                  ) : (
+                    <div className="space-y-3 max-h-72 overflow-y-auto">
+                      {editMembers.map((member, idx) => (
+                        <div key={idx} className="border border-neutral-200 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-neutral-500">
+                              {editForm.type === 'JOINT_OWNERSHIP' ? `Owner ${idx + 1}` : `Member ${idx + 1}`}
+                              {member.isPrimary && <span className="ml-2 bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-xs">Primary</span>}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setEditMembers(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-xs text-danger-600 hover:text-danger-800 font-medium"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div className="sm:col-span-2">
+                              <label className="block text-xs text-neutral-500 mb-1">Full Name *</label>
+                              <input
+                                type="text"
+                                value={member.name}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, name: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="Full name"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">ID Number</label>
+                              <input
+                                type="text"
+                                value={member.idNumber}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, idNumber: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="National ID"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">Ownership %</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={member.ownershipPercent}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, ownershipPercent: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="e.g. 50"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">Phone</label>
+                              <input
+                                type="text"
+                                value={member.phone}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, phone: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="+254..."
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-neutral-500 mb-1">Email</label>
+                              <input
+                                type="email"
+                                value={member.email}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx ? { ...m, email: e.target.value } : m))}
+                                className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                placeholder="email@example.com"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id={`primary-${idx}`}
+                                checked={member.isPrimary}
+                                onChange={e => setEditMembers(prev => prev.map((m, i) => i === idx
+                                  ? { ...m, isPrimary: e.target.checked }
+                                  : { ...m, isPrimary: false }
+                                ))}
+                                className="w-4 h-4 text-primary-600 border-neutral-300 rounded"
+                              />
+                              <label htmlFor={`primary-${idx}`} className="text-xs text-neutral-700">Primary contact</label>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Management Fee */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Management Fee</label>
@@ -1349,6 +1555,19 @@ export default function LandlordCRMPage({ params }: Props) {
                     else delete payload.tenantPlacementFee
                     payload.managementFeeType = editForm.managementFeeType
                     payload.tenantPlacementFeeType = editForm.tenantPlacementFeeType
+                    payload.type = editForm.type
+                    payload.members = editForm.type !== 'INDIVIDUAL'
+                      ? editMembers
+                          .filter(m => m.name.trim())
+                          .map(m => ({
+                            name: m.name.trim(),
+                            idNumber: m.idNumber.trim() || undefined,
+                            phone: m.phone.trim() || undefined,
+                            email: m.email.trim() || undefined,
+                            ownershipPercent: m.ownershipPercent ? parseFloat(m.ownershipPercent) : undefined,
+                            isPrimary: m.isPrimary,
+                          }))
+                      : []
 
                     const res = await fetch(`/api/landlords/${landlordId}`, {
                       method: 'PATCH',
@@ -1381,8 +1600,8 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Add Note Modal */}
       {showNoteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
+          <div className="bg-surface rounded-lg max-w-2xl w-full mx-4 sm:mx-auto p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold text-neutral-900 mb-4">Add Note</h3>
             <textarea
               rows={6}
               value={noteText}
@@ -1403,8 +1622,8 @@ export default function LandlordCRMPage({ params }: Props) {
       {/* Contact Landlord Modal */}
       {showContactModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-2xl w-full p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Contact {landlord.name}</h3>
+          <div className="bg-surface rounded-lg max-w-2xl w-full mx-4 sm:mx-auto p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold text-neutral-900 mb-4">Contact {landlord.name}</h3>
             <p className="text-sm text-neutral-500 mb-4">{landlord.email} • {landlord.phone}</p>
             <div className="space-y-4">
               <div>
@@ -1426,10 +1645,51 @@ export default function LandlordCRMPage({ params }: Props) {
         </div>
       )}
 
+      {/* Upload Service Agreement Modal */}
+      {showServiceAgreementModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-md w-full mx-4 sm:mx-auto p-4 md:p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-neutral-900">Upload Management Agreement</h3>
+              <button onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-neutral-500 mb-4">Upload the signed management/service agreement with this landlord.</p>
+            <label className="block">
+              <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${serviceAgreementFile ? 'border-primary-400 bg-primary-50' : 'border-neutral-300 hover:border-primary-400'}`}>
+                {serviceAgreementFile ? (
+                  <>
+                    <p className="text-3xl mb-2">📄</p>
+                    <p className="font-medium text-neutral-900 text-sm">{serviceAgreementFile.name}</p>
+                    <p className="text-xs text-neutral-500 mt-1">{(serviceAgreementFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-3xl mb-2">📁</p>
+                    <p className="text-sm text-neutral-600">Click or drag a file here</p>
+                    <p className="text-xs text-neutral-400 mt-1">PDF, JPG, PNG, DOCX — max 10 MB</p>
+                  </>
+                )}
+              </div>
+              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={e => setServiceAgreementFile(e.target.files?.[0] ?? null)} />
+            </label>
+            <div className="flex gap-3 mt-5">
+              <Button variant="outline" className="flex-1" onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }}>Cancel</Button>
+              <Button variant="primary" className="flex-1" disabled={!serviceAgreementFile || uploadingServiceAgreement} onClick={handleUploadServiceAgreement}>
+                {uploadingServiceAgreement ? 'Uploading…' : 'Upload Agreement'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Upload Document Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-md w-full p-6">
+          <div className="bg-surface rounded-lg max-w-md w-full mx-4 sm:mx-auto p-4 md:p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-neutral-900">Upload Document</h3>
               <button onClick={() => { setShowUploadModal(false); setUploadFile(null) }} className="text-neutral-400 hover:text-neutral-600">
@@ -1469,6 +1729,117 @@ export default function LandlordCRMPage({ params }: Props) {
               </Button>
               <Button variant="primary" className="flex-1" disabled={!uploadFile || uploading} onClick={handleUpload}>
                 {uploading ? 'Uploading…' : 'Upload'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Preview Modal */}
+      {showInvitePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full mx-4 sm:mx-auto">
+            <div className="border-b border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg md:text-xl font-bold text-neutral-900">Invitation Preview</h2>
+              <button
+                onClick={() => setShowInvitePreview(false)}
+                className="text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-4 md:px-6 py-5 space-y-4">
+              <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Recipient</span>
+                  <span className="text-sm font-medium text-neutral-900">{landlord.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Email</span>
+                  <span className="text-sm font-medium text-neutral-900">{landlord.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Role</span>
+                  <span className="text-sm font-medium text-success-700">Landlord</span>
+                </div>
+                {landlordProperties.length > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-neutral-600">Properties</span>
+                    <span className="text-sm font-medium text-neutral-900">
+                      {landlordProperties.length} {landlordProperties.length === 1 ? 'property' : 'properties'}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-600">Expires</span>
+                  <span className="text-sm font-medium text-neutral-900">7 days from now</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Email Preview</p>
+                <div className="border border-neutral-200 rounded-lg p-4 bg-white">
+                  <p className="text-sm text-neutral-900 font-medium mb-2">
+                    Hi {landlord.name.split(' ')[0]},
+                  </p>
+                  <p className="text-sm text-neutral-700 mb-2">
+                    You&apos;ve been invited to join the landlord portal. Click the link below to set up your account and access your property portfolio, tenant information, and financial reports.
+                  </p>
+                  <div className="bg-success-50 border border-success-200 rounded px-3 py-2 text-center">
+                    <span className="text-sm text-success-700 font-medium">Set Up Your Account</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-3">
+                    This invitation expires in 7 days. If you did not expect this invitation, you can ignore this email.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs text-primary-800">
+                    A secure invite link will be generated and copied to your clipboard. You can share it manually or the landlord will receive it via email once email sending is configured.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 border-t border-neutral-200 px-4 md:px-6 py-4 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowInvitePreview(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                disabled={inviteSending}
+                onClick={async () => {
+                  setInviteSending(true)
+                  try {
+                    const res = await fetch('/api/invitations', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: landlord.email, name: landlord.name, role: 'LANDLORD', landlordId }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok) {
+                      alert(data.error)
+                    } else {
+                      const copied = await navigator.clipboard.writeText(data.inviteUrl).then(() => true).catch(() => false)
+                      setShowInvitePreview(false)
+                      alert(copied ? 'Invite link copied to clipboard!' : `Invite created! Share this link:\n${data.inviteUrl}`)
+                    }
+                  } catch {
+                    alert('Failed to send invitation')
+                  } finally {
+                    setInviteSending(false)
+                  }
+                }}
+              >
+                {inviteSending ? 'Sending...' : 'Send Invitation'}
               </Button>
             </div>
           </div>

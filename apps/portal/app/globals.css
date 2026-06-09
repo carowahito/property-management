@@ -1,71 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Open+Sans:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* ─── Primary (Blue) ─── */
-    --color-primary-50: 239 246 255;
-    --color-primary-100: 219 234 254;
-    --color-primary-200: 191 219 254;
-    --color-primary-300: 147 197 253;
-    --color-primary-400: 96 165 250;
-    --color-primary-500: 59 130 246;
-    --color-primary-600: 37 99 235;
-    --color-primary-700: 29 78 216;
-    --color-primary-800: 30 64 175;
-    --color-primary-900: 30 58 138;
+    /* ─── Primary (Deep Navy #1A3A5C) ─── */
+    --color-primary-50:  238 242 247;
+    --color-primary-100: 208 218 234;
+    --color-primary-200: 162 184 213;
+    --color-primary-300: 116 150 192;
+    --color-primary-400:  70 116 171;
+    --color-primary-500:  37  82 150;
+    --color-primary-600:  26  58  92;   /* #1A3A5C — Deep Navy */
+    --color-primary-700:  20  48  78;
+    --color-primary-800:  14  37  64;
+    --color-primary-900:   9  26  46;
 
-    /* ─── Success (Green) ─── */
-    --color-success-50: 240 253 244;
-    --color-success-100: 220 252 231;
-    --color-success-500: 34 197 94;
-    --color-success-600: 22 163 74;
-    --color-success-700: 21 128 61;
-    --color-success-900: 20 83 45;
+    /* ─── Success (Confirm Green #2A6B3C) ─── */
+    --color-success-50:  235 245 238;
+    --color-success-100: 200 230 208;
+    --color-success-500:  60 154  84;
+    --color-success-600:  42 107  60;   /* #2A6B3C — Brand Green */
+    --color-success-700:  31  80  41;
+    --color-success-900:  21  54  32;
 
-    /* ─── Danger (Red) ─── */
-    --color-danger-50: 254 242 242;
-    --color-danger-100: 254 226 226;
-    --color-danger-500: 239 68 68;
-    --color-danger-600: 220 38 38;
-    --color-danger-700: 185 28 28;
+    /* ─── Danger (Alert Red #B33A2A) ─── */
+    --color-danger-50:  250 240 238;
+    --color-danger-100: 240 201 196;
+    --color-danger-500: 204  80  64;
+    --color-danger-600: 179  58  42;   /* #B33A2A — Brand Red */
+    --color-danger-700: 143  46  34;
 
-    /* ─── Warning (Orange/Amber) ─── */
-    --color-warning-50: 255 251 235;
+    /* ─── Warning (Amber — unchanged) ─── */
+    --color-warning-50:  255 251 235;
     --color-warning-100: 254 243 199;
-    --color-warning-500: 245 158 11;
-    --color-warning-600: 217 119 6;
-    --color-warning-700: 180 83 9;
+    --color-warning-500: 245 158  11;
+    --color-warning-600: 217 119   6;
+    --color-warning-700: 180  83   9;
 
     /* ─── Neutral (Gray) ─── */
-    --color-neutral-50: 249 250 251;
+    --color-neutral-50:  249 250 251;
     --color-neutral-100: 243 244 246;
     --color-neutral-200: 229 231 235;
     --color-neutral-300: 209 213 219;
     --color-neutral-400: 156 163 175;
     --color-neutral-500: 107 114 128;
-    --color-neutral-600: 75 85 99;
-    --color-neutral-700: 55 65 81;
-    --color-neutral-800: 31 41 55;
-    --color-neutral-900: 17 24 39;
+    --color-neutral-600:  75  85  99;
+    --color-neutral-700:  55  65  81;
+    --color-neutral-800:  31  41  55;
+    --color-neutral-900:  17  24  39;
 
     /* ─── Sidebar ─── */
-    --color-sidebar-bg: 15 23 42;
-    --color-sidebar-text: 203 213 225;
-    --color-sidebar-active: 37 99 235;
+    --color-sidebar-bg:     15  26  46;   /* Deep navy dark */
+    --color-sidebar-text:  203 213 225;
+    --color-sidebar-active: 232 150  12;  /* #E8960C — Saffron */
 
     /* ─── Surface & Layout ─── */
-    --color-surface: 255 255 255;
-    --color-page-bg: 249 250 251;
-    --color-border: 229 231 235;
+    --color-surface:  255 255 255;
+    --color-page-bg:  249 250 251;
+    --color-border:   229 231 235;
 
     /* ─── Radius ─── */
-    --radius-sm: 0.25rem;
-    --radius-md: 0.375rem;
-    --radius-lg: 0.5rem;
-    --radius-xl: 0.75rem;
-    --radius-2xl: 1rem;
+    --radius-sm:   0.25rem;
+    --radius-md:   0.375rem;
+    --radius-lg:   0.5rem;
+    --radius-xl:   0.75rem;
+    --radius-2xl:  1rem;
     --radius-full: 9999px;
 
     /* ─── Shadows ─── */
@@ -75,7 +77,7 @@
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
     /* ─── Typography ─── */
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-sans: 'Montserrat', 'Open Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   }
 
