@@ -59,6 +59,9 @@ export default function VendorCRMPage({ params }: Props) {
   const [vendorId, setVendorId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', specialization: '', address: '' })
   const [contactMessage, setContactMessage] = useState({ subject: '', content: '' })
+  const [showServiceAgreementModal, setShowServiceAgreementModal] = useState(false)
+  const [serviceAgreementFile, setServiceAgreementFile] = useState<File | null>(null)
+  const [uploadingServiceAgreement, setUploadingServiceAgreement] = useState(false)
 
   useEffect(() => {
     params.then(p => setVendorId(p.id))
@@ -136,6 +139,25 @@ export default function VendorCRMPage({ params }: Props) {
       else { const d = await res.json(); alert(d.error || 'Failed to send') }
     } catch { alert('Failed to send') }
     finally { setSaving(false) }
+  }
+
+  const handleUploadServiceAgreement = async () => {
+    if (!serviceAgreementFile || !vendorId) return
+    setUploadingServiceAgreement(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', serviceAgreementFile)
+      const res = await fetch(`/api/vendors/${vendorId}/service-agreement`, { method: 'POST', body: fd })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+      } else {
+        setServiceAgreementFile(null)
+        setShowServiceAgreementModal(false)
+        window.location.reload()
+      }
+    } catch { alert('Upload failed') }
+    finally { setUploadingServiceAgreement(false) }
   }
 
   const vendorJobs = vendor.workOrders || []
@@ -359,6 +381,32 @@ export default function VendorCRMPage({ params }: Props) {
                     ))}
                   </div>
                 </div>
+              </div>
+
+              {/* Service Agreement */}
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-4">Service Agreement</h3>
+                {(vendor as any).serviceAgreementUrl ? (
+                  <div className="bg-neutral-50 rounded-lg p-4 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-neutral-900 truncate">{(vendor as any).serviceAgreementName || 'Service Agreement'}</p>
+                      {(vendor as any).serviceAgreementDate && (
+                        <p className="text-xs text-neutral-500 mt-0.5">{formatDate((vendor as any).serviceAgreementDate)}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button variant="outline" size="sm" onClick={() => window.open((vendor as any).serviceAgreementUrl, '_blank')}>View</Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowServiceAgreementModal(true)}>Replace</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-neutral-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-neutral-500 mb-3">No service agreement on file</p>
+                    <Button variant="outline" className="w-full" onClick={() => setShowServiceAgreementModal(true)}>
+                      Upload Service Agreement
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Performance Chart */}
@@ -677,6 +725,47 @@ export default function VendorCRMPage({ params }: Props) {
             <div className="flex gap-3 mt-4">
               <Button variant="outline" onClick={() => setShowContactModal(false)} className="flex-1">Cancel</Button>
               <Button variant="primary" onClick={handleSendContact} disabled={saving || !contactMessage.subject || !contactMessage.content} className="flex-1">{saving ? 'Sending...' : 'Send Message'}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Service Agreement Upload Modal */}
+      {showServiceAgreementModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-neutral-900">Upload Service Agreement</h3>
+              <button onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-neutral-500 mb-4">Upload the signed service agreement with this vendor.</p>
+            <label className="block">
+              <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${serviceAgreementFile ? 'border-primary-400 bg-primary-50' : 'border-neutral-300 hover:border-primary-400'}`}>
+                {serviceAgreementFile ? (
+                  <>
+                    <p className="text-3xl mb-2">📄</p>
+                    <p className="font-medium text-neutral-900 text-sm">{serviceAgreementFile.name}</p>
+                    <p className="text-xs text-neutral-500 mt-1">{(serviceAgreementFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-3xl mb-2">📁</p>
+                    <p className="text-sm text-neutral-600">Click or drag a file here</p>
+                    <p className="text-xs text-neutral-400 mt-1">PDF, JPG, PNG, DOCX — max 10 MB</p>
+                  </>
+                )}
+              </div>
+              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={e => setServiceAgreementFile(e.target.files?.[0] ?? null)} />
+            </label>
+            <div className="flex gap-3 mt-5">
+              <Button variant="outline" className="flex-1" onClick={() => { setShowServiceAgreementModal(false); setServiceAgreementFile(null) }}>Cancel</Button>
+              <Button variant="primary" className="flex-1" disabled={!serviceAgreementFile || uploadingServiceAgreement} onClick={handleUploadServiceAgreement}>
+                {uploadingServiceAgreement ? 'Uploading…' : 'Upload Agreement'}
+              </Button>
             </div>
           </div>
         </div>

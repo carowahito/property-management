@@ -374,8 +374,11 @@ model Vendor {
   specialization String
   rating         Float    @default(0)
   status         StakeholderStatus @default(ACTIVE)
-  address        String?
-  licenseNumber  String?
+  address               String?
+  licenseNumber         String?
+  serviceAgreementUrl   String?
+  serviceAgreementName  String?
+  serviceAgreementDate  DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
