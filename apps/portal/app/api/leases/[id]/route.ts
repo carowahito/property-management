@@ -51,6 +51,21 @@ export async function GET(
             },
           },
         },
+        // Include unit reference so UI can show unit number and unit-level landlord
+        unitRef: {
+          select: {
+            id: true,
+            unitNumber: true,
+            landlord: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              }
+            }
+          }
+        },
         payments: {
           select: {
             id: true,
