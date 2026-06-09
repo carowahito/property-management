@@ -21,6 +21,7 @@ export default function LeaseDetailPage({ params }: Props) {
   const [saving, setSaving] = useState(false)
   const [editForm, setEditForm] = useState({
     monthlyRent: '', securityDeposit: '', status: '', terms: '',
+    startDate: '', endDate: '',
     noticePeriod: '', petPolicy: '', specialConditions: '',
   })
   const [renewForm, setRenewForm] = useState({
@@ -142,6 +143,8 @@ export default function LeaseDetailPage({ params }: Props) {
       monthlyRent: String(lease.monthlyRent || ''),
       securityDeposit: String(lease.securityDeposit || ''),
       status: lease.status || 'ACTIVE',
+      startDate: lease.startDate ? lease.startDate.split('T')[0] : '',
+      endDate: lease.endDate ? lease.endDate.split('T')[0] : '',
       terms: lease.terms || '',
       noticePeriod: String(lease.noticePeriod || '1'),
       petPolicy: lease.petPolicy || '',
@@ -160,6 +163,8 @@ export default function LeaseDetailPage({ params }: Props) {
           monthlyRent: parseFloat(editForm.monthlyRent) || undefined,
           securityDeposit: parseFloat(editForm.securityDeposit) || undefined,
           status: editForm.status,
+          startDate: editForm.startDate || undefined,
+          endDate: editForm.endDate || undefined,
           terms: editForm.terms || undefined,
           noticePeriod: parseInt(editForm.noticePeriod) || undefined,
           petPolicy: editForm.petPolicy || undefined,
@@ -563,6 +568,16 @@ export default function LeaseDetailPage({ params }: Props) {
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Notice Period (months)</label>
                   <input type="number" min="1" value={editForm.noticePeriod} onChange={(e) => setEditForm(prev => ({ ...prev, noticePeriod: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date</label>
+                  <input type="date" value={editForm.startDate} onChange={(e) => setEditForm(prev => ({ ...prev, startDate: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date</label>
+                  <input type="date" value={editForm.endDate} onChange={(e) => setEditForm(prev => ({ ...prev, endDate: e.target.value }))} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" />
                 </div>
               </div>
               <div>
