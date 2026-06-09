@@ -53,7 +53,8 @@ export default function LandlordLayout({
           <div className="flex justify-between h-16">
             <div className="flex">
               <Link href="/landlord/dashboard" className="flex items-center">
-                <span className="text-xl font-bold text-success-600">Landlord Portal</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/tochi-logo.svg" alt="Tochi Property" className="h-9 w-auto" />
               </Link>
               <div className="ml-10 flex space-x-1">
                 {navItems.map((item) => (
@@ -126,7 +127,7 @@ export default function LandlordLayout({
       <main className="min-h-screen bg-neutral-50">{children}</main>
       <footer className="bg-surface border-t border-neutral-200 mt-12">
         <div className="py-6 px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-neutral-500">© 2025 Catalyst Suite - Landlord Portal</p>
+          <p className="text-center text-sm text-neutral-500">© 2025 Tochi Property · tochiproperty.com</p>
         </div>
       </footer>
     </>

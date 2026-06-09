@@ -190,15 +190,15 @@ export default function AdminLayout({
       <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-neutral-200 transition-all duration-300 overflow-hidden flex flex-col`}>
         {/* Logo Section */}
         <div className="flex items-center justify-between p-4 border-b border-neutral-200 h-20">
-          {sidebarOpen && (
-            <Link href="/admin" className="flex items-center space-x-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-lg font-bold text-white">🏢</span>
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-sm font-bold text-neutral-900">PropManage</h1>
-                <p className="text-xs text-neutral-500">Admin</p>
-              </div>
+          {sidebarOpen ? (
+            <Link href="/admin" className="flex items-center flex-1 min-w-0 pr-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/tochi-logo.svg" alt="Tochi Property" className="h-10 w-auto max-w-full" />
+            </Link>
+          ) : (
+            <Link href="/admin" className="flex items-center justify-center flex-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/tochi-icon.svg" alt="Tochi Property" className="h-8 w-8" />
             </Link>
           )}
           <button
