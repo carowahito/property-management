@@ -562,7 +562,11 @@ function TenantsPage() {
                         {tenant.property.name}
                       </Link>
                     </td>
-                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-600 hidden md:table-cell">{tenant.unit || '-'}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm hidden md:table-cell">
+                      {tenant.unit
+                        ? <Link href={`/admin/units/${tenant.unit}`} className="text-primary-600 hover:text-primary-800">{tenant.unit}</Link>
+                        : <span className="text-neutral-400">-</span>}
+                    </td>
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-600 hidden lg:table-cell">{tenant._count.leases}</td>
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
