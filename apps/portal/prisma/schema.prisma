@@ -358,6 +358,8 @@ model Tenant {
   renewals         LeaseRenewal[]
   invitations      Invitation[]
 
+  documents       TenantDocument[]
+
   @@unique([companyId, email])
   @@index([email])
   @@index([companyId])
@@ -365,6 +367,23 @@ model Tenant {
   @@index([unitId])
   @@index([status])
   @@map("tenants")
+}
+
+model TenantDocument {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  fileType    String
+  fileSize    Int
+  storagePath String   @default("")
+  url         String   @default("")
+  content     String?
+  uploadedAt  DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("tenant_documents")
 }
 
 model Vendor {

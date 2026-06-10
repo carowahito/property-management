@@ -84,6 +84,11 @@ export default function TenantCRMPage({ params }: Props) {
 
   const [tenantApiData, setTenantApiData] = useState<any>(null)
   const [isLoadingTenant, setIsLoadingTenant] = useState(false)
+  const [docsList, setDocsList] = useState<any[]>([])
+  const [docsLoading, setDocsLoading] = useState(false)
+  const [showUploadDocModal, setShowUploadDocModal] = useState(false)
+  const [uploadDocFile, setUploadDocFile] = useState<File | null>(null)
+  const [uploadingDoc, setUploadingDoc] = useState(false)
 
   // Unwrap params to get tenant ID
   useEffect(() => {
@@ -99,6 +104,44 @@ export default function TenantCRMPage({ params }: Props) {
       .then(data => { if (data && !data.error) setTenantApiData(data); setIsLoadingTenant(false) })
       .catch(() => setIsLoadingTenant(false))
   }, [tenantId])
+
+  const fetchDocuments = () => {
+    if (!tenantId) return
+    setDocsLoading(true)
+    fetch(`/api/tenants/${tenantId}/documents`)
+      .then(r => r.json())
+      .then(d => setDocsList(d.documents || []))
+      .finally(() => setDocsLoading(false))
+  }
+
+  useEffect(() => {
+    if (activeTab === 'documents') fetchDocuments()
+  }, [activeTab, tenantId])
+
+  const handleUploadDoc = async () => {
+    if (!uploadDocFile || !tenantId) return
+    setUploadingDoc(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', uploadDocFile)
+      const res = await fetch(`/api/tenants/${tenantId}/documents`, { method: 'POST', body: fd })
+      if (res.ok) {
+        setUploadDocFile(null)
+        setShowUploadDocModal(false)
+        fetchDocuments()
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+      }
+    } catch { alert('Upload failed') }
+    finally { setUploadingDoc(false) }
+  }
+
+  const handleDeleteDoc = async (docId: string) => {
+    if (!confirm('Delete this document?')) return
+    await fetch(`/api/tenants/${tenantId}/documents?docId=${docId}`, { method: 'DELETE' })
+    fetchDocuments()
+  }
 
   // Adapt API response to shape used by this component
   const unitData = tenantApiData?.unitRef || null
@@ -256,7 +299,7 @@ export default function TenantCRMPage({ params }: Props) {
     ...tenantPayments.map((p: any) => ({ id: p.id, type: 'payment', description: `Payment: KES ${Number(p.amount).toLocaleString()} — ${p.month}`, date: p.paidDate, user: '' })),
     ...tenantMaintenance.map((m: any) => ({ id: m.id, type: 'maintenance', description: `${m.title} (${m.status})`, date: m.createdAt, user: '' })),
   ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  const documents: any[] = []
+  const documents = docsList
 
   // Filter payments based on filters
   const filteredPayments = tenantPayments.filter((payment: any) => {
@@ -325,8 +368,8 @@ export default function TenantCRMPage({ params }: Props) {
     if (!documentSearch) return true
     
     const searchLower = documentSearch.toLowerCase()
-    return doc.name.toLowerCase().includes(searchLower) || 
-           doc.type.toLowerCase().includes(searchLower)
+    return doc.name.toLowerCase().includes(searchLower) ||
+           (doc.fileType || '').toLowerCase().includes(searchLower)
   })
 
   // Filter communications
@@ -1175,59 +1218,65 @@ export default function TenantCRMPage({ params }: Props) {
           {activeTab === 'documents' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-                <h3 className="font-semibold text-neutral-900">Documents</h3>
-                <Button variant="primary">📤 Upload Document</Button>
+                <h3 className="font-semibold text-neutral-900">Documents ({documents.length})</h3>
+                <Button variant="primary" onClick={() => setShowUploadDocModal(true)}>📤 Upload Document</Button>
               </div>
 
               {/* Search */}
               <div className="bg-neutral-50 rounded-lg p-3 md:p-4 border border-neutral-200">
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Search Documents
-                </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={documentSearch}
                     onChange={(e) => setDocumentSearch(e.target.value)}
                     className="w-full px-4 py-2 pl-10 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Search by document name or type..."
+                    placeholder="Search by document name..."
                   />
-                  <svg 
-                    className="absolute left-3 top-2.5 w-5 h-5 text-neutral-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="absolute left-3 top-2.5 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-                <div className="mt-2 text-sm text-neutral-600">
-                  Showing {filteredDocuments.length} of {documents.length} documents
-                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                {filteredDocuments.length > 0 ? (
-                  filteredDocuments.map(doc => (
-                    <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-danger-100 rounded flex items-center justify-center">
-                          <span className="text-danger-600">📄</span>
+              {docsLoading ? (
+                <p className="text-sm text-neutral-400 text-center py-8">Loading documents…</p>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {filteredDocuments.length > 0 ? (
+                    filteredDocuments.map((doc: any) => (
+                      <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded flex items-center justify-center text-lg">
+                            {doc.fileType?.includes('pdf') ? '📄' : doc.fileType?.includes('image') ? '🖼️' : '📎'}
+                          </div>
+                          <div>
+                            <p className="font-medium text-neutral-900">{doc.name}</p>
+                            <p className="text-xs text-neutral-500">
+                              {doc.fileType} • {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(1)} KB` : ''} • {formatDate(doc.uploadedAt)}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-neutral-900">{doc.name}</p>
-                          <p className="text-xs text-neutral-500">{doc.type} • {doc.size} • {formatDate(doc.date)}</p>
+                        <div className="flex gap-2">
+                          {doc.url && (
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="outline" size="sm">View</Button>
+                            </a>
+                          )}
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)}>
+                            <span className="text-danger-600">Delete</span>
+                          </Button>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">Download</Button>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 text-neutral-500">
+                      <p className="text-4xl mb-3">📁</p>
+                      <p className="font-medium">No documents yet</p>
+                      <p className="text-sm mt-1">Upload IDs, passport photos, or any supporting documents</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-neutral-500">
-                    No documents found matching your search
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -2171,6 +2220,58 @@ export default function TenantCRMPage({ params }: Props) {
               <Button variant="outline" onClick={() => { setShowUploadLeaseModal(false); setLeaseUploadFile(null) }}>Cancel</Button>
               <Button onClick={handleUploadLease} disabled={!leaseUploadFile || isUploadingLease}>
                 {isUploadingLease ? 'Uploading...' : 'Upload Document'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Document Modal */}
+      {showUploadDocModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+              <h3 className="text-lg font-semibold text-neutral-900">Upload Document</h3>
+              <button onClick={() => { setShowUploadDocModal(false); setUploadDocFile(null) }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-neutral-500">Upload IDs, passport photos, lease documents, or any supporting documents for this tenant.</p>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition ${uploadDocFile ? 'border-primary-400 bg-primary-50' : 'border-neutral-300 hover:border-primary-400'}`}
+                onClick={() => document.getElementById('doc-file-input')?.click()}
+              >
+                <input
+                  id="doc-file-input"
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={e => setUploadDocFile(e.target.files?.[0] || null)}
+                />
+                {uploadDocFile ? (
+                  <div className="flex items-center justify-center gap-2 text-primary-700">
+                    <span className="text-2xl">📄</span>
+                    <div className="text-left">
+                      <p className="font-medium text-sm">{uploadDocFile.name}</p>
+                      <p className="text-xs text-neutral-500">{(uploadDocFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <svg className="mx-auto h-10 w-10 text-neutral-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="text-sm text-neutral-600">Click to select a file</p>
+                    <p className="text-xs text-neutral-400 mt-1">PDF, images, Word documents — max 10 MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => { setShowUploadDocModal(false); setUploadDocFile(null) }}>Cancel</Button>
+              <Button onClick={handleUploadDoc} disabled={!uploadDocFile || uploadingDoc}>
+                {uploadingDoc ? 'Uploading...' : 'Upload'}
               </Button>
             </div>
           </div>
