@@ -22,6 +22,19 @@ interface Payment {
   };
 }
 
+const EMPTY_FORM = {
+  tenantId: '',
+  leaseId: '',
+  amount: '',
+  type: 'RENT' as const,
+  method: 'MPESA' as const,
+  status: 'PAID' as const,
+  dueDate: new Date().toISOString().split('T')[0],
+  paidDate: new Date().toISOString().split('T')[0],
+  reference: '',
+  notes: '',
+};
+
 export default function RentPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,12 +43,96 @@ export default function RentPaymentsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
-  useEffect(() => {
+  // Record Payment modal
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [saving, setSaving] = useState(false);
+  const [tenantsList, setTenantsList] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [leasesList, setLeasesList] = useState<{ id: string; startDate: string; endDate: string; monthlyRent: number; property: { name: string }; unit: string | null }[]>([]);
+  const [loadingLeases, setLoadingLeases] = useState(false);
+
+  const refreshPayments = () => {
+    setIsLoading(true);
     fetch('/api/payments?type=RENT&limit=200')
       .then(r => r.json())
       .then(data => { setPayments(data.payments || []); setIsLoading(false); })
       .catch(() => setIsLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { refreshPayments(); }, []);
+
+  // Load tenants when modal opens
+  useEffect(() => {
+    if (!showModal) return;
+    fetch('/api/tenants?status=ACTIVE&limit=200')
+      .then(r => r.json())
+      .then(data => setTenantsList(data.tenants || []));
+  }, [showModal]);
+
+  // Load leases when tenant is selected
+  useEffect(() => {
+    if (!form.tenantId) { setLeasesList([]); return; }
+    setLoadingLeases(true);
+    fetch(`/api/leases?tenantId=${form.tenantId}&limit=20`)
+      .then(r => r.json())
+      .then(data => {
+        const leases = (data.leases || []).map((l: any) => ({
+          id: l.id,
+          startDate: l.startDate,
+          endDate: l.endDate,
+          monthlyRent: Number(l.monthlyRent),
+          property: l.property,
+          unit: l.unit ?? l.unitRef?.unitNumber ?? null,
+        }));
+        setLeasesList(leases);
+        // Auto-select first lease and pre-fill amount
+        if (leases.length === 1) {
+          setForm(f => ({ ...f, leaseId: leases[0].id, amount: String(leases[0].monthlyRent || '') }));
+        }
+      })
+      .finally(() => setLoadingLeases(false));
+  }, [form.tenantId]);
+
+  const handleLeaseChange = (leaseId: string) => {
+    const lease = leasesList.find(l => l.id === leaseId);
+    setForm(f => ({ ...f, leaseId, amount: lease ? String(lease.monthlyRent) : f.amount }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.tenantId || !form.leaseId || !form.amount) return;
+    setSaving(true);
+    try {
+      const body: any = {
+        tenantId: form.tenantId,
+        leaseId: form.leaseId,
+        amount: parseFloat(form.amount),
+        type: form.type,
+        method: form.method,
+        status: form.status,
+        dueDate: form.dueDate,
+      };
+      if (form.status === 'PAID' && form.paidDate) body.paidDate = form.paidDate;
+      if (form.reference) body.reference = form.reference;
+      if (form.notes) body.notes = form.notes;
+
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Failed to record payment');
+        return;
+      }
+      setShowModal(false);
+      setForm({ ...EMPTY_FORM });
+      refreshPayments();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Filter by time period
   const getDateRange = () => {
@@ -62,7 +159,7 @@ export default function RentPaymentsPage() {
         }
         return null;
       }
-      default: return null; // 'all' — no filter
+      default: return null;
     }
   };
 
@@ -104,6 +201,9 @@ export default function RentPaymentsPage() {
     }
   };
 
+  const inputCls = 'w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent';
+  const labelCls = 'block text-sm font-medium text-neutral-700 mb-1';
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -117,33 +217,29 @@ export default function RentPaymentsPage() {
           <h1 className='text-3xl font-bold text-neutral-900'>Rent Payments</h1>
           <p className='text-neutral-600 mt-1'>Track and manage rent payment transactions</p>
         </div>
-        <Button variant="primary" size="lg">+ Record Payment</Button>
+        <Button variant="primary" size="lg" onClick={() => setShowModal(true)}>+ Record Payment</Button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards — clickable to filter */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Total Payments</p>
-          <p className='text-3xl font-bold text-neutral-900'>{stats.totalPayments}</p>
-        </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Collected</p>
-          <p className='text-3xl font-bold text-success-600'>
-            KES {stats.paidAmount.toLocaleString()}
-          </p>
-        </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Pending</p>
-          <p className='text-3xl font-bold text-yellow-600'>
-            KES {stats.pendingAmount.toLocaleString()}
-          </p>
-        </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
-          <p className='text-sm text-neutral-600'>Overdue</p>
-          <p className='text-3xl font-bold text-danger-600'>
-            KES {stats.overdueAmount.toLocaleString()}
-          </p>
-        </div>
+        {[
+          { label: 'Total Payments', value: stats.totalPayments, display: stats.totalPayments.toString(), filter: 'all', color: 'text-neutral-900' },
+          { label: 'Collected', value: stats.paidAmount, display: `KES ${stats.paidAmount.toLocaleString()}`, filter: 'PAID', color: 'text-success-600' },
+          { label: 'Pending', value: stats.pendingAmount, display: `KES ${stats.pendingAmount.toLocaleString()}`, filter: 'PENDING', color: 'text-yellow-600' },
+          { label: 'Overdue', value: stats.overdueAmount, display: `KES ${stats.overdueAmount.toLocaleString()}`, filter: 'OVERDUE', color: 'text-danger-600' },
+        ].map(card => (
+          <button
+            key={card.filter}
+            onClick={() => setFilterStatus(filterStatus === card.filter ? 'all' : card.filter)}
+            className={`bg-surface shadow rounded-lg p-6 text-left transition-all hover:shadow-md hover:border hover:border-primary-200 ${filterStatus === card.filter ? 'ring-2 ring-primary-500' : ''}`}
+          >
+            <p className='text-sm text-neutral-600'>{card.label}</p>
+            <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.display}</p>
+            {filterStatus === card.filter && (
+              <p className='text-xs text-primary-500 mt-1'>Filtered ↑ click to clear</p>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Filter */}
@@ -168,32 +264,21 @@ export default function RentPaymentsPage() {
             <>
               <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-medium text-neutral-700 mb-2">Start Date</label>
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
+                <input type="date" value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
               </div>
               <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-medium text-neutral-700 mb-2">End Date</label>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
+                <input type="date" value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
               </div>
             </>
           )}
 
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-neutral-700 mb-2">Payment Status</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500'
-            >
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+              className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500'>
               <option value='all'>All Payments</option>
               <option value='PAID'>Paid</option>
               <option value='PENDING'>Pending</option>
@@ -219,7 +304,7 @@ export default function RentPaymentsPage() {
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Amount</th>
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Due Date</th>
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Paid Date</th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Payment Method</th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Method</th>
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Status</th>
               </tr>
             </thead>
@@ -244,17 +329,13 @@ export default function RentPaymentsPage() {
                   <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900'>
                     KES {Number(payment.amount).toLocaleString()}
                   </td>
-                  <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
-                    {formatDate(payment.dueDate)}
-                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>{formatDate(payment.dueDate)}</td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                     {payment.paidDate ? formatDate(payment.paidDate) : <span className='text-neutral-400'>—</span>}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-neutral-900'>
                     {formatMethod(payment.method)}
-                    {payment.reference && (
-                      <div className='text-xs text-neutral-500'>{payment.reference}</div>
-                    )}
+                    {payment.reference && <div className='text-xs text-neutral-500'>{payment.reference}</div>}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(payment.status)}`}>
@@ -267,6 +348,144 @@ export default function RentPaymentsPage() {
           </table>
         )}
       </div>
+
+      {/* Record Payment Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-neutral-100">
+              <h2 className="text-xl font-bold text-neutral-900">Record Payment</h2>
+              <button onClick={() => { setShowModal(false); setForm({ ...EMPTY_FORM }); }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Tenant */}
+              <div>
+                <label className={labelCls}>Tenant <span className="text-danger-600">*</span></label>
+                <select required value={form.tenantId}
+                  onChange={e => setForm(f => ({ ...f, tenantId: e.target.value, leaseId: '', amount: '' }))}
+                  className={inputCls}>
+                  <option value="">— Select tenant —</option>
+                  {tenantsList.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Lease */}
+              <div>
+                <label className={labelCls}>Lease <span className="text-danger-600">*</span></label>
+                <select required value={form.leaseId}
+                  onChange={e => handleLeaseChange(e.target.value)}
+                  disabled={!form.tenantId || loadingLeases}
+                  className={inputCls}>
+                  <option value="">{loadingLeases ? 'Loading leases…' : '— Select lease —'}</option>
+                  {leasesList.map(l => (
+                    <option key={l.id} value={l.id}>
+                      {l.property?.name}{l.unit ? ` · Unit ${l.unit}` : ''} — KES {l.monthlyRent.toLocaleString()}/mo
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Amount */}
+                <div>
+                  <label className={labelCls}>Amount (KES) <span className="text-danger-600">*</span></label>
+                  <input required type="number" min="1" step="1" value={form.amount}
+                    onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                    className={inputCls} placeholder="e.g. 30000" />
+                </div>
+
+                {/* Type */}
+                <div>
+                  <label className={labelCls}>Payment Type</label>
+                  <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))} className={inputCls}>
+                    <option value="RENT">Rent</option>
+                    <option value="DEPOSIT">Deposit</option>
+                    <option value="LATE_FEE">Late Fee</option>
+                    <option value="UTILITY">Utility</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Method */}
+                <div>
+                  <label className={labelCls}>Payment Method <span className="text-danger-600">*</span></label>
+                  <select required value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value as any }))} className={inputCls}>
+                    <option value="MPESA">M-PESA</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <option value="CASH">Cash</option>
+                    <option value="CHEQUE">Cheque</option>
+                    <option value="CARD">Card</option>
+                  </select>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className={labelCls}>Status</label>
+                  <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} className={inputCls}>
+                    <option value="PAID">Paid</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="OVERDUE">Overdue</option>
+                    <option value="PARTIAL">Partial</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Due Date */}
+                <div>
+                  <label className={labelCls}>Due Date <span className="text-danger-600">*</span></label>
+                  <input required type="date" value={form.dueDate}
+                    onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))} className={inputCls} />
+                </div>
+
+                {/* Paid Date */}
+                {form.status === 'PAID' && (
+                  <div>
+                    <label className={labelCls}>Paid Date</label>
+                    <input type="date" value={form.paidDate}
+                      onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))} className={inputCls} />
+                  </div>
+                )}
+              </div>
+
+              {/* Reference */}
+              <div>
+                <label className={labelCls}>Reference / Transaction ID</label>
+                <input type="text" value={form.reference}
+                  onChange={e => setForm(f => ({ ...f, reference: e.target.value }))}
+                  className={inputCls} placeholder="e.g. MPESA code, bank ref" />
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className={labelCls}>Notes</label>
+                <textarea rows={2} value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  className={inputCls} placeholder="Any additional notes…" />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" className="flex-1"
+                  onClick={() => { setShowModal(false); setForm({ ...EMPTY_FORM }); }}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" className="flex-1" disabled={saving}>
+                  {saving ? 'Saving…' : 'Record Payment'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
