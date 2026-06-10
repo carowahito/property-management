@@ -369,30 +369,30 @@ export default function PropertyDetailPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <a href="#units" className="bg-surface rounded-lg border border-neutral-200 p-6 hover:shadow-md hover:border-primary-300 transition cursor-pointer block">
           <p className="text-sm text-neutral-600">Total Units</p>
           <p className="text-3xl font-bold text-primary-600 mt-2">{property.totalUnits}</p>
           <p className="text-xs text-neutral-500 mt-1">{property.type}</p>
-        </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        </a>
+        <a href="#tenants" className="bg-surface rounded-lg border border-neutral-200 p-6 hover:shadow-md hover:border-success-300 transition cursor-pointer block">
           <p className="text-sm text-neutral-600">Occupied Units</p>
           <p className="text-3xl font-bold text-success-600 mt-2">{tenants.length}</p>
           <p className="text-xs text-neutral-500 mt-1">{property.totalUnits - tenants.length} vacant</p>
-        </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        </a>
+        <a href="#leases" className="bg-surface rounded-lg border border-neutral-200 p-6 hover:shadow-md hover:border-primary-300 transition cursor-pointer block">
           <p className="text-sm text-neutral-600">Occupancy Rate</p>
           <p className="text-3xl font-bold text-primary-600 mt-2">
             {property.totalUnits > 0 ? Math.round((tenants.length / property.totalUnits) * 100) : 0}%
           </p>
           <p className="text-xs text-neutral-500 mt-1">Current rate</p>
-        </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        </a>
+        <Link href={`/admin/payments?propertyId=${id}`} className="bg-surface rounded-lg border border-neutral-200 p-6 hover:shadow-md hover:border-warning-300 transition cursor-pointer block">
           <p className="text-sm text-neutral-600">Monthly Revenue</p>
           <p className="text-3xl font-bold text-warning-600 mt-2">
             KES {leases.reduce((sum, lease) => sum + Number(lease.monthlyRent), 0).toLocaleString()}
           </p>
           <p className="text-xs text-neutral-500 mt-1">{property._count?.leases || 0} active leases</p>
-        </div>
+        </Link>
       </div>
 
       {/* Property Owners */}
@@ -488,7 +488,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Current Tenants */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div id="tenants" className="bg-surface rounded-lg border border-neutral-200 p-6">
         <h2 className="text-xl font-bold text-neutral-900 mb-4">Current Tenants ({tenants.length})</h2>
 
         {tenants.length === 0 ? (
@@ -534,7 +534,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Active Leases */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div id="leases" className="bg-surface rounded-lg border border-neutral-200 p-6">
         <h2 className="text-xl font-bold text-neutral-900 mb-4">Active Leases ({leases.filter(l => l.status === 'ACTIVE').length})</h2>
         
         {leases.filter(l => l.status === 'ACTIVE').length === 0 ? (
@@ -587,7 +587,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Units List */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div id="units" className="bg-surface rounded-lg border border-neutral-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-neutral-900">Units</h2>
