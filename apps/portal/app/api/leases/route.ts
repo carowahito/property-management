@@ -127,32 +127,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
 
-    // Check for overlapping active leases (skip for PENDING — renewal leases
-    // are allowed to overlap with the current active lease)
-    if (validatedData.status !== 'PENDING') {
-      const overlappingLease = await prisma.lease.findFirst({
+    // Block any lease that overlaps an existing ACTIVE or PENDING lease for the
+    // same unit or same tenant.  Exception: a new PENDING lease may overlap an
+    // existing ACTIVE lease for the same unit (renewal workflow).
+    const newStart = new Date(validatedData.startDate)
+    const newEnd   = new Date(validatedData.endDate)
+    const periodOverlap = {
+      startDate: { lte: newEnd },
+      endDate:   { gte: newStart },
+    }
+
+    // Same-unit overlap check (blocks any status that would double-book the unit)
+    if (validatedData.unitId) {
+      const unitConflict = await prisma.lease.findFirst({
         where: {
-          tenantId: validatedData.tenantId,
-          status: 'ACTIVE',
-          OR: [
-            {
-              startDate: {
-                lte: new Date(validatedData.endDate),
-              },
-              endDate: {
-                gte: new Date(validatedData.startDate),
-              },
-            },
-          ],
+          unitId: validatedData.unitId,
+          status: { in: ['ACTIVE', 'PENDING'] },
+          // Allow a new PENDING to coexist with the current ACTIVE (renewal)
+          NOT: validatedData.status === 'PENDING' ? { status: 'ACTIVE' } : undefined,
+          ...periodOverlap,
         },
       })
-
-      if (overlappingLease) {
+      if (unitConflict) {
         return NextResponse.json(
-          { error: 'Tenant already has an active lease during this period' },
+          { error: `Unit already has a ${unitConflict.status.toLowerCase()} lease covering this period` },
           { status: 400 }
         )
       }
+    }
+
+    // Same-tenant overlap check (prevents the same tenant appearing on two
+    // simultaneous leases even across different units)
+    const tenantConflict = await prisma.lease.findFirst({
+      where: {
+        tenantId: validatedData.tenantId,
+        status: { in: ['ACTIVE', 'PENDING'] },
+        NOT: validatedData.status === 'PENDING' ? { status: 'ACTIVE' } : undefined,
+        ...periodOverlap,
+      },
+    })
+    if (tenantConflict) {
+      return NextResponse.json(
+        { error: `Tenant already has a ${tenantConflict.status.toLowerCase()} lease covering this period` },
+        { status: 400 }
+      )
     }
 
     const lease = await prisma.lease.create({

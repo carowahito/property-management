@@ -96,11 +96,13 @@ export default function AdminLeasesPage() {
     return endDate > now && endDate <= ninetyDaysFromNow && l.status === 'ACTIVE'
   })
 
+  const pendingLeases = leases.filter(l => l.status === 'PENDING')
+
   const stats = {
     activeLeases: activeLeases.length,
     expiringSoon: expiringSoon.length,
     totalLeases: leases.length,
-    totalAnnualValue: activeLeases.reduce((sum, l) => sum + (Number(l.monthlyRent) * 12), 0),
+    pendingLeases: pendingLeases.length,
   }
 
   // Filter leases
@@ -146,14 +148,9 @@ export default function AdminLeasesPage() {
           <p className="text-xs text-warning-600 mt-2">Within 90 days</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
-          <p className="text-sm text-neutral-600">Total Payments</p>
-          <p className="text-3xl font-bold text-neutral-900 mt-2">{leases.reduce((sum, l) => sum + l._count.payments, 0)}</p>
-          <p className="text-xs text-primary-600 mt-2">All lease payments</p>
-        </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
-          <p className="text-sm text-neutral-600">Total Annual Value</p>
-          <p className="text-3xl font-bold text-success-600 mt-2">KES {stats.totalAnnualValue.toLocaleString()}</p>
-          <p className="text-xs text-neutral-500 mt-2">Combined rental value</p>
+          <p className="text-sm text-neutral-600">Pending Leases</p>
+          <p className="text-3xl font-bold text-warning-600 mt-2">{stats.pendingLeases}</p>
+          <p className="text-xs text-neutral-500 mt-2">Awaiting signatures</p>
         </div>
       </div>
 

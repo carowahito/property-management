@@ -764,50 +764,49 @@ export default function TenantCRMPage({ params }: Props) {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Lease */}
+                {/* Leases */}
                 <div>
-                  <h3 className="font-semibold text-neutral-900 mb-4">
-                    {currentLease?.status === 'ACTIVE' ? 'Current Lease' : currentLease ? 'Last Lease' : 'Lease'}
-                  </h3>
-                  {currentLease ? (
-                    <div className={`rounded-lg p-4 space-y-3 ${currentLease.status === 'ACTIVE' ? 'bg-neutral-50' : 'bg-danger-50 border border-danger-200'}`}>
-                      {currentLease.status !== 'ACTIVE' && (
-                        <div className="flex items-center gap-2 pb-2 border-b border-danger-200">
-                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                            currentLease.status === 'EXPIRED' ? 'bg-danger-100 text-danger-700' :
-                            currentLease.status === 'TERMINATED' ? 'bg-danger-100 text-danger-700' :
-                            'bg-warning-100 text-warning-700'
-                          }`}>{currentLease.status}</span>
-                          <span className="text-xs text-neutral-500">Ended {formatDate(currentLease.endDate)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-sm text-neutral-600">Start Date</span>
-                        <span className="text-sm font-medium text-neutral-900">{formatDate(currentLease.startDate)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-neutral-600">End Date</span>
-                        <span className="text-sm font-medium text-neutral-900">{formatDate(currentLease.endDate)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-neutral-600">Monthly Rent</span>
-                        <span className="text-sm font-medium text-neutral-900">KES {Number(currentLease.monthlyRent).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-neutral-600">Security Deposit</span>
-                        <span className="text-sm font-medium text-neutral-900">KES {Number(currentLease.securityDeposit).toLocaleString()}</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="w-full mt-2"
-                        onClick={() => router.push(`/admin/leases/${currentLease.id}`)}
-                      >
-                        View Lease Details
-                      </Button>
-                      {!currentLease.documentUrl && (
+                  <h3 className="font-semibold text-neutral-900 mb-4">Leases</h3>
+                  {tenantLeases.length > 0 ? (
+                    <div className="space-y-3">
+                      {[...tenantLeases].sort((a: any, b: any) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map((lease: any) => {
+                        const isActive = lease.status === 'ACTIVE'
+                        const statusColor = isActive
+                          ? 'bg-success-100 text-success-700'
+                          : lease.status === 'PENDING'
+                          ? 'bg-warning-100 text-warning-700'
+                          : 'bg-danger-100 text-danger-700'
+                        return (
+                          <div
+                            key={lease.id}
+                            className={`rounded-lg p-4 space-y-2 ${isActive ? 'bg-neutral-50 border border-neutral-200' : 'bg-neutral-50 border border-neutral-100 opacity-80'}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className={`px-2 py-0.5 rounded text-xs font-bold ${statusColor}`}>{lease.status}</span>
+                              <span className="text-xs text-neutral-500">{formatDate(lease.startDate)} – {formatDate(lease.endDate)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-neutral-600">Monthly Rent</span>
+                              <span className="font-medium text-neutral-900">KES {Number(lease.monthlyRent).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-neutral-600">Security Deposit</span>
+                              <span className="font-medium text-neutral-900">KES {Number(lease.securityDeposit).toLocaleString()}</span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              className="w-full mt-1"
+                              onClick={() => router.push(`/admin/leases/${lease.id}`)}
+                            >
+                              View Lease Details
+                            </Button>
+                          </div>
+                        )
+                      })}
+                      {!currentLease?.documentUrl && currentLease && (
                         <Button
                           variant="outline"
-                          className="w-full mt-2"
+                          className="w-full"
                           onClick={() => setShowUploadLeaseModal(true)}
                         >
                           Upload Signed Lease
