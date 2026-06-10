@@ -1015,13 +1015,13 @@ export default function LandlordCRMPage({ params }: Props) {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Monthly Rent (KES)</label>
-                                  <input type="number" min="0" value={unitEditForm.monthlyRent}
+                                  <input type="number" min="0" value={unitEditForm.monthlyRent ?? ''}
                                     onChange={e => setUnitEditForm({ ...unitEditForm, monthlyRent: e.target.value })}
                                     className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                 </div>
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Status</label>
-                                  <select value={unitEditForm.status}
+                                  <select value={unitEditForm.status ?? 'VACANT'}
                                     onChange={e => setUnitEditForm({ ...unitEditForm, status: e.target.value })}
                                     className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500">
                                     <option value="VACANT">Vacant</option>
@@ -1033,32 +1033,32 @@ export default function LandlordCRMPage({ params }: Props) {
                                 </div>
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Floor</label>
-                                  <input type="number" min="0" value={unitEditForm.floor}
+                                  <input type="number" min="0" value={unitEditForm.floor ?? ''}
                                     onChange={e => setUnitEditForm({ ...unitEditForm, floor: e.target.value })}
                                     className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                 </div>
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Bedrooms</label>
-                                  <input type="number" min="0" value={unitEditForm.bedrooms}
+                                  <input type="number" min="0" value={unitEditForm.bedrooms ?? ''}
                                     onChange={e => setUnitEditForm({ ...unitEditForm, bedrooms: e.target.value })}
                                     className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                 </div>
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Bathrooms</label>
-                                  <input type="number" min="0" value={unitEditForm.bathrooms}
+                                  <input type="number" min="0" value={unitEditForm.bathrooms ?? ''}
                                     onChange={e => setUnitEditForm({ ...unitEditForm, bathrooms: e.target.value })}
                                     className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                 </div>
                                 <div>
                                   <label className="block text-xs text-neutral-500 mb-1">Service Charge</label>
                                   <div className="flex gap-1">
-                                    <select value={unitEditForm.serviceChargeType}
+                                    <select value={unitEditForm.serviceChargeType ?? 'FIXED'}
                                       onChange={e => setUnitEditForm({ ...unitEditForm, serviceChargeType: e.target.value })}
                                       className="w-20 px-1 py-1.5 border border-neutral-300 rounded text-xs focus:ring-1 focus:ring-primary-500">
                                       <option value="FIXED">KES</option>
                                       <option value="PERCENTAGE">%</option>
                                     </select>
-                                    <input type="number" min="0" value={unitEditForm.serviceCharge}
+                                    <input type="number" min="0" value={unitEditForm.serviceCharge ?? ''}
                                       onChange={e => setUnitEditForm({ ...unitEditForm, serviceCharge: e.target.value })}
                                       className="flex-1 px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                   </div>
@@ -1066,13 +1066,13 @@ export default function LandlordCRMPage({ params }: Props) {
                                 <div className="sm:col-span-2">
                                   <label className="block text-xs text-neutral-500 mb-1">Management Fee</label>
                                   <div className="flex gap-1">
-                                    <select value={unitEditForm.managementFeeType}
+                                    <select value={unitEditForm.managementFeeType ?? 'FIXED'}
                                       onChange={e => setUnitEditForm({ ...unitEditForm, managementFeeType: e.target.value })}
                                       className="w-20 px-1 py-1.5 border border-neutral-300 rounded text-xs focus:ring-1 focus:ring-primary-500">
                                       <option value="FIXED">KES</option>
                                       <option value="PERCENTAGE">%</option>
                                     </select>
-                                    <input type="number" min="0" value={unitEditForm.managementFee}
+                                    <input type="number" min="0" value={unitEditForm.managementFee ?? ''}
                                       onChange={e => setUnitEditForm({ ...unitEditForm, managementFee: e.target.value })}
                                       className="flex-1 px-2 py-1.5 border border-neutral-300 rounded text-sm focus:ring-1 focus:ring-primary-500" />
                                   </div>
