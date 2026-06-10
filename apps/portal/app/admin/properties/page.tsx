@@ -113,6 +113,8 @@ export default function PropertiesPage() {
     managementContactName: '',
     managementPhone: '',
     managementEmail: '',
+    // Ownership
+    landlordId: '',
     // Media
     photos: [] as File[],
     videoUrls: [] as string[],
@@ -281,14 +283,6 @@ export default function PropertiesPage() {
       return
     }
 
-    // Get first landlord from the API data
-    const landlords = landlordsData?.landlords || []
-    const landlordId = landlords[0]?.id
-    if (!landlordId) {
-      alert('No landlord available. Please create a landlord first.')
-      return
-    }
-
     // Map category label to Prisma enum value
     const propertyTypeMap: Record<string, string> = {
       'Residential Properties': 'APARTMENT',
@@ -313,7 +307,7 @@ export default function PropertiesPage() {
       totalUnits: newProperty.totalUnits ? parseInt(newProperty.totalUnits) : 1,
       description: newProperty.description,
       yearBuilt: newProperty.yearBuilt ? parseInt(newProperty.yearBuilt) : undefined,
-      landlordId,
+      ...(newProperty.landlordId ? { landlordId: newProperty.landlordId } : {}),
     }
 
     try {
@@ -348,6 +342,7 @@ export default function PropertiesPage() {
         managementContactName: '',
         managementPhone: '',
         managementEmail: '',
+        landlordId: '',
         photos: [],
         videoUrls: [],
       })
@@ -901,7 +896,28 @@ export default function PropertiesPage() {
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-2">Contact Information</h3>
                 <p className="text-sm text-neutral-600 mb-4">Property caretaker and/or management company details</p>
-                
+
+                {/* Landlord Assignment */}
+                <div className="mb-6">
+                  <h4 className="text-md font-medium text-neutral-900 mb-3">Landlord / Owner</h4>
+                  <p className="text-xs text-neutral-500 mb-3">Optional — assign only if the landlord is the direct point of contact. Leave blank for estates or developments where a caretaker or management office handles contact.</p>
+                  <div className="max-w-sm">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      Assign Landlord
+                    </label>
+                    <select
+                      value={newProperty.landlordId}
+                      onChange={(e) => setNewProperty({ ...newProperty, landlordId: e.target.value })}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="">— None —</option>
+                      {(landlordsData?.landlords || []).map((l: any) => (
+                        <option key={l.id} value={l.id}>{l.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 {/* Caretaker Information */}
                 <div className="mb-6">
                   <h4 className="text-md font-medium text-neutral-900 mb-3">Property Caretaker</h4>
