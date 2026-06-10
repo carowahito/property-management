@@ -162,7 +162,7 @@ export default function AdminLandlordsPage() {
 
         if (String(unit.unitId).startsWith('new_')) {
           // Create a brand-new unit
-          await fetch('/api/units', {
+          const unitRes = await fetch('/api/units', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -176,6 +176,10 @@ export default function AdminLandlordsPage() {
               status: (unit.status || 'vacant').toUpperCase(),
             }),
           });
+          if (!unitRes.ok) {
+            const err = await unitRes.json();
+            throw new Error(err.error || `Failed to create unit ${unit.unitNumber}`);
+          }
         } else {
           // Existing unit — assign it to this landlord
           await fetch(`/api/units/${unit.unitNumber}`, {
