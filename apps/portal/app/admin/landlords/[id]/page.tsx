@@ -21,6 +21,7 @@ export default function LandlordCRMPage({ params }: Props) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [docsList, setDocsList] = useState<any[]>([])
+  const [docSearch, setDocSearch] = useState('')
   const [showServiceAgreementModal, setShowServiceAgreementModal] = useState(false)
   const [serviceAgreementFile, setServiceAgreementFile] = useState<File | null>(null)
   const [uploadingServiceAgreement, setUploadingServiceAgreement] = useState(false)
@@ -64,6 +65,12 @@ export default function LandlordCRMPage({ params }: Props) {
       .then(r => r.json())
       .then(d => setDocsList(d.documents || []))
       .finally(() => setDocsLoading(false))
+  }
+
+  const handleDeleteDoc = async (docId: string) => {
+    if (!confirm('Delete this document?')) return
+    await fetch(`/api/landlords/${landlordId}/documents?docId=${docId}`, { method: 'DELETE' })
+    fetchDocuments()
   }
 
   const handleUpload = async () => {
@@ -807,37 +814,64 @@ export default function LandlordCRMPage({ params }: Props) {
                 <h3 className="font-semibold text-neutral-900">Documents ({docsList.length})</h3>
                 <Button variant="primary" onClick={() => setShowUploadModal(true)}>📤 Upload Document</Button>
               </div>
+
+              {/* Search */}
+              <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={docSearch}
+                    onChange={(e) => setDocSearch(e.target.value)}
+                    className="w-full px-4 py-2 pl-10 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    placeholder="Search by document name..."
+                  />
+                  <svg className="absolute left-3 top-2.5 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+
               {docsLoading ? (
                 <p className="text-sm text-neutral-400 text-center py-8">Loading documents…</p>
               ) : docsList.length === 0 ? (
                 <div className="text-center py-12 bg-neutral-50 rounded-lg border border-dashed border-neutral-300">
-                  <p className="text-4xl mb-2">📄</p>
+                  <p className="text-4xl mb-2">📁</p>
                   <p className="text-neutral-500 font-medium">No documents yet</p>
-                  <p className="text-sm text-neutral-400 mt-1">Upload KRA PIN, ID copy, bank letters, etc.</p>
+                  <p className="text-sm text-neutral-400 mt-1">Upload IDs, KRA PIN, passport photos, bank letters, or any supporting documents</p>
                   <Button variant="outline" className="mt-4" onClick={() => setShowUploadModal(true)}>Upload First Document</Button>
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {docsList.map((doc: any) => {
-                    const sizeMb = (doc.fileSize / (1024 * 1024)).toFixed(2)
-                    const ext = doc.name.split('.').pop()?.toUpperCase() ?? 'FILE'
-                    return (
-                      <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-primary-600">{ext}</span>
+                  {docsList
+                    .filter((doc: any) => !docSearch || doc.name.toLowerCase().includes(docSearch.toLowerCase()))
+                    .map((doc: any) => {
+                      const ext = doc.name.split('.').pop()?.toUpperCase() ?? 'FILE'
+                      return (
+                        <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-bold text-primary-600">{ext}</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-neutral-900">{doc.name}</p>
+                              <p className="text-xs text-neutral-500">
+                                {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(1)} KB` : ''} • {formatDate(doc.uploadedAt)}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-neutral-900">{doc.name}</p>
-                            <p className="text-xs text-neutral-500">{sizeMb} MB • {formatDate(doc.uploadedAt)}</p>
+                          <div className="flex gap-2">
+                            {doc.url && (
+                              <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm">View</Button>
+                              </a>
+                            )}
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)}>
+                              <span className="text-danger-600">Delete</span>
+                            </Button>
                           </div>
                         </div>
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="sm">⬇ Download</Button>
-                        </a>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
                 </div>
               )}
             </div>
