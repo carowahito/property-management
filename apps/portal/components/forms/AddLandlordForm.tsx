@@ -1543,7 +1543,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                   <div className="flex gap-2">
                     <select
                       name="monthlyManagementFeeType"
-                      value={formData.monthlyManagementFeeType}
+                      value={formData.monthlyManagementFeeType ?? 'PERCENTAGE'}
                       onChange={handleInputChange}
                       className="w-44 px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
