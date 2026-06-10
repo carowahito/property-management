@@ -80,10 +80,22 @@ export async function POST(
       updateData.tenantSignedAt = new Date()
     }
 
-    await prisma.lease.update({
+    const updatedLease = await prisma.lease.update({
       where: { id },
       data: updateData,
+      select: { status: true, landlordSignedAt: true, tenantSignedAt: true, startDate: true },
     })
+
+    // Promote PENDING → ACTIVE as soon as both parties have signed and the
+    // start date has arrived, without waiting for the next GET request.
+    if (
+      updatedLease.status === 'PENDING' &&
+      updatedLease.landlordSignedAt &&
+      updatedLease.tenantSignedAt &&
+      new Date(updatedLease.startDate) <= new Date()
+    ) {
+      await prisma.lease.update({ where: { id }, data: { status: 'ACTIVE' } })
+    }
 
     return NextResponse.json({ url: publicUrl, type, leaseId: id })
   } catch (error: any) {

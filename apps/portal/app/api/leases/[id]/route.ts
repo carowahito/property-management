@@ -126,6 +126,22 @@ export async function PATCH(
       updateData.endDate = new Date(validatedData.endDate)
     }
 
+    // Block manual promotion to ACTIVE on an unsigned lease.
+    // A lease may only become ACTIVE via the signature upload route or
+    // the lease lifecycle service (both of which verify signatures exist).
+    if (validatedData.status === 'ACTIVE') {
+      const current = await prisma.lease.findUnique({
+        where: { id },
+        select: { landlordSignedAt: true, tenantSignedAt: true },
+      })
+      if (!current?.landlordSignedAt || !current?.tenantSignedAt) {
+        return NextResponse.json(
+          { error: 'Cannot set lease to Active — both landlord and tenant signatures are required first.' },
+          { status: 400 }
+        )
+      }
+    }
+
     // If updating tenant or property, check they exist
     if (validatedData.tenantId) {
       const tenant = await prisma.tenant.findUnique({
@@ -186,7 +202,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

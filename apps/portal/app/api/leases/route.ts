@@ -176,6 +176,10 @@ export async function POST(request: NextRequest) {
     const lease = await prisma.lease.create({
       data: {
         ...validatedData,
+        // New leases always start as PENDING regardless of what was sent.
+        // The lifecycle (or upload route) will promote to ACTIVE once both
+        // parties have signed and the start date has arrived.
+        status: 'PENDING',
         startDate: new Date(validatedData.startDate),
         endDate: new Date(validatedData.endDate),
       },
