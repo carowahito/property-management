@@ -243,6 +243,7 @@ model Landlord {
   name        String
   email       String
   phone       String
+  password    String?  // hashed or 'MANAGED_BY_SUPABASE'
   idNumber    String?
   address     String?
   bankName    String?
@@ -327,6 +328,7 @@ model Tenant {
   name            String
   email           String
   phone           String
+  password        String?  // hashed or 'MANAGED_BY_SUPABASE'
   idNumber        String?
   emergencyContact String?
   emergencyPhone  String?
