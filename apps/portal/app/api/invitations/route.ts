@@ -4,6 +4,45 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import crypto from 'crypto'
 
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const adminUser = await prisma.user.findFirst({
+    where: { email: session.user.email!, active: true },
+  })
+  if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
+
+  const { searchParams } = new URL(req.url)
+  const role   = searchParams.get('role')?.toUpperCase()
+  const status = searchParams.get('status')?.toUpperCase()
+
+  const where: any = { companyId: adminUser.companyId }
+  if (role   && ['TENANT', 'LANDLORD', 'VENDOR'].includes(role))             where.role   = role
+  if (status && ['PENDING', 'ACCEPTED', 'EXPIRED'].includes(status)) where.status = status
+
+  // Auto-expire invitations whose expiresAt has passed
+  await prisma.invitation.updateMany({
+    where: { companyId: adminUser.companyId, status: 'PENDING', expiresAt: { lt: new Date() } },
+    data: { status: 'EXPIRED' },
+  })
+
+  const [invitations, pendingTenantCount] = await Promise.all([
+    prisma.invitation.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        tenant: { select: { id: true, name: true, unit: true } },
+      },
+    }),
+    prisma.invitation.count({
+      where: { companyId: adminUser.companyId, role: 'TENANT', status: 'PENDING' },
+    }),
+  ])
+
+  return NextResponse.json({ invitations, pendingTenantCount })
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) {
@@ -93,4 +132,24 @@ export async function POST(req: NextRequest) {
     },
     inviteUrl,
   })
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+
+  const adminUser = await prisma.user.findFirst({
+    where: { email: session.user.email!, active: true },
+  })
+  if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
+
+  const inv = await prisma.invitation.findFirst({ where: { id, companyId: adminUser.companyId } })
+  if (!inv) return NextResponse.json({ error: 'Invitation not found' }, { status: 404 })
+
+  await prisma.invitation.update({ where: { id }, data: { status: 'EXPIRED' } })
+  return NextResponse.json({ success: true })
 }

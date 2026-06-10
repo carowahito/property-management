@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Link from 'next/link'
-import { Download, Upload, CheckCircle2, XCircle, AlertTriangle, FileSpreadsheet, X } from 'lucide-react'
+import { Download, Upload, CheckCircle2, XCircle, AlertTriangle, FileSpreadsheet, X, Mail } from 'lucide-react'
 import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
 interface Tenant {
@@ -416,6 +416,15 @@ function TenantsPage() {
     queryFn: fetchTenants,
   })
 
+  const { data: invitesData } = useQuery({
+    queryKey: ['pending-tenant-invites'],
+    queryFn: async () => {
+      const res = await fetch('/api/invitations?role=TENANT&status=PENDING')
+      if (!res.ok) return { pendingTenantCount: 0 }
+      return res.json()
+    },
+  })
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -435,24 +444,19 @@ function TenantsPage() {
   const tenants = data?.tenants || []
   
   // Get unique properties for filter
-  const properties = Array.from(new Set(tenants.map(t => t.property.name))).sort()
-  
+  const properties = Array.from(new Set(tenants.map(t => t.property?.name).filter(Boolean))).sort() as string[]
+
   // Apply filters
   const filteredTenants = tenants.filter(tenant => {
     const matchesStatus = filterStatus === 'all' || tenant.status === filterStatus
-    const matchesProperty = filterProperty === 'all' || tenant.property.name === filterProperty
+    const matchesProperty = filterProperty === 'all' || tenant.property?.name === filterProperty
     return matchesStatus && matchesProperty
   })
   
   const activeTenants = tenants.filter(t => t.status === 'ACTIVE')
   const pendingTenants = tenants.filter(t => t.status === 'PENDING')
 
-  const stats = [
-    { label: 'Total Tenants', value: tenants.length.toString(), change: `${activeTenants.length} active` },
-    { label: 'Active Leases', value: activeTenants.length.toString(), change: `${tenants.reduce((sum, t) => sum + t._count.leases, 0)} total leases` },
-    { label: 'Pending Move-ins', value: pendingTenants.length.toString(), change: 'Awaiting confirmation' },
-    { label: 'Total Payments', value: tenants.reduce((sum, t) => sum + t._count.payments, 0).toString(), change: 'All tenants' },
-  ]
+  const pendingInviteCount = invitesData?.pendingTenantCount ?? 0
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -481,13 +485,29 @@ function TenantsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
-            <p className="text-sm text-neutral-600">{stat.label}</p>
-            <p className="text-3xl font-bold text-neutral-900 mt-2">{stat.value}</p>
-            <p className="text-xs text-neutral-500 mt-2">{stat.change}</p>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+          <p className="text-sm text-neutral-600">Total Tenants</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{tenants.length}</p>
+          <p className="text-xs text-neutral-500 mt-2">{activeTenants.length} active</p>
+        </div>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+          <p className="text-sm text-neutral-600">Active Leases</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{activeTenants.length}</p>
+          <p className="text-xs text-neutral-500 mt-2">{tenants.reduce((sum, t) => sum + t._count.leases, 0)} total leases</p>
+        </div>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+          <p className="text-sm text-neutral-600">Pending Move-ins</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{pendingTenants.length}</p>
+          <p className="text-xs text-neutral-500 mt-2">Awaiting confirmation</p>
+        </div>
+        <Link href="/admin/invitations?role=tenant&status=pending" className="block bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 hover:border-primary-300 hover:shadow-sm transition-all group">
+          <div className="flex items-start justify-between">
+            <p className="text-sm text-neutral-600 group-hover:text-primary-600 transition-colors">Pending Invites</p>
+            <Mail className="w-4 h-4 text-neutral-400 group-hover:text-primary-500 transition-colors" />
           </div>
-        ))}
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{pendingInviteCount}</p>
+          <p className="text-xs text-primary-500 mt-2 group-hover:text-primary-600">View invite schedule →</p>
+        </Link>
       </div>
 
       <div className="bg-surface rounded-lg border border-neutral-200 overflow-hidden">
