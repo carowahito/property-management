@@ -79,6 +79,13 @@ export default function AdminVendorsPage() {
       (filterCategory === 'all' || vendor.category === filterCategory)
   );
 
+  const [pendingInviteCount, setPendingInviteCount] = useState(0)
+  useEffect(() => {
+    fetch('/api/invitations?role=VENDOR&status=PENDING')
+      .then(r => r.ok ? r.json() : { pendingTenantCount: 0 })
+      .then(d => setPendingInviteCount(d.pendingTenantCount ?? 0))
+  }, [])
+
   const stats = {
     totalVendors: vendors.length,
     activeVendors: vendors.filter((v) => v.status === 'active').length,
@@ -96,7 +103,7 @@ export default function AdminVendorsPage() {
         <Button variant="primary" size="lg" onClick={() => setShowAddModal(true)}>+ Add Vendor</Button>
       </div>
 
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6'>
         <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Total Vendors</p>
           <p className='text-3xl font-bold text-primary-600'>{stats.totalVendors}</p>
@@ -113,6 +120,16 @@ export default function AdminVendorsPage() {
           <p className='text-sm text-neutral-600'>Average Rating</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.avgRating} ⭐</p>
         </div>
+        <Link href='/admin/invitations?role=vendor&status=pending' className='block bg-surface shadow rounded-lg p-4 md:p-6 hover:border hover:border-primary-300 hover:shadow-md transition-all group'>
+          <div className='flex items-start justify-between'>
+            <p className='text-sm text-neutral-600 group-hover:text-primary-600 transition-colors'>Pending Invites</p>
+            <svg className='w-4 h-4 text-neutral-400 group-hover:text-primary-500 transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+            </svg>
+          </div>
+          <p className='text-3xl font-bold text-neutral-900 mt-2'>{pendingInviteCount}</p>
+          <p className='text-xs text-primary-500 mt-2 group-hover:text-primary-600'>View invite schedule →</p>
+        </Link>
       </div>
 
       <div className='bg-surface shadow rounded-lg p-4 md:p-6'>

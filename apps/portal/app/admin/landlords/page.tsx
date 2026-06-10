@@ -255,6 +255,16 @@ export default function AdminLandlordsPage() {
     totalUnits: landlords.reduce((sum, l) => sum + l._count.units, 0),
   };
 
+  const { data: invitesData } = useQuery({
+    queryKey: ['pending-landlord-invites'],
+    queryFn: async () => {
+      const res = await fetch('/api/invitations?role=LANDLORD&status=PENDING')
+      if (!res.ok) return { pendingTenantCount: 0 }
+      return res.json()
+    },
+  })
+  const pendingInviteCount = invitesData?.pendingTenantCount ?? 0
+
   return (
     <div className='p-4 md:p-6 space-y-4 md:space-y-6'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
@@ -265,7 +275,7 @@ export default function AdminLandlordsPage() {
         <Button variant="primary" size="lg" onClick={() => setShowAddLandlordModal(true)}>+ Add Landlord</Button>
       </div>
 
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6'>
         <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Total Landlords</p>
           <p className='text-3xl font-bold text-primary-600'>{stats.totalLandlords}</p>
@@ -282,6 +292,16 @@ export default function AdminLandlordsPage() {
           <p className='text-sm text-neutral-600'>Total Units</p>
           <p className='text-3xl font-bold text-primary-600'>{stats.totalUnits}</p>
         </div>
+        <Link href='/admin/invitations?role=landlord&status=pending' className='block bg-surface shadow rounded-lg p-4 md:p-6 hover:border hover:border-primary-300 hover:shadow-md transition-all group'>
+          <div className='flex items-start justify-between'>
+            <p className='text-sm text-neutral-600 group-hover:text-primary-600 transition-colors'>Pending Invites</p>
+            <svg className='w-4 h-4 text-neutral-400 group-hover:text-primary-500 transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+            </svg>
+          </div>
+          <p className='text-3xl font-bold text-neutral-900 mt-2'>{pendingInviteCount}</p>
+          <p className='text-xs text-primary-500 mt-2 group-hover:text-primary-600'>View invite schedule →</p>
+        </Link>
       </div>
 
       <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
