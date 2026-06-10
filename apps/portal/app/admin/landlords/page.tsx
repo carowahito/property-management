@@ -123,6 +123,7 @@ export default function AdminLandlordsPage() {
         status: 'ACTIVE',
         type: landlordType,
         managementFeePercent: formData.monthlyManagementFeePercent ? parseFloat(formData.monthlyManagementFeePercent) : undefined,
+        managementFeeType: formData.monthlyManagementFeeType || 'PERCENTAGE',
         tenantPlacementFee: formData.tenantPlacementFeeMonths ? parseFloat(formData.tenantPlacementFeeMonths) : undefined,
         members: members.length > 0 ? members : undefined,
       };
