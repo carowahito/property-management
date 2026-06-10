@@ -43,6 +43,26 @@ export default function RentPaymentsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
+  // Receipt actions
+  const [sendingReceipt, setSendingReceipt] = useState<string | null>(null);
+  const [sentReceipts, setSentReceipts] = useState<Set<string>>(new Set());
+
+  const handleSendReceipt = async (paymentId: string) => {
+    setSendingReceipt(paymentId);
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/receipt`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to send receipt');
+      } else {
+        setSentReceipts(prev => new Set(prev).add(paymentId));
+        setTimeout(() => setSentReceipts(prev => { const s = new Set(prev); s.delete(paymentId); return s; }), 3000);
+      }
+    } finally {
+      setSendingReceipt(null);
+    }
+  };
+
   // Record Payment modal
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -306,6 +326,7 @@ export default function RentPaymentsPage() {
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Paid Date</th>
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Method</th>
                 <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Status</th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider'>Receipt</th>
               </tr>
             </thead>
             <tbody className='bg-surface divide-y divide-neutral-200'>
@@ -341,6 +362,29 @@ export default function RentPaymentsPage() {
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(payment.status)}`}>
                       {payment.status}
                     </span>
+                  </td>
+                  <td className='px-6 py-4 whitespace-nowrap'>
+                    <div className='flex items-center gap-2'>
+                      <a
+                        href={`/api/payments/${payment.id}/receipt`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-xs px-2 py-1 rounded border border-neutral-300 text-neutral-700 hover:bg-neutral-100 transition-colors'
+                      >
+                        View
+                      </a>
+                      <button
+                        onClick={() => handleSendReceipt(payment.id)}
+                        disabled={sendingReceipt === payment.id}
+                        className={`text-xs px-2 py-1 rounded border transition-colors ${
+                          sentReceipts.has(payment.id)
+                            ? 'border-success-400 text-green-700 bg-success-50'
+                            : 'border-primary-300 text-primary-700 hover:bg-primary-50'
+                        }`}
+                      >
+                        {sendingReceipt === payment.id ? 'Sending…' : sentReceipts.has(payment.id) ? 'Sent ✓' : 'Send'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
