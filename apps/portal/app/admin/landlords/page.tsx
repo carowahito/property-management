@@ -219,6 +219,15 @@ export default function AdminLandlordsPage() {
     queryFn: fetchLandlords,
   })
 
+  const { data: invitesData } = useQuery({
+    queryKey: ['pending-landlord-invites'],
+    queryFn: async () => {
+      const res = await fetch('/api/invitations?role=LANDLORD&status=PENDING')
+      if (!res.ok) return { pendingTenantCount: 0 }
+      return res.json()
+    },
+  })
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -255,14 +264,6 @@ export default function AdminLandlordsPage() {
     totalUnits: landlords.reduce((sum, l) => sum + l._count.units, 0),
   };
 
-  const { data: invitesData } = useQuery({
-    queryKey: ['pending-landlord-invites'],
-    queryFn: async () => {
-      const res = await fetch('/api/invitations?role=LANDLORD&status=PENDING')
-      if (!res.ok) return { pendingTenantCount: 0 }
-      return res.json()
-    },
-  })
   const pendingInviteCount = invitesData?.pendingTenantCount ?? 0
 
   return (
