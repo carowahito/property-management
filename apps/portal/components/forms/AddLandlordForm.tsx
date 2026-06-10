@@ -104,6 +104,7 @@ interface LandlordFormData {
   additionalNotes: string;
   
   // Pricing & Commission
+  monthlyManagementFeeType: 'PERCENTAGE' | 'FIXED';
   monthlyManagementFeePercent: string;
   tenantPlacementFeeMonths: string;
   commercialLeasingFeeType: 'percent_annual' | 'months_rent';
@@ -271,6 +272,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
     restrictions: [],
     otherInstructions: '',
     additionalNotes: '',
+    monthlyManagementFeeType: 'PERCENTAGE' as const,
     monthlyManagementFeePercent: '',
     tenantPlacementFeeMonths: '1',
     commercialLeasingFeeType: 'months_rent',
@@ -1531,46 +1533,62 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
             <h4 className="text-lg font-semibold text-neutral-800 mb-4 border-b pb-2 mt-8">Pricing & Commission</h4>
             
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
-              <h5 className="font-medium text-purple-800">
+              <h5 className="font-medium text-primary-800">
                 {formData.propertyType === 'residential' ? '🏠 Residential Properties' : '🏢 Commercial Properties'}
               </h5>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Monthly Management Fee *</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      name="monthlyManagementFeePercent"
-                      value={formData.monthlyManagementFeePercent}
+                  <div className="flex gap-2">
+                    <select
+                      name="monthlyManagementFeeType"
+                      value={formData.monthlyManagementFeeType ?? 'PERCENTAGE'}
                       onChange={handleInputChange}
-                      className={inputClass}
-                      min="0"
-                      max="100"
-                      step="0.5"
-                      placeholder="e.g., 10"
-                    />
-                    <span className="text-sm text-neutral-600 whitespace-nowrap">% of monthly rent collected</span>
+                      className="w-44 px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="PERCENTAGE">% of Rent</option>
+                      <option value="FIXED">Fixed Amount (KES)</option>
+                    </select>
+                    <div className="flex flex-1 h-10 rounded-lg overflow-hidden border border-neutral-300 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
+                      <input
+                        type="number"
+                        name="monthlyManagementFeePercent"
+                        value={formData.monthlyManagementFeePercent}
+                        onChange={handleInputChange}
+                        className="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0"
+                        min="0"
+                        max={formData.monthlyManagementFeeType === 'PERCENTAGE' ? '100' : undefined}
+                        step={formData.monthlyManagementFeeType === 'PERCENTAGE' ? '0.5' : '1'}
+                        placeholder={formData.monthlyManagementFeeType === 'PERCENTAGE' ? 'e.g., 10' : 'e.g., 5000'}
+                      />
+                      <span className="px-3 flex items-center bg-neutral-100 text-sm text-neutral-600 border-l border-neutral-300 whitespace-nowrap">
+                        {formData.monthlyManagementFeeType === 'PERCENTAGE' ? '%' : 'KES'}
+                      </span>
+                    </div>
                   </div>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    {formData.monthlyManagementFeeType === 'PERCENTAGE' ? 'Percentage of monthly rent collected' : 'Fixed amount charged per month'}
+                  </p>
                 </div>
-                
+
                 {formData.propertyType === 'residential' ? (
                   <div>
                     <label className={labelClass}>Tenant Placement Fee *</label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-neutral-600">Equivalent to</span>
+                    <div className="flex h-10 rounded-lg overflow-hidden border border-neutral-300 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
                       <input
                         type="number"
                         name="tenantPlacementFeeMonths"
                         value={formData.tenantPlacementFeeMonths}
                         onChange={handleInputChange}
-                        className={`${inputClass} w-20`}
+                        className="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0"
                         min="0"
                         step="0.5"
-                        placeholder="1"
+                        placeholder="e.g., 1"
                       />
-                      <span className="text-sm text-neutral-600 whitespace-nowrap">month&apos;s rent (one-time, per new tenant)</span>
+                      <span className="px-3 flex items-center bg-neutral-100 text-sm text-neutral-600 border-l border-neutral-300 whitespace-nowrap">month(s) rent</span>
                     </div>
+                    <p className="text-xs text-neutral-500 mt-1">One-time fee charged per new tenant placed</p>
                   </div>
                 ) : (
                   <div>
@@ -1584,7 +1602,7 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                             value="percent_annual"
                             checked={formData.commercialLeasingFeeType === 'percent_annual'}
                             onChange={handleInputChange}
-                            className="h-4 w-4 text-purple-600"
+                            className="h-4 w-4 text-primary-600"
                           />
                           <span className="text-sm">% of annual rent</span>
                         </label>
@@ -1595,40 +1613,40 @@ export default function AddLandlordForm({ onClose, onSubmit }: AddLandlordFormPr
                             value="months_rent"
                             checked={formData.commercialLeasingFeeType === 'months_rent'}
                             onChange={handleInputChange}
-                            className="h-4 w-4 text-purple-600"
+                            className="h-4 w-4 text-primary-600"
                           />
                           <span className="text-sm">Month(s) rent</span>
                         </label>
                       </div>
                       
                       {formData.commercialLeasingFeeType === 'percent_annual' ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex h-10 rounded-lg overflow-hidden border border-neutral-300 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
                           <input
                             type="number"
                             name="commercialLeasingFeePercent"
                             value={formData.commercialLeasingFeePercent}
                             onChange={handleInputChange}
-                            className={`${inputClass} w-24`}
+                            className="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0"
                             min="0"
                             max="100"
                             step="0.5"
                             placeholder="e.g., 15"
                           />
-                          <span className="text-sm text-neutral-600">% of annual rent</span>
+                          <span className="px-3 flex items-center bg-neutral-100 text-sm text-neutral-600 border-l border-neutral-300 whitespace-nowrap">% annual rent</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
+                        <div className="flex h-10 rounded-lg overflow-hidden border border-neutral-300 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent">
                           <input
                             type="number"
                             name="commercialLeasingFeeMonths"
                             value={formData.commercialLeasingFeeMonths}
                             onChange={handleInputChange}
-                            className={`${inputClass} w-24`}
+                            className="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0"
                             min="0"
                             step="0.5"
                             placeholder="e.g., 1"
                           />
-                          <span className="text-sm text-neutral-600">month(s) rent</span>
+                          <span className="px-3 flex items-center bg-neutral-100 text-sm text-neutral-600 border-l border-neutral-300 whitespace-nowrap">month(s) rent</span>
                         </div>
                       )}
                     </div>

@@ -262,6 +262,9 @@ export default function StatementsPage() {
                   <tr key={s.id} className="hover:bg-neutral-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-neutral-900">{s.landlord.name}</div>
+                      {(s.landlord as any).type === 'JOINT_OWNERSHIP' && (s.landlord as any).members?.length > 0 && (
+                        <div className="text-xs text-neutral-400">& {(s.landlord as any).members.map((m: any) => m.name).join(' & ')}</div>
+                      )}
                       <div className="text-xs text-neutral-500">{s.landlord.email}</div>
                     </td>
                     <td className="px-4 py-3 text-neutral-700">
@@ -344,6 +347,9 @@ export default function StatementsPage() {
                 <div>
                   <p className="text-xs text-neutral-500 uppercase tracking-wide">Landlord</p>
                   <p className="font-medium text-neutral-900">{selectedStatement.landlord.name}</p>
+                  {(selectedStatement.landlord as any).type === 'JOINT_OWNERSHIP' && (selectedStatement.landlord as any).members?.length > 0 && (
+                    <p className="text-xs text-neutral-400">& {(selectedStatement.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
+                  )}
                   <p className="text-sm text-neutral-500">{selectedStatement.landlord.email}</p>
                 </div>
                 <div>

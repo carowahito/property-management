@@ -1,86 +1,97 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 
 interface Invitation {
   id: string
-  type: 'tenant' | 'landlord' | 'vendor'
+  role: 'TENANT' | 'LANDLORD' | 'VENDOR'
   email: string
   name: string
-  phone?: string
-  property?: string
-  status: 'pending' | 'accepted' | 'expired'
-  sentDate: string
-  expiryDate: string
-  invitedBy: string
+  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED'
+  createdAt: string
+  expiresAt: string
+  acceptedAt: string | null
+  tenant: { id: string; name: string; unit: string | null } | null
 }
 
 export default function InvitationsPage() {
+  const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
   const [showInviteModal, setShowInviteModal] = useState(false)
-  const [inviteType, setInviteType] = useState<'tenant' | 'landlord' | 'vendor'>('tenant')
+  const [inviteType, setInviteType] = useState<'TENANT' | 'LANDLORD' | 'VENDOR'>('TENANT')
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'expired'>('all')
-  
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'ACCEPTED' | 'EXPIRED'>(
+    (searchParams.get('status')?.toUpperCase() as any) || 'all'
+  )
+  const [roleFilter, setRoleFilter] = useState<'all' | 'TENANT' | 'LANDLORD' | 'VENDOR'>(
+    (searchParams.get('role')?.toUpperCase() as any) || 'all'
+  )
+  const [sending, setSending] = useState(false)
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null)
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    property: '',
     message: '',
   })
 
-  const [invitations, setInvitations] = useState<Invitation[]>([])
+  const { data, isLoading } = useQuery({
+    queryKey: ['invitations'],
+    queryFn: async () => {
+      const res = await fetch('/api/invitations')
+      if (!res.ok) throw new Error('Failed to load invitations')
+      return res.json() as Promise<{ invitations: Invitation[]; pendingTenantCount: number }>
+    },
+  })
+
+  const invitations = data?.invitations ?? []
 
   const stats = {
     total: invitations.length,
-    pending: invitations.filter(i => i.status === 'pending').length,
-    accepted: invitations.filter(i => i.status === 'accepted').length,
-    expired: invitations.filter(i => i.status === 'expired').length,
+    pending: invitations.filter(i => i.status === 'PENDING').length,
+    accepted: invitations.filter(i => i.status === 'ACCEPTED').length,
+    expired: invitations.filter(i => i.status === 'EXPIRED').length,
   }
 
-  const filteredInvitations = invitations.filter(invitation => {
-    const matchesSearch = 
-      invitation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invitation.email.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = statusFilter === 'all' || invitation.status === statusFilter
-
-    return matchesSearch && matchesStatus
+  const filteredInvitations = invitations.filter(inv => {
+    const matchesSearch =
+      inv.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inv.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || inv.status === statusFilter
+    const matchesRole   = roleFilter   === 'all' || inv.role   === roleFilter
+    return matchesSearch && matchesStatus && matchesRole
   })
 
-  const handleSendInvitation = () => {
-    const newInvitation: Invitation = {
-      id: `INV-${String(invitations.length + 1).padStart(3, '0')}`,
-      type: inviteType,
-      email: formData.email,
-      name: formData.name,
-      phone: formData.phone,
-      property: inviteType === 'tenant' ? formData.property : undefined,
-      status: 'pending',
-      sentDate: new Date().toISOString().split('T')[0],
-      expiryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      invitedBy: 'Admin',
+  const handleSendInvitation = async () => {
+    setSending(true)
+    setInviteUrl(null)
+    try {
+      const res = await fetch('/api/invitations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, name: formData.name, role: inviteType }),
+      })
+      const json = await res.json()
+      if (!res.ok) { alert(json.error || 'Failed to send invitation'); return }
+      setInviteUrl(json.inviteUrl)
+      queryClient.invalidateQueries({ queryKey: ['invitations'] })
+      queryClient.invalidateQueries({ queryKey: ['pending-tenant-invites'] })
+      setFormData({ name: '', email: '', message: '' })
+    } finally {
+      setSending(false)
     }
-
-    setInvitations([newInvitation, ...invitations])
-    setShowInviteModal(false)
-    setFormData({ name: '', email: '', phone: '', property: '', message: '' })
-    
-    // In real app, send email invitation here
-    console.log('Sending invitation email to:', formData.email)
   }
 
-  const resendInvitation = (invitationId: string) => {
-    console.log('Resending invitation:', invitationId)
-    // In real app, resend email invitation
-  }
-
-  const revokeInvitation = (invitationId: string) => {
-    setInvitations(invitations.map(inv => 
-      inv.id === invitationId ? { ...inv, status: 'expired' as const } : inv
-    ))
+  const revokeInvitation = async (invitationId: string) => {
+    const res = await fetch(`/api/invitations?id=${invitationId}`, { method: 'DELETE' })
+    if (res.ok) {
+      queryClient.invalidateQueries({ queryKey: ['invitations'] })
+      queryClient.invalidateQueries({ queryKey: ['pending-tenant-invites'] })
+    }
   }
 
   return (
@@ -172,156 +183,89 @@ export default function InvitationsPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'all'
-                  ? 'bg-primary-600 text-white shadow-md'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setStatusFilter('pending')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'pending'
-                  ? 'bg-yellow-600 text-white shadow-md'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              Pending
-            </button>
-            <button
-              onClick={() => setStatusFilter('accepted')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'accepted'
-                  ? 'bg-success-600 text-white shadow-md'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              Accepted
-            </button>
-            <button
-              onClick={() => setStatusFilter('expired')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                statusFilter === 'expired'
-                  ? 'bg-danger-600 text-white shadow-md'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              Expired
-            </button>
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'PENDING', 'ACCEPTED', 'EXPIRED'] as const).map(s => (
+              <button key={s} onClick={() => setStatusFilter(s)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  statusFilter === s
+                    ? s === 'PENDING' ? 'bg-yellow-600 text-white' : s === 'ACCEPTED' ? 'bg-success-600 text-white' : s === 'EXPIRED' ? 'bg-danger-600 text-white' : 'bg-primary-600 text-white'
+                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                }`}>
+                {s === 'all' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+              </button>
+            ))}
+            <select value={roleFilter} onChange={e => setRoleFilter(e.target.value as any)}
+              className="px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+              <option value="all">All Roles</option>
+              <option value="TENANT">Tenants</option>
+              <option value="LANDLORD">Landlords</option>
+              <option value="VENDOR">Vendors</option>
+            </select>
           </div>
         </div>
       </div>
 
       {/* Invitations List */}
       <div className="bg-surface rounded-lg border border-neutral-200 shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="py-12 text-center text-neutral-500 text-sm">Loading invitations…</div>
+        ) : filteredInvitations.length === 0 ? (
+          <div className="py-12 text-center text-neutral-500 text-sm">No invitations found.</div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  ID / Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Property/Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Sent Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Expires
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Unit</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Sent</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Expires</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-surface divide-y divide-neutral-200">
-              {filteredInvitations.map((invitation) => (
-                <tr key={invitation.id} className="hover:bg-neutral-50">
+              {filteredInvitations.map((inv) => (
+                <tr key={inv.id} className="hover:bg-neutral-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{inv.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{inv.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <p className="text-sm font-medium text-neutral-900">{invitation.id}</p>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      invitation.type === 'tenant' 
-                        ? 'bg-primary-100 text-primary-800'
-                        : invitation.type === 'landlord'
-                        ? 'bg-success-100 text-green-800'
-                        : 'bg-warning-100 text-orange-800'
-                    }`}>
-                      {invitation.type.charAt(0).toUpperCase() + invitation.type.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                    {invitation.name}
+                      inv.role === 'TENANT' ? 'bg-primary-100 text-primary-800'
+                      : inv.role === 'LANDLORD' ? 'bg-success-100 text-green-800'
+                      : 'bg-warning-100 text-orange-800'
+                    }`}>{inv.role.charAt(0) + inv.role.slice(1).toLowerCase()}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                    <p>{invitation.email}</p>
-                    {invitation.phone && <p className="text-xs">{invitation.phone}</p>}
+                    {inv.tenant?.unit ?? '—'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-neutral-500">
-                    {invitation.property || '—'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                    {formatDate(invitation.sentDate)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                    {formatDate(invitation.expiryDate)}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{formatDate(inv.createdAt)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{formatDate(inv.expiresAt)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      invitation.status === 'pending' 
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : invitation.status === 'accepted'
-                        ? 'bg-success-100 text-green-800'
-                        : 'bg-danger-100 text-red-800'
-                    }`}>
-                      {invitation.status.charAt(0).toUpperCase() + invitation.status.slice(1)}
-                    </span>
+                      inv.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800'
+                      : inv.status === 'ACCEPTED' ? 'bg-success-100 text-green-800'
+                      : 'bg-danger-100 text-red-800'
+                    }`}>{inv.status.charAt(0) + inv.status.slice(1).toLowerCase()}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex gap-2">
-                      {invitation.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => resendInvitation(invitation.id)}
-                            className="text-primary-600 hover:text-primary-900"
-                            title="Resend invitation"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => revokeInvitation(invitation.id)}
-                            className="text-danger-600 hover:text-red-900"
-                            title="Revoke invitation"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    {inv.status === 'PENDING' && (
+                      <button onClick={() => revokeInvitation(inv.id)}
+                        className="text-danger-600 hover:text-red-900" title="Revoke">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Invite Modal */}
@@ -348,9 +292,9 @@ export default function InvitationsPage() {
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   <button
-                    onClick={() => setInviteType('tenant')}
+                    onClick={() => setInviteType('TENANT')}
                     className={`p-4 border-2 rounded-lg transition ${
-                      inviteType === 'tenant'
+                      inviteType === 'TENANT'
                         ? 'border-primary-600 bg-primary-50'
                         : 'border-neutral-200 hover:border-neutral-300'
                     }`}
@@ -361,22 +305,22 @@ export default function InvitationsPage() {
                     <p className="font-medium text-sm">Tenant</p>
                   </button>
                   <button
-                    onClick={() => setInviteType('landlord')}
+                    onClick={() => setInviteType('LANDLORD')}
                     className={`p-4 border-2 rounded-lg transition ${
-                      inviteType === 'landlord'
+                      inviteType === 'LANDLORD'
                         ? 'border-success-600 bg-success-50'
                         : 'border-neutral-200 hover:border-neutral-300'
                     }`}
                   >
                     <svg className="w-8 h-8 mx-auto mb-2 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                     <p className="font-medium text-sm">Landlord</p>
                   </button>
                   <button
-                    onClick={() => setInviteType('vendor')}
+                    onClick={() => setInviteType('VENDOR')}
                     className={`p-4 border-2 rounded-lg transition ${
-                      inviteType === 'vendor'
+                      inviteType === 'VENDOR'
                         ? 'border-warning-600 bg-warning-50'
                         : 'border-neutral-200 hover:border-neutral-300'
                     }`}
@@ -389,105 +333,60 @@ export default function InvitationsPage() {
                 </div>
               </div>
 
+              {inviteUrl ? (
+                <div className="space-y-4">
+                  <div className="bg-success-50 border border-success-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-success-800 mb-2">Invitation created. Share this link with the invitee:</p>
+                    <div className="flex gap-2">
+                      <input readOnly value={inviteUrl}
+                        className="flex-1 px-3 py-2 bg-white border border-neutral-300 rounded-lg text-xs font-mono text-neutral-700 focus:outline-none" />
+                      <button onClick={() => navigator.clipboard.writeText(inviteUrl)}
+                        className="px-3 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700">Copy</button>
+                    </div>
+                    <p className="text-xs text-success-700 mt-2">Link expires in 7 days.</p>
+                  </div>
+                  <button onClick={() => { setInviteUrl(null); setShowInviteModal(false) }}
+                    className="w-full px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 font-medium">Done</button>
+                </div>
+              ) : (
               <form onSubmit={(e) => { e.preventDefault(); handleSendInvitation(); }} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Full Name <span className="text-danger-600">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <input type="text" required
                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Enter full name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Email Address <span className="text-danger-600">*</span>
                   </label>
-                  <input
-                    type="email"
-                    required
+                  <input type="email" required
                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="email@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="+254 712 345 678"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 text-sm text-primary-800">
+                  <p className="font-medium">What happens next?</p>
+                  <p className="mt-1">A secure invite link will be generated. Share it with the invitee so they can register. The link expires in 7 days.</p>
                 </div>
-
-                {inviteType === 'tenant' && (
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Property / Unit
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Sunset Apartments - Unit 3C"
-                      value={formData.property}
-                      onChange={(e) => setFormData({ ...formData, property: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Personal Message (Optional)
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Add a personal message to the invitation..."
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  />
-                </div>
-
-                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                  <div className="flex items-start">
-                    <svg className="h-5 w-5 text-primary-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="text-sm text-primary-800">
-                      <p className="font-medium">What happens next?</p>
-                      <p className="mt-1">The invitee will receive an email with a secure link to create their account. The invitation expires in 14 days.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowInviteModal(false)}
-                    className="flex-1 px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 font-medium"
-                  >
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setShowInviteModal(false)}
+                    className="flex-1 px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 font-medium">
                     Cancel
                   </button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="flex-1"
-                  >
-                    Send Invitation
+                  <Button type="submit" variant="primary" className="flex-1" disabled={sending}>
+                    {sending ? 'Creating…' : 'Create Invite Link'}
                   </Button>
                 </div>
               </form>
+              )}
             </div>
           </div>
         </div>

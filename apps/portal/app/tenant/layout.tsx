@@ -26,7 +26,7 @@ export default function TenantLayout({ children }: { children: React.ReactNode }
           <footer className='bg-surface border-t border-neutral-200 mt-12'>
             <div className='py-6 px-4 sm:px-6 lg:px-8'>
               <p className='text-center text-sm text-neutral-500'>
-                © 2025 Catalyst Suite. All rights reserved. | Need help?{' '}
+                © 2025 Tochi Property. All rights reserved. | Need help?{' '}
                 <Link href='/tenant/support' className='text-primary-600 hover:text-primary-800'>
                   Contact Support
                 </Link>

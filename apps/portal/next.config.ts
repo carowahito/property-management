@@ -5,10 +5,15 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Pre-existing Recharts v3 type narrowing in app/admin/analytics surfaces under
-    // the regenerated pnpm lockfile. Matches the existing ESLint policy until those
-    // tooltip formatter callsites are tightened.
     ignoreBuildErrors: true,
+  },
+  serverExternalPackages: ['pdfkit'],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // pdfkit is server-only — prevent webpack from trying to bundle it for the browser
+      config.resolve.fallback = { ...config.resolve.fallback, pdfkit: false }
+    }
+    return config
   },
 };
 

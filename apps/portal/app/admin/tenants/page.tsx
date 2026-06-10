@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import Link from 'next/link'
-import { Download, Upload, CheckCircle2, XCircle, AlertTriangle, FileSpreadsheet, X } from 'lucide-react'
+import { Download, Upload, CheckCircle2, XCircle, AlertTriangle, FileSpreadsheet, X, Mail } from 'lucide-react'
 import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
 interface Tenant {
@@ -349,7 +349,6 @@ function TenantsPage() {
           unitId: propertyUnits.find(u => u.unitNumber === formData.unit)?.id || undefined,
           unit: formData.unit,
           moveInDate: formData.moveInDate || undefined,
-          status: 'ACTIVE',
           // Lease fields
           leaseStartDate: formData.leaseStartDate || formData.moveInDate || undefined,
           leaseEndDate: formData.leaseEndDate || undefined,
@@ -417,6 +416,15 @@ function TenantsPage() {
     queryFn: fetchTenants,
   })
 
+  const { data: invitesData } = useQuery({
+    queryKey: ['pending-tenant-invites'],
+    queryFn: async () => {
+      const res = await fetch('/api/invitations?role=TENANT&status=PENDING')
+      if (!res.ok) return { pendingTenantCount: 0 }
+      return res.json()
+    },
+  })
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -436,67 +444,80 @@ function TenantsPage() {
   const tenants = data?.tenants || []
   
   // Get unique properties for filter
-  const properties = Array.from(new Set(tenants.map(t => t.property.name))).sort()
-  
+  const properties = Array.from(new Set(tenants.map(t => t.property?.name).filter(Boolean))).sort() as string[]
+
   // Apply filters
   const filteredTenants = tenants.filter(tenant => {
     const matchesStatus = filterStatus === 'all' || tenant.status === filterStatus
-    const matchesProperty = filterProperty === 'all' || tenant.property.name === filterProperty
+    const matchesProperty = filterProperty === 'all' || tenant.property?.name === filterProperty
     return matchesStatus && matchesProperty
   })
   
   const activeTenants = tenants.filter(t => t.status === 'ACTIVE')
   const pendingTenants = tenants.filter(t => t.status === 'PENDING')
 
-  const stats = [
-    { label: 'Total Tenants', value: tenants.length.toString(), change: `${activeTenants.length} active` },
-    { label: 'Active Leases', value: activeTenants.length.toString(), change: `${tenants.reduce((sum, t) => sum + t._count.leases, 0)} total leases` },
-    { label: 'Pending Move-ins', value: pendingTenants.length.toString(), change: 'Awaiting confirmation' },
-    { label: 'Total Payments', value: tenants.reduce((sum, t) => sum + t._count.payments, 0).toString(), change: 'All tenants' },
-  ]
+  const pendingInviteCount = invitesData?.pendingTenantCount ?? 0
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Tenants</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Tenants</h1>
           <p className="text-neutral-600 mt-2">Manage tenant information and leases</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <a
             href="/templates/tenants-template.csv"
             download="tenants-template.csv"
             className="inline-flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
           >
             <Download className="w-4 h-4" />
-            Download Template
+            <span className="hidden sm:inline">Download Template</span>
+            <span className="sm:hidden">Template</span>
           </a>
           <Button variant="outline" onClick={() => { resetBulkImport(); setShowBulkImportModal(true) }}>
             <Upload className="w-4 h-4 mr-2" />
-            Bulk Import
+            <span className="hidden sm:inline">Bulk Import</span>
+            <span className="sm:hidden">Import</span>
           </Button>
           <Button variant="primary" size="lg" onClick={() => setShowAddTenantModal(true)}>+ Add Tenant</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="bg-surface rounded-lg border border-neutral-200 p-6">
-            <p className="text-sm text-neutral-600">{stat.label}</p>
-            <p className="text-3xl font-bold text-neutral-900 mt-2">{stat.value}</p>
-            <p className="text-xs text-neutral-500 mt-2">{stat.change}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+          <p className="text-sm text-neutral-600">Total Tenants</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{tenants.length}</p>
+          <p className="text-xs text-neutral-500 mt-2">{activeTenants.length} active</p>
+        </div>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+          <p className="text-sm text-neutral-600">Active Leases</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{activeTenants.length}</p>
+          <p className="text-xs text-neutral-500 mt-2">{tenants.reduce((sum, t) => sum + t._count.leases, 0)} total leases</p>
+        </div>
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
+          <p className="text-sm text-neutral-600">Pending Move-ins</p>
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{pendingTenants.length}</p>
+          <p className="text-xs text-neutral-500 mt-2">Awaiting confirmation</p>
+        </div>
+        <Link href="/admin/invitations?role=tenant&status=pending" className="block bg-surface rounded-lg border border-neutral-200 p-4 md:p-6 hover:border-primary-300 hover:shadow-sm transition-all group">
+          <div className="flex items-start justify-between">
+            <p className="text-sm text-neutral-600 group-hover:text-primary-600 transition-colors">Pending Invites</p>
+            <Mail className="w-4 h-4 text-neutral-400 group-hover:text-primary-500 transition-colors" />
           </div>
-        ))}
+          <p className="text-3xl font-bold text-neutral-900 mt-2">{pendingInviteCount}</p>
+          <p className="text-xs text-primary-500 mt-2 group-hover:text-primary-600">View invite schedule →</p>
+        </Link>
       </div>
 
       <div className="bg-surface rounded-lg border border-neutral-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-neutral-200">
+        <div className="px-4 md:px-6 py-4 border-b border-neutral-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-neutral-900">All Tenants</h2>
           </div>
-          
+
           {/* Filters */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-neutral-700 mb-2">Status</label>
               <select
@@ -536,34 +557,38 @@ function TenantsPage() {
             <table className="w-full">
               <thead className="bg-neutral-50 border-b border-neutral-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Property</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Unit</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Leases</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-700">Actions</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700">Name</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700 hidden md:table-cell">Email</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700 hidden lg:table-cell">Phone</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700">Property</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700 hidden md:table-cell">Unit</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700 hidden lg:table-cell">Leases</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700">Status</th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-semibold text-neutral-700">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
                 {filteredTenants.map((tenant) => (
                   <tr key={tenant.id} className="hover:bg-neutral-50">
-                    <td className="px-6 py-4 text-sm font-medium">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm font-medium">
                       <Link href={`/admin/tenants/${tenant.id}`} className="text-primary-600 hover:text-primary-800">
                         {tenant.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 text-sm text-neutral-600">{tenant.email}</td>
-                    <td className="px-6 py-4 text-sm text-neutral-600">{tenant.phone}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <Link href={`/admin/properties/${tenant.property.id}`} className="text-primary-600 hover:text-primary-800">
-                        {tenant.property.name}
-                      </Link>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-600 hidden md:table-cell">{tenant.email}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-600 hidden lg:table-cell">{tenant.phone}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm">
+                      {tenant.property
+                        ? <Link href={`/admin/properties/${tenant.property.id}`} className="text-primary-600 hover:text-primary-800">{tenant.property.name}</Link>
+                        : <span className="text-neutral-400">-</span>}
                     </td>
-                    <td className="px-6 py-4 text-sm text-neutral-600">{tenant.unit || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-neutral-600">{tenant._count.leases}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm hidden md:table-cell">
+                      {tenant.unit
+                        ? <Link href={`/admin/units/${tenant.unit}`} className="text-primary-600 hover:text-primary-800">{tenant.unit}</Link>
+                        : <span className="text-neutral-400">-</span>}
+                    </td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-600 hidden lg:table-cell">{tenant._count.leases}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         tenant.status === 'ACTIVE' ? 'bg-success-50 text-success-700' :
                         tenant.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700' :
@@ -573,7 +598,7 @@ function TenantsPage() {
                         {tenant.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm">
                       <ArchiveDeleteButtons
                         entityName="tenant"
                         entityLabel={tenant.name}
@@ -596,7 +621,7 @@ function TenantsPage() {
       {showBulkImportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-bold text-neutral-900">Bulk Import Tenants</h3>
@@ -798,7 +823,7 @@ function TenantsPage() {
       {showAddTenantModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-neutral-900">Add New Tenant</h3>
                 <button
@@ -811,7 +836,7 @@ function TenantsPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 {/* Personal Information */}
                 <div className="border-b border-neutral-200 pb-4">
                   <h4 className="text-lg font-semibold text-neutral-800 mb-4">Personal Information</h4>

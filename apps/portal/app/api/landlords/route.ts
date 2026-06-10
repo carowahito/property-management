@@ -40,6 +40,10 @@ export async function GET(request: NextRequest) {
           units: {
             select: { propertyId: true },
           },
+          members: {
+            select: { name: true, isPrimary: true, ownershipPercent: true },
+            orderBy: { isPrimary: 'desc' },
+          },
           _count: {
             select: {
               properties: true,

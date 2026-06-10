@@ -139,10 +139,15 @@ export default function UnitDetailPage() {
                   <Link href={`/admin/landlords/${unit.landlord.id}`} className="text-base font-semibold text-primary-600 hover:underline">
                     {unit.landlord.name}
                   </Link>
+                  {unit.landlord.type === 'JOINT_OWNERSHIP' && unit.landlord.members?.length > 0 && (
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      & {unit.landlord.members.map((m: any) => m.name).join(' & ')}
+                    </p>
+                  )}
                   <p className="text-xs text-neutral-400">{unit.landlord.email}</p>
                 </div>
                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                  unit.landlord.type === 'JOINT_OWNERSHIP' ? 'bg-purple-100 text-purple-700' :
+                  unit.landlord.type === 'JOINT_OWNERSHIP' ? 'bg-primary-100 text-primary-700' :
                   unit.landlord.type === 'COMPANY' ? 'bg-blue-100 text-blue-700' :
                   'bg-neutral-100 text-neutral-600'
                 }`}>
@@ -150,7 +155,7 @@ export default function UnitDetailPage() {
                    unit.landlord.type === 'COMPANY' ? 'Company' : 'Individual'}
                 </span>
               </div>
-              {unit.landlord.members?.length > 0 && (
+              {unit.landlord.type !== 'JOINT_OWNERSHIP' && unit.landlord.members?.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-neutral-100">
                   <p className="text-xs text-neutral-500 mb-1">Members</p>
                   {unit.landlord.members.map((m: any) => (
@@ -166,10 +171,17 @@ export default function UnitDetailPage() {
         <div className="bg-surface rounded-lg shadow p-5 flex flex-col justify-between">
           <div>
             <p className="text-xs text-neutral-500 uppercase tracking-wide">Tenant</p>
-            <p className="text-lg font-semibold text-neutral-900 mt-1">{unit?.activeTenant?.name ?? '—'}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-lg font-semibold text-neutral-900">{unit?.activeTenant?.name ?? '—'}</p>
+              {unit?.activeTenant?.status === 'PENDING' && (
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Pending Move-in</span>
+              )}
+            </div>
             <p className="text-xs text-neutral-400">
               {unit?.activeTenant
-                ? `Moved in ${new Date(unit.activeTenant.moveInDate).toLocaleDateString()}`
+                ? unit.activeTenant.moveInDate
+                  ? `Move-in ${new Date(unit.activeTenant.moveInDate).toLocaleDateString()}`
+                  : unit.activeTenant.email
                 : 'No active tenant'}
             </p>
           </div>

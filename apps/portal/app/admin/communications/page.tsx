@@ -132,7 +132,7 @@ export default function CommunicationsPage() {
     switch (category) {
       case 'rent-reminder': return 'bg-warning-100 text-orange-800'
       case 'maintenance': return 'bg-primary-100 text-primary-800'
-      case 'lease': return 'bg-purple-100 text-purple-800'
+      case 'lease': return 'bg-primary-100 text-primary-800'
       case 'payment': return 'bg-success-100 text-green-800'
       case 'announcement': return 'bg-yellow-100 text-yellow-800'
       case 'support': return 'bg-indigo-100 text-indigo-800'
@@ -141,10 +141,10 @@ export default function CommunicationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Communications</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Communications</h1>
           <p className="text-neutral-600 mt-2">View and manage all communications with tenants, landlords, and vendors</p>
         </div>
         <Button variant="primary" onClick={() => setShowCompose(true)}>
@@ -153,20 +153,20 @@ export default function CommunicationsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Total Messages</p>
           <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.total}</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Sent</p>
           <p className="text-3xl font-bold text-primary-600 mt-2">{stats.sent}</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Received</p>
           <p className="text-3xl font-bold text-success-600 mt-2">{stats.received}</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Unread</p>
           <p className="text-3xl font-bold text-warning-600 mt-2">{stats.unread}</p>
         </div>
@@ -189,7 +189,7 @@ export default function CommunicationsPage() {
           {/* Filter Buttons */}
           <div className="flex flex-wrap gap-2">
             {/* Type Filter */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <span className="text-sm font-medium text-neutral-700 flex items-center">Type:</span>
               {(['all', 'email', 'sms', 'in-app', 'system'] as const).map(type => (
                 <button
@@ -209,7 +209,7 @@ export default function CommunicationsPage() {
             <div className="w-px bg-neutral-300"></div>
 
             {/* Stakeholder Filter */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <span className="text-sm font-medium text-neutral-700 flex items-center">To/From:</span>
               {(['all', 'tenant', 'landlord', 'vendor'] as const).map(stakeholder => (
                 <button
@@ -229,7 +229,7 @@ export default function CommunicationsPage() {
             <div className="w-px bg-neutral-300"></div>
 
             {/* Category Filter */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <span className="text-sm font-medium text-neutral-700 flex items-center">Category:</span>
               {(['all', 'rent-reminder', 'maintenance', 'lease', 'payment', 'announcement', 'support'] as const).map(category => (
                 <button
@@ -237,7 +237,7 @@ export default function CommunicationsPage() {
                   onClick={() => setCategoryFilter(category)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
                     categoryFilter === category
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
@@ -333,7 +333,7 @@ export default function CommunicationsPage() {
       {selectedMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -363,7 +363,7 @@ export default function CommunicationsPage() {
 
               {/* Message Metadata */}
               <div className="bg-neutral-50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-neutral-600">Direction</p>
                     <p className="font-semibold text-neutral-900">
@@ -463,9 +463,9 @@ export default function CommunicationsPage() {
       {showCompose && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-neutral-900">Compose Message</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-neutral-900">Compose Message</h2>
                 <button
                   onClick={() => setShowCompose(false)}
                   className="text-neutral-400 hover:text-neutral-600"
@@ -477,7 +477,7 @@ export default function CommunicationsPage() {
               </div>
 
               <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">Message Type</label>
                     <select className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
@@ -500,7 +500,7 @@ export default function CommunicationsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">Recipient Type</label>
                     <select 
@@ -567,7 +567,7 @@ export default function CommunicationsPage() {
                       type="button"
                       onClick={() => handleImproveWithAI('subject')}
                       disabled={!composeSubject || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -591,7 +591,7 @@ export default function CommunicationsPage() {
                       type="button"
                       onClick={() => handleImproveWithAI('message')}
                       disabled={!composeMessage || isImprovingText}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
+                      className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 disabled:text-neutral-400 disabled:cursor-not-allowed transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />

@@ -28,9 +28,21 @@ interface Payment {
       id: string
       name: string
     }
+    unitRef?: {
+      id: string
+      unitNumber: string
+      landlord?: {
+        id: string
+        name: string
+        type?: string
+        members?: { id: string; name: string }[]
+      }
+    }
     landlord?: {
       id: string
       name: string
+      type?: string
+      members?: { id: string; name: string }[]
     }
   }
 }
@@ -143,31 +155,31 @@ export default function AdminPaymentsPage() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-neutral-900">Payments</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Payments</h1>
         <p className="text-neutral-600 mt-2">Track and manage all payment transactions across all properties</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Total Collected</p>
           <p className="text-3xl font-bold text-neutral-900 mt-2">KES {stats.totalCollected.toLocaleString()}</p>
           <p className="text-xs text-success-600 mt-2">This month</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Pending Payments</p>
           <p className="text-3xl font-bold text-neutral-900 mt-2">KES {stats.pending.toLocaleString()}</p>
           <p className="text-xs text-neutral-500 mt-2">Awaiting payment</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Overdue</p>
           <p className="text-3xl font-bold text-neutral-900 mt-2">KES {stats.overdue.toLocaleString()}</p>
           <p className="text-xs text-warning-600 mt-2">{stats.overdueCount} overdue</p>
         </div>
-        <div className="bg-surface rounded-lg border border-neutral-200 p-6">
+        <div className="bg-surface rounded-lg border border-neutral-200 p-4 md:p-6">
           <p className="text-sm text-neutral-600">Collection Rate</p>
           <p className="text-3xl font-bold text-neutral-900 mt-2">{stats.collectionRate.toFixed(1)}%</p>
           <p className="text-xs text-neutral-500 mt-2">{paidPayments.length} of {stats.totalTransactions} paid</p>
@@ -175,9 +187,9 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface rounded-lg border border-neutral-200 p-4 space-y-4">
+      <div className="bg-surface rounded-lg border border-neutral-200 p-3 md:p-4 space-y-4">
         {/* Time Period Filter */}
-        <div className="flex flex-wrap gap-4 items-end">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 md:gap-4 items-stretch sm:items-end">
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-neutral-700 mb-2">Time Period</label>
             <select
@@ -218,7 +230,7 @@ export default function AdminPaymentsPage() {
         </div>
 
         {/* Search and Status Filter */}
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4">
           <div className="flex-1">
             <input
               type="text"
@@ -228,7 +240,7 @@ export default function AdminPaymentsPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setStatusFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
@@ -279,34 +291,34 @@ export default function AdminPaymentsPage() {
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
                   Transaction ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Tenant
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
                   Landlord
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                   Property
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                   Month
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
                   Method
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -324,36 +336,45 @@ export default function AdminPaymentsPage() {
               ) : (
                 filteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-neutral-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-medium text-neutral-900 hidden lg:table-cell">
                       {payment.reference || payment.id.slice(0, 8)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-900">
                       <Link href={`/admin/tenants/${payment.tenant.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                         {payment.tenant.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                      {payment.lease.landlord ? (
-                        <Link href={`/admin/landlords/${payment.lease.landlord.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                          {payment.lease.landlord.name}
-                        </Link>
-                      ) : 'N/A'}
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900 hidden lg:table-cell">
+                      {(() => {
+                        const ll = payment.lease.unitRef?.landlord || payment.lease.landlord
+                        if (!ll) return 'N/A'
+                        return (
+                          <div>
+                            <Link href={`/admin/landlords/${ll.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
+                              {ll.name}
+                            </Link>
+                            {ll.type === 'JOINT_OWNERSHIP' && (ll.members?.length ?? 0) > 0 && (
+                              <p className="text-xs text-neutral-400">& {ll.members!.map(m => m.name).join(' & ')}</p>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm hidden md:table-cell">
                       <Link href={`/admin/properties/${payment.lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
                         {payment.lease.property.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
                       KES {Number(payment.amount).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-500 hidden md:table-cell">
                       {new Date(payment.dueDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-500 hidden lg:table-cell">
                       {payment.method}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         payment.status === 'PAID'
                           ? 'bg-success-100 text-green-800'
@@ -364,10 +385,10 @@ export default function AdminPaymentsPage() {
                         {payment.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-500 hidden md:table-cell">
                       {formatDate(payment.paidDate || payment.dueDate)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => setSelectedPayment(payment)}
                         className="text-primary-600 hover:text-primary-900"
@@ -387,9 +408,9 @@ export default function AdminPaymentsPage() {
       {selectedPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="flex items-start justify-between mb-4">
-                <h2 className="text-2xl font-bold text-neutral-900">Payment Details</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-neutral-900">Payment Details</h2>
                 <button
                   onClick={() => setSelectedPayment(null)}
                   className="text-neutral-400 hover:text-neutral-600"
@@ -401,7 +422,7 @@ export default function AdminPaymentsPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-neutral-600">Transaction ID</p>
                     <p className="text-lg font-semibold text-neutral-900">{selectedPayment.reference || selectedPayment.id.slice(0, 8)}</p>
@@ -422,7 +443,7 @@ export default function AdminPaymentsPage() {
 
                 <div className="border-t border-neutral-200 pt-4">
                   <h3 className="font-semibold text-neutral-900 mb-3">Payment Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-neutral-600">Amount</p>
                       <p className="text-xl font-bold text-neutral-900">KES {Number(selectedPayment.amount).toLocaleString()}</p>
@@ -459,13 +480,20 @@ export default function AdminPaymentsPage() {
                     <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <div>
                         <p className="text-sm text-neutral-600">Landlord</p>
-                        {selectedPayment.lease.landlord ? (
-                          <Link href={`/admin/landlords/${selectedPayment.lease.landlord.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
-                            {selectedPayment.lease.landlord.name}
-                          </Link>
-                        ) : (
-                          <p className="font-semibold text-neutral-900">N/A</p>
-                        )}
+                        {(() => {
+                          const ll = selectedPayment.lease.unitRef?.landlord || selectedPayment.lease.landlord
+                          if (!ll) return <p className="font-semibold text-neutral-900">N/A</p>
+                          return (
+                            <>
+                              <Link href={`/admin/landlords/${ll.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
+                                {ll.name}
+                              </Link>
+                              {ll.type === 'JOINT_OWNERSHIP' && (ll.members?.length ?? 0) > 0 && (
+                                <p className="text-xs text-neutral-500">& {ll.members!.map(m => m.name).join(' & ')}</p>
+                              )}
+                            </>
+                          )
+                        })()}
                         <p className="text-xs text-neutral-500">Property Owner</p>
                       </div>
                     </div>

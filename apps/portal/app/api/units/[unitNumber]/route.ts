@@ -49,10 +49,7 @@ export async function PATCH(
       data: prismaData as any,
       include: {
         property: { select: { id: true, name: true, address: true } },
-        landlord: {
-          select: { id: true, name: true, email: true, phone: true, type: true },
-          include: { members: { orderBy: { createdAt: 'asc' } } },
-        },
+        landlord: { include: { members: { orderBy: { createdAt: 'asc' } } } },
       },
     })
 
@@ -79,10 +76,7 @@ export async function GET(
       where: { unitNumber },
       include: {
         property: { select: { id: true, name: true, address: true } },
-        landlord: {
-          select: { id: true, name: true, email: true, phone: true, type: true },
-          include: { members: { orderBy: { createdAt: 'asc' } } },
-        },
+        landlord: { include: { members: { orderBy: { createdAt: 'asc' } } } },
       },
     })
 

@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
               name: true,
               email: true,
               phone: true,
+              type: true,
+              members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
             },
           },
           property: {

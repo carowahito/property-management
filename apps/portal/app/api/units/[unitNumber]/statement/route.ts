@@ -49,11 +49,13 @@ export async function GET(
       property: true,
       landlord: { include: { members: { orderBy: { createdAt: 'asc' } } } },
       tenants: {
-        where: { status: 'ACTIVE' },
-        select: { id: true, name: true, email: true, phone: true, moveInDate: true },
+        where: { status: { in: ['ACTIVE', 'PENDING'] } },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, email: true, phone: true, moveInDate: true, status: true },
       },
       leases: {
-        where: { status: 'ACTIVE' },
+        where: { status: { in: ['ACTIVE', 'PENDING'] } },
+        orderBy: { startDate: 'asc' },
         select: {
           id: true, startDate: true, endDate: true,
           monthlyRent: true, securityDeposit: true, terms: true, status: true,

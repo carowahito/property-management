@@ -69,7 +69,8 @@ export default function TenantNavigation() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <Link href="/tenant/dashboard" className="flex items-center">
-              <span className="text-xl font-bold text-primary-600">Tenant Portal</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/tochi-logo.svg" alt="Tochi Property" className="h-9 w-auto" />
             </Link>
             <div className="ml-10 flex space-x-1">
               {navItems.map((item) => (

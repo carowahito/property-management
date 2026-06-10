@@ -14,6 +14,7 @@ export default function AdminLayout({
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'Administration': false,
     'Main': false,
@@ -186,24 +187,43 @@ export default function AdminLayout({
 
   return (
     <div className="flex h-screen bg-neutral-50">
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-neutral-200 transition-all duration-300 overflow-hidden flex flex-col`}>
+      <aside className={`
+        ${sidebarOpen ? 'md:w-64' : 'md:w-20'}
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-neutral-200 transition-all duration-300 overflow-hidden flex flex-col
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static
+      `}>
         {/* Logo Section */}
-        <div className="flex items-center justify-between p-4 border-b border-neutral-200 h-20">
-          {sidebarOpen && (
-            <Link href="/admin" className="flex items-center space-x-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-lg font-bold text-white">🏢</span>
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-sm font-bold text-neutral-900">PropManage</h1>
-                <p className="text-xs text-neutral-500">Admin</p>
-              </div>
+        <div className="flex items-center justify-between p-4 border-b border-neutral-200 h-16 md:h-20">
+          {sidebarOpen ? (
+            <Link href="/admin" className="flex items-center flex-1 min-w-0 pr-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/tochi-logo.svg" alt="Tochi Property" className="h-10 w-auto max-w-full" />
+            </Link>
+          ) : (
+            <Link href="/admin" className="flex items-center justify-center flex-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/tochi-icon.svg" alt="Tochi Property" className="h-8 w-8" />
             </Link>
           )}
+          {/* Close button on mobile */}
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-1.5 hover:bg-neutral-100 rounded-lg transition flex-shrink-0 md:hidden"
+          >
+            <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          {/* Collapse toggle on desktop */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 hover:bg-neutral-100 rounded-lg transition flex-shrink-0"
+            className="p-1.5 hover:bg-neutral-100 rounded-lg transition flex-shrink-0 hidden md:block"
             title={sidebarOpen ? 'Collapse' : 'Expand'}
           >
             <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,6 +269,7 @@ export default function AdminLayout({
                           <Link
                             key={item.href}
                             href={item.href}
+                            onClick={() => setMobileMenuOpen(false)}
                             className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition text-sm font-medium group ${
                               isActive(item.href)
                                 ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-600'
@@ -283,6 +304,7 @@ export default function AdminLayout({
                       <Link
                         key={item.href}
                         href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center justify-center p-2 rounded-lg transition text-sm relative ${
                           isActive(item.href)
                             ? 'bg-primary-50 text-primary-600'
@@ -330,38 +352,51 @@ export default function AdminLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
         <header className="bg-white border-b border-neutral-200 shadow-sm sticky top-0 z-40">
-          <div className="px-8 py-3 flex justify-between items-center">
-            <div className="flex flex-col">
-              <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-lg mb-2 w-fit ${
-                currentUserRole === 'Admin' 
-                  ? 'bg-danger-100' 
-                  : 'bg-neutral-100'
-              }`}>
-                <svg className={`w-4 h-4 ${currentUserRole === 'Admin' ? 'text-danger-600' : 'text-neutral-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          <div className="px-4 md:px-8 py-2 md:py-3 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              {/* Hamburger menu on mobile */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition md:hidden"
+              >
+                <svg className="w-6 h-6 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-                <span className={`text-xs font-semibold uppercase tracking-wide ${currentUserRole === 'Admin' ? 'text-danger-700' : 'text-neutral-700'}`}>
-                  {currentUserRole}
-                </span>
+              </button>
+              <div className="flex flex-col">
+                <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-lg mb-1 md:mb-2 w-fit ${
+                  currentUserRole === 'Admin'
+                    ? 'bg-danger-100'
+                    : 'bg-neutral-100'
+                }`}>
+                  <svg className={`w-4 h-4 ${currentUserRole === 'Admin' ? 'text-danger-600' : 'text-neutral-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span className={`text-xs font-semibold uppercase tracking-wide ${currentUserRole === 'Admin' ? 'text-danger-700' : 'text-neutral-700'}`}>
+                    {currentUserRole}
+                  </span>
+                </div>
+                <h2 className="text-lg md:text-2xl font-bold text-neutral-900">
+                  {currentUserRole === 'Admin' ? 'Admin Suite' : `${currentUserRole} Dashboard`}
+                </h2>
               </div>
-              <h2 className="text-2xl font-bold text-neutral-900">
-                {currentUserRole === 'Admin' ? 'Admin Suite' : `${currentUserRole} Dashboard`}
-              </h2>
             </div>
-            <div className="flex items-center space-x-4">
-              <GlobalSearch />
+            <div className="flex items-center space-x-2 md:space-x-4">
+              <div className="hidden sm:block">
+                <GlobalSearch />
+              </div>
 
               {/* Portal Switcher */}
               <div className="relative">
                 <button
                   onClick={() => setShowPortalSwitcher(!showPortalSwitcher)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition text-sm font-medium"
+                  className="flex items-center space-x-2 px-2 md:px-3 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition text-sm font-medium"
                   title="Switch portal view"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
-                  <span>Switch Portal</span>
+                  <span className="hidden md:inline">Switch Portal</span>
                 </button>
                 {showPortalSwitcher && (
                   <>
@@ -412,11 +447,11 @@ export default function AdminLayout({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              <div className="flex items-center space-x-2 px-3 py-2 bg-neutral-50 rounded-lg hover:bg-neutral-100 cursor-pointer">
+              <div className="flex items-center space-x-2 px-2 md:px-3 py-2 bg-neutral-50 rounded-lg hover:bg-neutral-100 cursor-pointer">
                 <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span className="text-sm font-medium text-neutral-700">Profile</span>
+                <span className="text-sm font-medium text-neutral-700 hidden md:inline">Profile</span>
               </div>
             </div>
           </div>
@@ -424,11 +459,11 @@ export default function AdminLayout({
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="px-8 py-6">
+          <div className="px-4 md:px-8 py-4 md:py-6">
             {showBackButton && (
               <button
                 onClick={() => router.back()}
-                className="mb-6 flex items-center gap-2 px-3 py-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition group"
+                className="mb-4 md:mb-6 flex items-center gap-2 px-3 py-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition group"
                 title="Go back"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

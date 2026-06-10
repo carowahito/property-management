@@ -171,6 +171,9 @@ export default function StatementPrintPage() {
               Landlord Details
             </h3>
             <p className="font-medium text-neutral-900">{statement.landlord.name}</p>
+            {(statement.landlord as any).type === 'JOINT_OWNERSHIP' && (statement.landlord as any).members?.length > 0 && (
+              <p className="text-xs text-neutral-400">& {(statement.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
+            )}
             <p className="text-neutral-600">{statement.landlord.email}</p>
             <p className="text-neutral-600">{statement.landlord.phone}</p>
             {statement.landlord.bankName && (

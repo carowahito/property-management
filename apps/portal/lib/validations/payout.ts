@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const createPayoutSchema = z.object({
   landlordId: z.string().min(1, 'Landlord is required'),
+  unitId: z.string().min(1, 'Unit is required'),
   amount: z.number().positive('Amount must be positive'),
   period: z.string().min(1, 'Period is required (e.g., "January 2024")'),
   status: z.enum(['PENDING', 'PROCESSING', 'PAID', 'FAILED']).default('PENDING'),

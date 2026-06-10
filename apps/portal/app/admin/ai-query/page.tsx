@@ -177,7 +177,7 @@ export default function AIQueryPage() {
               </div>
               <div className="p-4 bg-purple-50 rounded-lg">
                 <h4 className="font-semibold text-purple-900 mb-2">👥 Tenants</h4>
-                <p className="text-sm text-purple-800">
+                <p className="text-sm text-primary-800">
                   Query tenant information, payment status, and lease details
                 </p>
               </div>

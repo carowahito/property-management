@@ -156,7 +156,7 @@ export default function ReferralProgramPage() {
             </p>
           </div>
           <div className="text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">💰</span>
             </div>
             <h3 className="font-semibold text-neutral-900 mb-2">3. You Both Get Rewarded</h3>

@@ -110,3 +110,26 @@ export async function POST(
     return NextResponse.json({ error: err.message ?? 'Upload failed' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const docId = searchParams.get('docId')
+  if (!docId) return NextResponse.json({ error: 'docId required' }, { status: 400 })
+
+  const doc = await (prisma as any).landlordDocument.findUnique({ where: { id: docId } })
+  if (!doc) return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+
+  const supabase = tryGetSupabaseAdmin()
+  if (supabase && doc.storagePath) {
+    await supabase.storage.from(BUCKET).remove([doc.storagePath])
+  }
+
+  await (prisma as any).landlordDocument.delete({ where: { id: docId } })
+  return NextResponse.json({ success: true })
+}

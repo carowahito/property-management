@@ -4,13 +4,52 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import crypto from 'crypto'
 
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const adminUser = await prisma.user.findFirst({
+    where: { email: session.user.email!, active: true },
+  })
+  if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
+
+  const { searchParams } = new URL(req.url)
+  const role   = searchParams.get('role')?.toUpperCase()
+  const status = searchParams.get('status')?.toUpperCase()
+
+  const where: any = { companyId: adminUser.companyId }
+  if (role   && ['TENANT', 'LANDLORD', 'VENDOR'].includes(role))             where.role   = role
+  if (status && ['PENDING', 'ACCEPTED', 'EXPIRED'].includes(status)) where.status = status
+
+  // Auto-expire invitations whose expiresAt has passed
+  await prisma.invitation.updateMany({
+    where: { companyId: adminUser.companyId, status: 'PENDING', expiresAt: { lt: new Date() } },
+    data: { status: 'EXPIRED' },
+  })
+
+  const [invitations, pendingTenantCount] = await Promise.all([
+    prisma.invitation.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        tenant: { select: { id: true, name: true, unit: true } },
+      },
+    }),
+    prisma.invitation.count({
+      where: { companyId: adminUser.companyId, role: 'TENANT', status: 'PENDING' },
+    }),
+  ])
+
+  return NextResponse.json({ invitations, pendingTenantCount })
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { email, name, role, tenantId, landlordId, vendorId } = await req.json()
+  const { email, name, role, tenantId, landlordId, vendorId, leaseStartDate, leaseEndDate } = await req.json()
 
   if (!email || !name || !role) {
     return NextResponse.json({ error: 'Email, name, and role are required' }, { status: 400 })
@@ -54,10 +93,15 @@ export async function POST(req: NextRequest) {
     where: { email, companyId: adminUser.companyId, status: 'PENDING' },
   })
 
+  const leaseDates = {
+    leaseStartDate: leaseStartDate ? new Date(leaseStartDate) : null,
+    leaseEndDate: leaseEndDate ? new Date(leaseEndDate) : null,
+  }
+
   const invitation = existing
     ? await prisma.invitation.update({
         where: { id: existing.id },
-        data: { token, expiresAt, name, role },
+        data: { token, expiresAt, name, role, ...leaseDates },
       })
     : await prisma.invitation.create({
         data: {
@@ -70,6 +114,7 @@ export async function POST(req: NextRequest) {
           tenantId: role === 'TENANT' ? tenantId : null,
           landlordId: role === 'LANDLORD' ? landlordId : null,
           vendorId: role === 'VENDOR' ? vendorId : null,
+          ...leaseDates,
         },
       })
 
@@ -87,4 +132,24 @@ export async function POST(req: NextRequest) {
     },
     inviteUrl,
   })
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+
+  const adminUser = await prisma.user.findFirst({
+    where: { email: session.user.email!, active: true },
+  })
+  if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
+
+  const inv = await prisma.invitation.findFirst({ where: { id, companyId: adminUser.companyId } })
+  if (!inv) return NextResponse.json({ error: 'Invitation not found' }, { status: 404 })
+
+  await prisma.invitation.update({ where: { id }, data: { status: 'EXPIRED' } })
+  return NextResponse.json({ success: true })
 }

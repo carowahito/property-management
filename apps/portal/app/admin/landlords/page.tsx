@@ -14,6 +14,8 @@ interface Landlord {
   email: string
   phone: string
   status: string
+  type: string
+  members: Array<{ name: string; isPrimary: boolean; ownershipPercent: number | null }>
   _count: {
     properties: number
     units: number
@@ -121,6 +123,7 @@ export default function AdminLandlordsPage() {
         status: 'ACTIVE',
         type: landlordType,
         managementFeePercent: formData.monthlyManagementFeePercent ? parseFloat(formData.monthlyManagementFeePercent) : undefined,
+        managementFeeType: formData.monthlyManagementFeeType || 'PERCENTAGE',
         tenantPlacementFee: formData.tenantPlacementFeeMonths ? parseFloat(formData.tenantPlacementFeeMonths) : undefined,
         members: members.length > 0 ? members : undefined,
       };
@@ -216,6 +219,15 @@ export default function AdminLandlordsPage() {
     queryFn: fetchLandlords,
   })
 
+  const { data: invitesData } = useQuery({
+    queryKey: ['pending-landlord-invites'],
+    queryFn: async () => {
+      const res = await fetch('/api/invitations?role=LANDLORD&status=PENDING')
+      if (!res.ok) return { pendingTenantCount: 0 }
+      return res.json()
+    },
+  })
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -252,36 +264,48 @@ export default function AdminLandlordsPage() {
     totalUnits: landlords.reduce((sum, l) => sum + l._count.units, 0),
   };
 
+  const pendingInviteCount = invitesData?.pendingTenantCount ?? 0
+
   return (
-    <div className='p-6 space-y-6'>
-      <div className='flex items-center justify-between'>
+    <div className='p-4 md:p-6 space-y-4 md:space-y-6'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
-          <h1 className='text-3xl font-bold text-neutral-900'>Landlords CRM</h1>
+          <h1 className='text-xl md:text-2xl font-bold text-neutral-900'>Landlords CRM</h1>
           <p className='text-neutral-600 mt-1'>Manage landlord relationships and portfolios</p>
         </div>
         <Button variant="primary" size="lg" onClick={() => setShowAddLandlordModal(true)}>+ Add Landlord</Button>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-surface shadow rounded-lg p-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Total Landlords</p>
           <p className='text-3xl font-bold text-primary-600'>{stats.totalLandlords}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Active</p>
           <p className='text-3xl font-bold text-success-600'>{stats.activeLandlords}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Inactive</p>
           <p className='text-3xl font-bold text-neutral-600'>{stats.inactiveLandlords}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Total Units</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.totalUnits}</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalUnits}</p>
         </div>
+        <Link href='/admin/invitations?role=landlord&status=pending' className='block bg-surface shadow rounded-lg p-4 md:p-6 hover:border hover:border-primary-300 hover:shadow-md transition-all group'>
+          <div className='flex items-start justify-between'>
+            <p className='text-sm text-neutral-600 group-hover:text-primary-600 transition-colors'>Pending Invites</p>
+            <svg className='w-4 h-4 text-neutral-400 group-hover:text-primary-500 transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+            </svg>
+          </div>
+          <p className='text-3xl font-bold text-neutral-900 mt-2'>{pendingInviteCount}</p>
+          <p className='text-xs text-primary-500 mt-2 group-hover:text-primary-600'>View invite schedule →</p>
+        </Link>
       </div>
 
-      <div className='bg-surface shadow rounded-lg p-6'>
+      <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
         <div className='mb-4 grid grid-cols-1 md:grid-cols-3 gap-4'>
           <div className="md:col-span-2">
             <input
@@ -309,19 +333,19 @@ export default function AdminLandlordsPage() {
           <table className='min-w-full divide-y divide-neutral-200'>
             <thead className='bg-neutral-50'>
               <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Landlord
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell'>
                   Contact
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Units
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Status
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Actions
                 </th>
               </tr>
@@ -329,29 +353,36 @@ export default function AdminLandlordsPage() {
             <tbody className='bg-surface divide-y divide-neutral-200'>
               {filteredLandlords.map((landlord) => (
                 <tr key={landlord.id} className='hover:bg-neutral-50'>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4'>
                     <div className='flex items-center'>
-                      <div className='h-10 w-10 rounded-full bg-success-100 flex items-center justify-center'>
+                      <div className='h-10 w-10 rounded-full bg-success-100 flex-shrink-0 flex items-center justify-center'>
                         <span className='text-success-600 font-semibold text-lg'>
                           {landlord.name.charAt(0)}
                         </span>
                       </div>
-                      <div className='ml-4'>
+                      <div className='ml-4 min-w-0'>
                         <Link href={`/admin/landlords/${landlord.id}`} className='text-sm font-medium text-primary-600 hover:text-primary-800'>
-                          {landlord.name}
+                          {landlord.type === 'JOINT_OWNERSHIP' && landlord.members?.length > 0
+                            ? [landlord.name, ...landlord.members.map(m => m.name)].join(' & ')
+                            : landlord.name}
                         </Link>
+                        {landlord.type === 'COMPANY' && landlord.members?.length > 0 && (
+                          <p className='text-xs text-neutral-400 mt-0.5'>
+                            Contact: {landlord.members.find(m => m.isPrimary)?.name || landlord.members[0].name}
+                          </p>
+                        )}
                         <p className='text-sm text-neutral-500'>{landlord._count.payouts} payouts</p>
                       </div>
                     </div>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4 hidden md:table-cell'>
                     <p className='text-sm text-neutral-900'>{landlord.email}</p>
                     <p className='text-sm text-neutral-500'>{landlord.phone}</p>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4'>
                     <Link href={`/admin/landlords/${landlord.id}?tab=properties`} className='text-sm font-semibold text-primary-600 hover:underline'>{landlord._count.units} units</Link>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4'>
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         landlord.status === 'ACTIVE'
@@ -364,7 +395,7 @@ export default function AdminLandlordsPage() {
                       {landlord.status}
                     </span>
                   </td>
-                  <td className='px-6 py-4 text-sm space-x-2'>
+                  <td className='px-3 md:px-6 py-2 md:py-4 text-sm space-x-2'>
                     <Button
                       variant="primary"
                       size="sm"
@@ -401,9 +432,9 @@ export default function AdminLandlordsPage() {
       {selectedLandlord && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
           <div className='bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
-            <div className='p-6'>
+            <div className='p-4 md:p-6'>
               <div className='flex items-center justify-between mb-6'>
-                <h2 className='text-2xl font-bold text-neutral-900'>Landlord Details</h2>
+                <h2 className='text-xl md:text-2xl font-bold text-neutral-900'>Landlord Details</h2>
                 <button
                   onClick={() => setSelectedLandlord(null)}
                   className='text-neutral-400 hover:text-neutral-600'

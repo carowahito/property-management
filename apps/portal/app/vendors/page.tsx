@@ -110,7 +110,7 @@ export default function VendorsPage() {
         </div>
         <div className='bg-surface shadow rounded-lg p-6'>
           <p className='text-sm text-neutral-600'>Total Vendors</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.totalVendors}</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalVendors}</p>
         </div>
       </div>
 

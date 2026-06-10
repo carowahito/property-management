@@ -127,7 +127,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const tenantData: any = { ...validatedData, companyId: company.id }
+    const tenantData: any = {
+      ...validatedData,
+      companyId: company.id,
+      // Always start PENDING — promoted to ACTIVE when their lease is signed
+      // and the move-in date arrives. Ignores any status sent from the client.
+      status: 'PENDING',
+    }
 
     // Convert date strings to Date objects
     if (validatedData.moveInDate) {
@@ -164,7 +170,7 @@ export async function POST(request: NextRequest) {
             endDate: new Date(leaseEndDate),
             monthlyRent,
             securityDeposit: securityDeposit ?? 0,
-            status: 'ACTIVE',
+            status: 'PENDING',
           },
         })
       } catch (leaseErr) {

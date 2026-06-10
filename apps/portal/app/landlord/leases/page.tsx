@@ -104,7 +104,7 @@ export default function LandlordLeasesPage() {
         <div className="bg-surface shadow rounded-lg p-6">
           <span className="text-3xl mb-2 block">📊</span>
           <p className="text-sm text-neutral-600">Total Leases</p>
-          <p className="text-3xl font-bold text-purple-600">{leases.length}</p>
+          <p className="text-3xl font-bold text-primary-600">{leases.length}</p>
         </div>
       </div>
 

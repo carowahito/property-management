@@ -126,7 +126,7 @@ export default function EnquiryCRMPage({ params }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Communications</p>
-          <p className="text-2xl font-bold text-purple-600 mt-2">{communications.length}</p>
+          <p className="text-2xl font-bold text-primary-600 mt-2">{communications.length}</p>
         </div>
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <p className="text-sm text-neutral-600">Notes</p>

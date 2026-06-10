@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createLeaseSchema } from '@/lib/validations/lease'
+import { runLeaseLifecycle } from '@/lib/services/lease-lifecycle'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,14 +20,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // Auto-expire leases whose end date has passed — keeps status correct without a cron job
-    await prisma.lease.updateMany({
-      where: {
-        status: 'ACTIVE',
-        endDate: { lt: new Date() },
-      },
-      data: { status: 'EXPIRED' },
-    })
+    // Auto-expire lapsed leases and promote signed PENDING leases
+    await runLeaseLifecycle()
 
     const where: any = {}
 
@@ -55,6 +50,22 @@ export async function GET(request: NextRequest) {
                 select: {
                   id: true,
                   name: true,
+                  type: true,
+                  members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
+                },
+              },
+            },
+          },
+          unitRef: {
+            select: {
+              id: true,
+              unitNumber: true,
+              landlord: {
+                select: {
+                  id: true,
+                  name: true,
+                  type: true,
+                  members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
                 },
               },
             },
@@ -116,27 +127,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
 
-    // Check for overlapping active leases
-    const overlappingLease = await prisma.lease.findFirst({
+    // Block any lease that overlaps an existing ACTIVE or PENDING lease for the
+    // same unit or same tenant.  Exception: a new PENDING lease may overlap an
+    // existing ACTIVE lease for the same unit (renewal workflow).
+    const newStart = new Date(validatedData.startDate)
+    const newEnd   = new Date(validatedData.endDate)
+    const periodOverlap = {
+      startDate: { lte: newEnd },
+      endDate:   { gte: newStart },
+    }
+
+    // Same-unit overlap check (blocks any status that would double-book the unit)
+    if (validatedData.unitId) {
+      const unitConflict = await prisma.lease.findFirst({
+        where: {
+          unitId: validatedData.unitId,
+          status: { in: ['ACTIVE', 'PENDING'] },
+          // Allow a new PENDING to coexist with the current ACTIVE (renewal)
+          NOT: validatedData.status === 'PENDING' ? { status: 'ACTIVE' } : undefined,
+          ...periodOverlap,
+        },
+      })
+      if (unitConflict) {
+        return NextResponse.json(
+          { error: `Unit already has a ${unitConflict.status.toLowerCase()} lease covering this period` },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Same-tenant overlap check (prevents the same tenant appearing on two
+    // simultaneous leases even across different units)
+    const tenantConflict = await prisma.lease.findFirst({
       where: {
         tenantId: validatedData.tenantId,
-        status: 'ACTIVE',
-        OR: [
-          {
-            startDate: {
-              lte: new Date(validatedData.endDate),
-            },
-            endDate: {
-              gte: new Date(validatedData.startDate),
-            },
-          },
-        ],
+        status: { in: ['ACTIVE', 'PENDING'] },
+        NOT: validatedData.status === 'PENDING' ? { status: 'ACTIVE' } : undefined,
+        ...periodOverlap,
       },
     })
-
-    if (overlappingLease) {
+    if (tenantConflict) {
       return NextResponse.json(
-        { error: 'Tenant already has an active lease during this period' },
+        { error: `Tenant already has a ${tenantConflict.status.toLowerCase()} lease covering this period` },
         { status: 400 }
       )
     }
@@ -144,6 +176,10 @@ export async function POST(request: NextRequest) {
     const lease = await prisma.lease.create({
       data: {
         ...validatedData,
+        // New leases always start as PENDING regardless of what was sent.
+        // The lifecycle (or upload route) will promote to ACTIVE once both
+        // parties have signed and the start date has arrived.
+        status: 'PENDING',
         startDate: new Date(validatedData.startDate),
         endDate: new Date(validatedData.endDate),
       },

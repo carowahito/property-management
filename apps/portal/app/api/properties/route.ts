@@ -44,12 +44,14 @@ export async function GET(request: NextRequest) {
               name: true,
               email: true,
               phone: true,
+              type: true,
+              members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
             },
           },
           propertyUnits: {
             select: {
               landlord: {
-                select: { id: true, name: true },
+                select: { id: true, name: true, type: true, members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } } },
               },
             },
             orderBy: { unitNumber: 'asc' },

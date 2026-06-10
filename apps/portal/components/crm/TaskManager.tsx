@@ -404,7 +404,7 @@ export default function TaskManager({ stakeholderId, stakeholderName, stakeholde
                     </div>
                   )}
                   <div className="bg-purple-50 rounded-lg p-3">
-                    <p className="text-xs text-purple-600 font-medium mb-1">ASSIGNED TO</p>
+                    <p className="text-xs text-primary-600 font-medium mb-1">ASSIGNED TO</p>
                     <p className="text-sm font-semibold text-neutral-900">{selectedTask.assignedTo}</p>
                   </div>
                   <div className="bg-success-50 rounded-lg p-3">

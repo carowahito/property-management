@@ -205,7 +205,7 @@ export default function FinancialReportsPage() {
         <StatCard label="Total Rent Collected" value={financials.totalGrossRent} color="text-neutral-900" />
         <StatCard label="Paid to Landlords" value={financials.totalNetToLandlords} color="text-danger-600" />
         <StatCard label="Management Revenue" value={financials.mgmtRevenue} color="text-success-600" subtitle="Fees retained by company" />
-        <StatCard label="Profit Margin" value={null} color="text-purple-600"
+        <StatCard label="Profit Margin" value={null} color="text-primary-600"
           display={`${financials.mgmtMargin.toFixed(1)}%`}
           subtitle={`${financials.transactionCount} transactions`} />
       </div>
@@ -315,7 +315,7 @@ export default function FinancialReportsPage() {
                       <td className="py-2 text-right text-neutral-900">KES {l.gross.toLocaleString()}</td>
                       <td className="py-2 text-right text-success-600 font-semibold">KES {l.fees.toLocaleString()}</td>
                       <td className="py-2 text-right text-neutral-600">KES {l.net.toLocaleString()}</td>
-                      <td className="py-2 text-right text-purple-600 font-semibold">{margin}%</td>
+                      <td className="py-2 text-right text-primary-600 font-semibold">{margin}%</td>
                       <td className="py-2 text-right text-neutral-500">{l.txnCount}</td>
                     </tr>
                   );
@@ -354,7 +354,7 @@ export default function FinancialReportsPage() {
                       <td className="py-2 text-right text-neutral-900">KES {p.gross.toLocaleString()}</td>
                       <td className="py-2 text-right text-success-600 font-semibold">KES {p.fees.toLocaleString()}</td>
                       <td className="py-2 text-right text-neutral-600">KES {p.net.toLocaleString()}</td>
-                      <td className="py-2 text-right text-purple-600 font-semibold">{margin}%</td>
+                      <td className="py-2 text-right text-primary-600 font-semibold">{margin}%</td>
                       <td className="py-2 text-right text-neutral-500">{p.txnCount}</td>
                     </tr>
                   );

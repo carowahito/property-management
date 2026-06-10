@@ -79,6 +79,13 @@ export default function AdminVendorsPage() {
       (filterCategory === 'all' || vendor.category === filterCategory)
   );
 
+  const [pendingInviteCount, setPendingInviteCount] = useState(0)
+  useEffect(() => {
+    fetch('/api/invitations?role=VENDOR&status=PENDING')
+      .then(r => r.ok ? r.json() : { pendingTenantCount: 0 })
+      .then(d => setPendingInviteCount(d.pendingTenantCount ?? 0))
+  }, [])
+
   const stats = {
     totalVendors: vendors.length,
     activeVendors: vendors.filter((v) => v.status === 'active').length,
@@ -87,36 +94,46 @@ export default function AdminVendorsPage() {
   };
 
   return (
-    <div className='p-6 space-y-6'>
-      <div className='flex items-center justify-between'>
+    <div className='p-4 md:p-6 space-y-4 md:space-y-6'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
-          <h1 className='text-3xl font-bold text-neutral-900'>Vendors CRM</h1>
+          <h1 className='text-xl md:text-2xl font-bold text-neutral-900'>Vendors CRM</h1>
           <p className='text-neutral-600 mt-1'>Manage vendor relationships and performance</p>
         </div>
         <Button variant="primary" size="lg" onClick={() => setShowAddModal(true)}>+ Add Vendor</Button>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-surface shadow rounded-lg p-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Total Vendors</p>
           <p className='text-3xl font-bold text-primary-600'>{stats.totalVendors}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Active Vendors</p>
           <p className='text-3xl font-bold text-success-600'>{stats.activeVendors}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Completed Jobs</p>
-          <p className='text-3xl font-bold text-purple-600'>{stats.totalCompletedJobs}</p>
+          <p className='text-3xl font-bold text-primary-600'>{stats.totalCompletedJobs}</p>
         </div>
-        <div className='bg-surface shadow rounded-lg p-6'>
+        <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
           <p className='text-sm text-neutral-600'>Average Rating</p>
           <p className='text-3xl font-bold text-yellow-600'>{stats.avgRating} ⭐</p>
         </div>
+        <Link href='/admin/invitations?role=vendor&status=pending' className='block bg-surface shadow rounded-lg p-4 md:p-6 hover:border hover:border-primary-300 hover:shadow-md transition-all group'>
+          <div className='flex items-start justify-between'>
+            <p className='text-sm text-neutral-600 group-hover:text-primary-600 transition-colors'>Pending Invites</p>
+            <svg className='w-4 h-4 text-neutral-400 group-hover:text-primary-500 transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+            </svg>
+          </div>
+          <p className='text-3xl font-bold text-neutral-900 mt-2'>{pendingInviteCount}</p>
+          <p className='text-xs text-primary-500 mt-2 group-hover:text-primary-600'>View invite schedule →</p>
+        </Link>
       </div>
 
-      <div className='bg-surface shadow rounded-lg p-6'>
-        <div className='mb-4 flex gap-4'>
+      <div className='bg-surface shadow rounded-lg p-4 md:p-6'>
+        <div className='mb-4 flex flex-col sm:flex-row gap-2 md:gap-4'>
           <input
             type='text'
             placeholder='Search vendors by name or category...'
@@ -142,28 +159,28 @@ export default function AdminVendorsPage() {
           <table className='min-w-full divide-y divide-neutral-200'>
             <thead className='bg-neutral-50'>
               <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Vendor
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell'>
                   Category
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell'>
                   Contact
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell'>
                   Type
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell'>
                   Rating
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell'>
                   Jobs
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Status
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
+                <th className='px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase'>
                   Actions
                 </th>
               </tr>
@@ -171,7 +188,7 @@ export default function AdminVendorsPage() {
             <tbody className='bg-surface divide-y divide-neutral-200'>
               {filteredVendors.map((vendor) => (
                 <tr key={vendor.id} className='hover:bg-neutral-50 cursor-pointer' onClick={() => window.location.href = `/admin/vendors/${vendor.id}`}>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4'>
                     <div className='flex items-center'>
                       <div className='h-10 w-10 rounded-full bg-warning-100 flex items-center justify-center'>
                         <span className='text-warning-600 font-semibold text-lg'>
@@ -186,33 +203,33 @@ export default function AdminVendorsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4 hidden md:table-cell'>
                     <span className='px-2 py-1 text-xs font-semibold rounded-full bg-primary-100 text-primary-800'>
                       {vendor.category}
                     </span>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4 hidden md:table-cell'>
                     <p className='text-sm text-neutral-900'>{vendor.email}</p>
                     <p className='text-sm text-neutral-500'>{vendor.phone}</p>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4 hidden md:table-cell'>
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         vendor.vendorType === 'company'
-                          ? 'bg-purple-100 text-purple-800'
+                          ? 'bg-primary-100 text-primary-800'
                           : 'bg-neutral-100 text-neutral-800'
                       }`}
                     >
                       {vendor.vendorType}
                     </span>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4 hidden md:table-cell'>
                     <div className='flex items-center'>
                       <span className='text-yellow-500 mr-1'>⭐</span>
                       <span className='text-sm font-semibold text-neutral-900'>{vendor.rating}</span>
                     </div>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4 hidden md:table-cell'>
                     <p className='text-sm text-neutral-900'>
                       <span className='font-semibold text-success-600'>{vendor.completedJobs}</span> completed
                     </p>
@@ -220,7 +237,7 @@ export default function AdminVendorsPage() {
                       <span className='font-semibold text-primary-600'>{vendor.activeJobs}</span> active
                     </p>
                   </td>
-                  <td className='px-6 py-4'>
+                  <td className='px-3 md:px-6 py-2 md:py-4'>
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         vendor.status === 'active'
@@ -233,7 +250,7 @@ export default function AdminVendorsPage() {
                       {vendor.status}
                     </span>
                   </td>
-                  <td className='px-6 py-4 text-sm space-x-2' onClick={(e) => e.stopPropagation()}>
+                  <td className='px-3 md:px-6 py-2 md:py-4 text-sm space-x-2' onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="primary"
                       size="sm"
@@ -265,7 +282,7 @@ export default function AdminVendorsPage() {
       {selectedVendor && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
           <div className='bg-surface rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
-            <div className='p-6'>
+            <div className='p-4 md:p-6'>
               <div className='flex items-center justify-between mb-6'>
                 <h2 className='text-2xl font-bold text-neutral-900'>Vendor Details</h2>
                 <button
@@ -324,7 +341,7 @@ export default function AdminVendorsPage() {
       {/* Add Vendor Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg max-w-lg w-full p-6">
+          <div className="bg-surface rounded-lg max-w-lg w-full p-4 md:p-6">
             <h3 className="text-xl font-bold text-neutral-900 mb-4">Add Vendor</h3>
             <div className="space-y-4">
               <div>

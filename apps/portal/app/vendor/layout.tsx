@@ -12,7 +12,8 @@ export default function VendorLayout({
           <div className="flex justify-between h-16">
             <div className="flex">
               <Link href="/vendor" className="flex items-center">
-                <span className="text-xl font-bold text-warning-600">Vendor Portal</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/tochi-logo.svg" alt="Tochi Property" className="h-9 w-auto" />
               </Link>
               <div className="ml-10 flex space-x-6">
                 <Link href="/vendor" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-neutral-900 hover:text-warning-600">Dashboard</Link>
@@ -34,7 +35,7 @@ export default function VendorLayout({
       <main className="min-h-screen bg-neutral-50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
       <footer className="bg-surface border-t border-neutral-200 mt-12">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-neutral-500">© 2025 Catalyst Suite - Vendor Portal</p>
+          <p className="text-center text-sm text-neutral-500">© 2025 Tochi Property · tochiproperty.com</p>
         </div>
       </footer>
     </>

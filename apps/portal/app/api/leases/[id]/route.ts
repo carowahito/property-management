@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { updateLeaseSchema } from '@/lib/validations/lease'
+import { runLeaseLifecycle } from '@/lib/services/lease-lifecycle'
 
 export async function GET(
   request: NextRequest,
@@ -17,11 +18,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Auto-expire if end date has passed
-    await prisma.lease.updateMany({
-      where: { id, status: 'ACTIVE', endDate: { lt: new Date() } },
-      data: { status: 'EXPIRED' },
-    })
+    // Auto-expire lapsed leases and promote signed PENDING leases
+    await runLeaseLifecycle()
 
     const lease = await prisma.lease.findUnique({
       where: { id: id },
@@ -47,9 +45,28 @@ export async function GET(
                 name: true,
                 email: true,
                 phone: true,
+                type: true,
+                members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
               },
             },
           },
+        },
+        // Include unit reference so UI can show unit number and unit-level landlord
+        unitRef: {
+          select: {
+            id: true,
+            unitNumber: true,
+            landlord: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                type: true,
+                members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
+              }
+            }
+          }
         },
         payments: {
           select: {
@@ -107,6 +124,22 @@ export async function PATCH(
 
     if (validatedData.endDate) {
       updateData.endDate = new Date(validatedData.endDate)
+    }
+
+    // Block manual promotion to ACTIVE on an unsigned lease.
+    // A lease may only become ACTIVE via the signature upload route or
+    // the lease lifecycle service (both of which verify signatures exist).
+    if (validatedData.status === 'ACTIVE') {
+      const current = await prisma.lease.findUnique({
+        where: { id },
+        select: { landlordSignedAt: true, tenantSignedAt: true },
+      })
+      if (!current?.landlordSignedAt || !current?.tenantSignedAt) {
+        return NextResponse.json(
+          { error: 'Cannot set lease to Active — both landlord and tenant signatures are required first.' },
+          { status: 400 }
+        )
+      }
     }
 
     // If updating tenant or property, check they exist
@@ -169,7 +202,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

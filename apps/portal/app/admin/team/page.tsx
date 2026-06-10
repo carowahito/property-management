@@ -51,7 +51,7 @@ export default function TeamManagementPage() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'Admin': return 'bg-danger-100 text-red-800'
-      case 'Manager': return 'bg-purple-100 text-purple-800'
+      case 'Manager': return 'bg-primary-100 text-primary-800'
       case 'Sales': return 'bg-primary-100 text-primary-800'
       case 'Customer Care': return 'bg-success-100 text-green-800'
       case 'Caretaker': return 'bg-warning-100 text-orange-800'
@@ -151,8 +151,8 @@ export default function TeamManagementPage() {
               <p className="text-sm text-neutral-500 mb-1">Departments</p>
               <p className="text-3xl font-bold text-neutral-900">{stats.departments}</p>
             </div>
-            <div className="bg-purple-100 p-4 rounded-xl">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-primary-100 p-4 rounded-xl">
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
