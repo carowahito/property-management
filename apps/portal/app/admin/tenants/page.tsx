@@ -558,9 +558,9 @@ function TenantsPage() {
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-600 hidden md:table-cell">{tenant.email}</td>
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-600 hidden lg:table-cell">{tenant.phone}</td>
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm">
-                      <Link href={`/admin/properties/${tenant.property.id}`} className="text-primary-600 hover:text-primary-800">
-                        {tenant.property.name}
-                      </Link>
+                      {tenant.property
+                        ? <Link href={`/admin/properties/${tenant.property.id}`} className="text-primary-600 hover:text-primary-800">{tenant.property.name}</Link>
+                        : <span className="text-neutral-400">-</span>}
                     </td>
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm hidden md:table-cell">
                       {tenant.unit

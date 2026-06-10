@@ -171,10 +171,17 @@ export default function UnitDetailPage() {
         <div className="bg-surface rounded-lg shadow p-5 flex flex-col justify-between">
           <div>
             <p className="text-xs text-neutral-500 uppercase tracking-wide">Tenant</p>
-            <p className="text-lg font-semibold text-neutral-900 mt-1">{unit?.activeTenant?.name ?? '—'}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-lg font-semibold text-neutral-900">{unit?.activeTenant?.name ?? '—'}</p>
+              {unit?.activeTenant?.status === 'PENDING' && (
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Pending Move-in</span>
+              )}
+            </div>
             <p className="text-xs text-neutral-400">
               {unit?.activeTenant
-                ? `Moved in ${new Date(unit.activeTenant.moveInDate).toLocaleDateString()}`
+                ? unit.activeTenant.moveInDate
+                  ? `Move-in ${new Date(unit.activeTenant.moveInDate).toLocaleDateString()}`
+                  : unit.activeTenant.email
                 : 'No active tenant'}
             </p>
           </div>
