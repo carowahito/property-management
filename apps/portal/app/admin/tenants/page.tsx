@@ -349,7 +349,6 @@ function TenantsPage() {
           unitId: propertyUnits.find(u => u.unitNumber === formData.unit)?.id || undefined,
           unit: formData.unit,
           moveInDate: formData.moveInDate || undefined,
-          status: 'ACTIVE',
           // Lease fields
           leaseStartDate: formData.leaseStartDate || formData.moveInDate || undefined,
           leaseEndDate: formData.leaseEndDate || undefined,

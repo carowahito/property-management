@@ -84,6 +84,10 @@ export async function runLeaseLifecycle() {
         where: { id: lease.id },
         data: { status: 'ACTIVE' },
       }),
+      prisma.tenant.update({
+        where: { id: lease.tenantId },
+        data: { status: 'ACTIVE' },
+      }),
       prisma.leaseRenewal.updateMany({
         where: {
           newLeaseId: lease.id,

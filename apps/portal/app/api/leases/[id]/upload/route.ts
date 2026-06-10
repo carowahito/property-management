@@ -94,7 +94,16 @@ export async function POST(
       updatedLease.tenantSignedAt &&
       new Date(updatedLease.startDate) <= new Date()
     ) {
-      await prisma.lease.update({ where: { id }, data: { status: 'ACTIVE' } })
+      const activatedLease = await prisma.lease.update({
+        where: { id },
+        data: { status: 'ACTIVE' },
+        select: { tenantId: true },
+      })
+      // Also activate the tenant
+      await prisma.tenant.update({
+        where: { id: activatedLease.tenantId },
+        data: { status: 'ACTIVE' },
+      })
     }
 
     return NextResponse.json({ url: publicUrl, type, leaseId: id })
