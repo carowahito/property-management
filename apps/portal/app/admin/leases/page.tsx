@@ -15,7 +15,11 @@ interface Lease {
   endDate: string
   status: string
   unit: string | null
-  unitRef?: { unitNumber: string } | null
+  unitRef?: {
+    id: string
+    unitNumber: string
+    landlord: { id: string; name: string; type?: string; members?: { id: string; name: string }[] } | null
+  } | null
   renewal?: boolean
   tenantSignedAt: string | null
   landlordSignedAt: string | null
@@ -101,9 +105,10 @@ export default function AdminLeasesPage() {
 
   // Filter leases
   const filteredLeases = leases.filter(lease => {
+    const landlord = lease.unitRef?.landlord ?? lease.property.landlord
     const matchesSearch =
       lease.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (lease.property.landlord?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (landlord?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       lease.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (lease.unit && lease.unit.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -281,18 +286,21 @@ export default function AdminLeasesPage() {
                         <p className="text-xs text-neutral-500">{lease._count.payments} payments</p>
                       </td>
                       <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900 hidden lg:table-cell">
-                        {lease.property.landlord ? (
-                          <div>
-                            <Link href={`/admin/landlords/${lease.property.landlord.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                              {lease.property.landlord.name}
-                            </Link>
-                            {(lease.property.landlord as any).type === 'JOINT_OWNERSHIP' && (lease.property.landlord as any).members?.length > 0 && (
-                              <p className="text-xs text-neutral-400">& {(lease.property.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-neutral-400">--</span>
-                        )}
+                        {(() => {
+                          const ll = lease.unitRef?.landlord ?? lease.property.landlord
+                          return ll ? (
+                            <div>
+                              <Link href={`/admin/landlords/${ll.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
+                                {ll.name}
+                              </Link>
+                              {ll.type === 'JOINT_OWNERSHIP' && ll.members && ll.members.length > 0 && (
+                                <p className="text-xs text-neutral-400">& {ll.members.map((m) => m.name).join(' & ')}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-neutral-400">--</span>
+                          )
+                        })()}
                       </td>
                       <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm hidden md:table-cell">
                         <Link href={`/admin/properties/${lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
@@ -419,18 +427,21 @@ export default function AdminLeasesPage() {
                     </div>
                     <div className="p-3 md:p-4 bg-neutral-50 rounded-lg">
                       <p className="text-sm text-neutral-600">Landlord</p>
-                      {selectedLease.property.landlord ? (
-                        <>
-                          <Link href={`/admin/landlords/${selectedLease.property.landlord.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
-                            {selectedLease.property.landlord.name}
-                          </Link>
-                          {(selectedLease.property.landlord as any).type === 'JOINT_OWNERSHIP' && (selectedLease.property.landlord as any).members?.length > 0 && (
-                            <p className="text-xs text-neutral-500">& {(selectedLease.property.landlord as any).members.map((m: any) => m.name).join(' & ')}</p>
-                          )}
-                        </>
-                      ) : (
-                        <p className="font-semibold text-neutral-900">—</p>
-                      )}
+                      {(() => {
+                        const ll = selectedLease.unitRef?.landlord ?? selectedLease.property.landlord
+                        return ll ? (
+                          <>
+                            <Link href={`/admin/landlords/${ll.id}`} className="font-semibold text-primary-600 hover:text-primary-800 hover:underline">
+                              {ll.name}
+                            </Link>
+                            {ll.type === 'JOINT_OWNERSHIP' && ll.members && ll.members.length > 0 && (
+                              <p className="text-xs text-neutral-500">& {ll.members.map((m) => m.name).join(' & ')}</p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="font-semibold text-neutral-900">—</p>
+                        )
+                      })()}
                       <p className="text-xs text-neutral-500">Property Owner</p>
                     </div>
                   </div>

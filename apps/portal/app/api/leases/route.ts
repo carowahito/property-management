@@ -56,6 +56,20 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          unitRef: {
+            select: {
+              id: true,
+              unitNumber: true,
+              landlord: {
+                select: {
+                  id: true,
+                  name: true,
+                  type: true,
+                  members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
+                },
+              },
+            },
+          },
           _count: {
             select: {
               payments: true,
