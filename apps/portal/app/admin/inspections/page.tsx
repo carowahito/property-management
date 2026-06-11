@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import {
   type ChecklistData,
   type ChecklistItem,
+  type MatrixRow,
   CONDITION_CODES,
   ACTION_CODES,
   defaultChecklistData,
@@ -51,6 +52,7 @@ interface TenantOption { id: string; name: string }
 
 const INSPECTION_TYPES = [
   { value: 'MOVE_IN', label: 'Move-In' },
+  { value: 'POST_MOVE_IN', label: 'Post-Move-In Confirmation (5+ days)' },
   { value: 'THREE_MONTH', label: '3-Month (New Tenancy)' },
   { value: 'ROUTINE_6_MONTH', label: '6-Month Routine' },
   { value: 'PRE_MOVE_OUT', label: 'Pre Move-Out (2+ wks before)' },
@@ -194,6 +196,10 @@ export default function InspectionsPage() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   const [completeLoading, setCompleteLoading] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
+  // Report email
+  const [showEmailForm, setShowEmailForm] = useState(false)
+  const [emailTo, setEmailTo] = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
 
   // Dropdown data
   const [properties, setProperties] = useState<PropertyOption[]>([])
@@ -368,6 +374,64 @@ export default function InspectionsPage() {
       ? { ...prev, defects: prev.defects.filter((_, idx) => idx !== i) }
       : prev
     )
+  }
+
+  function updateMatrixCond(
+    matrix: 'bedroomMatrix' | 'bathroomMatrix',
+    rowIdx: number,
+    colIdx: number,
+    value: string,
+  ) {
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const rows = [...prev[matrix]] as MatrixRow[]
+      const cond = [...rows[rowIdx].cond]
+      cond[colIdx] = value
+      rows[rowIdx] = { ...rows[rowIdx], cond }
+      return { ...prev, [matrix]: rows }
+    })
+  }
+
+  function updateMatrixComments(
+    matrix: 'bedroomMatrix' | 'bathroomMatrix',
+    rowIdx: number,
+    value: string,
+  ) {
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const rows = [...prev[matrix]] as MatrixRow[]
+      rows[rowIdx] = { ...rows[rowIdx], comments: value }
+      return { ...prev, [matrix]: rows }
+    })
+  }
+
+  function updateAdditionalItem(idx: number, field: keyof ChecklistItem, value: string) {
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const items = [...prev.additionalItems]
+      items[idx] = { ...items[idx], [field]: value }
+      return { ...prev, additionalItems: items }
+    })
+  }
+
+  async function handleEmailReport() {
+    if (!selectedInspection || !emailTo.trim()) return
+    setEmailLoading(true)
+    try {
+      const res = await fetch(`/api/inspections/${selectedInspection.id}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: emailTo }),
+      })
+      if (res.ok) {
+        setShowEmailForm(false)
+        setEmailTo('')
+        alert('Report sent successfully')
+      } else {
+        alert('Failed to send report email')
+      }
+    } catch { alert('Network error') }
+    finally { setEmailLoading(false) }
   }
 
   function toggleSection(section: string) {
@@ -825,26 +889,173 @@ export default function InspectionsPage() {
                     <span><strong>Action:</strong> OK=No action · CL=Cleaning · RP=Repair · RC=Replace · TC=Tenant charge (evidence required)</span>
                   </div>
 
-                  {/* Checklist Sections */}
-                  {getUniqueSections(checklistData.items).map(section => {
-                    const sectionItems = checklistData.items
-                    const sectionItemsFiltered = sectionItems.map((item, globalIdx) => ({ item, globalIdx })).filter(({ item }) => item.section === section)
-                    const isExpanded = expandedSections.has(section)
-                    const hasIssue = sectionItemsFiltered.some(({ item }) => item.condition === 'P' || item.condition === 'D' || item.condition === 'F')
+                  {/* Checklist Sections — residential interleaves matrices; commercial renders all directly */}
+                  {(() => {
+                    const allSections = getUniqueSections(checklistData.items)
+                    const isRes = checklistData.propertyCategory === 'RESIDENTIAL'
+                    const earlyIds = ['3.1', '3.2', '3.3']
+                    const earlySections = isRes ? allSections.filter(s => earlyIds.some(id => s.startsWith(id))) : allSections
+                    const lateSections = isRes ? allSections.filter(s => !earlyIds.some(id => s.startsWith(id))) : []
+
+                    const renderSection = (section: string) => {
+                      const sectionItemsFiltered = checklistData.items.map((item, globalIdx) => ({ item, globalIdx })).filter(({ item }) => item.section === section)
+                      const isExpanded = expandedSections.has(section)
+                      const hasIssue = sectionItemsFiltered.some(({ item }) => item.condition === 'P' || item.condition === 'D' || item.condition === 'F')
+                      return (
+                        <div key={section}>
+                          <button type="button" onClick={() => toggleSection(section)}
+                            className="w-full flex items-center justify-between px-6 py-2.5 bg-[#1A3A5C] text-white text-left hover:bg-[#142d47] transition-colors">
+                            <span className="text-sm font-semibold">{section}</span>
+                            <div className="flex items-center gap-2">
+                              {hasIssue && !isCompleted && (
+                                <span className="text-xs bg-[#E8960C] text-white px-2 py-0.5 rounded-full">Needs attention</span>
+                              )}
+                              <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full">
+                                <thead>
+                                  <tr className="bg-neutral-100 border-b border-neutral-200">
+                                    <th className="px-3 py-1.5 text-left text-xs font-semibold text-neutral-600">Item</th>
+                                    <th className="px-2 py-1.5 text-left text-xs font-semibold text-neutral-600 w-20">Cond.</th>
+                                    <th className="px-2 py-1.5 text-left text-xs font-semibold text-neutral-600 w-20">Action</th>
+                                    <th className="px-2 py-1.5 text-left text-xs font-semibold text-neutral-600">Comments / Photo Ref.</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {sectionItemsFiltered.map(({ item, globalIdx }) => (
+                                    <ChecklistRow key={`${section}-${item.item}`} item={item} idx={globalIdx}
+                                      onUpdate={updateItem} readonly={isCompleted} />
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
+
+                    const renderMatrixSection = (
+                      sectionId: string,
+                      title: string,
+                      subtitle: string,
+                      matrixKey: 'bedroomMatrix' | 'bathroomMatrix',
+                      colLabels: string[],
+                    ) => {
+                      const rows = checklistData[matrixKey] as MatrixRow[]
+                      if (!rows?.length) return null
+                      const key = `_${matrixKey}_`
+                      const isExpanded = expandedSections.has(key)
+                      const hasIssue = rows.some(r => r.cond.some(c => c === 'P' || c === 'D' || c === 'F'))
+                      return (
+                        <div key={key}>
+                          <button type="button" onClick={() => toggleSection(key)}
+                            className="w-full flex items-center justify-between px-6 py-2.5 bg-[#1A3A5C] text-white text-left hover:bg-[#142d47] transition-colors">
+                            <span className="text-sm font-semibold">{sectionId} {title} <span className="text-xs font-normal opacity-75">— {subtitle}</span></span>
+                            <div className="flex items-center gap-2">
+                              {hasIssue && !isCompleted && (
+                                <span className="text-xs bg-[#E8960C] text-white px-2 py-0.5 rounded-full">Needs attention</span>
+                              )}
+                              <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full">
+                                <thead>
+                                  <tr className="bg-neutral-100 border-b border-neutral-200">
+                                    <th className="px-3 py-1.5 text-left text-xs font-semibold text-neutral-600 min-w-[180px]">Item</th>
+                                    {colLabels.map(l => (
+                                      <th key={l} className="px-2 py-1.5 text-center text-xs font-semibold text-neutral-600 w-16">{l}</th>
+                                    ))}
+                                    <th className="px-2 py-1.5 text-left text-xs font-semibold text-neutral-600">Comments / Photo Ref.</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {rows.map((row, rowIdx) => {
+                                    const rowBg = row.cond.some(c => c === 'P' || c === 'D') ? 'bg-red-50' :
+                                      row.cond.some(c => c === 'F') ? 'bg-yellow-50' : ''
+                                    return (
+                                      <tr key={row.item} className={`border-b border-neutral-100 ${rowBg}`}>
+                                        <td className="px-3 py-1.5 text-xs text-neutral-800">{row.item}</td>
+                                        {colLabels.map((_, colIdx) => {
+                                          const cv = row.cond[colIdx] ?? 'G'
+                                          return (
+                                            <td key={colIdx} className="px-2 py-1.5 w-16 text-center">
+                                              {isCompleted ? (
+                                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${
+                                                  cv === 'G' || cv === 'N' ? 'bg-green-100 text-green-800' :
+                                                  cv === 'F' ? 'bg-yellow-100 text-yellow-800' :
+                                                  cv === 'P' || cv === 'D' ? 'bg-red-100 text-red-800' :
+                                                  cv === 'M' ? 'bg-orange-100 text-orange-800' :
+                                                  'bg-neutral-100 text-neutral-600'
+                                                }`}>{cv}</span>
+                                              ) : (
+                                                <select value={cv}
+                                                  onChange={e => updateMatrixCond(matrixKey, rowIdx, colIdx, e.target.value)}
+                                                  className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500">
+                                                  {CONDITION_CODES.map(c => (
+                                                    <option key={c.value} value={c.value}>{c.value}</option>
+                                                  ))}
+                                                </select>
+                                              )}
+                                            </td>
+                                          )
+                                        })}
+                                        <td className="px-2 py-1.5">
+                                          {isCompleted ? (
+                                            <span className="text-xs text-neutral-600">{row.comments || '—'}</span>
+                                          ) : (
+                                            <input type="text" value={row.comments}
+                                              onChange={e => updateMatrixComments(matrixKey, rowIdx, e.target.value)}
+                                              placeholder="Comments / Photo Ref."
+                                              className="text-xs border border-neutral-200 rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500" />
+                                          )}
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
+
+                    const bedCols = Array.from({ length: checklistData.numBedrooms || 2 }, (_, i) => `Bed ${i + 1}`)
+                    const bathCols = Array.from({ length: checklistData.numBathrooms || 1 }, (_, i) => `WC ${i + 1}`)
 
                     return (
-                      <div key={section}>
-                        <button type="button" onClick={() => toggleSection(section)}
+                      <>
+                        {earlySections.map(renderSection)}
+                        {isRes && renderMatrixSection('3.4', 'Bedrooms', 'one column per bedroom', 'bedroomMatrix', bedCols)}
+                        {isRes && renderMatrixSection('3.5', 'Bathrooms & Toilets', 'one column per bathroom', 'bathroomMatrix', bathCols)}
+                        {lateSections.map(renderSection)}
+                      </>
+                    )
+                  })()}
+
+                  {/* Additional Areas */}
+                  {(() => {
+                    const addKey = '_ADDITIONAL_'
+                    const addSectionNum = checklistData.propertyCategory === 'RESIDENTIAL' ? '3.10' : '3.11'
+                    const isExpanded = expandedSections.has(addKey)
+                    const items = checklistData.additionalItems || []
+                    return (
+                      <div>
+                        <button type="button" onClick={() => toggleSection(addKey)}
                           className="w-full flex items-center justify-between px-6 py-2.5 bg-[#1A3A5C] text-white text-left hover:bg-[#142d47] transition-colors">
-                          <span className="text-sm font-semibold">{section}</span>
-                          <div className="flex items-center gap-2">
-                            {hasIssue && !isCompleted && (
-                              <span className="text-xs bg-[#E8960C] text-white px-2 py-0.5 rounded-full">Needs attention</span>
-                            )}
-                            <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
+                          <span className="text-sm font-semibold">{addSectionNum} Additional Areas / Items</span>
+                          <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
                         </button>
                         {isExpanded && (
                           <div className="overflow-x-auto">
@@ -858,9 +1069,55 @@ export default function InspectionsPage() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {sectionItemsFiltered.map(({ item, globalIdx }) => (
-                                  <ChecklistRow key={`${section}-${item.item}`} item={item} idx={globalIdx}
-                                    onUpdate={updateItem} readonly={isCompleted} />
+                                {items.map((it, idx) => (
+                                  <tr key={idx} className="border-b border-neutral-100">
+                                    <td className="px-2 py-1.5">
+                                      {isCompleted ? (
+                                        <span className="text-xs text-neutral-800">{it.item || '—'}</span>
+                                      ) : (
+                                        <input type="text" value={it.item}
+                                          onChange={e => updateAdditionalItem(idx, 'item', e.target.value)}
+                                          placeholder="Area or item name"
+                                          className="text-xs border border-neutral-200 rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500" />
+                                      )}
+                                    </td>
+                                    <td className="px-2 py-1.5 w-20">
+                                      {isCompleted ? (
+                                        <span className="text-xs text-neutral-600">{it.condition}</span>
+                                      ) : (
+                                        <select value={it.condition}
+                                          onChange={e => updateAdditionalItem(idx, 'condition', e.target.value)}
+                                          className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500">
+                                          {CONDITION_CODES.map(c => (
+                                            <option key={c.value} value={c.value}>{c.value}</option>
+                                          ))}
+                                        </select>
+                                      )}
+                                    </td>
+                                    <td className="px-2 py-1.5 w-20">
+                                      {isCompleted ? (
+                                        <span className="text-xs text-neutral-600">{it.action}</span>
+                                      ) : (
+                                        <select value={it.action}
+                                          onChange={e => updateAdditionalItem(idx, 'action', e.target.value)}
+                                          className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500">
+                                          {ACTION_CODES.map(c => (
+                                            <option key={c.value} value={c.value}>{c.value}</option>
+                                          ))}
+                                        </select>
+                                      )}
+                                    </td>
+                                    <td className="px-2 py-1.5">
+                                      {isCompleted ? (
+                                        <span className="text-xs text-neutral-600">{it.comments || '—'}</span>
+                                      ) : (
+                                        <input type="text" value={it.comments}
+                                          onChange={e => updateAdditionalItem(idx, 'comments', e.target.value)}
+                                          placeholder="Comments / Photo Ref."
+                                          className="text-xs border border-neutral-200 rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500" />
+                                      )}
+                                    </td>
+                                  </tr>
                                 ))}
                               </tbody>
                             </table>
@@ -868,7 +1125,7 @@ export default function InspectionsPage() {
                         )}
                       </div>
                     )
-                  })}
+                  })()}
 
                   {/* Utility Meters */}
                   <div>
@@ -1121,6 +1378,34 @@ export default function InspectionsPage() {
             </ModalBody>
 
             <ModalFooter>
+              {isCompleted && isChecklist && (
+                <div className="flex items-center gap-2 flex-wrap mr-auto">
+                  <Button variant="outline" size="sm"
+                    onClick={() => window.open(`/api/inspections/${selectedInspection.id}/report`, '_blank')}>
+                    Download Report
+                  </Button>
+                  {!showEmailForm ? (
+                    <Button variant="outline" size="sm" onClick={() => setShowEmailForm(true)}>
+                      Email Report
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={emailTo}
+                        onChange={e => setEmailTo(e.target.value)}
+                        placeholder="Recipient email"
+                        className="text-xs border border-neutral-300 rounded px-2 py-1.5 w-48 focus:ring-1 focus:ring-primary-500"
+                        onKeyDown={e => e.key === 'Enter' && handleEmailReport()}
+                      />
+                      <Button variant="primary" size="sm" onClick={handleEmailReport} disabled={emailLoading || !emailTo.trim()}>
+                        {emailLoading ? 'Sending...' : 'Send'}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { setShowEmailForm(false); setEmailTo('') }}>✕</Button>
+                    </div>
+                  )}
+                </div>
+              )}
               {!isCompleted && !isCancelled && (
                 <>
                   <Button variant="outline" onClick={saveProgress}>Save Progress</Button>

@@ -20,6 +20,7 @@ interface Lease {
     id: string
     name: string
     address: string
+    landlord?: { id: string; name: string } | null
   }
   unitRef?: { id: string; unitNumber: string } | null
 }
@@ -69,7 +70,15 @@ export default function LandlordDocumentsPage() {
     queryFn: fetchStatements,
   })
 
-  if (loadingLeases || loadingStatements) {
+  const landlordId = leasesData?.leases?.[0]?.property?.landlord?.id as string | undefined
+
+  const { data: landlordDocsData, isLoading: loadingDocs } = useQuery({
+    queryKey: ['landlord-inspection-docs', landlordId],
+    enabled: !!landlordId,
+    queryFn: () => fetch(`/api/landlords/${landlordId}/documents`).then(r => r.json()),
+  })
+
+  if (loadingLeases || loadingStatements || (!!landlordId && loadingDocs)) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
@@ -79,6 +88,7 @@ export default function LandlordDocumentsPage() {
 
   const leases = leasesData?.leases || []
   const statements = statementsData?.statements || []
+  const inspectionReports = (landlordDocsData?.documents || []).filter((d: any) => d.fileType === 'INSPECTION_REPORT')
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -156,6 +166,39 @@ export default function LandlordDocumentsPage() {
                     {stmt.status}
                   </span>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Inspection Reports */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Inspection Reports</h2>
+        <div className="bg-surface shadow rounded-lg p-6">
+          <div className="space-y-4">
+            {inspectionReports.length === 0 && (
+              <p className="text-sm text-neutral-500">No inspection reports yet</p>
+            )}
+            {inspectionReports.map((doc: any) => (
+              <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:border-amber-500 transition-colors">
+                <div className="flex items-center space-x-4">
+                  <div className="text-4xl">📋</div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">{doc.name}</p>
+                    <p className="text-xs text-neutral-600">
+                      Completed: {formatDate(doc.uploadedAt)}
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 text-sm text-primary-600 hover:text-primary-900 border border-primary-300 rounded hover:bg-primary-50 transition-colors"
+                >
+                  View Report
+                </a>
               </div>
             ))}
           </div>

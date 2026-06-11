@@ -1467,6 +1467,7 @@ enum WorkOrderStatus {
 
 enum InspectionType {
   MOVE_IN
+  POST_MOVE_IN
   THREE_MONTH
   ROUTINE_6_MONTH
   PRE_MOVE_OUT

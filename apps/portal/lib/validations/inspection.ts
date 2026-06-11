@@ -27,7 +27,7 @@ export const createInspectionSchema = z.object({
   unitId: z.string().optional().nullable(),
   tenantId: z.string().optional().nullable(),
   leaseId: z.string().optional().nullable(),
-  type: z.enum(['MOVE_IN', 'THREE_MONTH', 'ROUTINE_6_MONTH', 'PRE_MOVE_OUT', 'MOVE_OUT', 'ANNUAL']),
+  type: z.enum(['MOVE_IN', 'POST_MOVE_IN', 'THREE_MONTH', 'ROUTINE_6_MONTH', 'PRE_MOVE_OUT', 'MOVE_OUT', 'ANNUAL']),
   scheduledDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: 'Invalid date',
   }),
@@ -41,7 +41,7 @@ export const updateInspectionSchema = z.object({
   unitId: z.string().optional().nullable(),
   tenantId: z.string().optional().nullable(),
   leaseId: z.string().optional().nullable(),
-  type: z.enum(['MOVE_IN', 'THREE_MONTH', 'ROUTINE_6_MONTH', 'PRE_MOVE_OUT', 'MOVE_OUT', 'ANNUAL']).optional(),
+  type: z.enum(['MOVE_IN', 'POST_MOVE_IN', 'THREE_MONTH', 'ROUTINE_6_MONTH', 'PRE_MOVE_OUT', 'MOVE_OUT', 'ANNUAL']).optional(),
   scheduledDate: z.string().optional(),
   completedDate: z.string().optional().nullable(),
   inspector: z.string().optional().nullable(),

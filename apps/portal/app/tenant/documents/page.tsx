@@ -28,7 +28,15 @@ export default function DocumentsPage() {
     queryFn: () => fetch('/api/payments?status=PAID').then(r => r.json()),
   })
 
-  const isLoading = isLoadingLeases || isLoadingPayments
+  const tenantId = leasesData?.leases?.[0]?.tenant?.id as string | undefined
+
+  const { data: tenantDocsData, isLoading: isLoadingDocs } = useQuery({
+    queryKey: ['tenant-inspection-docs', tenantId],
+    enabled: !!tenantId,
+    queryFn: () => fetch(`/api/tenants/${tenantId}/documents`).then(r => r.json()),
+  })
+
+  const isLoading = isLoadingLeases || isLoadingPayments || (!!tenantId && isLoadingDocs)
 
   if (isLoading) {
     return (
@@ -43,6 +51,7 @@ export default function DocumentsPage() {
 
   const leases = leasesData?.leases || []
   const paidPayments = paymentsData?.payments || []
+  const inspectionDocs = (tenantDocsData?.documents || []).filter((d: any) => d.fileType === 'INSPECTION_REPORT')
 
   // Build document list from real data
   const documents: DocumentItem[] = []
@@ -73,10 +82,22 @@ export default function DocumentsPage() {
     })
   })
 
+  // Add inspection reports
+  inspectionDocs.forEach((doc: any) => {
+    documents.push({
+      id: `inspection-${doc.id}`,
+      name: doc.name,
+      type: 'Inspection',
+      date: doc.uploadedAt,
+      status: 'Active',
+      link: doc.url,
+    })
+  })
+
   // Sort by date descending
   documents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-  const documentTypes = ['All', 'Lease', 'Receipt']
+  const documentTypes = ['All', 'Lease', 'Receipt', 'Inspection']
 
   const filteredDocuments = activeFilter === 'All'
     ? documents
@@ -102,7 +123,7 @@ export default function DocumentsPage() {
       </div>
 
       {/* Document Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-4 mb-6">
         <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <p className="text-sm font-medium text-neutral-500">Total Documents</p>
@@ -122,6 +143,14 @@ export default function DocumentsPage() {
             <p className="text-sm font-medium text-neutral-500">Payment Receipts</p>
             <p className="mt-1 text-2xl font-semibold text-success-600">
               {documents.filter((d) => d.type === 'Receipt').length}
+            </p>
+          </div>
+        </div>
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <p className="text-sm font-medium text-neutral-500">Inspection Reports</p>
+            <p className="mt-1 text-2xl font-semibold text-amber-600">
+              {documents.filter((d) => d.type === 'Inspection').length}
             </p>
           </div>
         </div>
@@ -205,6 +234,8 @@ export default function DocumentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <Link
                         href={doc.link}
+                        target={doc.type === 'Inspection' ? '_blank' : undefined}
+                        rel={doc.type === 'Inspection' ? 'noreferrer' : undefined}
                         className="text-primary-600 hover:text-primary-900"
                       >
                         View

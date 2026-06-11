@@ -4,6 +4,16 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { completeInspectionSchema } from '@/lib/validations/inspection'
 
+const INSPECTION_TYPE_LABELS: Record<string, string> = {
+  MOVE_IN: 'Move-In',
+  POST_MOVE_IN: 'Post-Move-In Confirmation (5+ days)',
+  THREE_MONTH: '3-Month (New Tenancy)',
+  ROUTINE_6_MONTH: '6-Month Routine',
+  PRE_MOVE_OUT: 'Pre-Move-Out (2+ weeks before)',
+  MOVE_OUT: 'Move-Out',
+  ANNUAL: 'Annual Condition Report',
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -81,6 +91,7 @@ export async function POST(
             id: true,
             name: true,
             address: true,
+            landlordId: true,
           },
         },
         unit: {
@@ -97,6 +108,54 @@ export async function POST(
         },
       },
     })
+
+    // Auto-create inspection report documents if checklist data exists
+    const completedRooms = inspection.rooms as any
+    if (completedRooms && completedRooms._v === 2) {
+      const typeLabel = INSPECTION_TYPE_LABELS[inspection.type] || inspection.type
+      const completedDate = inspection.completedDate
+        ? new Date(inspection.completedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      const docName = `Inspection Report — ${typeLabel} — ${completedDate}`
+      const reportUrl = `/api/inspections/${id}/report`
+
+      const docCreates: Promise<any>[] = []
+
+      if (inspection.tenantId) {
+        docCreates.push(
+          prisma.tenantDocument.create({
+            data: {
+              tenantId: inspection.tenantId,
+              name: docName,
+              fileType: 'INSPECTION_REPORT',
+              fileSize: 0,
+              storagePath: '',
+              url: reportUrl,
+            },
+          })
+        )
+      }
+
+      const landlordId = (inspection.property as any)?.landlordId
+      if (landlordId) {
+        docCreates.push(
+          prisma.landlordDocument.create({
+            data: {
+              landlordId,
+              name: docName,
+              fileType: 'INSPECTION_REPORT',
+              fileSize: 0,
+              storagePath: '',
+              url: reportUrl,
+            },
+          })
+        )
+      }
+
+      if (docCreates.length > 0) {
+        await Promise.allSettled(docCreates)
+      }
+    }
 
     return NextResponse.json(inspection)
   } catch (error: any) {
