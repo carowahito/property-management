@@ -6,6 +6,7 @@ export interface ChecklistItem {
   condition: string // N | G | F | P | D | M | NA
   action: string    // OK | CL | RP | RC | TC
   comments: string
+  photos?: string[] // base64 data URLs (compressed JPEG)
 }
 
 // Matrix row used for 3.4 Bedrooms and 3.5 Bathrooms (one condition per column)
@@ -48,6 +49,7 @@ export interface ChecklistData {
   noticeDate: string
   numBedrooms: number        // residential
   numBathrooms: number       // residential
+  notes: string              // general inspection notes / comments
   // Checklist items
   items: ChecklistItem[]           // all standard sections
   bedroomMatrix: MatrixRow[]       // 3.4 (residential) — Bed 1/2/3/4 columns
@@ -417,6 +419,7 @@ export function defaultChecklistData(
     noticeDate: '',
     numBedrooms,
     numBathrooms,
+    notes: '',
     overallCondition: 'GOOD',
     leaseViolations: false,
     violationDetails: '',

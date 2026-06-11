@@ -218,6 +218,14 @@ function buildHtml(inspection: any, data: ChecklistData): string {
       ? `<tr><td colspan="4" style="padding:8px;font-size:11px;color:#999;border:1px solid #ddd;">No defects recorded</td></tr>` : ''}
   </table>`
 
+  // General notes
+  const generalNotes = data.notes?.trim()
+    ? `<div style="background:#f8fafc;border:1px solid #ddd;border-radius:4px;padding:10px 12px;margin-bottom:10px;">
+        <strong style="font-size:11px;color:${NAVY};">General Inspection Notes</strong>
+        <p style="font-size:11px;color:#333;margin-top:4px;white-space:pre-wrap;">${data.notes}</p>
+      </div>`
+    : ''
+
   // Overall assessment
   const overall = `<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:10px;">
     <tr style="background:${SAFFRON};color:#fff;">
@@ -383,6 +391,7 @@ function buildHtml(inspection: any, data: ChecklistData): string {
   ${keysTable}
   ${defectsTable}
   ${sop006}${sop008}${sop009}
+  ${generalNotes}
   ${overall}
 
   <!-- Declarations & Signatures -->

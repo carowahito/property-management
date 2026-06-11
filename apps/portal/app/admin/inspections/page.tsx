@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -106,73 +106,170 @@ function computeOverall(data: ChecklistData): string {
   return avg >= 3.5 ? 'EXCELLENT' : avg >= 2.5 ? 'GOOD' : avg >= 1.5 ? 'FAIR' : 'POOR'
 }
 
+// ── Image resize helper ────────────────────────────────────────────────────────
+
+async function resizeImage(file: File, maxPx = 1200, quality = 0.72): Promise<string> {
+  return new Promise(resolve => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const scale = Math.min(1, maxPx / img.width, maxPx / img.height)
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.src = url
+  })
+}
+
+const NEEDS_EVIDENCE = new Set(['P', 'D', 'M'])
+
 // ── Checklist row ─────────────────────────────────────────────────────────────
 
 function ChecklistRow({
-  item, idx, onUpdate, readonly,
+  item, idx, onUpdate, onAddPhoto, onRemovePhoto, readonly, editableName,
 }: {
   item: ChecklistItem
   idx: number
   onUpdate: (idx: number, field: keyof ChecklistItem, value: string) => void
+  onAddPhoto?: (idx: number, dataUrl: string) => void
+  onRemovePhoto?: (idx: number, photoIdx: number) => void
   readonly: boolean
+  editableName?: boolean
 }) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const photos = item.photos || []
+  const needsEvidence = NEEDS_EVIDENCE.has(item.condition)
+  const hasEvidence = !!(item.comments.trim() || photos.length)
+  const showWarning = needsEvidence && !hasEvidence && !readonly
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !onAddPhoto) return
+    const dataUrl = await resizeImage(file)
+    onAddPhoto(idx, dataUrl)
+    e.target.value = ''
+  }
+
   const condColor: Record<string, string> = {
     P: 'bg-red-50', D: 'bg-red-50', F: 'bg-yellow-50', M: 'bg-orange-50',
   }
   const rowBg = condColor[item.condition] || ''
+
   return (
-    <tr className={`border-b border-neutral-100 ${rowBg}`}>
-      <td className="px-3 py-1.5 text-xs text-neutral-800 min-w-[200px]">{item.item}</td>
-      <td className="px-2 py-1.5 w-20">
-        {readonly ? (
-          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${
-            item.condition === 'G' || item.condition === 'N' ? 'bg-green-100 text-green-800' :
-            item.condition === 'F' ? 'bg-yellow-100 text-yellow-800' :
-            item.condition === 'P' || item.condition === 'D' ? 'bg-red-100 text-red-800' :
-            item.condition === 'M' ? 'bg-orange-100 text-orange-800' :
-            'bg-neutral-100 text-neutral-600'
-          }`}>{item.condition}</span>
-        ) : (
-          <select
-            value={item.condition}
-            onChange={e => onUpdate(idx, 'condition', e.target.value)}
-            className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500"
-          >
-            {CONDITION_CODES.map(c => (
-              <option key={c.value} value={c.value}>{c.value}</option>
-            ))}
-          </select>
-        )}
-      </td>
-      <td className="px-2 py-1.5 w-20">
-        {readonly ? (
-          <span className="text-xs text-neutral-600">{item.action}</span>
-        ) : (
-          <select
-            value={item.action}
-            onChange={e => onUpdate(idx, 'action', e.target.value)}
-            className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500"
-          >
-            {ACTION_CODES.map(c => (
-              <option key={c.value} value={c.value}>{c.value}</option>
-            ))}
-          </select>
-        )}
-      </td>
-      <td className="px-2 py-1.5">
-        {readonly ? (
-          <span className="text-xs text-neutral-600">{item.comments || '—'}</span>
-        ) : (
-          <input
-            type="text"
-            value={item.comments}
-            onChange={e => onUpdate(idx, 'comments', e.target.value)}
-            placeholder="Comments / Photo Ref."
-            className="text-xs border border-neutral-200 rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-          />
-        )}
-      </td>
-    </tr>
+    <>
+      <tr className={`border-b border-neutral-100 ${rowBg}${showWarning ? ' ring-1 ring-inset ring-red-400' : ''}`}>
+        <td className="px-3 py-1.5 text-xs text-neutral-800 min-w-[200px]">
+          {showWarning && (
+            <span className="inline-block text-red-500 mr-1" title="Add a comment or photo for P / D / M items">⚠</span>
+          )}
+          {editableName && !readonly ? (
+            <input type="text" value={item.item}
+              onChange={e => onUpdate(idx, 'item', e.target.value)}
+              placeholder="Area or item name"
+              className="text-xs border border-neutral-200 rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500" />
+          ) : (
+            item.item || '—'
+          )}
+        </td>
+        <td className="px-2 py-1.5 w-20">
+          {readonly ? (
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${
+              item.condition === 'G' || item.condition === 'N' ? 'bg-green-100 text-green-800' :
+              item.condition === 'F' ? 'bg-yellow-100 text-yellow-800' :
+              item.condition === 'P' || item.condition === 'D' ? 'bg-red-100 text-red-800' :
+              item.condition === 'M' ? 'bg-orange-100 text-orange-800' :
+              'bg-neutral-100 text-neutral-600'
+            }`}>{item.condition}</span>
+          ) : (
+            <select
+              value={item.condition}
+              onChange={e => onUpdate(idx, 'condition', e.target.value)}
+              className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500"
+            >
+              {CONDITION_CODES.map(c => (
+                <option key={c.value} value={c.value}>{c.value}</option>
+              ))}
+            </select>
+          )}
+        </td>
+        <td className="px-2 py-1.5 w-20">
+          {readonly ? (
+            <span className="text-xs text-neutral-600">{item.action}</span>
+          ) : (
+            <select
+              value={item.action}
+              onChange={e => onUpdate(idx, 'action', e.target.value)}
+              className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500"
+            >
+              {ACTION_CODES.map(c => (
+                <option key={c.value} value={c.value}>{c.value}</option>
+              ))}
+            </select>
+          )}
+        </td>
+        <td className="px-2 py-1.5">
+          {readonly ? (
+            <span className="text-xs text-neutral-600">{item.comments || '—'}</span>
+          ) : (
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={item.comments}
+                onChange={e => onUpdate(idx, 'comments', e.target.value)}
+                placeholder={needsEvidence ? 'Comment required for P/D/M…' : 'Comments / Photo Ref.'}
+                className={`text-xs border rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500 focus:border-transparent ${
+                  showWarning ? 'border-red-300 bg-red-50 placeholder:text-red-400' : 'border-neutral-200'
+                }`}
+              />
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+              <button
+                type="button"
+                title="Add photo"
+                onClick={() => fileRef.current?.click()}
+                className={`flex-shrink-0 px-1.5 py-1 rounded border text-sm transition-colors ${
+                  showWarning
+                    ? 'border-red-300 text-red-400 hover:bg-red-50 hover:text-red-600'
+                    : 'border-neutral-200 text-neutral-400 hover:border-primary-300 hover:text-primary-600'
+                }`}
+              >
+                📷
+              </button>
+            </div>
+          )}
+        </td>
+      </tr>
+      {/* Photo thumbnails */}
+      {photos.length > 0 && (
+        <tr className={`border-b border-neutral-100 ${rowBg}`}>
+          <td colSpan={4} className="px-3 pb-2 pt-0.5">
+            <div className="flex gap-2 flex-wrap">
+              {photos.map((src, i) => (
+                <div key={i} className="relative group">
+                  <img src={src} alt={`Photo ${i + 1}`}
+                    className="w-16 h-16 object-cover rounded border border-neutral-200 cursor-pointer"
+                    onClick={() => window.open(src, '_blank')} />
+                  <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] bg-black/50 text-white rounded-b pointer-events-none">
+                    P{String(i + 1).padStart(3, '0')}
+                  </span>
+                  {!readonly && (
+                    <button type="button" onClick={() => onRemovePhoto?.(idx, i)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center leading-none">
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -436,6 +533,42 @@ export default function InspectionsPage() {
     })
   }
 
+  function addPhotoToItem(idx: number, dataUrl: string) {
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const items = [...prev.items]
+      items[idx] = { ...items[idx], photos: [...(items[idx].photos || []), dataUrl] }
+      return { ...prev, items }
+    })
+  }
+
+  function removePhotoFromItem(idx: number, photoIdx: number) {
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const items = [...prev.items]
+      items[idx] = { ...items[idx], photos: (items[idx].photos || []).filter((_, i) => i !== photoIdx) }
+      return { ...prev, items }
+    })
+  }
+
+  function addPhotoToAdditional(idx: number, dataUrl: string) {
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const items = [...prev.additionalItems]
+      items[idx] = { ...items[idx], photos: [...(items[idx].photos || []), dataUrl] }
+      return { ...prev, additionalItems: items }
+    })
+  }
+
+  function removePhotoFromAdditional(idx: number, photoIdx: number) {
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const items = [...prev.additionalItems]
+      items[idx] = { ...items[idx], photos: (items[idx].photos || []).filter((_, i) => i !== photoIdx) }
+      return { ...prev, additionalItems: items }
+    })
+  }
+
   async function handleEmailReport() {
     if (!selectedInspection || !emailTo.trim()) return
     setEmailLoading(true)
@@ -515,6 +648,31 @@ export default function InspectionsPage() {
       let followUpRequired = false
 
       if (checklistData) {
+        // Validate: P / D / M items must have a comment or at least one photo
+        const noEvidence = [
+          ...checklistData.items,
+          ...checklistData.additionalItems.filter(it => it.item.trim()),
+        ].filter(it => NEEDS_EVIDENCE.has(it.condition) && !it.comments.trim() && !(it.photos?.length))
+
+        // Matrix rows: require at least a comment if any column is P/D/M
+        const matrixNoEvidence = [
+          ...checklistData.bedroomMatrix,
+          ...checklistData.bathroomMatrix,
+        ].filter(row =>
+          row.cond.some(c => NEEDS_EVIDENCE.has(c)) && !row.comments.trim()
+        )
+
+        if (noEvidence.length > 0 || matrixNoEvidence.length > 0) {
+          const names = [
+            ...noEvidence.map(it => it.item),
+            ...matrixNoEvidence.map(row => row.item),
+          ]
+          alert(`Add a comment or photo for these P / D / M items before completing:\n\n• ${names.join('\n• ')}`)
+          setShowCompleteConfirm(false)
+          setCompleteLoading(false)
+          return
+        }
+
         rooms = checklistData
         overallCondition = checklistData.overallCondition || 'GOOD'
         maintenanceItems = checklistData.defects
@@ -905,10 +1063,30 @@ export default function InspectionsPage() {
                     </div>
                   </div>
 
+                  {/* General Notes */}
+                  <div className="px-6 py-3 bg-neutral-50 border-b border-neutral-200">
+                    <label className="block text-xs font-medium text-neutral-600 mb-1">
+                      General Inspection Notes
+                      {!isCompleted && <span className="ml-1 text-neutral-400 font-normal">(overall observations, access issues, anything not captured in sections below)</span>}
+                    </label>
+                    {isCompleted ? (
+                      <p className="text-sm text-neutral-700 whitespace-pre-wrap">{(checklistData as any).notes || '—'}</p>
+                    ) : (
+                      <textarea
+                        rows={2}
+                        value={(checklistData as any).notes || ''}
+                        onChange={e => updateMeta('notes', e.target.value)}
+                        placeholder="e.g. Property well maintained overall. Tenant was present. Access via estate agent key…"
+                        className="text-sm border border-neutral-300 rounded px-3 py-2 w-full focus:ring-2 focus:ring-primary-500 resize-none"
+                      />
+                    )}
+                  </div>
+
                   {/* Legend */}
                   <div className="px-6 py-2 bg-neutral-50 border-b border-neutral-200 flex flex-wrap gap-x-6 gap-y-1 text-xs text-neutral-500">
                     <span><strong>Condition:</strong> N=New · G=Good · F=Fair · P=Poor · D=Damaged · M=Missing · N/A=Not applicable</span>
                     <span><strong>Action:</strong> OK=No action · CL=Cleaning · RP=Repair · RC=Replace · TC=Tenant charge (evidence required)</span>
+                    <span className="text-amber-600"><strong>⚠ P / D / M</strong> items require a comment or photo before completing.</span>
                   </div>
 
                   {/* Checklist Sections — residential interleaves matrices; commercial renders all directly */}
@@ -951,7 +1129,9 @@ export default function InspectionsPage() {
                                 <tbody>
                                   {sectionItemsFiltered.map(({ item, globalIdx }) => (
                                     <ChecklistRow key={`${section}-${item.item}`} item={item} idx={globalIdx}
-                                      onUpdate={updateItem} readonly={isCompleted} />
+                                      onUpdate={updateItem} readonly={isCompleted}
+                                      onAddPhoto={isCompleted ? undefined : addPhotoToItem}
+                                      onRemovePhoto={isCompleted ? undefined : removePhotoFromItem} />
                                   ))}
                                 </tbody>
                               </table>
@@ -1092,54 +1272,16 @@ export default function InspectionsPage() {
                               </thead>
                               <tbody>
                                 {items.map((it, idx) => (
-                                  <tr key={idx} className="border-b border-neutral-100">
-                                    <td className="px-2 py-1.5">
-                                      {isCompleted ? (
-                                        <span className="text-xs text-neutral-800">{it.item || '—'}</span>
-                                      ) : (
-                                        <input type="text" value={it.item}
-                                          onChange={e => updateAdditionalItem(idx, 'item', e.target.value)}
-                                          placeholder="Area or item name"
-                                          className="text-xs border border-neutral-200 rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500" />
-                                      )}
-                                    </td>
-                                    <td className="px-2 py-1.5 w-20">
-                                      {isCompleted ? (
-                                        <span className="text-xs text-neutral-600">{it.condition}</span>
-                                      ) : (
-                                        <select value={it.condition}
-                                          onChange={e => updateAdditionalItem(idx, 'condition', e.target.value)}
-                                          className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500">
-                                          {CONDITION_CODES.map(c => (
-                                            <option key={c.value} value={c.value}>{c.value}</option>
-                                          ))}
-                                        </select>
-                                      )}
-                                    </td>
-                                    <td className="px-2 py-1.5 w-20">
-                                      {isCompleted ? (
-                                        <span className="text-xs text-neutral-600">{it.action}</span>
-                                      ) : (
-                                        <select value={it.action}
-                                          onChange={e => updateAdditionalItem(idx, 'action', e.target.value)}
-                                          className="text-xs border border-neutral-300 rounded px-1 py-1 w-full bg-white focus:ring-1 focus:ring-primary-500">
-                                          {ACTION_CODES.map(c => (
-                                            <option key={c.value} value={c.value}>{c.value}</option>
-                                          ))}
-                                        </select>
-                                      )}
-                                    </td>
-                                    <td className="px-2 py-1.5">
-                                      {isCompleted ? (
-                                        <span className="text-xs text-neutral-600">{it.comments || '—'}</span>
-                                      ) : (
-                                        <input type="text" value={it.comments}
-                                          onChange={e => updateAdditionalItem(idx, 'comments', e.target.value)}
-                                          placeholder="Comments / Photo Ref."
-                                          className="text-xs border border-neutral-200 rounded px-2 py-1 w-full focus:ring-1 focus:ring-primary-500" />
-                                      )}
-                                    </td>
-                                  </tr>
+                                  <ChecklistRow
+                                    key={idx}
+                                    item={it}
+                                    idx={idx}
+                                    onUpdate={updateAdditionalItem}
+                                    onAddPhoto={isCompleted ? undefined : addPhotoToAdditional}
+                                    onRemovePhoto={isCompleted ? undefined : removePhotoFromAdditional}
+                                    readonly={isCompleted}
+                                    editableName
+                                  />
                                 ))}
                               </tbody>
                             </table>
