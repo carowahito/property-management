@@ -93,6 +93,19 @@ function getUniqueSections(items: ChecklistItem[]) {
   return out
 }
 
+const COND_SCORES: Record<string, number> = { N: 4, G: 3, F: 2, P: 1, D: 1, M: 1 }
+
+function computeOverall(data: ChecklistData): string {
+  const all: number[] = []
+  data.items.forEach(it => { if (it.condition in COND_SCORES) all.push(COND_SCORES[it.condition]) })
+  ;(data.bedroomMatrix || []).forEach(row => row.cond.forEach(c => { if (c in COND_SCORES) all.push(COND_SCORES[c]) }))
+  ;(data.bathroomMatrix || []).forEach(row => row.cond.forEach(c => { if (c in COND_SCORES) all.push(COND_SCORES[c]) }))
+  ;(data.additionalItems || []).filter(it => it.item.trim()).forEach(it => { if (it.condition in COND_SCORES) all.push(COND_SCORES[it.condition]) })
+  if (!all.length) return 'GOOD'
+  const avg = all.reduce((s, n) => s + n, 0) / all.length
+  return avg >= 3.5 ? 'EXCELLENT' : avg >= 2.5 ? 'GOOD' : avg >= 1.5 ? 'FAIR' : 'POOR'
+}
+
 // ── Checklist row ─────────────────────────────────────────────────────────────
 
 function ChecklistRow({
@@ -284,15 +297,21 @@ export default function InspectionsPage() {
   function openDetail(inspection: Inspection) {
     setSelectedInspection(inspection)
     setShowCompleteConfirm(false)
+    setShowEmailForm(false)
+    setEmailTo('')
 
     if (inspection.propertyCategory) {
       // Checklist-mode
       const stored = inspection.rooms
       if (stored && (stored as any)._v === 2) {
-        setChecklistData(stored as ChecklistData)
-        // Expand all sections for SCHEDULED/IN_PROGRESS
+        const data = stored as ChecklistData
+        // Auto-compute overall from saved conditions (for in-progress forms)
+        const withComputed = inspection.status !== 'COMPLETED'
+          ? { ...data, overallCondition: computeOverall(data) }
+          : data
+        setChecklistData(withComputed)
         if (inspection.status !== 'COMPLETED') {
-          const sections = getUniqueSections((stored as ChecklistData).items)
+          const sections = getUniqueSections(data.items)
           setExpandedSections(new Set(sections))
         } else {
           setExpandedSections(new Set())
@@ -327,7 +346,8 @@ export default function InspectionsPage() {
       if (!prev) return prev
       const items = [...prev.items]
       items[idx] = { ...items[idx], [field]: value }
-      return { ...prev, items }
+      const next = { ...prev, items }
+      return { ...next, overallCondition: computeOverall(next) }
     })
   }
 
@@ -388,7 +408,8 @@ export default function InspectionsPage() {
       const cond = [...rows[rowIdx].cond]
       cond[colIdx] = value
       rows[rowIdx] = { ...rows[rowIdx], cond }
-      return { ...prev, [matrix]: rows }
+      const next = { ...prev, [matrix]: rows }
+      return { ...next, overallCondition: computeOverall(next) }
     })
   }
 
@@ -410,7 +431,8 @@ export default function InspectionsPage() {
       if (!prev) return prev
       const items = [...prev.additionalItems]
       items[idx] = { ...items[idx], [field]: value }
-      return { ...prev, additionalItems: items }
+      const next = { ...prev, additionalItems: items }
+      return { ...next, overallCondition: computeOverall(next) }
     })
   }
 
@@ -1272,23 +1294,24 @@ export default function InspectionsPage() {
                   {/* Overall Assessment */}
                   <div className="px-6 py-4 space-y-4">
                     <h3 className="text-sm font-semibold text-[#1A3A5C] uppercase tracking-wide">Overall Assessment</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {['EXCELLENT', 'GOOD', 'FAIR', 'POOR'].map(c => (
-                        <label key={c} className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm cursor-pointer transition-colors ${
-                          checklistData.overallCondition === c
-                            ? (c === 'EXCELLENT' || c === 'GOOD') ? 'border-green-500 bg-green-50 text-green-800'
-                              : c === 'FAIR' ? 'border-yellow-500 bg-yellow-50 text-yellow-800'
-                              : 'border-red-500 bg-red-50 text-red-800'
-                            : 'border-neutral-300 text-neutral-600'
-                        }`}>
-                          <input type="radio" name="overallCondition" value={c}
-                            checked={checklistData.overallCondition === c}
-                            onChange={() => !isCompleted && updateMeta('overallCondition', c)}
-                            disabled={isCompleted} className="sr-only" />
-                          {c.charAt(0) + c.slice(1).toLowerCase()}
-                        </label>
-                      ))}
-                    </div>
+                    {(() => {
+                      const c = checklistData.overallCondition
+                      const colorClass =
+                        c === 'EXCELLENT' ? 'border-green-500 bg-green-50 text-green-800' :
+                        c === 'GOOD'      ? 'border-green-400 bg-green-50 text-green-700' :
+                        c === 'FAIR'      ? 'border-yellow-500 bg-yellow-50 text-yellow-800' :
+                                            'border-red-500 bg-red-50 text-red-800'
+                      return (
+                        <div className="flex items-center gap-3">
+                          <span className={`inline-flex items-center px-4 py-1.5 rounded-full border text-sm font-semibold ${colorClass}`}>
+                            {c ? c.charAt(0) + c.slice(1).toLowerCase() : '—'}
+                          </span>
+                          {!isCompleted && (
+                            <span className="text-xs text-neutral-400 italic">Auto-calculated from condition codes above</span>
+                          )}
+                        </div>
+                      )
+                    })()}
 
                     <div>
                       <label className="block text-xs font-medium text-neutral-600 mb-1">
