@@ -36,18 +36,17 @@ export async function POST(
       return NextResponse.json({ error: 'Cannot complete a cancelled inspection' }, { status: 400 })
     }
 
-    // Auto-flag followUpRequired if any room is POOR condition
-    let followUpRequired = false
-    const rooms = validatedData.rooms as any[] | null | undefined
-    if (rooms && rooms.length > 0) {
-      followUpRequired = rooms.some(
-        (room: any) => room.condition === 'POOR'
-      )
+    // Auto-flag followUpRequired — client sends it explicitly; legacy: derive from room conditions
+    const rooms = validatedData.rooms as any
+    const isLegacyRooms = Array.isArray(rooms)
+    let followUpRequired = validatedData.followUpRequired ?? false
+    if (isLegacyRooms && rooms.length > 0 && validatedData.followUpRequired === undefined) {
+      followUpRequired = rooms.some((room: any) => room.condition === 'POOR')
     }
 
     // Extract maintenance items from rooms with POOR/FAIR conditions if not explicitly provided
     let maintenanceItems = validatedData.maintenanceItems || []
-    if (rooms && rooms.length > 0 && maintenanceItems.length === 0) {
+    if (isLegacyRooms && rooms.length > 0 && maintenanceItems.length === 0) {
       const autoItems = rooms
         .filter((room: any) => room.condition === 'POOR' || room.condition === 'FAIR')
         .filter((room: any) => room.notes && room.notes.trim().length > 0)

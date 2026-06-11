@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
         tenantId: validatedData.tenantId || undefined,
         leaseId: validatedData.leaseId || undefined,
         type: validatedData.type,
+        propertyCategory: validatedData.propertyCategory || undefined,
         scheduledDate: new Date(validatedData.scheduledDate),
         inspector: validatedData.inspector || undefined,
         status: validatedData.status,

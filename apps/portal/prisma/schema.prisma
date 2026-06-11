@@ -1056,6 +1056,7 @@ model Inspection {
   leaseId         String?
 
   type            InspectionType
+  propertyCategory String?  // RESIDENTIAL | COMMERCIAL
   scheduledDate   DateTime
   completedDate   DateTime?
   inspector       String?  // agent name
@@ -1064,8 +1065,8 @@ model Inspection {
   overallCondition String?  // EXCELLENT / GOOD / FAIR / POOR
   summary         String?  @db.Text
 
-  // Room-by-room findings as JSON
-  rooms           Json?    // Array: [{room, condition, notes, photos: []}]
+  // Checklist / room findings as JSON (v2 = ChecklistData object; v1 = array)
+  rooms           Json?
 
   // Follow-up
   followUpRequired Boolean @default(false)
