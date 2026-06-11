@@ -369,8 +369,8 @@ function buildHtml(inspection: any, data: ChecklistData): string {
     <p>${isRes ? 'Residential Properties' : 'Commercial Properties — Offices · Retail · Warehouses'}</p>
   </div>
 
-  <!-- HOW TO USE -->
-  <div style="background:#fffbeb;border-left:4px solid ${SAFFRON};padding:8px 12px;margin-bottom:12px;font-size:10px;color:#555;">
+  <!-- HOW TO USE (screen only — hidden on print/PDF) -->
+  <div class="no-print" style="background:#fffbeb;border-left:4px solid ${SAFFRON};padding:8px 12px;margin-bottom:12px;font-size:10px;color:#555;">
     <strong>HOW TO USE:</strong> All inspections are digital-first — complete this form in the Inspection Module on a mobile device wherever possible (SOP 006); this document mirrors the platform form for offline use. Photograph every room and every defect; photo references go in the comments column. Both the inspector and the tenant sign on completion and a copy is shared with the tenant.
     ${isRes ? ' For move-out inspections, this report is compared side-by-side against the move-in report and forms the basis of deposit decisions.' : ''}
   </div>
