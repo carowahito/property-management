@@ -2,12 +2,23 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
+import { StatementMenuButton } from '@/components/ui/statement-menu-button'
+import { getStatementDateRange, StatementPeriod } from '@/lib/statement-period'
 
 export default function TenantPaymentsPage() {
   const [filter, setFilter] = useState('all')
+  const { data: session } = useSession()
+  const tenantId = session?.user?.id
+
+  const handleViewStatement = (period: StatementPeriod) => {
+    if (!tenantId) return
+    const { startDate, endDate } = getStatementDateRange(period)
+    window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`, '_blank')
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['tenant-payments'],
@@ -71,12 +82,7 @@ export default function TenantPaymentsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Payment History</h1>
         <div className="flex gap-2">
-          <Link
-            href="/tenant/statements"
-            className="inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50"
-          >
-            View Statement
-          </Link>
+          <StatementMenuButton label="View Statement" onSelect={handleViewStatement} />
           <Link
             href="/tenant/payments/new"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
@@ -223,12 +229,14 @@ export default function TenantPaymentsPage() {
                           Pay Now
                         </Link>
                       ) : payment.status === 'PAID' ? (
-                        <Link
-                          href={`/tenant/payments/${payment.id}/receipt`}
+                        <a
+                          href={`/api/payments/${payment.id}/receipt`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-primary-600 hover:text-primary-900"
                         >
                           View Receipt
-                        </Link>
+                        </a>
                       ) : (
                         <span className="text-neutral-400">-</span>
                       )}

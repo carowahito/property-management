@@ -17,10 +17,6 @@ export default function TenantNavigation() {
       icon: '🏠',
       submenu: [
         { href: '/tenant/lease', label: 'My Lease' },
-        { href: '/tenant/utilities', label: 'Utilities' },
-        { href: '/tenant/energy', label: 'Energy Usage' },
-        { href: '/tenant/access', label: 'Access Control' },
-        { href: '/tenant/smart-home', label: 'Smart Home' },
         { href: '/tenant/security', label: 'Security' },
       ]
     },
@@ -29,7 +25,6 @@ export default function TenantNavigation() {
       icon: '💰',
       submenu: [
         { href: '/tenant/payments', label: 'Payments' },
-        { href: '/tenant/statements', label: 'Statements' },
         { href: '/tenant/autopay', label: 'Auto-Pay' },
         { href: '/tenant/payment-plans', label: 'Payment Plans' },
         { href: '/tenant/insurance', label: 'Insurance' },

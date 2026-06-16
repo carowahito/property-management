@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { StatementMenuButton } from '@/components/ui/statement-menu-button';
+import { StatementPeriod, getStatementDateRange } from '@/lib/statement-period';
 import { formatDate } from '@/lib/utils';
 
 interface OwnerStatement {
@@ -75,13 +77,14 @@ export default function LandlordStatementsPage() {
     window.print();
   };
 
-  // Download the full landlord statement via the statement API
-  const handleDownloadStatement = () => {
+  // Download the landlord statement via the statement API for the selected period
+  const handleDownloadStatement = (period: StatementPeriod) => {
     // Use the first statement's landlordId
     const landlordId = statements[0]?.landlordId;
     if (!landlordId) return;
+    const { startDate, endDate } = getStatementDateRange(period);
     window.open(
-      `/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`,
+      `/api/landlords/${landlordId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`,
       '_blank'
     );
   };
@@ -117,12 +120,7 @@ export default function LandlordStatementsPage() {
             <p className="text-neutral-600 mt-2">View detailed breakdown of rent collected and deductions</p>
           </div>
           {statements.length > 0 && (
-            <button
-              onClick={handleDownloadStatement}
-              className="px-4 py-2 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-700 transition-colors"
-            >
-              Download Full Statement
-            </button>
+            <StatementMenuButton label="Download Statement" variant="dark" onSelect={handleDownloadStatement} />
           )}
         </div>
       </div>

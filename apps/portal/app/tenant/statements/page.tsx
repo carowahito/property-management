@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { StatementPeriodSelect } from '@/components/ui/statement-period-select';
+import { StatementPeriod, getStatementDateRange } from '@/lib/statement-period';
 import { formatDate } from '@/lib/utils';
 
 interface LedgerEntry {
@@ -27,23 +30,13 @@ interface StatementData {
 }
 
 export default function TenantStatementsPage() {
-  const [period, setPeriod] = useState('12'); // months
+  const [period, setPeriod] = useState<StatementPeriod>('12');
+  const { data: session } = useSession();
 
-  // For now, fetch all tenants and use the first one (until tenant auth is wired)
-  // In production, the API would filter by session.user.id → tenant mapping
-  const { data: tenantsData } = useQuery({
-    queryKey: ['tenants-list'],
-    queryFn: () => fetch('/api/tenants?limit=1').then((r) => r.json()),
-  });
+  // session.user.id is the tenant's DB id when role === 'TENANT'
+  const tenantId = session?.user?.id;
 
-  const tenantId = tenantsData?.tenants?.[0]?.id;
-
-  const endDate = new Date().toISOString().split('T')[0];
-  const startDate = new Date(
-    new Date().setMonth(new Date().getMonth() - parseInt(period))
-  )
-    .toISOString()
-    .split('T')[0];
+  const { startDate, endDate } = getStatementDateRange(period);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['tenant-statement', tenantId, period],
@@ -99,16 +92,7 @@ export default function TenantStatementsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white"
-          >
-            <option value="3">Last 3 months</option>
-            <option value="6">Last 6 months</option>
-            <option value="12">Last 12 months</option>
-            <option value="24">Last 24 months</option>
-          </select>
+          <StatementPeriodSelect value={period} onChange={setPeriod} />
           <button
             onClick={handleDownload}
             className="px-4 py-2 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-700 transition-colors"

@@ -44,7 +44,18 @@ interface Payment {
       type?: string
       members?: { id: string; name: string }[]
     }
-  }
+  } | null
+  property?: { id: string; name: string } | null
+  unit?: {
+    id: string
+    unitNumber: string
+    landlord?: {
+      id: string
+      name: string
+      type?: string
+      members?: { id: string; name: string }[]
+    }
+  } | null
 }
 
 interface PaymentsResponse {
@@ -146,7 +157,7 @@ export default function AdminPaymentsPage() {
   const filteredPayments = timeFilteredPayments.filter(payment => {
     const matchesSearch =
       payment.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.lease.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (payment.lease?.property.name || payment.property?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (payment.reference && payment.reference.toLowerCase().includes(searchTerm.toLowerCase()))
 
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter
@@ -346,7 +357,7 @@ export default function AdminPaymentsPage() {
                     </td>
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900 hidden lg:table-cell">
                       {(() => {
-                        const ll = payment.lease.unitRef?.landlord || payment.lease.landlord
+                        const ll = payment.lease?.unitRef?.landlord || payment.lease?.landlord || payment.unit?.landlord
                         if (!ll) return 'N/A'
                         return (
                           <div>
@@ -361,9 +372,15 @@ export default function AdminPaymentsPage() {
                       })()}
                     </td>
                     <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm hidden md:table-cell">
-                      <Link href={`/admin/properties/${payment.lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                        {payment.lease.property.name}
-                      </Link>
+                      {(() => {
+                        const property = payment.lease?.property || payment.property
+                        if (!property) return <span className="text-neutral-400">—</span>
+                        return (
+                          <Link href={`/admin/properties/${property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
+                            {property.name}
+                          </Link>
+                        )
+                      })()}
                     </td>
                     <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
                       KES {Number(payment.amount).toLocaleString()}
@@ -481,7 +498,7 @@ export default function AdminPaymentsPage() {
                       <div>
                         <p className="text-sm text-neutral-600">Landlord</p>
                         {(() => {
-                          const ll = selectedPayment.lease.unitRef?.landlord || selectedPayment.lease.landlord
+                          const ll = selectedPayment.lease?.unitRef?.landlord || selectedPayment.lease?.landlord || selectedPayment.unit?.landlord
                           if (!ll) return <p className="font-semibold text-neutral-900">N/A</p>
                           return (
                             <>
@@ -500,10 +517,18 @@ export default function AdminPaymentsPage() {
                     <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                       <div>
                         <p className="text-sm text-neutral-600">Property</p>
-                        <Link href={`/admin/properties/${selectedPayment.lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline font-semibold">
-                          {selectedPayment.lease.property.name}
-                        </Link>
-                        <p className="text-xs text-neutral-500">Lease ID: {selectedPayment.lease.id.slice(0, 8)}</p>
+                        {(() => {
+                          const property = selectedPayment.lease?.property || selectedPayment.property
+                          if (!property) return <p className="font-semibold text-neutral-900">N/A</p>
+                          return (
+                            <Link href={`/admin/properties/${property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline font-semibold">
+                              {property.name}
+                            </Link>
+                          )
+                        })()}
+                        <p className="text-xs text-neutral-500">
+                          {selectedPayment.lease ? `Lease ID: ${selectedPayment.lease.id.slice(0, 8)}` : 'No lease (recorded before signing)'}
+                        </p>
                       </div>
                     </div>
                   </div>

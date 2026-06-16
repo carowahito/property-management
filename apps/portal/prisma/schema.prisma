@@ -580,7 +580,7 @@ model Lease {
 model Payment {
   id              String   @id @default(cuid())
   tenantId        String
-  leaseId         String
+  leaseId         String?
   propertyId      String?
   unitId          String?
   landlordId      String?
@@ -599,7 +599,7 @@ model Payment {
 
   // Relations
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  lease           Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  lease           Lease?   @relation(fields: [leaseId], references: [id], onDelete: SetNull)
   property        Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
   unit            Unit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
   landlord        Landlord? @relation(fields: [landlordId], references: [id], onDelete: SetNull)

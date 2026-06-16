@@ -27,7 +27,9 @@ interface Payment {
     id: string;
     property: { id: string; name: string };
     unitRef?: { id: string; unitNumber: string } | null;
-  };
+  } | null;
+  property?: { id: string; name: string } | null;
+  unit?: { id: string; unitNumber: string } | null;
 }
 
 interface MaintenanceRequest {
@@ -194,8 +196,11 @@ export default function LandlordDashboard() {
                 <div className="flex-1">
                   <p className="text-sm font-medium">{payment.tenant.name}</p>
                   <p className="text-xs text-neutral-600">
-                    {payment.lease.property.name}
-                    {payment.lease.unitRef ? ` - ${payment.lease.unitRef.unitNumber}` : ''} - KES{' '}
+                    {payment.lease?.property?.name || payment.property?.name || '—'}
+                    {(() => {
+                      const unitNumber = payment.lease?.unitRef?.unitNumber || payment.unit?.unitNumber;
+                      return unitNumber ? ` - ${unitNumber}` : '';
+                    })()} - KES{' '}
                     {Number(payment.amount).toLocaleString()}
                   </p>
                   {payment.paidDate && (

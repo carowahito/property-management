@@ -87,7 +87,7 @@ export default function DocumentsPage() {
       type: 'Receipt',
       date: paymentDate,
       status: 'Active',
-      link: `/tenant/payments/${payment.id}/receipt`,
+      link: `/api/payments/${payment.id}/receipt`,
     })
   })
 
@@ -267,8 +267,8 @@ export default function DocumentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <Link
                         href={doc.link}
-                        target={doc.type === 'Inspection' ? '_blank' : undefined}
-                        rel={doc.type === 'Inspection' ? 'noreferrer' : undefined}
+                        target={doc.type === 'Inspection' || doc.type === 'Receipt' ? '_blank' : undefined}
+                        rel={doc.type === 'Inspection' || doc.type === 'Receipt' ? 'noreferrer' : undefined}
                         className="text-primary-600 hover:text-primary-900"
                       >
                         View

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { StatementMenuButton } from '@/components/ui/statement-menu-button'
+import { getStatementDateRange } from '@/lib/statement-period'
 import { formatDate } from '@/lib/utils'
 import TaskManager from '@/components/crm/TaskManager'
 import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
@@ -383,11 +385,13 @@ export default function LandlordCRMPage({ params }: Props) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
-            <Button variant="outline" onClick={() => {
-              window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
-            }}>
-              📄 Statement
-            </Button>
+            <StatementMenuButton
+              label="📄 Statement"
+              onSelect={(period) => {
+                const { startDate, endDate } = getStatementDateRange(period)
+                window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`, '_blank')
+              }}
+            />
             <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
               ✉️ Invite
             </Button>
@@ -720,15 +724,14 @@ export default function LandlordCRMPage({ params }: Props) {
               {/* Payouts */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Payout History</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatementMenuButton
+                    label="📄 Download Statement"
+                    onSelect={(period) => {
+                      const { startDate, endDate } = getStatementDateRange(period)
+                      window.open(`/api/landlords/${landlordId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`, '_blank')
                     }}
-                  >
-                    📄 Download Statement
-                  </Button>
+                  />
                   <Button
                     variant="primary"
                     onClick={() => router.push(`/admin/landlords/${landlordId}/statements`)}

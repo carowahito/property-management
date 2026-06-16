@@ -2,7 +2,9 @@ import { z } from 'zod'
 
 export const createPaymentSchema = z.object({
   tenantId: z.string().min(1, 'Tenant is required'),
-  leaseId: z.string().min(1, 'Lease is required'),
+  leaseId: z.string().optional(),
+  propertyId: z.string().optional(),
+  unitId: z.string().optional(),
   amount: z.number().positive('Amount must be positive'),
   type: z.enum(['RENT', 'DEPOSIT', 'LATE_FEE', 'UTILITY', 'MAINTENANCE']).default('RENT'),
   method: z.enum(['CASH', 'BANK_TRANSFER', 'MPESA', 'CARD', 'CHEQUE']),

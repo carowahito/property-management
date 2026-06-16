@@ -23,10 +23,16 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
 
+    // Tenants can only see their own requests
+    if (session.user.role === 'TENANT') {
+      where.tenantId = session.user.id
+    } else {
+      if (tenantId && tenantId !== 'all') where.tenantId = tenantId
+      if (propertyId && propertyId !== 'all') where.propertyId = propertyId
+    }
+
     if (status && status !== 'all') where.status = status
     if (priority && priority !== 'all') where.priority = priority
-    if (tenantId && tenantId !== 'all') where.tenantId = tenantId
-    if (propertyId && propertyId !== 'all') where.propertyId = propertyId
     if (category && category !== 'all')
       where.category = { contains: category, mode: 'insensitive' }
 

@@ -41,7 +41,11 @@ export default function TenantDashboardPage() {
   const monthlyRent = activeLease ? Number(activeLease.monthlyRent) : 0
   const tenantName = activeLease?.tenant?.name || 'Tenant'
   const propertyAddress = activeLease
-    ? `${activeLease.property?.name || ''}, ${activeLease.property?.address || ''}`
+    ? [
+        activeLease.unitRef?.unitNumber && `Unit ${activeLease.unitRef.unitNumber}`,
+        activeLease.property?.name,
+        activeLease.property?.address,
+      ].filter(Boolean).join(', ')
     : 'No active lease'
 
   // Calculate outstanding balance from pending payments
@@ -49,8 +53,12 @@ export default function TenantDashboardPage() {
     .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
     .reduce((sum: number, p: any) => sum + Number(p.amount), 0)
 
-  // Find next payment due date
-  const nextPayment = recentPayments.find((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
+  // Next payment due: today if there are arrears, otherwise first of next month
+  const nextPaymentDate = activeLease
+    ? outstandingBalance > 0
+      ? new Date()
+      : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
+    : null
 
   const getPaymentStatusStyle = (status: string) => {
     switch (status) {
@@ -140,7 +148,7 @@ export default function TenantDashboardPage() {
                     Next Payment Due
                   </dt>
                   <dd className="text-lg font-semibold text-neutral-900">
-                    {nextPayment ? formatDate(nextPayment.dueDate) : 'N/A'}
+                    {nextPaymentDate ? formatDate(nextPaymentDate.toISOString()) : 'N/A'}
                   </dd>
                 </dl>
               </div>

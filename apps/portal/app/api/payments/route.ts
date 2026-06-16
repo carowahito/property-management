@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createPaymentSchema } from '@/lib/validations/payment'
+import { syncPaymentToLedger } from '@/lib/services/tenant-ledger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,8 +25,14 @@ export async function GET(request: NextRequest) {
 
     if (status && status !== 'all') where.status = status
     if (type && type !== 'all') where.type = type
-    if (tenantId && tenantId !== 'all') where.tenantId = tenantId
     if (leaseId && leaseId !== 'all') where.leaseId = leaseId
+
+    // Tenants are scoped to their own payments only
+    if (session.user.role === 'TENANT') {
+      where.tenantId = session.user.id
+    } else {
+      if (tenantId && tenantId !== 'all') where.tenantId = tenantId
+    }
 
     const [payments, total] = await Promise.all([
       prisma.payment.findMany({
@@ -57,6 +64,18 @@ export async function GET(request: NextRequest) {
                     select: { id: true, name: true, type: true, members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } } },
                   },
                 },
+              },
+            },
+          },
+          property: {
+            select: { id: true, name: true, address: true },
+          },
+          unit: {
+            select: {
+              id: true,
+              unitNumber: true,
+              landlord: {
+                select: { id: true, name: true, type: true, members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } } },
               },
             },
           },
@@ -103,18 +122,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
     }
 
-    // Check if lease exists
-    const lease = await prisma.lease.findUnique({
-      where: { id: validatedData.leaseId },
-    })
+    // Lease is optional — a payment (e.g. a deposit) can be recorded before a lease is signed
+    let lease = null
+    if (validatedData.leaseId) {
+      lease = await prisma.lease.findUnique({
+        where: { id: validatedData.leaseId },
+      })
 
-    if (!lease) {
-      return NextResponse.json({ error: 'Lease not found' }, { status: 404 })
+      if (!lease) {
+        return NextResponse.json({ error: 'Lease not found' }, { status: 404 })
+      }
     }
 
     const paymentData: any = {
       ...validatedData,
       dueDate: new Date(validatedData.dueDate),
+      propertyId: validatedData.propertyId || lease?.propertyId || undefined,
+      unitId: validatedData.unitId || lease?.unitId || undefined,
     }
 
     if (validatedData.paidDate) {
@@ -142,8 +166,18 @@ export async function POST(request: NextRequest) {
             },
           },
         },
+        property: {
+          select: { id: true, name: true },
+        },
+        unit: {
+          select: { id: true, unitNumber: true },
+        },
       },
     })
+
+    if (payment.status === 'PAID') {
+      await syncPaymentToLedger(payment.id)
+    }
 
     return NextResponse.json(payment, { status: 201 })
   } catch (error: any) {
