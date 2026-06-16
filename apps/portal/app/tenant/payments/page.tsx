@@ -42,8 +42,11 @@ export default function TenantPaymentsPage() {
     .filter((p) => p.status === 'PENDING' || p.status === 'OVERDUE')
     .reduce((sum, p) => sum + Number(p.amount), 0)
 
-  // Find next due payment
-  const nextDuePayment = payments.find((p) => p.status === 'PENDING' || p.status === 'OVERDUE')
+  // Next payment due: today if there are arrears, first of next month if clear
+  const now = new Date()
+  const nextPaymentDate = totalPending > 0
+    ? now
+    : new Date(now.getFullYear(), now.getMonth() + 1, 1)
 
   const formatMethod = (method: string) => {
     switch (method) {
@@ -114,7 +117,7 @@ export default function TenantPaymentsPage() {
           <div className="p-5">
             <p className="text-sm font-medium text-neutral-500">Next Payment Due</p>
             <p className="mt-1 text-2xl font-semibold text-neutral-900">
-              {nextDuePayment ? formatDate(nextDuePayment.dueDate) : 'N/A'}
+              {formatDate(nextPaymentDate.toISOString())}
             </p>
           </div>
         </div>
