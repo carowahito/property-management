@@ -33,8 +33,8 @@ export default function TenantStatementsPage() {
   const [period, setPeriod] = useState<StatementPeriod>('12');
   const { data: session } = useSession();
 
-  // session.user.id is the tenant's DB id when role === 'TENANT'
-  const tenantId = session?.user?.id;
+  // session.user.id is the tenant DB id only when role === 'TENANT'
+  const tenantId = session?.user?.role === 'TENANT' ? session?.user?.id : null;
 
   const { startDate, endDate } = getStatementDateRange(period);
 

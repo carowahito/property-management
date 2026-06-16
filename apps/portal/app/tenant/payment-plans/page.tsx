@@ -8,7 +8,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 function useEligible() {
   const { data: session } = useSession()
-  const tenantId = session?.user?.id
+  const tenantId = session?.user?.role === 'TENANT' ? session?.user?.id : null
   const { data, isLoading } = useQuery({
     queryKey: ['payment-plans-eligibility', tenantId],
     queryFn: () => fetch(`/api/tenants/${tenantId}`).then(r => r.json()),

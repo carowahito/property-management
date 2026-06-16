@@ -35,7 +35,7 @@ function StatCard({ label, value, sub, highlight }: { label: string; value: stri
 
 export default function TenantAnalyticsPage() {
   const { data: session } = useSession()
-  const tenantId = session?.user?.id
+  const tenantId = session?.user?.role === 'TENANT' ? session?.user?.id : null
 
   const { data: paymentsData, isLoading: loadingPayments } = useQuery({
     queryKey: ['analytics-payments'],

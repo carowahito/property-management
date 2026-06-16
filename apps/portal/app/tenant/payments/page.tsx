@@ -12,7 +12,8 @@ import { getStatementDateRange, StatementPeriod } from '@/lib/statement-period'
 export default function TenantPaymentsPage() {
   const [filter, setFilter] = useState('all')
   const { data: session } = useSession()
-  const tenantId = session?.user?.id
+  const isTenant = session?.user?.role === 'TENANT'
+  const tenantId = isTenant ? session?.user?.id : null
 
   const handleViewStatement = (period: StatementPeriod) => {
     if (!tenantId) return

@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 
 function usePaymentPlansEligible() {
   const { data: session } = useSession()
-  const tenantId = session?.user?.id
+  const tenantId = session?.user?.role === 'TENANT' ? session?.user?.id : null
   const { data } = useQuery({
     queryKey: ['nav-tenant-movein', tenantId],
     queryFn: () => fetch(`/api/tenants/${tenantId}`).then(r => r.json()),
