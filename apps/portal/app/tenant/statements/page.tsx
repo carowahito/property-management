@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -35,31 +34,12 @@ export default function TenantStatementsPage() {
   const [period, setPeriod] = useState<StatementPeriod>('12');
   const { data: session } = useSession();
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const isTenant = session?.user?.role === 'TENANT';
-  const isAdmin = !isTenant && !!session?.user?.role;
-  // Tenants use their session ID; admins/agents pass ?tenantId= in the URL
-  const urlTenantId = searchParams.get('tenantId');
-  const tenantId = isTenant ? session?.user?.id : (urlTenantId ?? null);
-
-  // For admin: fetch tenant list to power the switcher and auto-default
-  const { data: tenantsData, isLoading: loadingTenants } = useQuery({
-    queryKey: ['statements-tenant-list'],
-    queryFn: () => fetch('/api/tenants?limit=100&status=ACTIVE').then(r => r.json()),
-    enabled: isAdmin,
-    staleTime: 60_000,
-  });
-
-  const tenantList: { id: string; name: string; unitRef?: { unitNumber: string } }[] =
-    tenantsData?.tenants ?? [];
-
-  // Auto-redirect admin to first tenant when no tenantId in URL
-  useEffect(() => {
-    if (isAdmin && !tenantId && !loadingTenants && tenantList.length > 0) {
-      router.replace(`/tenant/statements?tenantId=${tenantList[0].id}`);
-    }
-  }, [isAdmin, tenantId, loadingTenants, tenantList, router]);
+  // Tenants always see their own statement; admins pass ?tenantId= via URL
+  const tenantId = isTenant
+    ? session?.user?.id
+    : (searchParams.get('tenantId') ?? null);
 
   const { startDate, endDate } = getStatementDateRange(period);
 
@@ -114,24 +94,6 @@ export default function TenantStatementsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Admin tenant switcher */}
-      {isAdmin && tenantList.length > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
-          <span className="text-sm font-medium text-neutral-600 shrink-0">Viewing tenant:</span>
-          <select
-            value={tenantId ?? ''}
-            onChange={(e) => router.push(`/tenant/statements?tenantId=${e.target.value}`)}
-            className="flex-1 text-sm border border-neutral-300 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            {tenantList.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}{t.unitRef?.unitNumber ? ` — ${t.unitRef.unitNumber}` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
