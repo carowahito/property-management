@@ -23,6 +23,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       ? new Date(startDate)
       : new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
+    if (!tenantId || tenantId === 'undefined') {
+      return NextResponse.json({ success: false, message: 'Tenant ID required' }, { status: 400 });
+    }
+
     const statement = await tenantStatementGenerator.generateStatement(
       tenantId,
       periodStart,
@@ -48,12 +52,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ statement, success: true });
   } catch (error) {
     console.error('Error generating tenant statement:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: error instanceof Error ? error.message : 'Failed to generate statement',
-      },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Failed to generate statement';
+    const status = message === 'Tenant not found' ? 404 : 500;
+    return NextResponse.json({ success: false, message }, { status });
   }
 }
