@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
@@ -55,10 +55,11 @@ export default function TenantStatementsPage() {
     tenantsData?.tenants ?? [];
 
   // Auto-redirect admin to first tenant when no tenantId in URL
-  if (isAdmin && !tenantId && !loadingTenants && tenantList.length > 0) {
-    router.replace(`/tenant/statements?tenantId=${tenantList[0].id}`);
-    return null;
-  }
+  useEffect(() => {
+    if (isAdmin && !tenantId && !loadingTenants && tenantList.length > 0) {
+      router.replace(`/tenant/statements?tenantId=${tenantList[0].id}`);
+    }
+  }, [isAdmin, tenantId, loadingTenants, tenantList, router]);
 
   const { startDate, endDate } = getStatementDateRange(period);
 
