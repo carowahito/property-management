@@ -7,6 +7,7 @@ import type { ChecklistData, MatrixRow } from '@/lib/inspection-checklists'
 import {
   BEDROOM_ITEMS, BATHROOM_ITEMS,
   RES_SECTION_META, COM_SECTION_META,
+  defaultChecklistData,
 } from '@/lib/inspection-checklists'
 
 const NAVY = '#1A3A5C'
@@ -241,14 +242,6 @@ function buildHtml(inspection: any, data: ChecklistData): string {
     </tr>
   </table>`
 
-  // SOP notices
-  const sopBox = (text: string) =>
-    `<div style="border-left:4px solid ${SAFFRON};background:#fffbeb;padding:8px 12px;margin:6px 0;font-size:10px;color:#555;">${text}</div>`
-
-  const sop006 = sopBox('<strong>SOP 006</strong> — Digital-first inspection. Photograph every room and every defect; add photo references in the Comments column. If the unit appears unoccupied or the tenant is absent without notice, photograph all accessible areas and notify the landlord in writing within 24 hours.')
-  const sop008 = isRes ? sopBox('<strong>SOP 008</strong> — Move-out deductions require evidence — photos, comparison report, and invoices/quotes.') : ''
-  const sop009 = !isRes ? sopBox('<strong>SOP 009</strong> — Commercial tenants must restore the premises to original condition at lease end (dilapidations). Assess against the original-condition record from lease start.') : ''
-
   // Signatures
   const sigBlock = (label: string, name = '', sig = '', date = '') => {
     const isImage = sig.startsWith('data:image')
@@ -400,14 +393,13 @@ function buildHtml(inspection: any, data: ChecklistData): string {
 
   <!-- 3. Condition Checklist -->
   <div class="section-title">3. Condition Checklist</div>
-  <p style="font-size:10px;color:#666;margin-bottom:8px;">Mark N/A for any item not present.${!isRes ? ' Document the original condition thoroughly at lease start — commercial tenants must restore the premises to original condition at lease end (dilapidations, SOP 009).' : ''}</p>
+  <p style="font-size:10px;color:#666;margin-bottom:8px;">Mark N/A for any item not present.${!isRes ? ' Document the original condition thoroughly at lease start — commercial tenants must restore the premises to original condition at lease end (dilapidations).' : ''}</p>
 
   ${checklistBody}
   ${additionalTable}
   ${metersTable}
   ${keysTable}
   ${defectsTable}
-  ${sop006}${sop008}${sop009}
   ${generalNotes}
   ${overall}
 
@@ -432,10 +424,22 @@ async function fetchInspection(id: string) {
           landlord: { select: { id: true, name: true } },
         },
       },
-      unit: { select: { id: true, unitNumber: true } },
+      unit: { select: { id: true, unitNumber: true, bedrooms: true, bathrooms: true } },
       tenant: { select: { id: true, name: true, email: true } },
     },
   })
+}
+
+function resolveChecklistData(inspection: NonNullable<Awaited<ReturnType<typeof fetchInspection>>>): ChecklistData | null {
+  const rooms = inspection.rooms as any
+  if (rooms && rooms._v === 2) return rooms as ChecklistData
+  if (!inspection.propertyCategory) return null
+  // No saved checklist yet (e.g. inspection not started or completed manually on paper) — return a blank template
+  return defaultChecklistData(
+    inspection.propertyCategory as 'RESIDENTIAL' | 'COMMERCIAL',
+    inspection.unit?.bedrooms ?? 2,
+    inspection.unit?.bathrooms ?? 1,
+  )
 }
 
 // GET — return the HTML report
@@ -451,12 +455,12 @@ export async function GET(
     const inspection = await fetchInspection(id)
     if (!inspection) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const rooms = inspection.rooms as any
-    if (!rooms || rooms._v !== 2) {
+    const data = resolveChecklistData(inspection)
+    if (!data) {
       return NextResponse.json({ error: 'No checklist data for this inspection' }, { status: 400 })
     }
 
-    const html = buildHtml(inspection, rooms as ChecklistData)
+    const html = buildHtml(inspection, data)
     return new NextResponse(html, {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
@@ -482,12 +486,11 @@ export async function POST(
     const inspection = await fetchInspection(id)
     if (!inspection) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const rooms = inspection.rooms as any
-    if (!rooms || rooms._v !== 2) {
+    const data = resolveChecklistData(inspection)
+    if (!data) {
       return NextResponse.json({ error: 'No checklist data for this inspection' }, { status: 400 })
     }
 
-    const data = rooms as ChecklistData
     const html = buildHtml(inspection, data)
     const typeLabel = INSPECTION_TYPE_LABELS[inspection.type] || inspection.type
     const propName = inspection.property?.name || 'Property'

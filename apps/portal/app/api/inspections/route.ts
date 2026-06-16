@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               unitNumber: true,
+              bedrooms: true,
+              bathrooms: true,
             },
           },
           tenant: {

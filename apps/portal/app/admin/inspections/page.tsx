@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -50,7 +51,7 @@ interface Inspection {
   rootInspectionId?: string | null
   reassessmentNumber?: number
   property: { id: string; name: string; address: string; landlordId?: string | null }
-  unit: { id: string; unitNumber: string } | null
+  unit: { id: string; unitNumber: string; bedrooms?: number | null; bathrooms?: number | null } | null
   tenant: { id: string; name: string; email: string; phone: string } | null
   lease: { id: string; startDate: string; endDate: string; status: string } | null
 }
@@ -316,6 +317,7 @@ export default function InspectionsPage() {
   const [legacySummary, setLegacySummary] = useState('')
   const [legacyViolations, setLegacyViolations] = useState<any[]>([])
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
+  const [guideOpenKey, setGuideOpenKey] = useState<string | null>(null)
   const [completeLoading, setCompleteLoading] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
   const [inspectorSigData, setInspectorSigData] = useState<string | null>(null)
@@ -374,6 +376,14 @@ export default function InspectionsPage() {
       window.removeEventListener('resize', close)
     }
   }, [openActionMenuId])
+
+  // Close the code-guide tooltip when clicking anywhere else
+  useEffect(() => {
+    if (!guideOpenKey) return
+    const close = () => setGuideOpenKey(null)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [guideOpenKey])
 
   // Deep-link: open a specific inspection when ?id=... is present (e.g. from a resume-link email)
   useEffect(() => {
@@ -483,7 +493,8 @@ export default function InspectionsPage() {
       } else {
         const data = defaultChecklistData(
           inspection.propertyCategory as 'RESIDENTIAL' | 'COMMERCIAL',
-          2, 1
+          inspection.unit?.bedrooms ?? 2,
+          inspection.unit?.bathrooms ?? 1
         )
         setChecklistData(data)
         setExpandedSections(new Set(getUniqueSections(data.items)))
@@ -662,6 +673,34 @@ export default function InspectionsPage() {
       next.has(section) ? next.delete(section) : next.add(section)
       return next
     })
+  }
+
+  function toggleGuide(key: string) {
+    setGuideOpenKey(prev => prev === key ? null : key)
+  }
+
+  function renderGuideIcon(key: string) {
+    return (
+      <span className="relative">
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={(e) => { e.stopPropagation(); toggleGuide(key) }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); toggleGuide(key) } }}
+          title="Condition & action code guide"
+          className="w-5 h-5 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-[11px] font-bold cursor-pointer select-none"
+        >?</span>
+        {guideOpenKey === key && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute right-0 top-full mt-1 w-72 bg-white text-neutral-700 text-xs rounded-lg shadow-lg border border-neutral-200 p-3 z-50 normal-case font-normal"
+          >
+            <p className="mb-1.5"><strong>Condition:</strong> N=New · G=Good · F=Fair · P=Poor · D=Damaged · M=Missing · N/A=Not applicable</p>
+            <p><strong>Action:</strong> OK=No action · CL=Cleaning · RP=Repair · RC=Replace · TC=Tenant charge (evidence required)</p>
+          </div>
+        )}
+      </span>
+    )
   }
 
   function handleBedroomChange(n: number) {
@@ -1025,8 +1064,20 @@ export default function InspectionsPage() {
                   <tr key={inspection.id} className="hover:bg-neutral-50">
                     <td className="px-4 py-3 hidden lg:table-cell text-xs text-neutral-500 font-mono">{inspection.referenceCode || '—'}</td>
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-neutral-900">{inspection.property?.name}</div>
-                      {inspection.unit && <div className="text-xs text-neutral-500">Unit {inspection.unit.unitNumber}</div>}
+                      <div className="text-sm font-medium text-neutral-900">
+                        {inspection.property?.id ? (
+                          <Link href={`/admin/properties/${inspection.property.id}`} className="hover:text-primary-600 hover:underline" onClick={e => e.stopPropagation()}>
+                            {inspection.property.name}
+                          </Link>
+                        ) : inspection.property?.name}
+                      </div>
+                      {inspection.unit && (
+                        <div className="text-xs text-neutral-500">
+                          <Link href={`/admin/units/${inspection.unit.unitNumber}`} className="hover:text-primary-600 hover:underline" onClick={e => e.stopPropagation()}>
+                            Unit {inspection.unit.unitNumber}
+                          </Link>
+                        </div>
+                      )}
                       <div className="text-xs text-neutral-400 lg:hidden">{inspection.referenceCode}</div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
@@ -1036,7 +1087,13 @@ export default function InspectionsPage() {
                         }`}>{inspection.propertyCategory === 'RESIDENTIAL' ? '🏠 Residential' : '🏢 Commercial'}</span>
                       ) : <span className="text-xs text-neutral-400">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-sm text-neutral-700 hidden md:table-cell">{inspection.tenant?.name || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-neutral-700 hidden md:table-cell">
+                      {inspection.tenant ? (
+                        <Link href={`/admin/tenants/${inspection.tenant.id}`} className="hover:text-primary-600 hover:underline" onClick={e => e.stopPropagation()}>
+                          {inspection.tenant.name}
+                        </Link>
+                      ) : '—'}
+                    </td>
                     <td className="px-4 py-3 text-sm text-neutral-700 hidden md:table-cell">{formatType(inspection.type)}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={overdue ? 'text-danger-600 font-semibold' : 'text-neutral-700'}>
@@ -1107,6 +1164,12 @@ export default function InspectionsPage() {
                   className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
                   onClick={() => { closeMenu(); openDetail(inspection) }}
                 >Edit</button>
+              )}
+              {inspection.propertyCategory && (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  onClick={() => { closeMenu(); window.open(`/api/inspections/${inspection.id}/report`, '_blank') }}
+                >Download</button>
               )}
               {inspection.status === 'COMPLETED' && !inspection.inspectorSignature && (
                 <button
@@ -1227,8 +1290,27 @@ export default function InspectionsPage() {
                   )}
                 </h2>
                 <p className="text-sm text-neutral-500 mt-0.5">
-                  {selectedInspection.property?.name}
-                  {selectedInspection.unit ? ` · Unit ${selectedInspection.unit.unitNumber}` : ''}
+                  {selectedInspection.property?.id ? (
+                    <Link href={`/admin/properties/${selectedInspection.property.id}`} className="hover:text-primary-600 hover:underline">
+                      {selectedInspection.property.name}
+                    </Link>
+                  ) : selectedInspection.property?.name}
+                  {selectedInspection.unit ? (
+                    <>
+                      {' · '}
+                      <Link href={`/admin/units/${selectedInspection.unit.unitNumber}`} className="hover:text-primary-600 hover:underline">
+                        Unit {selectedInspection.unit.unitNumber}
+                      </Link>
+                    </>
+                  ) : ''}
+                  {selectedInspection.tenant ? (
+                    <>
+                      {' · '}
+                      <Link href={`/admin/tenants/${selectedInspection.tenant.id}`} className="hover:text-primary-600 hover:underline">
+                        {selectedInspection.tenant.name}
+                      </Link>
+                    </>
+                  ) : ''}
                 </p>
                 {!isCompleted && !isCancelled ? (
                   <div className="flex flex-wrap items-end gap-2 mt-2">
@@ -1450,6 +1532,7 @@ export default function InspectionsPage() {
                               {hasIssue && !isCompleted && (
                                 <span className="text-xs bg-[#E8960C] text-white px-2 py-0.5 rounded-full">Needs attention</span>
                               )}
+                              {renderGuideIcon(section)}
                               <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
@@ -1502,6 +1585,7 @@ export default function InspectionsPage() {
                               {hasIssue && !isCompleted && (
                                 <span className="text-xs bg-[#E8960C] text-white px-2 py-0.5 rounded-full">Needs attention</span>
                               )}
+                              {renderGuideIcon(key)}
                               <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
@@ -1595,9 +1679,12 @@ export default function InspectionsPage() {
                         <button type="button" onClick={() => toggleSection(addKey)}
                           className="w-full flex items-center justify-between px-6 py-2.5 bg-[#1A3A5C] text-white text-left hover:bg-[#142d47] transition-colors">
                           <span className="text-sm font-semibold">{addSectionNum} Additional Areas / Items</span>
-                          <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                          <div className="flex items-center gap-2">
+                            {renderGuideIcon(addKey)}
+                            <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
                         </button>
                         {isExpanded && (
                           <div className="overflow-x-auto">
@@ -1840,7 +1927,11 @@ export default function InspectionsPage() {
                   <div className="flex items-center gap-3 flex-wrap">
                     <Badge variant={statusVariant(selectedInspection.status)}>{selectedInspection.status.replace('_', ' ')}</Badge>
                     {selectedInspection.inspector && <span className="text-sm text-neutral-600">Inspector: <strong>{selectedInspection.inspector}</strong></span>}
-                    {selectedInspection.tenant && <span className="text-sm text-neutral-600">Tenant: <strong>{selectedInspection.tenant.name}</strong></span>}
+                    {selectedInspection.tenant && (
+                      <span className="text-sm text-neutral-600">
+                        Tenant: <Link href={`/admin/tenants/${selectedInspection.tenant.id}`} className="font-semibold hover:text-primary-600 hover:underline">{selectedInspection.tenant.name}</Link>
+                      </span>
+                    )}
                   </div>
                   <div>
                     <h3 className="text-md font-semibold text-neutral-900 mb-3">Room Assessment</h3>
