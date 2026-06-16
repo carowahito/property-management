@@ -161,9 +161,9 @@ export default function TenantAnalyticsPage() {
         <h2 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">Tenancy Overview</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
-            label="Time at Unit"
-            value={monthsAtUnit !== null ? formatDuration(monthsAtUnit) : '—'}
-            sub={tenancyStart ? `Since ${tenancyStart.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
+            label="Move-in Date"
+            value={moveInDate ? moveInDate.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) : (leaseStart ? leaseStart.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—')}
+            sub={monthsAtUnit !== null ? `${formatDuration(monthsAtUnit)} ago` : undefined}
           />
           <StatCard
             label="Lease Ends"
@@ -173,7 +173,7 @@ export default function TenantAnalyticsPage() {
           />
           <StatCard
             label="Monthly Rent"
-            value={activeLease ? `KES ${Number(activeLease.unitRef?.monthlyRent ?? activeLease.rentAmount ?? 0).toLocaleString()}` : '—'}
+            value={activeLease ? `KES ${Number(activeLease.unitRef?.monthlyRent ?? activeLease.monthlyRent ?? 0).toLocaleString()}` : '—'}
             sub={activeLease?.unitRef?.unitNumber ? `Unit ${activeLease.unitRef.unitNumber}` : undefined}
           />
           <StatCard

@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               unitNumber: true,
+              monthlyRent: true,
               landlord: {
                 select: {
                   id: true,
