@@ -723,6 +723,9 @@ export default function TenantCRMPage({ params }: Props) {
                 window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`, '_blank')
               }}
             />
+            <Button variant="outline" onClick={() => router.push(`/tenant/statements?tenantId=${tenantId}`)}>
+              🏠 Tenant Portal
+            </Button>
             <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
               ✉️ Invite
             </Button>

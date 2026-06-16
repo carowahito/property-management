@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { StatementPeriodSelect } from '@/components/ui/statement-period-select';
@@ -32,9 +33,13 @@ interface StatementData {
 export default function TenantStatementsPage() {
   const [period, setPeriod] = useState<StatementPeriod>('12');
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
 
-  // session.user.id is the tenant DB id only when role === 'TENANT'
-  const tenantId = session?.user?.role === 'TENANT' ? session?.user?.id : null;
+  // Tenants use their session ID; admins/agents pass ?tenantId= in the URL
+  const isTenant = session?.user?.role === 'TENANT';
+  const tenantId = isTenant
+    ? session?.user?.id
+    : (searchParams.get('tenantId') ?? null);
 
   const { startDate, endDate } = getStatementDateRange(period);
 
@@ -57,7 +62,20 @@ export default function TenantStatementsPage() {
     );
   };
 
-  if (isLoading || !tenantId) {
+  if (!tenantId) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-sm">
+          <p className="text-lg font-semibold text-neutral-700">No tenant selected</p>
+          <p className="mt-2 text-sm text-neutral-500">
+            Add <code className="bg-neutral-100 px-1 rounded text-xs">?tenantId=&lt;id&gt;</code> to the URL to view a tenant&apos;s statement, or open this page from the admin tenant detail view.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
