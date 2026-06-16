@@ -3,30 +3,49 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { useQuery } from '@tanstack/react-query'
+
+function usePaymentPlansEligible() {
+  const { data: session } = useSession()
+  const tenantId = session?.user?.id
+  const { data } = useQuery({
+    queryKey: ['nav-tenant-movein', tenantId],
+    queryFn: () => fetch(`/api/tenants/${tenantId}`).then(r => r.json()),
+    enabled: !!tenantId,
+    staleTime: 10 * 60 * 1000,
+  })
+  const moveInDate = data?.moveInDate
+  if (!moveInDate) return false
+  const twoYearsAgo = new Date()
+  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+  return new Date(moveInDate) <= twoYearsAgo
+}
 
 export default function TenantNavigation() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const pathname = usePathname()
+  const showPaymentPlans = usePaymentPlansEligible()
 
   const isActive = (path: string) => pathname?.startsWith(path)
 
   const navItems = [
     { href: '/tenant/dashboard', label: 'Dashboard', icon: '📊' },
-    { 
-      label: 'Property', 
+    {
+      label: 'Property',
       icon: '🏠',
       submenu: [
         { href: '/tenant/lease', label: 'My Lease' },
         { href: '/tenant/security', label: 'Security' },
       ]
     },
-    { 
-      label: 'Financial', 
+    {
+      label: 'Financial',
       icon: '💰',
       submenu: [
         { href: '/tenant/payments', label: 'Payments' },
         { href: '/tenant/autopay', label: 'Auto-Pay' },
-        { href: '/tenant/payment-plans', label: 'Payment Plans' },
+        ...(showPaymentPlans ? [{ href: '/tenant/payment-plans', label: 'Payment Plans' }] : []),
         { href: '/tenant/insurance', label: 'Insurance' },
         { href: '/tenant/analytics', label: 'Analytics' },
       ]
