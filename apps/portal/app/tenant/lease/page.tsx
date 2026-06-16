@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -179,12 +180,16 @@ function LeaseCard({ lease, label }: { lease: any; label?: string }) {
 }
 
 export default function TenantLeasePage() {
+  const { data: session } = useSession()
+  const tenantId = session?.user?.id
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['tenant-leases'],
+    queryKey: ['tenant-leases', tenantId],
     queryFn: async () => {
+      const scope = tenantId ? `&tenantId=${tenantId}` : ''
       const [activeRes, pendingRes] = await Promise.all([
-        fetch('/api/leases?status=ACTIVE&limit=1'),
-        fetch('/api/leases?status=PENDING&limit=1'),
+        fetch(`/api/leases?status=ACTIVE&limit=1${scope}`),
+        fetch(`/api/leases?status=PENDING&limit=1${scope}`),
       ])
       const [activeData, pendingData] = await Promise.all([activeRes.json(), pendingRes.json()])
       return {
@@ -192,6 +197,7 @@ export default function TenantLeasePage() {
         pending: pendingData.leases?.[0] || null,
       }
     },
+    enabled: !!tenantId,
   })
 
   if (isLoading) {
