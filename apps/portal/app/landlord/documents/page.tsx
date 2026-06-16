@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
@@ -78,6 +79,15 @@ export default function LandlordDocumentsPage() {
     queryFn: () => fetch(`/api/landlords/${landlordId}/documents`).then(r => r.json()),
   })
 
+  const { data: myInspectionsData } = useQuery({
+    queryKey: ['landlord-me-inspections'],
+    queryFn: () => fetch('/api/landlords/me/inspections').then(r => r.json()),
+  })
+
+  const pendingSignatureInspections = (myInspectionsData?.inspections || []).filter(
+    (i: any) => !i.landlordSignedAt
+  )
+
   if (loadingLeases || loadingStatements || (!!landlordId && loadingDocs)) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -95,6 +105,30 @@ export default function LandlordDocumentsPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-neutral-900">Documents</h1>
       </div>
+
+      {/* Pending Inspection Signatures */}
+      {pendingSignatureInspections.length > 0 && (
+        <div className="mb-8 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4">
+          <p className="text-sm font-medium text-amber-800 mb-2">
+            {pendingSignatureInspections.length} inspection report{pendingSignatureInspections.length > 1 ? 's' : ''} awaiting your signature
+          </p>
+          <ul className="space-y-2">
+            {pendingSignatureInspections.map((insp: any) => (
+              <li key={insp.id} className="flex items-center justify-between bg-surface rounded px-3 py-2">
+                <span className="text-sm text-neutral-700">
+                  {insp.property?.name}{insp.unit ? ` — Unit ${insp.unit.unitNumber}` : ''} — {insp.completedDate ? formatDate(insp.completedDate) : ''}
+                </span>
+                <Link
+                  href={`/landlord/inspections/${insp.id}/sign`}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-900"
+                >
+                  Sign Now
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Lease Agreements */}
       <div className="mb-8">

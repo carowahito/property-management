@@ -250,22 +250,36 @@ function buildHtml(inspection: any, data: ChecklistData): string {
   const sop009 = !isRes ? sopBox('<strong>SOP 009</strong> — Commercial tenants must restore the premises to original condition at lease end (dilapidations). Assess against the original-condition record from lease start.') : ''
 
   // Signatures
-  const sigBlock = (label: string, name = '', sig = '', date = '') =>
-    `<td style="padding:10px;border:1px solid #ddd;width:50%;vertical-align:top;">
+  const sigBlock = (label: string, name = '', sig = '', date = '') => {
+    const isImage = sig.startsWith('data:image')
+    const sigHtml = isImage
+      ? `<img src="${sig}" alt="Signature" style="height:40px;max-width:200px;" />`
+      : sig
+        ? `<span style="font-family:cursive;font-size:14px;">${sig}</span>`
+        : `<span style="color:#999;font-size:10px;">Awaiting signature</span>`
+    return `<td style="padding:10px;border:1px solid #ddd;width:50%;vertical-align:top;">
       <div style="font-size:11px;font-weight:700;background:${NAVY};color:#fff;padding:4px 8px;margin:-10px -10px 8px -10px;">${label}</div>
       <p style="font-size:11px;margin:4px 0;"><strong>Name:</strong> ${name || '&nbsp;'}</p>
-      <p style="font-size:11px;margin:4px 0;"><strong>Signature:</strong> ${sig ? `<span style="font-family:cursive;font-size:14px;">${sig}</span>` : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</p>
+      <p style="font-size:11px;margin:4px 0;"><strong>Signature:</strong> ${sigHtml}</p>
       <p style="font-size:11px;margin:4px 0;"><strong>Date:</strong> ${fmtDate(date) || '&nbsp;'}</p>
     </td>`
+  }
+
+  const hasTenant = !!inspection.tenant
+  const secondSignerLabel = hasTenant ? 'TENANT / OCCUPIER REPRESENTATIVE' : 'LANDLORD'
+  const secondSignerName = hasTenant ? (inspection.tenant?.name || '') : ((inspection.property as any)?.landlord?.name || '')
+  const secondSignerSig = hasTenant ? (inspection.tenantSignature || '') : (inspection.landlordSignature || '')
+  const secondSignerDate = hasTenant ? inspection.tenantSignedAt : inspection.landlordSignedAt
+  const secondSignerSigned = hasTenant ? !!inspection.tenantSignature : !!inspection.landlordSignature
 
   const sigTable = `<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:10px;">
     <tr>
-      ${sigBlock('INSPECTOR (Tochi Property)', inspection.inspector || '', inspection.inspectorSignature || '', inspection.completedDate)}
-      ${sigBlock('TENANT / OCCUPIER REPRESENTATIVE', inspection.tenant?.name || '', inspection.tenantSignature || '', inspection.tenantSignedAt)}
+      ${sigBlock('INSPECTOR (Tochi Property)', inspection.inspector || '', inspection.inspectorSignature || '', inspection.inspectorSignedAt || inspection.completedDate)}
+      ${sigBlock(secondSignerLabel, secondSignerName, secondSignerSig, secondSignerDate || undefined)}
     </tr>
     <tr>
       <td style="padding:8px 10px;font-size:11px;border:1px solid #ddd;">
-        <strong>Report shared with tenant:</strong> ${inspection.tenantSignature ? '☑ Yes' : '☐ Yes'} &nbsp; Date: ${fmtDate(inspection.tenantSignedAt) || '___________'}
+        <strong>Report shared with ${hasTenant ? 'tenant' : 'landlord'}:</strong> ${secondSignerSigned ? '☑ Yes' : '☐ Yes'} &nbsp; Date: ${fmtDate(secondSignerDate) || '___________'}
       </td>
       <td style="padding:8px 10px;font-size:11px;border:1px solid #ddd;">
         <strong>Uploaded to Toru PropTech:</strong> ☑ Yes
@@ -413,7 +427,10 @@ async function fetchInspection(id: string) {
     where: { id },
     include: {
       property: {
-        select: { id: true, name: true, address: true, landlordId: true },
+        select: {
+          id: true, name: true, address: true, landlordId: true,
+          landlord: { select: { id: true, name: true } },
+        },
       },
       unit: { select: { id: true, unitNumber: true } },
       tenant: { select: { id: true, name: true, email: true } },

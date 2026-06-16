@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -8,6 +9,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SignaturePad } from '@/components/ui/SignaturePad'
 import {
   type ChecklistData,
   type ChecklistItem,
@@ -38,7 +40,16 @@ interface Inspection {
   maintenanceItems: any[] | null
   violations: any[] | null
   status: string
-  property: { id: string; name: string; address: string }
+  inspectorSignature?: string | null
+  inspectorSignedAt?: string | null
+  tenantSignature?: string | null
+  tenantSignedAt?: string | null
+  landlordSignature?: string | null
+  landlordSignedAt?: string | null
+  referenceCode?: string | null
+  rootInspectionId?: string | null
+  reassessmentNumber?: number
+  property: { id: string; name: string; address: string; landlordId?: string | null }
   unit: { id: string; unitNumber: string } | null
   tenant: { id: string; name: string; email: string; phone: string } | null
   lease: { id: string; startDate: string; endDate: string; status: string } | null
@@ -276,6 +287,7 @@ function ChecklistRow({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function InspectionsPage() {
+  const { data: session } = useSession()
   const [inspections, setInspections] = useState<Inspection[]>([])
   const [loading, setLoading] = useState(true)
   const [filterType, setFilterType] = useState('all')
@@ -306,6 +318,25 @@ export default function InspectionsPage() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   const [completeLoading, setCompleteLoading] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
+  const [inspectorSigData, setInspectorSigData] = useState<string | null>(null)
+  const [showInspectorSigPad, setShowInspectorSigPad] = useState(false)
+  const [resumeLinkLoading, setResumeLinkLoading] = useState(false)
+
+  // Editable inspection details (date / type / agent)
+  const [editScheduledDate, setEditScheduledDate] = useState('')
+  const [editType, setEditType] = useState('')
+  const [editInspector, setEditInspector] = useState('')
+  const [savingDetails, setSavingDetails] = useState(false)
+  const [agents, setAgents] = useState<{ id: string; name: string; email: string; role: string }[]>([])
+
+  // Row actions dropdown
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null)
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ type: 'archive' | 'delete' | 'reassess'; inspection: Inspection } | null>(null)
+  const [confirmLoading, setConfirmLoading] = useState(false)
+  const [validateTarget, setValidateTarget] = useState<Inspection | null>(null)
+  const [validateLoading, setValidateLoading] = useState(false)
+  const [sendValidationLoadingId, setSendValidationLoadingId] = useState<string | null>(null)
   // Report email
   const [showEmailForm, setShowEmailForm] = useState(false)
   const [emailTo, setEmailTo] = useState('')
@@ -332,9 +363,33 @@ export default function InspectionsPage() {
 
   useEffect(() => { fetchInspections() }, [fetchInspections])
 
+  // Close the row-actions dropdown on scroll so it doesn't drift away from its button
+  useEffect(() => {
+    if (!openActionMenuId) return
+    const close = () => { setOpenActionMenuId(null); setMenuPos(null) }
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [openActionMenuId])
+
+  // Deep-link: open a specific inspection when ?id=... is present (e.g. from a resume-link email)
+  useEffect(() => {
+    const linkedId = new URLSearchParams(window.location.search).get('id')
+    if (!linkedId) return
+    fetch(`/api/inspections/${linkedId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(inspection => { if (inspection) openDetail(inspection) })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     fetch('/api/properties?limit=500').then(r => r.json()).then(d => setProperties(d.properties || [])).catch(() => {})
     fetch('/api/tenants?limit=500').then(r => r.json()).then(d => setTenants(d.tenants || [])).catch(() => {})
+    fetch('/api/users').then(r => r.json()).then(d => setAgents(d.users || [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -389,6 +444,13 @@ export default function InspectionsPage() {
     finally { setScheduleLoading(false) }
   }
 
+  // ── Open schedule modal ─────────────────────────────────────────────────────
+
+  function openScheduleModal() {
+    setScheduleForm(f => ({ ...f, inspector: f.inspector || session?.user?.name || '' }))
+    setShowScheduleModal(true)
+  }
+
   // ── Open detail ────────────────────────────────────────────────────────────
 
   function openDetail(inspection: Inspection) {
@@ -396,6 +458,11 @@ export default function InspectionsPage() {
     setShowCompleteConfirm(false)
     setShowEmailForm(false)
     setEmailTo('')
+    setInspectorSigData(null)
+    setShowInspectorSigPad(false)
+    setEditScheduledDate(new Date(inspection.scheduledDate).toISOString().slice(0, 10))
+    setEditType(inspection.type)
+    setEditInspector(inspection.inspector || '')
 
     if (inspection.propertyCategory) {
       // Checklist-mode
@@ -613,6 +680,33 @@ export default function InspectionsPage() {
     })
   }
 
+  // ── Save inspection details (date / type / agent) ───────────────────────────
+
+  async function saveDetails() {
+    if (!selectedInspection) return
+    setSavingDetails(true)
+    try {
+      const res = await fetch(`/api/inspections/${selectedInspection.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scheduledDate: editScheduledDate,
+          type: editType,
+          inspector: editInspector || null,
+        }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setSelectedInspection(prev => prev ? { ...prev, scheduledDate: updated.scheduledDate, type: updated.type, inspector: updated.inspector } : prev)
+        fetchInspections()
+      } else {
+        const d = await res.json()
+        alert(d.error || 'Failed to save inspection details')
+      }
+    } catch { alert('Network error') }
+    finally { setSavingDetails(false) }
+  }
+
   // ── Save progress ──────────────────────────────────────────────────────────
 
   async function saveProgress() {
@@ -635,10 +729,139 @@ export default function InspectionsPage() {
     } catch { /* silent */ }
   }
 
+  async function handleEmailResumeLink() {
+    if (!selectedInspection) return
+    setResumeLinkLoading(true)
+    try {
+      await saveProgress()
+      const res = await fetch(`/api/inspections/${selectedInspection.id}/email-resume-link`, { method: 'POST' })
+      if (res.ok) {
+        const d = await res.json()
+        alert(`Resume link emailed to ${d.sentTo}`)
+      } else {
+        const d = await res.json()
+        alert(d.error || 'Failed to send resume link')
+      }
+    } catch { alert('Network error') }
+    finally { setResumeLinkLoading(false) }
+  }
+
+  // ── Row actions: Validate / Send for Validation / Archive / Delete ─────────
+
+  function openValidate(inspection: Inspection) {
+    setOpenActionMenuId(null)
+    setValidateTarget(inspection)
+  }
+
+  async function handleValidateSign(dataUrl: string) {
+    if (!validateTarget) return
+    setValidateLoading(true)
+    try {
+      const res = await fetch(`/api/inspections/${validateTarget.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inspectorSignature: dataUrl, inspectorSignedAt: new Date().toISOString() }),
+      })
+      if (res.ok) {
+        setValidateTarget(null)
+        fetchInspections()
+      } else {
+        const d = await res.json()
+        alert(d.error || 'Failed to save inspector signature')
+      }
+    } catch { alert('Network error') }
+    finally { setValidateLoading(false) }
+  }
+
+  async function handleSendForValidation(inspection: Inspection) {
+    setOpenActionMenuId(null)
+    if (inspection.status !== 'COMPLETED') {
+      alert('Inspection must be completed before it can be sent for validation.')
+      return
+    }
+    setSendValidationLoadingId(inspection.id)
+    try {
+      const res = await fetch(`/api/inspections/${inspection.id}/send-for-validation`, { method: 'POST' })
+      const d = await res.json()
+      if (res.ok) {
+        alert(`Sent for validation to ${d.sentTo}`)
+      } else {
+        alert(d.error || 'Failed to send for validation')
+      }
+    } catch { alert('Network error') }
+    finally { setSendValidationLoadingId(null) }
+  }
+
+  function requestArchive(inspection: Inspection) {
+    setOpenActionMenuId(null)
+    setConfirmAction({ type: 'archive', inspection })
+  }
+
+  function requestDelete(inspection: Inspection) {
+    setOpenActionMenuId(null)
+    setConfirmAction({ type: 'delete', inspection })
+  }
+
+  function requestReassess(inspection: Inspection) {
+    setOpenActionMenuId(null)
+    if (inspection.status !== 'COMPLETED' || !inspection.inspectorSignature) {
+      alert('You can only reassess an inspection after the current inspection has been validated')
+      return
+    }
+    setConfirmAction({ type: 'reassess', inspection })
+  }
+
+  async function handleConfirmAction() {
+    if (!confirmAction) return
+    setConfirmLoading(true)
+    try {
+      if (confirmAction.type === 'archive') {
+        const res = await fetch(`/api/inspections/${confirmAction.inspection.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'ARCHIVED' }),
+        })
+        if (!res.ok) {
+          const d = await res.json()
+          alert(d.error || 'Failed to archive inspection')
+          return
+        }
+      } else if (confirmAction.type === 'delete') {
+        const res = await fetch(`/api/inspections/${confirmAction.inspection.id}`, { method: 'DELETE' })
+        if (!res.ok) {
+          const d = await res.json()
+          alert(d.error || 'Failed to delete inspection')
+          return
+        }
+      } else {
+        const res = await fetch(`/api/inspections/${confirmAction.inspection.id}/reassess`, { method: 'POST' })
+        if (!res.ok) {
+          const d = await res.json()
+          alert(d.error || 'Failed to reassess inspection')
+          return
+        }
+        const created = await res.json()
+        setConfirmAction(null)
+        fetchInspections()
+        const full = await fetch(`/api/inspections/${created.id}`).then(r => r.ok ? r.json() : null).catch(() => null)
+        openDetail(full || created)
+        return
+      }
+      setConfirmAction(null)
+      fetchInspections()
+    } catch { alert('Network error') }
+    finally { setConfirmLoading(false) }
+  }
+
   // ── Complete ───────────────────────────────────────────────────────────────
 
   async function handleComplete() {
     if (!selectedInspection) return
+    if (!inspectorSigData) {
+      alert('Inspector signature is required to complete the inspection')
+      setShowInspectorSigPad(true)
+      return
+    }
     setCompleteLoading(true)
 
     try {
@@ -710,6 +933,7 @@ export default function InspectionsPage() {
           rooms,
           maintenanceItems: maintenanceItems.length > 0 ? maintenanceItems : null,
           followUpRequired,
+          inspectorSignature: inspectorSigData,
         }),
       })
 
@@ -726,7 +950,7 @@ export default function InspectionsPage() {
   }
 
   const isCompleted = selectedInspection?.status === 'COMPLETED'
-  const isCancelled = selectedInspection?.status === 'CANCELLED'
+  const isCancelled = selectedInspection?.status === 'CANCELLED' || selectedInspection?.status === 'ARCHIVED'
   const isChecklist = !!(selectedInspection?.propertyCategory)
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -739,7 +963,7 @@ export default function InspectionsPage() {
           <h1 className="text-xl md:text-2xl font-bold text-neutral-900">Property Inspections</h1>
           <p className="text-neutral-500 text-sm mt-1">SOP 006 — All inspections are digital-first. Photograph every room and defect.</p>
         </div>
-        <Button variant="primary" size="lg" onClick={() => setShowScheduleModal(true)}>+ Schedule Inspection</Button>
+        <Button variant="primary" size="lg" onClick={openScheduleModal}>+ Schedule Inspection</Button>
       </div>
 
       {/* Stats */}
@@ -768,6 +992,7 @@ export default function InspectionsPage() {
             { value: 'IN_PROGRESS', label: 'In Progress' },
             { value: 'COMPLETED', label: 'Completed' },
             { value: 'CANCELLED', label: 'Cancelled' },
+            { value: 'ARCHIVED', label: 'Archived' },
           ]} />
       </div>
 
@@ -777,11 +1002,12 @@ export default function InspectionsPage() {
           <div className="p-12 text-center text-neutral-500">Loading inspections...</div>
         ) : inspections.length === 0 ? (
           <EmptyState title="No inspections found" description="Schedule your first property inspection."
-            action={<Button variant="primary" onClick={() => setShowScheduleModal(true)}>Schedule Inspection</Button>} />
+            action={<Button variant="primary" onClick={openScheduleModal}>Schedule Inspection</Button>} />
         ) : (
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
               <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden lg:table-cell">Ref</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Property / Unit</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">Category</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase hidden md:table-cell">Tenant</th>
@@ -797,9 +1023,11 @@ export default function InspectionsPage() {
                 const overdue = (inspection.status === 'SCHEDULED' || inspection.status === 'IN_PROGRESS') && new Date(inspection.scheduledDate) < now
                 return (
                   <tr key={inspection.id} className="hover:bg-neutral-50">
+                    <td className="px-4 py-3 hidden lg:table-cell text-xs text-neutral-500 font-mono">{inspection.referenceCode || '—'}</td>
                     <td className="px-4 py-3">
                       <div className="text-sm font-medium text-neutral-900">{inspection.property?.name}</div>
                       {inspection.unit && <div className="text-xs text-neutral-500">Unit {inspection.unit.unitNumber}</div>}
+                      <div className="text-xs text-neutral-400 lg:hidden">{inspection.referenceCode}</div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       {inspection.propertyCategory ? (
@@ -823,9 +1051,30 @@ export default function InspectionsPage() {
                         : <span className="text-sm text-neutral-400">—</span>}
                       {inspection.followUpRequired && <Badge variant="danger" size="sm" className="ml-1">Follow-up</Badge>}
                     </td>
-                    <td className="px-4 py-3">
-                      <Button variant="ghost" size="sm" onClick={() => openDetail(inspection)}>
-                        {inspection.status === 'COMPLETED' ? 'View' : 'Open'}
+                    <td className="px-4 py-3 relative">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          if (openActionMenuId === inspection.id) {
+                            setOpenActionMenuId(null)
+                            setMenuPos(null)
+                            return
+                          }
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          const menuWidth = 192 // w-48
+                          const menuMaxHeight = 288 // max-h-72
+                          const spaceBelow = window.innerHeight - rect.bottom
+                          const openUpward = spaceBelow < menuMaxHeight && rect.top > spaceBelow
+                          setMenuPos({
+                            top: openUpward ? undefined : rect.bottom + 4,
+                            bottom: openUpward ? window.innerHeight - rect.top + 4 : undefined,
+                            left: Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8)),
+                          })
+                          setOpenActionMenuId(inspection.id)
+                        }}
+                      >
+                        Actions ▾
                       </Button>
                     </td>
                   </tr>
@@ -835,6 +1084,63 @@ export default function InspectionsPage() {
           </table>
         )}
       </div>
+
+      {/* ── Row actions dropdown (fixed-position so it isn't clipped by the table's overflow) ── */}
+      {openActionMenuId && menuPos && (() => {
+        const inspection = inspections.find(i => i.id === openActionMenuId)
+        if (!inspection) return null
+        const closeMenu = () => { setOpenActionMenuId(null); setMenuPos(null) }
+        return (
+          <>
+            <div className="fixed inset-0 z-40" onClick={closeMenu} />
+            <div
+              className="fixed z-50 w-48 max-h-72 overflow-y-auto bg-white border border-neutral-200 rounded-lg shadow-lg py-1"
+              style={{ top: menuPos.top, bottom: menuPos.bottom, left: menuPos.left }}
+            >
+              {inspection.status === 'COMPLETED' ? (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  onClick={() => { closeMenu(); openDetail(inspection) }}
+                >View</button>
+              ) : (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  onClick={() => { closeMenu(); openDetail(inspection) }}
+                >Edit</button>
+              )}
+              {inspection.status === 'COMPLETED' && !inspection.inspectorSignature && (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  onClick={() => { setMenuPos(null); openValidate(inspection) }}
+                >Validate</button>
+              )}
+              {inspection.status === 'COMPLETED' && (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                  disabled={sendValidationLoadingId === inspection.id}
+                  onClick={() => { setMenuPos(null); handleSendForValidation(inspection) }}
+                >{sendValidationLoadingId === inspection.id ? 'Sending…' : 'Send for Validation'}</button>
+              )}
+              {inspection.status === 'COMPLETED' && (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  onClick={() => { setMenuPos(null); requestReassess(inspection) }}
+                >Reassess</button>
+              )}
+              {inspection.status !== 'ARCHIVED' && (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                  onClick={() => { setMenuPos(null); requestArchive(inspection) }}
+                >Archive</button>
+              )}
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-danger-600 hover:bg-danger-50"
+                onClick={() => { setMenuPos(null); requestDelete(inspection) }}
+              >Delete</button>
+            </div>
+          </>
+        )
+      })()}
 
       {/* ── Schedule Modal ──────────────────────────────────────────────────── */}
       <Modal open={showScheduleModal} onClose={() => setShowScheduleModal(false)} className="max-w-lg">
@@ -923,10 +1229,44 @@ export default function InspectionsPage() {
                 <p className="text-sm text-neutral-500 mt-0.5">
                   {selectedInspection.property?.name}
                   {selectedInspection.unit ? ` · Unit ${selectedInspection.unit.unitNumber}` : ''}
-                  {' · '}{formatType(selectedInspection.type)}
-                  {' · '}{new Date(selectedInspection.scheduledDate).toLocaleDateString()}
-                  {selectedInspection.inspector ? ` · ${selectedInspection.inspector}` : ''}
                 </p>
+                {!isCompleted && !isCancelled ? (
+                  <div className="flex flex-wrap items-end gap-2 mt-2">
+                    <Input
+                      type="date"
+                      className="w-auto py-1 text-sm"
+                      value={editScheduledDate}
+                      onChange={e => setEditScheduledDate(e.target.value)}
+                    />
+                    <Select
+                      className="w-auto py-1 text-sm"
+                      options={INSPECTION_TYPES}
+                      value={editType}
+                      onChange={e => setEditType(e.target.value)}
+                    />
+                    <Select
+                      className="w-auto py-1 text-sm"
+                      options={[
+                        { value: '', label: 'Select agent…' },
+                        ...(editInspector && !agents.some(a => a.name === editInspector)
+                          ? [{ value: editInspector, label: `${editInspector} (unlisted)` }]
+                          : []),
+                        ...agents.map(a => ({ value: a.name, label: a.name })),
+                      ]}
+                      value={editInspector}
+                      onChange={e => setEditInspector(e.target.value)}
+                    />
+                    <Button size="sm" variant="outline" onClick={saveDetails} disabled={savingDetails}>
+                      {savingDetails ? 'Saving…' : 'Save Details'}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-500 mt-0.5">
+                    {formatType(selectedInspection.type)}
+                    {' · '}{new Date(selectedInspection.scheduledDate).toLocaleDateString()}
+                    {selectedInspection.inspector ? ` · ${selectedInspection.inspector}` : ''}
+                  </p>
+                )}
               </div>
               <button onClick={() => setShowDetailModal(false)} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1574,10 +1914,24 @@ export default function InspectionsPage() {
               {!isCompleted && !isCancelled && (
                 <>
                   <Button variant="outline" onClick={saveProgress}>Save Progress</Button>
+                  <Button variant="outline" onClick={handleEmailResumeLink} disabled={resumeLinkLoading}>
+                    {resumeLinkLoading ? 'Sending...' : 'Email Me a Resume Link'}
+                  </Button>
                   {!showCompleteConfirm ? (
-                    <Button variant="success" onClick={() => setShowCompleteConfirm(true)}>Complete Inspection</Button>
+                    <Button
+                      variant="success"
+                      onClick={() => inspectorSigData ? setShowCompleteConfirm(true) : setShowInspectorSigPad(true)}
+                    >
+                      Complete Inspection
+                    </Button>
                   ) : (
                     <div className="flex items-center gap-2">
+                      {inspectorSigData && (
+                        <span className="flex items-center gap-1 text-xs text-success-700">
+                          <img src={inspectorSigData} alt="Inspector signature" className="h-6 border border-neutral-200 rounded bg-white" />
+                          <button type="button" className="underline text-neutral-500" onClick={() => setShowInspectorSigPad(true)}>change</button>
+                        </span>
+                      )}
                       <span className="text-sm text-neutral-600">Are you sure?</span>
                       <Button variant="outline" size="sm" onClick={() => setShowCompleteConfirm(false)}>Cancel</Button>
                       <Button variant="success" size="sm" onClick={handleComplete} disabled={completeLoading}>
@@ -1591,6 +1945,94 @@ export default function InspectionsPage() {
             </ModalFooter>
           </>
         )}
+      </Modal>
+
+      {/* ── Inspector Signature Modal ──────────────────────────────────────── */}
+      <Modal open={showInspectorSigPad} onClose={() => setShowInspectorSigPad(false)} className="max-w-lg">
+        <ModalHeader>
+          <h2 className="text-lg font-semibold">Inspector Signature</h2>
+          <button onClick={() => setShowInspectorSigPad(false)} className="text-neutral-400 hover:text-neutral-600">
+            ✕
+          </button>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600 mb-3">
+            Sign below to confirm you conducted this inspection. Your signature will appear on the inspection report.
+          </p>
+          <SignaturePad
+            label="Inspector sign here"
+            onSave={(dataUrl) => {
+              setInspectorSigData(dataUrl)
+              setShowInspectorSigPad(false)
+              setShowCompleteConfirm(true)
+            }}
+            onCancel={() => setShowInspectorSigPad(false)}
+          />
+        </ModalBody>
+      </Modal>
+
+      {/* ── Validate (Inspector Signature, row action) Modal ──────────────── */}
+      <Modal open={!!validateTarget} onClose={() => setValidateTarget(null)} className="max-w-lg">
+        <ModalHeader>
+          <h2 className="text-lg font-semibold">Validate Inspection</h2>
+          <button onClick={() => setValidateTarget(null)} className="text-neutral-400 hover:text-neutral-600">
+            ✕
+          </button>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600 mb-3">
+            {validateTarget?.property?.name}{validateTarget?.unit ? ` — Unit ${validateTarget.unit.unitNumber}` : ''}
+            <br />
+            Sign below as the inspector to validate this inspection report.
+          </p>
+          <SignaturePad
+            label="Inspector sign here"
+            saving={validateLoading}
+            onSave={handleValidateSign}
+            onCancel={() => setValidateTarget(null)}
+          />
+        </ModalBody>
+      </Modal>
+
+      {/* ── Archive / Delete / Reassess Confirm Modal ───────────────────────── */}
+      <Modal open={!!confirmAction} onClose={() => setConfirmAction(null)} className="max-w-sm">
+        <ModalHeader>
+          <h2 className="text-lg font-semibold">
+            {confirmAction?.type === 'archive' ? 'Archive Inspection?' : confirmAction?.type === 'reassess' ? 'Reassess Inspection?' : 'Delete Inspection?'}
+          </h2>
+          <button onClick={() => setConfirmAction(null)} className="text-neutral-400 hover:text-neutral-600">
+            ✕
+          </button>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600">
+            {confirmAction?.type === 'archive'
+              ? 'This will mark the inspection as archived and remove it from active views.'
+              : confirmAction?.type === 'reassess'
+                ? 'This will archive the current inspection report and create a new inspection for this unit, continuing the reference number sequence.'
+                : 'This will permanently delete this inspection and all its data. This action cannot be undone.'}
+          </p>
+          <p className="text-sm font-medium text-neutral-900 mt-2">
+            {confirmAction?.inspection.referenceCode && <span className="text-neutral-500 font-normal">{confirmAction.inspection.referenceCode} — </span>}
+            {confirmAction?.inspection.property?.name}
+            {confirmAction?.inspection.unit ? ` — Unit ${confirmAction.inspection.unit.unitNumber}` : ''}
+          </p>
+          {confirmAction?.type === 'delete' && (
+            <p className="text-sm text-neutral-500 mt-2">
+              Note: the assigned agent and the tenant or landlord on this inspection will be notified by email that it has been cancelled.
+            </p>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button
+            variant={confirmAction?.type === 'delete' ? 'danger' : 'primary'}
+            onClick={handleConfirmAction}
+            disabled={confirmLoading}
+          >
+            {confirmLoading ? 'Working…' : confirmAction?.type === 'archive' ? 'Archive' : confirmAction?.type === 'reassess' ? 'Reassess' : 'Delete'}
+          </Button>
+        </ModalFooter>
       </Modal>
     </div>
   )

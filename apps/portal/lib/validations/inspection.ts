@@ -53,9 +53,12 @@ export const updateInspectionSchema = z.object({
   maintenanceItems: z.array(maintenanceItemSchema).optional().nullable(),
   violations: z.array(violationSchema).optional().nullable(),
   inspectorSignature: z.string().optional().nullable(),
+  inspectorSignedAt: z.string().optional().nullable(),
   tenantSignature: z.string().optional().nullable(),
   tenantSignedAt: z.string().optional().nullable(),
-  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+  landlordSignature: z.string().optional().nullable(),
+  landlordSignedAt: z.string().optional().nullable(),
+  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'ARCHIVED']).optional(),
 })
 
 export const completeInspectionSchema = z.object({
@@ -67,7 +70,7 @@ export const completeInspectionSchema = z.object({
   maintenanceItems: z.array(maintenanceItemSchema).optional().nullable(),
   violations: z.array(violationSchema).optional().nullable(),
   followUpRequired: z.boolean().optional(),
-  inspectorSignature: z.string().optional().nullable(),
+  inspectorSignature: z.string().min(1, 'Inspector signature is required to complete inspection'),
   tenantSignature: z.string().optional().nullable(),
 })
 

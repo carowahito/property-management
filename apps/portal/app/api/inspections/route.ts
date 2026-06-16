@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createInspectionSchema } from '@/lib/validations/inspection'
+import { generateRootReferenceCode } from '@/lib/services/inspection-reference'
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,6 +112,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
 
+    const referenceCode = await generateRootReferenceCode()
+
     const inspection = await prisma.inspection.create({
       data: {
         propertyId: validatedData.propertyId,
@@ -122,6 +125,7 @@ export async function POST(request: NextRequest) {
         scheduledDate: new Date(validatedData.scheduledDate),
         inspector: validatedData.inspector || undefined,
         status: validatedData.status,
+        referenceCode,
       },
       include: {
         property: {

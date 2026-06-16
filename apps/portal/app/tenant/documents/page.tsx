@@ -36,6 +36,15 @@ export default function DocumentsPage() {
     queryFn: () => fetch(`/api/tenants/${tenantId}/documents`).then(r => r.json()),
   })
 
+  const { data: myInspectionsData } = useQuery({
+    queryKey: ['tenant-me-inspections'],
+    queryFn: () => fetch('/api/tenants/me/inspections').then(r => r.json()),
+  })
+
+  const pendingSignatureInspections = (myInspectionsData?.inspections || []).filter(
+    (i: any) => !i.tenantSignedAt
+  )
+
   const isLoading = isLoadingLeases || isLoadingPayments || (!!tenantId && isLoadingDocs)
 
   if (isLoading) {
@@ -121,6 +130,30 @@ export default function DocumentsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Documents</h1>
       </div>
+
+      {/* Pending Inspection Signatures */}
+      {pendingSignatureInspections.length > 0 && (
+        <div className="mb-6 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4">
+          <p className="text-sm font-medium text-amber-800 mb-2">
+            {pendingSignatureInspections.length} inspection report{pendingSignatureInspections.length > 1 ? 's' : ''} awaiting your signature
+          </p>
+          <ul className="space-y-2">
+            {pendingSignatureInspections.map((insp: any) => (
+              <li key={insp.id} className="flex items-center justify-between bg-surface rounded px-3 py-2">
+                <span className="text-sm text-neutral-700">
+                  {insp.property?.name}{insp.unit ? ` — Unit ${insp.unit.unitNumber}` : ''} — {insp.completedDate ? formatDate(insp.completedDate) : ''}
+                </span>
+                <Link
+                  href={`/tenant/inspections/${insp.id}/sign`}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-900"
+                >
+                  Sign Now
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Document Stats */}
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-4 mb-6">

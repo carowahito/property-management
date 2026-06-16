@@ -1075,10 +1075,19 @@ model Inspection {
 
   // Signatures
   inspectorSignature String?
+  inspectorSignedAt  DateTime?
   tenantSignature    String?
   tenantSignedAt     DateTime?
+  landlordSignature  String?
+  landlordSignedAt   DateTime?
 
   status          InspectionStatus @default(SCHEDULED)
+
+  // Identifier / reassessment lineage — e.g. "Inspection-0001" (original) or
+  // "Inspection-0001-2" (2nd reassessment of that unit's original inspection)
+  referenceCode      String?      @unique
+  rootInspectionId   String?
+  reassessmentNumber Int          @default(0)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1089,11 +1098,15 @@ model Inspection {
   tenant          Tenant?  @relation(fields: [tenantId], references: [id])
   lease           Lease?   @relation(fields: [leaseId], references: [id])
 
+  rootInspection  Inspection?  @relation("InspectionLineage", fields: [rootInspectionId], references: [id])
+  reassessments   Inspection[] @relation("InspectionLineage")
+
   @@index([propertyId])
   @@index([tenantId])
   @@index([type])
   @@index([status])
   @@index([scheduledDate])
+  @@index([rootInspectionId])
   @@map("inspections")
 }
 
@@ -1480,6 +1493,7 @@ enum InspectionStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+  ARCHIVED
 }
 
 enum ViewingStatus {
