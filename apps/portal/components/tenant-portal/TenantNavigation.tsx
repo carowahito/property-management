@@ -37,6 +37,7 @@ export default function TenantNavigation() {
       submenu: [
         { href: '/tenant/lease', label: 'My Lease' },
         { href: '/tenant/security', label: 'Security' },
+        { href: '/tenant/analytics', label: 'Analytics' },
       ]
     },
     {
@@ -47,7 +48,6 @@ export default function TenantNavigation() {
         { href: '/tenant/autopay', label: 'Auto-Pay' },
         ...(showPaymentPlans ? [{ href: '/tenant/payment-plans', label: 'Payment Plans' }] : []),
         { href: '/tenant/insurance', label: 'Insurance' },
-        { href: '/tenant/analytics', label: 'Analytics' },
       ]
     },
     { 
