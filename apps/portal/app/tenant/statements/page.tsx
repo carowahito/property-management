@@ -32,7 +32,7 @@ interface StatementData {
 
 export default function TenantStatementsPage() {
   const [period, setPeriod] = useState<StatementPeriod>('12');
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const searchParams = useSearchParams();
 
   const isTenant = session?.user?.role === 'TENANT';
@@ -62,10 +62,25 @@ export default function TenantStatementsPage() {
     );
   };
 
-  if (!tenantId) {
+  // Session still loading — wait before deciding anything
+  if (sessionStatus === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // Session loaded but no tenant context available
+  if (!tenantId) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-sm">
+          <p className="text-lg font-semibold text-neutral-700">No tenant selected</p>
+          <p className="mt-2 text-sm text-neutral-500">
+            Open this page from the admin tenant detail view to view a statement.
+          </p>
+        </div>
       </div>
     );
   }
