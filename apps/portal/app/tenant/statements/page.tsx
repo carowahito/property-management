@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { useTenantContext } from '@/lib/hooks/use-tenant-context';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { StatementPeriodSelect } from '@/components/ui/statement-period-select';
 import { StatementPeriod, getStatementDateRange } from '@/lib/statement-period';
@@ -32,14 +32,10 @@ interface StatementData {
 
 function TenantStatementsPageInner() {
   const [period, setPeriod] = useState<StatementPeriod>('12');
-  const { data: session, status: sessionStatus } = useSession();
   const searchParams = useSearchParams();
-
-  const isTenant = session?.user?.role === 'TENANT';
-  // Tenants always see their own statement; admins pass ?tenantId= via URL
-  const tenantId = isTenant
-    ? session?.user?.id
-    : (searchParams.get('tenantId') ?? null);
+  const { tenantId: cookieTenantId, sessionStatus } = useTenantContext();
+  // Cookie takes priority; admins can also still pass ?tenantId= directly
+  const tenantId = cookieTenantId ?? searchParams.get('tenantId');
 
   const { startDate, endDate } = getStatementDateRange(period);
 

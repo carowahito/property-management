@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, Suspense } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 
@@ -23,12 +23,11 @@ function usePaymentPlansEligible(tenantId: string | null) {
 function TenantNavigationInner() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const pathname = usePathname()
-  const router = useRouter()
-  const { tenantId, isAssuming, assumeParam } = useTenantContext()
+  const { tenantId } = useTenantContext()
   const showPaymentPlans = usePaymentPlansEligible(tenantId)
 
   const isActive = (path: string) => pathname?.startsWith(path)
-  const href = (path: string) => `${path}${assumeParam}`
+  const href = (path: string) => path
 
   const navItems = [
     { href: '/tenant/dashboard', label: 'Dashboard', icon: '📊' },
@@ -81,17 +80,6 @@ function TenantNavigationInner() {
 
   return (
     <div>
-      {isAssuming && (
-        <div className="bg-amber-500 text-white text-xs font-medium px-4 py-1.5 flex items-center justify-between">
-          <span>Viewing as tenant — {tenantId}</span>
-          <button
-            onClick={() => router.push('/admin')}
-            className="underline hover:no-underline ml-4"
-          >
-            Exit to Admin
-          </button>
-        </div>
-      )}
       <nav className="bg-white shadow-sm border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">

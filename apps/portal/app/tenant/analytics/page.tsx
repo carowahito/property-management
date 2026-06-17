@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { useEffectiveTenant } from '@/lib/hooks/use-effective-tenant'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 
 function monthsBetween(a: Date, b: Date) {
   return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
@@ -34,7 +34,7 @@ function StatCard({ label, value, sub, highlight }: { label: string; value: stri
 }
 
 export default function TenantAnalyticsPage() {
-  const { tenantId } = useEffectiveTenant()
+  const { tenantId } = useTenantContext()
 
   const { data: paymentsData, isLoading: loadingPayments } = useQuery({
     queryKey: ['analytics-payments'],

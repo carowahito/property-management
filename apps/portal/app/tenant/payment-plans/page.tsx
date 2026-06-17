@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useEffectiveTenant } from '@/lib/hooks/use-effective-tenant'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 function useEligible() {
-  const { tenantId } = useEffectiveTenant()
+  const { tenantId } = useTenantContext()
   const { data, isLoading } = useQuery({
     queryKey: ['payment-plans-eligibility', tenantId],
     queryFn: () => fetch(`/api/tenants/${tenantId}`).then(r => r.json()),

@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useSession } from 'next-auth/react'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -180,8 +180,7 @@ function LeaseCard({ lease, label }: { lease: any; label?: string }) {
 }
 
 export default function TenantLeasePage() {
-  const { data: session } = useSession()
-  const tenantId = session?.user?.id
+  const { tenantId } = useTenantContext()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['tenant-leases', tenantId],

@@ -2,22 +2,16 @@
 
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
 
 function TenantPaymentsPageInner() {
   const [filter, setFilter] = useState('all')
-  const { data: session } = useSession()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const isTenant = session?.user?.role === 'TENANT'
-  // Tenants use their session ID; admins/agents pass ?tenantId= in the URL
-  const tenantId = isTenant
-    ? session?.user?.id
-    : (searchParams.get('tenantId') ?? null)
+  const { tenantId, isTenant } = useTenantContext()
 
   const apiUrl = tenantId
     ? `/api/payments?tenantId=${tenantId}`
@@ -90,14 +84,7 @@ function TenantPaymentsPageInner() {
         <h1 className="text-2xl font-bold text-neutral-900">Payment History</h1>
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              const dest = isTenant
-                ? '/tenant/statements'
-                : tenantId
-                ? `/tenant/statements?tenantId=${tenantId}`
-                : '/tenant/statements'
-              router.push(dest)
-            }}
+            onClick={() => router.push('/tenant/statements')}
             className="inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50"
           >
             View Statement
