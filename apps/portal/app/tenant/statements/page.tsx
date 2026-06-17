@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -30,7 +30,7 @@ interface StatementData {
   entries: LedgerEntry[];
 }
 
-export default function TenantStatementsPage() {
+function TenantStatementsPageInner() {
   const [period, setPeriod] = useState<StatementPeriod>('12');
   const { data: session, status: sessionStatus } = useSession();
   const searchParams = useSearchParams();
@@ -287,5 +287,13 @@ export default function TenantStatementsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TenantStatementsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner size="lg" /></div>}>
+      <TenantStatementsPageInner />
+    </Suspense>
   );
 }

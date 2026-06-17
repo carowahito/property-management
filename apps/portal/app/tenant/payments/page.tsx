@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
 
-export default function TenantPaymentsPage() {
+function TenantPaymentsPageInner() {
   const [filter, setFilter] = useState('all')
   const { data: session } = useSession()
   const router = useRouter()
@@ -19,9 +19,14 @@ export default function TenantPaymentsPage() {
     ? session?.user?.id
     : (searchParams.get('tenantId') ?? null)
 
+  const apiUrl = tenantId
+    ? `/api/payments?tenantId=${tenantId}`
+    : '/api/payments'
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['tenant-payments'],
-    queryFn: () => fetch('/api/payments').then(r => r.json()),
+    queryKey: ['tenant-payments', tenantId],
+    queryFn: () => fetch(apiUrl).then(r => r.json()),
+    enabled: !!tenantId,
   })
 
   const payments: any[] = data?.payments || []
@@ -263,7 +268,7 @@ export default function TenantPaymentsPage() {
         </div>
       </div>
 
-      {/* Payment Statistics */}
+      {/* Payment Statistics — only meaningful for the scoped tenant */}
       <div className="mt-6 bg-surface shadow rounded-lg p-6">
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">Payment Statistics</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -288,5 +293,13 @@ export default function TenantPaymentsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TenantPaymentsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner size="lg" /></div>}>
+      <TenantPaymentsPageInner />
+    </Suspense>
   )
 }

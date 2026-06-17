@@ -1,8 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useSession } from 'next-auth/react'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { useEffectiveTenant } from '@/lib/hooks/use-effective-tenant'
 
 function monthsBetween(a: Date, b: Date) {
   return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
@@ -34,8 +34,7 @@ function StatCard({ label, value, sub, highlight }: { label: string; value: stri
 }
 
 export default function TenantAnalyticsPage() {
-  const { data: session } = useSession()
-  const tenantId = session?.user?.role === 'TENANT' ? session?.user?.id : null
+  const { tenantId } = useEffectiveTenant()
 
   const { data: paymentsData, isLoading: loadingPayments } = useQuery({
     queryKey: ['analytics-payments'],

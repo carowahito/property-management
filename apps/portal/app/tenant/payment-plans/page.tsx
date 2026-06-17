@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { useEffectiveTenant } from '@/lib/hooks/use-effective-tenant'
 import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 function useEligible() {
-  const { data: session } = useSession()
-  const tenantId = session?.user?.role === 'TENANT' ? session?.user?.id : null
+  const { tenantId } = useEffectiveTenant()
   const { data, isLoading } = useQuery({
     queryKey: ['payment-plans-eligibility', tenantId],
     queryFn: () => fetch(`/api/tenants/${tenantId}`).then(r => r.json()),

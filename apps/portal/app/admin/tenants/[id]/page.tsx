@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { StatementMenuButton } from '@/components/ui/statement-menu-button'
 import { getStatementDateRange } from '@/lib/statement-period'
 import { formatDate } from '@/lib/utils'
+import { setAssumedTenant } from '@/lib/assumed-tenant'
 import TaskManager from '@/components/crm/TaskManager'
 import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
@@ -723,8 +724,18 @@ export default function TenantCRMPage({ params }: Props) {
                 window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`, '_blank')
               }}
             />
-            <Button variant="outline" onClick={() => router.push(`/tenant/statements?tenantId=${tenantId}`)}>
-              🏠 Tenant Portal
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAssumedTenant({
+                  id: tenantId,
+                  name: tenant.name,
+                  unitNumber: tenantApiData?.unitRef?.unitNumber ?? tenant.unit ?? '',
+                })
+                router.push('/tenant/dashboard')
+              }}
+            >
+              Assume Tenant
             </Button>
             <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
               ✉️ Invite
