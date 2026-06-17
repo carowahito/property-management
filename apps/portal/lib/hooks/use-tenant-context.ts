@@ -31,5 +31,7 @@ export function useTenantContext() {
     isAdmin,
     isTenant,
     assumedTenant,
+    // Cookie-based impersonation; no URL param needed
+    assumeParam: '' as string,
   }
 }
