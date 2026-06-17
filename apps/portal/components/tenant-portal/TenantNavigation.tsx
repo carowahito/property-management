@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, Suspense } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 
@@ -23,11 +23,12 @@ function usePaymentPlansEligible(tenantId: string | null) {
 function TenantNavigationInner() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const pathname = usePathname()
-  const { tenantId } = useTenantContext()
+  const router = useRouter()
+  const { tenantId, isAssuming, assumeParam } = useTenantContext()
   const showPaymentPlans = usePaymentPlansEligible(tenantId)
 
   const isActive = (path: string) => pathname?.startsWith(path)
-  const href = (path: string) => path
+  const href = (path: string) => `${path}${assumeParam}`
 
   const navItems = [
     { href: '/tenant/dashboard', label: 'Dashboard', icon: '📊' },
@@ -158,14 +159,6 @@ function TenantNavigationInner() {
                   <Link href="/tenant/support" className="text-sm font-medium text-neutral-700 hover:text-neutral-900">❓ Support</Link>
                   <Link href="/" className="text-sm font-medium text-danger-600 hover:text-danger-800">🚪 Logout</Link>
                 </>
-              )}
-              {isAssuming && (
-                <button
-                  onClick={() => router.push('/admin')}
-                  className="text-sm font-medium text-amber-700 hover:text-amber-900"
-                >
-                  ← Back to Admin
-                </button>
               )}
             </div>
           </div>
