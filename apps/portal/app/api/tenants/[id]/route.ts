@@ -61,6 +61,8 @@ export async function GET(
                 email: true,
                 phone: true,
                 type: true,
+                bankName: true,
+                bankAccount: true,
                 members: { orderBy: { createdAt: 'asc' } },
               },
             },
