@@ -47,6 +47,8 @@ export const updateLeaseSchema = z.object({
   sentForSigning: z.boolean().optional(),
   tenantSignedAt: z.string().optional(),
   landlordSignedAt: z.string().optional(),
+  tenantSignature: z.string().optional(),
+  landlordSignature: z.string().optional(),
   // Second tenant
   tenant2Name: z.string().optional(),
   tenant2IdNumber: z.string().optional(),

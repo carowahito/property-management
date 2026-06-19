@@ -84,6 +84,18 @@ export default function TenantCRMPage({ params }: Props) {
   const [showUploadLeaseModal, setShowUploadLeaseModal] = useState(false)
   const [isUploadingLease, setIsUploadingLease] = useState(false)
   const [leaseUploadFile, setLeaseUploadFile] = useState<File | null>(null)
+  const [showNewLeaseChoiceModal, setShowNewLeaseChoiceModal] = useState(false)
+  const [showUploadNewLeaseModal, setShowUploadNewLeaseModal] = useState(false)
+  const [uploadNewLeaseForm, setUploadNewLeaseForm] = useState({
+    startDate: '',
+    endDate: '',
+    monthlyRent: '',
+    securityDeposit: '',
+    terms: '',
+  })
+  const [uploadNewLeaseFile, setUploadNewLeaseFile] = useState<File | null>(null)
+  const [isUploadingNewLease, setIsUploadingNewLease] = useState(false)
+  const [uploadNewLeaseError, setUploadNewLeaseError] = useState('')
 
   const [tenantApiData, setTenantApiData] = useState<any>(null)
   const [isLoadingTenant, setIsLoadingTenant] = useState(false)
@@ -573,6 +585,86 @@ export default function TenantCRMPage({ params }: Props) {
     finally { setIsUploadingLease(false) }
   }
 
+  const handleUploadNewLease = async () => {
+    const propertyId = tenantApiData?.property?.id
+    setUploadNewLeaseError('')
+    if (!propertyId) {
+      setUploadNewLeaseError('No property found for this tenant. Please assign the tenant to a unit first.')
+      return
+    }
+    const { startDate, endDate, monthlyRent, securityDeposit, terms } = uploadNewLeaseForm
+    if (!startDate || !endDate || !monthlyRent || !securityDeposit) {
+      setUploadNewLeaseError('Please fill in all date and rent fields.')
+      return
+    }
+    if (!terms.trim()) {
+      setUploadNewLeaseError('Lease terms are required when uploading a signed document.')
+      return
+    }
+    if (!uploadNewLeaseFile) {
+      setUploadNewLeaseError('Please select a lease document to upload.')
+      return
+    }
+    setIsUploadingNewLease(true)
+    try {
+      // Step 1: create the new lease record
+      const createRes = await fetch('/api/leases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          propertyId,
+          unitId: unitData?.id || undefined,
+          startDate,
+          endDate,
+          monthlyRent: parseFloat(monthlyRent),
+          securityDeposit: parseFloat(securityDeposit),
+          terms,
+        }),
+      })
+      if (!createRes.ok) {
+        const err = await createRes.json()
+        setUploadNewLeaseError(err.error || 'Failed to create lease record.')
+        return
+      }
+      const newLease = await createRes.json()
+
+      // Step 2: upload the signed document
+      const fd = new FormData()
+      fd.append('file', uploadNewLeaseFile)
+      fd.append('type', 'document')
+      const uploadRes = await fetch(`/api/leases/${newLease.id}/upload`, { method: 'POST', body: fd })
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json()
+        setUploadNewLeaseError(err.error || 'Lease created but document upload failed.')
+        return
+      }
+
+      // Step 3: mark as hard-copy signed and activate
+      const now = new Date().toISOString()
+      await fetch(`/api/leases/${newLease.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantSignature: 'HARD_COPY',
+          landlordSignature: 'HARD_COPY',
+          tenantSignedAt: now,
+          landlordSignedAt: now,
+          status: 'ACTIVE',
+        }),
+      })
+
+      setShowUploadNewLeaseModal(false)
+      setUploadNewLeaseForm({ startDate: '', endDate: '', monthlyRent: '', securityDeposit: '', terms: '' })
+      setUploadNewLeaseFile(null)
+      window.location.reload()
+    } catch {
+      setUploadNewLeaseError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsUploadingNewLease(false)
+    }
+  }
+
   // Calculate statistics
   const totalPaid = tenantPayments.filter((p: any) => p.status === 'Paid').reduce((sum: number, p: any) => sum + Number(p.amount), 0)
   const totalOverdue = tenantPayments.filter((p: any) => p.status === 'Overdue').reduce((sum: number, p: any) => sum + Number(p.amount), 0)
@@ -856,7 +948,7 @@ export default function TenantCRMPage({ params }: Props) {
                           </div>
                         )
                       })}
-                      {!currentLease?.documentUrl && currentLease && (
+                      {!currentLease?.documentUrl && currentLease && currentLease.status === 'ACTIVE' && (
                         <Button
                           variant="outline"
                           className="w-full"
@@ -865,15 +957,23 @@ export default function TenantCRMPage({ params }: Props) {
                           Upload Signed Lease
                         </Button>
                       )}
+                      {!tenantLeases.find((l: any) => l.status === 'ACTIVE') && (
+                        <Button
+                          className="w-full"
+                          onClick={() => setShowNewLeaseChoiceModal(true)}
+                        >
+                          + New Lease
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div className="bg-neutral-50 rounded-lg p-4 text-center">
                       <p className="text-neutral-500 mb-3">No lease on record</p>
                       <Button
                         className="w-full"
-                        onClick={() => setShowGenerateLeaseModal(true)}
+                        onClick={() => setShowNewLeaseChoiceModal(true)}
                       >
-                        + Generate Lease
+                        + New Lease
                       </Button>
                     </div>
                   )}
@@ -2342,6 +2442,161 @@ export default function TenantCRMPage({ params }: Props) {
               <Button variant="outline" onClick={() => { setShowUploadDocModal(false); setUploadDocFile(null) }}>Cancel</Button>
               <Button onClick={handleUploadDoc} disabled={!uploadDocFile || uploadingDoc}>
                 {uploadingDoc ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* New Lease Choice Modal */}
+      {showNewLeaseChoiceModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+              <h3 className="text-lg font-semibold text-neutral-900">New Lease</h3>
+              <button onClick={() => setShowNewLeaseChoiceModal(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              <p className="text-sm text-neutral-600 mb-4">How would you like to create the new lease?</p>
+              <button
+                className="w-full flex items-center gap-4 p-4 border border-neutral-200 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors text-left"
+                onClick={() => { setShowNewLeaseChoiceModal(false); setShowGenerateLeaseModal(true) }}
+              >
+                <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                </div>
+                <div>
+                  <p className="font-medium text-neutral-900">Generate New Lease</p>
+                  <p className="text-xs text-neutral-500 mt-0.5">Create a lease from a template and send for digital signing</p>
+                </div>
+              </button>
+              <button
+                className="w-full flex items-center gap-4 p-4 border border-neutral-200 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors text-left"
+                onClick={() => { setShowNewLeaseChoiceModal(false); setShowUploadNewLeaseModal(true) }}
+              >
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                </div>
+                <div>
+                  <p className="font-medium text-neutral-900">Upload Signed Lease</p>
+                  <p className="text-xs text-neutral-500 mt-0.5">Upload a hard-copy lease already signed by both parties</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload New Lease Modal */}
+      {showUploadNewLeaseModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0">
+              <h3 className="text-lg font-semibold text-neutral-900">Upload Signed Lease</h3>
+              <button onClick={() => { setShowUploadNewLeaseModal(false); setUploadNewLeaseFile(null); setUploadNewLeaseError('') }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+              {uploadNewLeaseError && (
+                <div className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 text-sm text-danger-700">
+                  {uploadNewLeaseError}
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    value={uploadNewLeaseForm.startDate}
+                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, startDate: e.target.value }))}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date *</label>
+                  <input
+                    type="date"
+                    value={uploadNewLeaseForm.endDate}
+                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 25000"
+                    value={uploadNewLeaseForm.monthlyRent}
+                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 50000"
+                    value={uploadNewLeaseForm.securityDeposit}
+                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Lease Terms &amp; Conditions *
+                  <span className="ml-1 font-normal text-neutral-400 text-xs">(required for uploaded leases)</span>
+                </label>
+                <textarea
+                  rows={5}
+                  placeholder="Enter the key terms and conditions of the lease — rental obligations, maintenance responsibilities, house rules, notice periods, etc."
+                  value={uploadNewLeaseForm.terms}
+                  onChange={e => setUploadNewLeaseForm(f => ({ ...f, terms: e.target.value }))}
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Signed Lease Document *</label>
+                <div
+                  className="border-2 border-dashed border-neutral-300 rounded-lg p-5 text-center cursor-pointer hover:border-primary-400 transition-colors"
+                  onClick={() => document.getElementById('upload-new-lease-file')?.click()}
+                >
+                  {uploadNewLeaseFile ? (
+                    <div>
+                      <p className="text-sm font-medium text-neutral-800">{uploadNewLeaseFile.name}</p>
+                      <p className="text-xs text-neutral-500 mt-1">{(uploadNewLeaseFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <svg className="w-9 h-9 text-neutral-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                      <p className="text-sm text-neutral-500">Click to select file</p>
+                      <p className="text-xs text-neutral-400 mt-1">PDF up to 10 MB</p>
+                    </div>
+                  )}
+                  <input
+                    id="upload-new-lease-file"
+                    type="file"
+                    accept=".pdf,image/*"
+                    className="hidden"
+                    onChange={e => setUploadNewLeaseFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 flex-shrink-0">
+              <Button variant="outline" onClick={() => { setShowUploadNewLeaseModal(false); setUploadNewLeaseFile(null); setUploadNewLeaseError('') }}>
+                Cancel
+              </Button>
+              <Button onClick={handleUploadNewLease} disabled={isUploadingNewLease}>
+                {isUploadingNewLease ? 'Saving...' : 'Save Lease'}
               </Button>
             </div>
           </div>
