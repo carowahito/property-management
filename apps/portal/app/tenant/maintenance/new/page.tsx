@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 
 const PRIORITY_MAP: Record<string, string> = {
   Low: 'LOW',
@@ -14,6 +15,7 @@ const PRIORITY_MAP: Record<string, string> = {
 
 export default function NewMaintenanceRequestPage() {
   const router = useRouter()
+  const { tenantId } = useTenantContext()
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -27,13 +29,18 @@ export default function NewMaintenanceRequestPage() {
   const [error, setError] = useState<string | null>(null)
 
   const { data: leasesData } = useQuery({
-    queryKey: ['tenant-lease'],
-    queryFn: () => fetch('/api/leases?status=ACTIVE&limit=1').then(r => r.json()),
+    queryKey: ['tenant-lease-new', tenantId],
+    queryFn: () => fetch(`/api/leases?status=ACTIVE&limit=1${tenantId ? `&tenantId=${tenantId}` : ''}`).then(r => r.json()),
+    enabled: !!tenantId,
   })
   const activeLease = leasesData?.leases?.[0] ?? null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!tenantId) {
+      setError('No tenant session found. Please log in again.')
+      return
+    }
     if (!activeLease) {
       setError('No active lease found. Please contact your property manager.')
       return
@@ -47,9 +54,9 @@ export default function NewMaintenanceRequestPage() {
     ].filter(Boolean).join('. ')
 
     const payload = {
-      tenantId: activeLease.tenant.id,
+      tenantId,                              // always use tenantId from session/impersonation context
       propertyId: activeLease.property.id,
-      unit: activeLease.unitNumber ?? undefined,
+      unit: activeLease.unit ?? activeLease.unitNumber ?? undefined,
       title: formData.title,
       description: formData.description + (notes ? `\n\n${notes}` : ''),
       priority: PRIORITY_MAP[formData.priority] ?? 'MEDIUM',
@@ -66,7 +73,7 @@ export default function NewMaintenanceRequestPage() {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || `Request failed (${res.status})`)
       }
-      router.push('/tenant/maintenance')
+      router.push('/tenant/requests')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit request. Please try again.')
       setIsSubmitting(false)
