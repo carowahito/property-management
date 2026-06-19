@@ -2370,7 +2370,7 @@ export default function TenantCRMPage({ params }: Props) {
                         if (start && term !== 'custom') {
                           const d = new Date(start)
                           d.setMonth(d.getMonth() + parseInt(term))
-                          d.setDate(d.getDate() - 1)
+  
                           endDate = d.toISOString().split('T')[0]
                         }
                         setGenerateLeaseForm(f => ({ ...f, startDate: start, endDate }))
@@ -2388,7 +2388,7 @@ export default function TenantCRMPage({ params }: Props) {
                         if (generateLeaseForm.startDate && term !== 'custom') {
                           const d = new Date(generateLeaseForm.startDate)
                           d.setMonth(d.getMonth() + parseInt(term))
-                          d.setDate(d.getDate() - 1)
+  
                           endDate = d.toISOString().split('T')[0]
                         }
                         setGenerateLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
@@ -2823,7 +2823,7 @@ export default function TenantCRMPage({ params }: Props) {
                         if (start && term !== 'custom') {
                           const d = new Date(start)
                           d.setMonth(d.getMonth() + parseInt(term))
-                          d.setDate(d.getDate() - 1)
+  
                           endDate = d.toISOString().split('T')[0]
                         }
                         setUploadNewLeaseForm(f => ({ ...f, startDate: start, endDate }))
@@ -2841,7 +2841,7 @@ export default function TenantCRMPage({ params }: Props) {
                         if (uploadNewLeaseForm.startDate && term !== 'custom') {
                           const d = new Date(uploadNewLeaseForm.startDate)
                           d.setMonth(d.getMonth() + parseInt(term))
-                          d.setDate(d.getDate() - 1)
+  
                           endDate = d.toISOString().split('T')[0]
                         }
                         setUploadNewLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
