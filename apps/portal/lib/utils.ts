@@ -23,12 +23,14 @@ export function formatRefNumber(refNumber: number): string {
 }
 
 /** Format a lease refNumber as a human-readable ID, e.g. Lease-0001 */
-export function formatLeaseRef(refNumber: number): string {
+export function formatLeaseRef(refNumber: number | null | undefined): string {
+  if (refNumber == null) return '—'
   return `Lease-${String(refNumber).padStart(4, '0')}`
 }
 
 /** Format a payment refNumber as a receipt ID, e.g. Receipt-0001 */
-export function formatReceiptRef(refNumber: number): string {
+export function formatReceiptRef(refNumber: number | null | undefined): string {
+  if (refNumber == null) return '—'
   return `Receipt-${String(refNumber).padStart(4, '0')}`
 }
 
