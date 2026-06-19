@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { SignaturePad } from '@/components/ui/SignaturePad'
 import Link from 'next/link'
+import { formatLeaseRef } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -400,6 +401,7 @@ export default function LeaseDetailPage({ params }: Props) {
               </span>
             </div>
             <p className="text-neutral-500">{lease.property?.name} • {lease.property?.address}</p>
+            {lease.refNumber && <p className="text-sm font-mono text-neutral-400 mt-0.5">{formatLeaseRef(lease.refNumber)}</p>}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
@@ -476,6 +478,7 @@ export default function LeaseDetailPage({ params }: Props) {
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <h3 className="font-semibold text-neutral-900 mb-4">Lease Details</h3>
           <div className="space-y-3 text-sm">
+            {lease.refNumber && <div className="flex justify-between"><span className="text-neutral-600">Lease Ref</span><span className="font-medium font-mono">{formatLeaseRef(lease.refNumber)}</span></div>}
             <div className="flex justify-between"><span className="text-neutral-600">Start Date</span><span className="font-medium">{formatDate(lease.startDate)}</span></div>
             <div className="flex justify-between"><span className="text-neutral-600">End Date</span><span className="font-medium">{formatDate(lease.endDate)}</span></div>
             <div className="flex justify-between"><span className="text-neutral-600">Unit</span><span className="font-medium">{lease.unitRef?.unitNumber || lease.unit || '-'}</span></div>

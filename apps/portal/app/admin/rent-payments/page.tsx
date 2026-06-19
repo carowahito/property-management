@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatReceiptRef } from '@/lib/utils';
 
 interface Payment {
   id: string;
+  refNumber: number;
   amount: string;
   type: string;
   method: string;

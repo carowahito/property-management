@@ -511,6 +511,7 @@ enum LeaseTemplateType {
 
 model Lease {
   id              String      @id @default(cuid())
+  refNumber       Int         @unique @default(autoincrement())
   tenantId        String
   propertyId      String
   unitId          String?
@@ -580,6 +581,7 @@ model Lease {
 
 model Payment {
   id         String        @id @default(cuid())
+  refNumber  Int           @unique @default(autoincrement())
   tenantId   String
   leaseId    String?
   propertyId String?

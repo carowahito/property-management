@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { StatementMenuButton } from '@/components/ui/statement-menu-button'
 import { getStatementDateRange } from '@/lib/statement-period'
-import { formatDate, formatRefNumber } from '@/lib/utils'
+import { formatDate, formatRefNumber, formatLeaseRef, formatReceiptRef } from '@/lib/utils'
 import { setAssumedTenant } from '@/lib/assumed-tenant'
 import TaskManager from '@/components/crm/TaskManager'
 import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
@@ -986,7 +986,10 @@ export default function TenantCRMPage({ params }: Props) {
                             className={`rounded-lg p-4 space-y-2 ${isActive ? 'bg-neutral-50 border border-neutral-200' : 'bg-neutral-50 border border-neutral-100 opacity-80'}`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className={`px-2 py-0.5 rounded text-xs font-bold ${statusColor}`}>{lease.status}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${statusColor}`}>{lease.status}</span>
+                                {lease.refNumber && <span className="text-xs font-mono text-neutral-400">{formatLeaseRef(lease.refNumber)}</span>}
+                              </div>
                               <span className="text-xs text-neutral-500">{formatDate(lease.startDate)} – {formatDate(lease.endDate)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
@@ -1199,7 +1202,7 @@ export default function TenantCRMPage({ params }: Props) {
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Amount</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Reference</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Receipt No.</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Receipt</th>
                     </tr>
@@ -1215,7 +1218,12 @@ export default function TenantCRMPage({ params }: Props) {
                           </td>
                           <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900">{payment.method}</td>
                           <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-500 font-mono">
-                            {payment.reference || <span className="text-neutral-300">—</span>}
+                            {payment.refNumber ? (
+                              <span>
+                                <span className="text-neutral-700">{formatReceiptRef(payment.refNumber)}</span>
+                                {payment.reference && <span className="block text-xs text-neutral-400">{payment.reference}</span>}
+                              </span>
+                            ) : payment.reference || <span className="text-neutral-300">—</span>}
                           </td>
                           <td className="px-3 md:px-6 py-2 md:py-4">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${

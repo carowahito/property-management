@@ -22,6 +22,16 @@ export function formatRefNumber(refNumber: number): string {
   return `SR-${String(refNumber).padStart(4, '0')}`
 }
 
+/** Format a lease refNumber as a human-readable ID, e.g. Lease-0001 */
+export function formatLeaseRef(refNumber: number): string {
+  return `Lease-${String(refNumber).padStart(4, '0')}`
+}
+
+/** Format a payment refNumber as a receipt ID, e.g. Receipt-0001 */
+export function formatReceiptRef(refNumber: number): string {
+  return `Receipt-${String(refNumber).padStart(4, '0')}`
+}
+
 /**
  * Format date in US format (MM/DD/YYYY)
  */

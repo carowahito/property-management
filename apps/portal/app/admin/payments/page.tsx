@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatReceiptRef } from '@/lib/utils'
 
 interface Payment {
   id: string
+  refNumber: number
   amount: number
   type: string
   method: string
@@ -303,7 +304,7 @@ export default function AdminPaymentsPage() {
             <thead className="bg-neutral-50">
               <tr>
                 <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
-                  Transaction ID
+                  Receipt No.
                 </th>
                 <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Tenant
@@ -348,7 +349,8 @@ export default function AdminPaymentsPage() {
                 filteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-neutral-50">
                     <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-medium text-neutral-900 hidden lg:table-cell">
-                      {payment.reference || payment.id.slice(0, 8)}
+                      <span className="font-medium">{formatReceiptRef(payment.refNumber)}</span>
+                      {payment.reference && <p className="text-xs text-neutral-500">{payment.reference}</p>}
                     </td>
                     <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-900">
                       <Link href={`/admin/tenants/${payment.tenant.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
@@ -441,8 +443,9 @@ export default function AdminPaymentsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-neutral-600">Transaction ID</p>
-                    <p className="text-lg font-semibold text-neutral-900">{selectedPayment.reference || selectedPayment.id.slice(0, 8)}</p>
+                    <p className="text-sm text-neutral-600">Receipt No.</p>
+                    <p className="text-lg font-semibold text-neutral-900">{formatReceiptRef(selectedPayment.refNumber)}</p>
+                    {selectedPayment.reference && <p className="text-xs text-neutral-500 mt-0.5">Ref: {selectedPayment.reference}</p>}
                   </div>
                   <div>
                     <p className="text-sm text-neutral-600">Status</p>

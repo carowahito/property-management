@@ -71,6 +71,7 @@ export async function GET(
         leases: {
           select: {
             id: true,
+            refNumber: true,
             startDate: true,
             endDate: true,
             monthlyRent: true,
@@ -85,11 +86,13 @@ export async function GET(
         payments: {
           select: {
             id: true,
+            refNumber: true,
             amount: true,
             paidDate: true,
             method: true,
             status: true,
             type: true,
+            reference: true,
           },
           orderBy: { paidDate: 'desc' },
           take: 10,
