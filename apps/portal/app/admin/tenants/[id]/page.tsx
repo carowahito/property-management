@@ -2451,15 +2451,17 @@ export default function TenantCRMPage({ params }: Props) {
                       onChange={e => setGenerateLeaseForm(f => ({ ...f, rentEscalation: e.target.value }))}
                       className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
+                    <p className="mt-1 text-xs text-neutral-500">Tenant must receive minimum 60 days notice before any increase</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">Notice Period (months)</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Move Out Notice Period (months)</label>
                     <input
-                      type="number" min="1" step="1" placeholder="1"
+                      type="number" min="1" step="1"
                       value={generateLeaseForm.noticePeriod}
                       onChange={e => setGenerateLeaseForm(f => ({ ...f, noticePeriod: e.target.value }))}
                       className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
+                    <p className="mt-1 text-xs text-neutral-500">Standard is 1 month for either party to terminate</p>
                   </div>
                 </div>
               </div>
@@ -2899,14 +2901,16 @@ export default function TenantCRMPage({ params }: Props) {
                       onChange={e => setUploadNewLeaseForm(f => ({ ...f, rentEscalation: e.target.value }))}
                       className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
+                    <p className="mt-1 text-xs text-neutral-500">Tenant must receive minimum 60 days notice before any increase</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">Notice Period (months)</label>
-                    <input type="number" min="1" step="1" placeholder="1"
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Move Out Notice Period (months)</label>
+                    <input type="number" min="1" step="1"
                       value={uploadNewLeaseForm.noticePeriod}
                       onChange={e => setUploadNewLeaseForm(f => ({ ...f, noticePeriod: e.target.value }))}
                       className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
+                    <p className="mt-1 text-xs text-neutral-500">Standard is 1 month for either party to terminate</p>
                   </div>
                 </div>
               </div>
