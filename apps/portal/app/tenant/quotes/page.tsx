@@ -465,8 +465,7 @@ export default function TenantQuotesPage() {
                     <div>
                       <p className="text-sm font-medium text-yellow-900">Important</p>
                       <p className="text-xs text-yellow-800 mt-1">
-                        By approving this quote, you agree to pay for this repair directly. Your security deposit
-                        is only applied at end of tenancy and cannot be used to cover repair costs.
+                        By approving this quote, you agree to pay for this repair directly.
                         Work will begin once payment is confirmed.
                       </p>
                     </div>
