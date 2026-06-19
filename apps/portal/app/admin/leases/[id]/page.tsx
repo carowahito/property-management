@@ -536,7 +536,7 @@ export default function LeaseDetailPage({ params }: Props) {
                     <span className="text-xs text-neutral-400">No document</span>
                   )}
                 </div>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   {lease.documentUrl && (
                     <a href={lease.documentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:underline">View PDF</a>
                   )}
@@ -547,6 +547,31 @@ export default function LeaseDetailPage({ params }: Props) {
                   <button onClick={() => docInputRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
                     {uploading === 'document' ? 'Uploading...' : lease.documentUrl ? 'Replace' : 'Upload PDF'}
                   </button>
+                  {lease.documentUrl && lease.tenantSignature !== 'HARD_COPY' && (
+                    <>
+                      <span className="text-xs text-neutral-300">|</span>
+                      <button
+                        onClick={async () => {
+                          const now = new Date().toISOString()
+                          await fetch(`/api/leases/${leaseId}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              status: 'ACTIVE',
+                              tenantSignature: 'HARD_COPY',
+                              landlordSignature: 'HARD_COPY',
+                              tenantSignedAt: now,
+                              landlordSignedAt: now,
+                            }),
+                          })
+                          refreshLease()
+                        }}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Mark as already signed
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -568,6 +593,12 @@ export default function LeaseDetailPage({ params }: Props) {
                   <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-success-50 border border-success-200 rounded-lg">
                     <svg className="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                     <span className="text-xs font-medium text-success-700">Digitally Signed</span>
+                  </div>
+                )}
+                {lease.landlordSignature === 'HARD_COPY' && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <span className="text-xs font-medium text-blue-700">Signed — Hard Copy</span>
                   </div>
                 )}
                 {showLandlordSigPad ? (
@@ -612,30 +643,45 @@ export default function LeaseDetailPage({ params }: Props) {
                     <span className="text-xs font-medium text-success-700">Digitally Signed</span>
                   </div>
                 )}
-                {!lease.tenantSignedAt && (
+                {lease.tenantSignature === 'HARD_COPY' && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <span className="text-xs font-medium text-blue-700">Signed — Hard Copy</span>
+                  </div>
+                )}
+                {!lease.tenantSignedAt && lease.tenantSignature !== 'HARD_COPY' && (
                   <p className="text-xs text-neutral-400 mt-2">Tenant will sign from their portal after you send for signing.</p>
                 )}
               </div>
 
               {/* Send for Signing */}
-              <div className="pt-3 border-t border-neutral-200">
-                {lease.sentForSigning ? (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Sent for Signing</span>
-                    <span className="font-medium text-success-600">✓ Sent {formatDate(lease.sentAt)}</span>
+              {lease.tenantSignature === 'HARD_COPY' || lease.landlordSignature === 'HARD_COPY' ? (
+                <div className="pt-3 border-t border-neutral-200">
+                  <div className="flex items-center gap-2 text-sm text-blue-700">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Lease already signed — hard copy uploaded
                   </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-neutral-700">Send to tenant for signing</p>
-                      <p className="text-xs text-neutral-500">Tenant will be able to view and sign from their portal</p>
+                </div>
+              ) : (
+                <div className="pt-3 border-t border-neutral-200">
+                  {lease.sentForSigning ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-neutral-600">Sent for Signing</span>
+                      <span className="font-medium text-success-600">✓ Sent {formatDate(lease.sentAt)}</span>
                     </div>
-                    <Button variant="primary" onClick={handleSendForSigning} disabled={saving}>
-                      {saving ? 'Sending...' : 'Send for Signing'}
-                    </Button>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-700">Send to tenant for signing</p>
+                        <p className="text-xs text-neutral-500">Tenant will be able to view and sign from their portal</p>
+                      </div>
+                      <Button variant="primary" onClick={handleSendForSigning} disabled={saving}>
+                        {saving ? 'Sending...' : 'Send for Signing'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

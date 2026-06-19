@@ -8,10 +8,11 @@ import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 
 function SigningBanner({ lease }: { lease: any }) {
+  const isHardCopy = lease.tenantSignature === 'HARD_COPY' || lease.landlordSignature === 'HARD_COPY'
   const tenantSigned = !!lease.tenantSignedAt
   const landlordSigned = !!lease.landlordSignedAt
-  const awaitingTenant = lease.sentForSigning && !tenantSigned
-  const awaitingLandlord = tenantSigned && !landlordSigned
+  const awaitingTenant = !isHardCopy && lease.sentForSigning && !tenantSigned
+  const awaitingLandlord = !isHardCopy && tenantSigned && !landlordSigned
 
   if (awaitingTenant) {
     return (
@@ -74,8 +75,10 @@ function LeaseCard({ lease, label }: { lease: any; label?: string }) {
     ? 'bg-yellow-100 text-yellow-800'
     : 'bg-neutral-100 text-neutral-800'
 
+  const isHardCopy = lease.tenantSignature === 'HARD_COPY' || lease.landlordSignature === 'HARD_COPY'
   const bothSigned = !!lease.tenantSignedAt && !!lease.landlordSignedAt
   const hasDocument = !!(lease.documentUrl || lease.documentHtml)
+  const viewUrl = lease.documentUrl ?? (lease.documentHtml ? `/api/leases/${lease.id}/generate-pdf` : null)
 
   return (
     <div className="bg-surface shadow rounded-lg p-6 space-y-6">
@@ -88,21 +91,15 @@ function LeaseCard({ lease, label }: { lease: any; label?: string }) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {hasDocument && (
-            <Button
-              variant="outline"
-              onClick={() => window.open(`/api/leases/${lease.id}/generate-pdf`, '_blank')}
-            >
+          {viewUrl && (
+            <Button variant="outline" onClick={() => window.open(viewUrl, '_blank')}>
               View Lease
             </Button>
           )}
-          {bothSigned && (
-            <Button
-              variant="primary"
-              onClick={() => window.open(`/api/leases/${lease.id}/generate-pdf?download=true`, '_blank')}
-            >
-              Download
-            </Button>
+          {viewUrl && (bothSigned || isHardCopy) && (
+            <a href={viewUrl} download target="_blank" rel="noopener noreferrer">
+              <Button variant="primary">Download</Button>
+            </a>
           )}
         </div>
       </div>
