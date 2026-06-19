@@ -302,7 +302,19 @@ export default function TenantCRMPage({ params }: Props) {
     ...tenantPayments.map((p: any) => ({ id: p.id, type: 'payment', description: `Payment: KES ${Number(p.amount).toLocaleString()} — ${p.month}`, date: p.paidDate, user: '' })),
     ...tenantMaintenance.map((m: any) => ({ id: m.id, type: 'maintenance', description: `${m.title} (${m.status})`, date: m.createdAt, user: '' })),
   ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  const documents = docsList
+  // Merge the uploaded lease PDF into the documents list as a virtual entry
+  const leaseDocEntry = currentLease?.documentUrl
+    ? [{
+        id: `lease-doc-${currentLease.id}`,
+        name: 'Lease Agreement',
+        url: currentLease.documentUrl,
+        fileType: 'application/pdf',
+        fileSize: null,
+        uploadedAt: currentLease.updatedAt || currentLease.createdAt,
+        isLease: true,
+      }]
+    : []
+  const documents = [...leaseDocEntry, ...docsList]
 
   // Filter payments based on filters
   const filteredPayments = tenantPayments.filter((payment: any) => {
@@ -608,11 +620,11 @@ export default function TenantCRMPage({ params }: Props) {
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 text-sm">
-                <div>
+                <div className="min-w-0">
                   <p className="text-neutral-600">📧 Email</p>
-                  <p className="font-medium text-neutral-900">{tenant.email}</p>
+                  <p className="font-medium text-neutral-900 break-all">{tenant.email}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-neutral-600">📱 Phone</p>
                   <p className="font-medium text-neutral-900">{tenant.phone}</p>
                 </div>
@@ -1301,9 +1313,14 @@ export default function TenantCRMPage({ params }: Props) {
                             {doc.fileType?.includes('pdf') ? '📄' : doc.fileType?.includes('image') ? '🖼️' : '📎'}
                           </div>
                           <div>
-                            <p className="font-medium text-neutral-900">{doc.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-neutral-900">{doc.name}</p>
+                              {doc.isLease && (
+                                <span className="text-xs font-medium bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Lease</span>
+                              )}
+                            </div>
                             <p className="text-xs text-neutral-500">
-                              {doc.fileType} • {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(1)} KB` : ''} • {formatDate(doc.uploadedAt)}
+                              {doc.fileType} • {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(1)} KB` : ''} {doc.uploadedAt ? `• ${formatDate(doc.uploadedAt)}` : ''}
                             </p>
                           </div>
                         </div>
@@ -1313,9 +1330,11 @@ export default function TenantCRMPage({ params }: Props) {
                               <Button variant="outline" size="sm">View</Button>
                             </a>
                           )}
-                          <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)}>
-                            <span className="text-danger-600">Delete</span>
-                          </Button>
+                          {!doc.isLease && (
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)}>
+                              <span className="text-danger-600">Delete</span>
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))
