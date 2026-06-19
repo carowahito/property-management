@@ -385,10 +385,10 @@ export default function LeaseDetailPage({ params }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
-            <Button variant="outline" onClick={() => window.open(`/api/leases/${leaseId}/generate-pdf`, '_blank')}>
+            <Button variant="outline" onClick={() => window.open(lease.documentUrl ?? `/api/leases/${leaseId}/generate-pdf`, '_blank')}>
               View Document
             </Button>
-            <Button variant="outline" onClick={() => window.open(`/api/leases/${leaseId}/generate-pdf?download=true`, '_blank')}>
+            <Button variant="outline" onClick={() => window.open(lease.documentUrl ?? `/api/leases/${leaseId}/generate-pdf?download=true`, '_blank')}>
               Download Agreement
             </Button>
             {lease.status === 'ACTIVE' && !pendingLease && (
