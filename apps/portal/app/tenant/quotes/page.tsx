@@ -42,7 +42,7 @@ export default function TenantQuotesPage() {
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'all'>('pending');
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'deposit-deduction' | 'direct-payment'>('deposit-deduction');
+  const [paymentMethod, setPaymentMethod] = useState<'deposit-deduction' | 'direct-payment'>('direct-payment');
 
   // Mock data - tenant-responsible quotes only
   const quotes: Quote[] = [
@@ -403,7 +403,7 @@ export default function TenantQuotesPage() {
                       <div className="bg-success-50 border border-success-200 rounded-lg p-3">
                         <p className="text-sm text-success-800">
                           <span className="font-medium">Payment Method:</span>{' '}
-                          {quote.paymentMethod === 'deposit-deduction' ? 'Deducted from Security Deposit' : 'Direct Payment Required'}
+                          Direct Payment Required
                         </p>
                       </div>
                     </div>
@@ -450,40 +450,11 @@ export default function TenantQuotesPage() {
                 </div>
 
                 <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
-                  <h4 className="font-medium text-primary-900 mb-2">Choose Payment Method</h4>
-                  <div className="space-y-3">
-                    <label className="flex items-start p-3 bg-surface rounded-lg border-2 border-neutral-200 cursor-pointer hover:border-primary-500">
-                      <input
-                        type="radio"
-                        checked={paymentMethod === 'deposit-deduction'}
-                        onChange={() => setPaymentMethod('deposit-deduction')}
-                        className="mt-1 mr-3"
-                      />
-                      <div>
-                        <p className="font-medium text-neutral-900">Deduct from Security Deposit</p>
-                        <p className="text-sm text-neutral-600">
-                          KES {selectedQuote.totalAmount.toLocaleString()} will be deducted from your security deposit.
-                          You&apos;ll need to replenish the deposit to maintain full coverage.
-                        </p>
-                      </div>
-                    </label>
-
-                    <label className="flex items-start p-3 bg-surface rounded-lg border-2 border-neutral-200 cursor-pointer hover:border-primary-500">
-                      <input
-                        type="radio"
-                        checked={paymentMethod === 'direct-payment'}
-                        onChange={() => setPaymentMethod('direct-payment')}
-                        className="mt-1 mr-3"
-                      />
-                      <div>
-                        <p className="font-medium text-neutral-900">Direct Payment</p>
-                        <p className="text-sm text-neutral-600">
-                          Pay KES {selectedQuote.totalAmount.toLocaleString()} directly via M-Pesa or bank transfer.
-                          Your security deposit remains intact.
-                        </p>
-                      </div>
-                    </label>
-                  </div>
+                  <h4 className="font-medium text-primary-900 mb-2">Payment Required</h4>
+                  <p className="text-sm text-neutral-600">
+                    Pay KES {selectedQuote.totalAmount.toLocaleString()} directly via M-Pesa or bank transfer.
+                    At least 50% must be paid upfront before work can be confirmed and scheduled.
+                  </p>
                 </div>
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -494,8 +465,9 @@ export default function TenantQuotesPage() {
                     <div>
                       <p className="text-sm font-medium text-yellow-900">Important</p>
                       <p className="text-xs text-yellow-800 mt-1">
-                        By approving this quote, you agree to be responsible for the payment as outlined above.
-                        Work will begin once payment is confirmed or deposit deduction is processed.
+                        By approving this quote, you agree to pay for this repair directly. Your security deposit
+                        is only applied at end of tenancy and cannot be used to cover repair costs.
+                        Work will begin once payment is confirmed.
                       </p>
                     </div>
                   </div>
