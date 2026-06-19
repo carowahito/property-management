@@ -76,6 +76,7 @@ export default function TenantCRMPage({ params }: Props) {
   const [showGenerateLeaseModal, setShowGenerateLeaseModal] = useState(false)
   const [generateLeaseForm, setGenerateLeaseForm] = useState({
     startDate: '',
+    leaseTerm: '12',
     endDate: '',
     monthlyRent: '',
     securityDeposit: '',
@@ -553,7 +554,7 @@ export default function TenantCRMPage({ params }: Props) {
       })
       if (res.ok) {
         setShowGenerateLeaseModal(false)
-        setGenerateLeaseForm({ startDate: '', endDate: '', monthlyRent: '', securityDeposit: '' })
+        setGenerateLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '' })
         window.location.reload()
       } else {
         const data = await res.json()
@@ -2301,19 +2302,61 @@ export default function TenantCRMPage({ params }: Props) {
                   <input
                     type="date"
                     value={generateLeaseForm.startDate}
-                    onChange={e => setGenerateLeaseForm(f => ({ ...f, startDate: e.target.value }))}
+                    onChange={e => {
+                      const start = e.target.value
+                      const term = generateLeaseForm.leaseTerm
+                      let endDate = generateLeaseForm.endDate
+                      if (start && term !== 'custom') {
+                        const d = new Date(start)
+                        d.setMonth(d.getMonth() + parseInt(term))
+                        d.setDate(d.getDate() - 1)
+                        endDate = d.toISOString().split('T')[0]
+                      }
+                      setGenerateLeaseForm(f => ({ ...f, startDate: start, endDate }))
+                    }}
                     className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date *</label>
-                  <input
-                    type="date"
-                    value={generateLeaseForm.endDate}
-                    onChange={e => setGenerateLeaseForm(f => ({ ...f, endDate: e.target.value }))}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
+                  <select
+                    value={generateLeaseForm.leaseTerm}
+                    onChange={e => {
+                      const term = e.target.value
+                      let endDate = generateLeaseForm.endDate
+                      if (generateLeaseForm.startDate && term !== 'custom') {
+                        const d = new Date(generateLeaseForm.startDate)
+                        d.setMonth(d.getMonth() + parseInt(term))
+                        d.setDate(d.getDate() - 1)
+                        endDate = d.toISOString().split('T')[0]
+                      }
+                      setGenerateLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
+                    }}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                  >
+                    <option value="6">6 months</option>
+                    <option value="12">12 months (1 year)</option>
+                    <option value="18">18 months</option>
+                    <option value="24">24 months (2 years)</option>
+                    <option value="36">36 months (3 years)</option>
+                    <option value="custom">Custom end date</option>
+                  </select>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  End Date *
+                  {generateLeaseForm.leaseTerm !== 'custom' && generateLeaseForm.endDate && (
+                    <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
+                  )}
+                </label>
+                <input
+                  type="date"
+                  value={generateLeaseForm.endDate}
+                  readOnly={generateLeaseForm.leaseTerm !== 'custom'}
+                  onChange={e => generateLeaseForm.leaseTerm === 'custom' && setGenerateLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                  className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${generateLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
