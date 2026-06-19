@@ -55,12 +55,11 @@ function TenantNavigationInner() {
       label: 'Services', 
       icon: '🔧',
       submenu: [
-        { href: '/tenant/maintenance', label: 'Maintenance' },
+        { href: '/tenant/requests', label: 'Service Requests' },
         { href: '/tenant/quotes', label: 'Repair Quotes' },
         { href: '/tenant/amenities', label: 'Amenities' },
         { href: '/tenant/packages', label: 'Packages' },
         { href: '/tenant/parking', label: 'Parking' },
-        { href: '/tenant/requests', label: 'Service Requests' },
       ]
     },
     { 
