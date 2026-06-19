@@ -46,7 +46,6 @@ function TenantNavigationInner() {
       icon: '💰',
       submenu: [
         { href: '/tenant/payments', label: 'Payments' },
-        { href: '/tenant/statements', label: 'Statement' },
         { href: '/tenant/autopay', label: 'Auto-Pay' },
         ...(showPaymentPlans ? [{ href: '/tenant/payment-plans', label: 'Payment Plans' }] : []),
         { href: '/tenant/insurance', label: 'Insurance' },
