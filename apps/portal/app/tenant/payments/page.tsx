@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
 
 function TenantPaymentsPageInner() {
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('paid')
   const router = useRouter()
   const { tenantId, isTenant } = useTenantContext()
 

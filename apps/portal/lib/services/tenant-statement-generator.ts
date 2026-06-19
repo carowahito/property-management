@@ -92,7 +92,7 @@ export class TenantStatementGenerator {
       ],
     });
 
-    const entries: TenantStatementEntry[] = ledger.map((row: { date: Date; type: string; description: string; reference: string | null; debit: unknown; credit: unknown; balance: unknown }) => ({
+    let entries: TenantStatementEntry[] = ledger.map((row: { date: Date; type: string; description: string; reference: string | null; debit: unknown; credit: unknown; balance: unknown }) => ({
       date: row.date,
       type: row.type,
       description: row.description,
@@ -102,12 +102,17 @@ export class TenantStatementGenerator {
       balance: Number(row.balance),
     }));
 
-    // Fetch PAID payment records directly — source of truth for what was received
+    // Fetch PAID payment records directly — source of truth for what was received.
+    // Use paidDate range (not dueDate) so payments made in the period are captured
+    // regardless of which month's rent they cover.
     const rawPayments = await prisma.payment.findMany({
       where: {
         tenantId,
         status: 'PAID',
-        dueDate: { gte: startDate, lte: endDate },
+        OR: [
+          { paidDate: { gte: startDate, lte: endDate } },
+          { paidDate: null, dueDate: { gte: startDate, lte: endDate } },
+        ],
       },
       orderBy: { dueDate: 'asc' },
       select: { amount: true, dueDate: true, paidDate: true, reference: true, type: true },
@@ -139,23 +144,24 @@ export class TenantStatementGenerator {
       select: { startDate: true },
     });
 
-    // Synthesize totals from monthly rent (more accurate than sparse ledger CHARGE entries)
     const monthlyRent = Number(tenant.unitRef?.monthlyRent ?? 0);
     const leaseStartDate = lease?.startDate ?? null;
     const effectiveStart = leaseStartDate && leaseStartDate > startDate ? leaseStartDate : startDate;
-    const cur = new Date(effectiveStart);
-    cur.setDate(1);
-    const endM = new Date(endDate);
-    endM.setDate(1);
-    let totalCharged = 0;
-    let runningBalance = 0;
-    // Build credit map by month
+
+    // Build credit map by dueDate month for totals calculation
     const creditsByMonth = new Map<string, number>();
     for (const p of directPayments) {
       const d = new Date(p.dueDate);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       creditsByMonth.set(key, (creditsByMonth.get(key) || 0) + p.amount);
     }
+
+    const cur = new Date(effectiveStart);
+    cur.setDate(1);
+    const endM = new Date(endDate);
+    endM.setDate(1);
+    let totalCharged = 0;
+    let runningBalance = 0;
     while (cur <= endM) {
       const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
       totalCharged += monthlyRent;
@@ -163,6 +169,61 @@ export class TenantStatementGenerator {
       cur.setMonth(cur.getMonth() + 1);
     }
     const closingBalance = runningBalance;
+
+    // If tenantLedger is empty, synthesize entries from monthly rent + actual payments
+    // so the web statement table always shows meaningful data.
+    if (entries.length === 0 && monthlyRent > 0) {
+      const synthetic: TenantStatementEntry[] = [];
+      let balance = 0;
+      const chargeDate = new Date(effectiveStart);
+      chargeDate.setDate(1);
+
+      // Build a sorted list of payment entries keyed by dueDate month
+      const paymentsByMonth = new Map<string, DirectPayment[]>();
+      for (const p of directPayments) {
+        const d = new Date(p.dueDate);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!paymentsByMonth.has(key)) paymentsByMonth.set(key, []);
+        paymentsByMonth.get(key)!.push(p);
+      }
+
+      const endMonth = new Date(endDate);
+      endMonth.setDate(1);
+      while (chargeDate <= endMonth) {
+        const key = `${chargeDate.getFullYear()}-${String(chargeDate.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = chargeDate.toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
+
+        // CHARGE entry
+        balance += monthlyRent;
+        synthetic.push({
+          date: new Date(chargeDate),
+          type: 'CHARGE',
+          description: `Rent — ${monthLabel}`,
+          reference: null,
+          debit: monthlyRent,
+          credit: 0,
+          balance,
+        });
+
+        // PAYMENT entries for this month
+        for (const p of paymentsByMonth.get(key) ?? []) {
+          balance -= p.amount;
+          synthetic.push({
+            date: p.paidDate ? new Date(p.paidDate) : new Date(p.dueDate),
+            type: 'PAYMENT',
+            description: `Payment received — ${monthLabel}`,
+            reference: p.reference,
+            debit: 0,
+            credit: p.amount,
+            balance,
+          });
+        }
+
+        chargeDate.setMonth(chargeDate.getMonth() + 1);
+      }
+
+      entries = synthetic;
+    }
 
     return {
       tenantId,
