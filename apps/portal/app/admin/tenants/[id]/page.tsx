@@ -107,7 +107,20 @@ export default function TenantCRMPage({ params }: Props) {
     endDate: '',
     monthlyRent: '',
     securityDeposit: '',
+    rentDueDay: '1',
+    gracePeriodDays: '5',
+    latePenaltyPerDay: '500',
+    noticePeriod: '1',
+    rentEscalation: '',
+    mpesaTill: '',
+    bankDetails: '',
+    petPolicy: '',
+    specialConditions: '',
     terms: '',
+    tenant2Name: '',
+    tenant2IdNumber: '',
+    tenant2Email: '',
+    tenant2Phone: '',
   })
   const [uploadNewLeaseFile, setUploadNewLeaseFile] = useState<File | null>(null)
   const [isUploadingNewLease, setIsUploadingNewLease] = useState(false)
@@ -623,12 +636,12 @@ export default function TenantCRMPage({ params }: Props) {
       setUploadNewLeaseError('No property found for this tenant. Please assign the tenant to a unit first.')
       return
     }
-    const { startDate, endDate, monthlyRent, securityDeposit, terms } = uploadNewLeaseForm
-    if (!startDate || !endDate || !monthlyRent || !securityDeposit) {
+    const uf = uploadNewLeaseForm
+    if (!uf.startDate || !uf.endDate || !uf.monthlyRent || !uf.securityDeposit) {
       setUploadNewLeaseError('Please fill in all date and rent fields.')
       return
     }
-    if (!terms.trim()) {
+    if (!uf.terms.trim()) {
       setUploadNewLeaseError('Lease terms are required when uploading a signed document.')
       return
     }
@@ -646,11 +659,24 @@ export default function TenantCRMPage({ params }: Props) {
           tenantId,
           propertyId,
           unitId: unitData?.id || undefined,
-          startDate,
-          endDate,
-          monthlyRent: parseFloat(monthlyRent),
-          securityDeposit: parseFloat(securityDeposit),
-          terms,
+          startDate: uf.startDate,
+          endDate: uf.endDate,
+          monthlyRent: parseFloat(uf.monthlyRent),
+          securityDeposit: parseFloat(uf.securityDeposit),
+          rentDueDay: parseInt(uf.rentDueDay) || 1,
+          gracePeriodDays: parseInt(uf.gracePeriodDays) || 5,
+          latePenaltyPerDay: parseFloat(uf.latePenaltyPerDay) || 500,
+          noticePeriod: parseInt(uf.noticePeriod) || 1,
+          ...(uf.rentEscalation ? { rentEscalation: parseFloat(uf.rentEscalation) } : {}),
+          ...(uf.mpesaTill ? { mpesaTill: uf.mpesaTill } : {}),
+          ...(uf.bankDetails ? { bankDetails: uf.bankDetails } : {}),
+          ...(uf.petPolicy ? { petPolicy: uf.petPolicy } : {}),
+          ...(uf.specialConditions ? { specialConditions: uf.specialConditions } : {}),
+          terms: uf.terms,
+          ...(uf.tenant2Name ? { tenant2Name: uf.tenant2Name } : {}),
+          ...(uf.tenant2IdNumber ? { tenant2IdNumber: uf.tenant2IdNumber } : {}),
+          ...(uf.tenant2Email ? { tenant2Email: uf.tenant2Email } : {}),
+          ...(uf.tenant2Phone ? { tenant2Phone: uf.tenant2Phone } : {}),
         }),
       })
       if (!createRes.ok) {
@@ -686,7 +712,7 @@ export default function TenantCRMPage({ params }: Props) {
       })
 
       setShowUploadNewLeaseModal(false)
-      setUploadNewLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', terms: '' })
+      setUploadNewLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
       setUploadNewLeaseFile(null)
       window.location.reload()
     } catch {
@@ -2729,119 +2755,256 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Upload New Lease Modal */}
       {showUploadNewLeaseModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0">
               <h3 className="text-lg font-semibold text-neutral-900">Upload Signed Lease</h3>
               <button onClick={() => { setShowUploadNewLeaseModal(false); setUploadNewLeaseFile(null); setUploadNewLeaseError('') }} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+            <div className="px-6 py-5 space-y-6 overflow-y-auto flex-1">
               {uploadNewLeaseError && (
                 <div className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 text-sm text-danger-700">
                   {uploadNewLeaseError}
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+
+              {/* Lease Period */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Lease Period</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+                    <input
+                      type="date"
+                      value={uploadNewLeaseForm.startDate}
+                      onChange={e => {
+                        const start = e.target.value
+                        const term = uploadNewLeaseForm.leaseTerm
+                        let endDate = uploadNewLeaseForm.endDate
+                        if (start && term !== 'custom') {
+                          const d = new Date(start)
+                          d.setMonth(d.getMonth() + parseInt(term))
+                          d.setDate(d.getDate() - 1)
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setUploadNewLeaseForm(f => ({ ...f, startDate: start, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
+                    <select
+                      value={uploadNewLeaseForm.leaseTerm}
+                      onChange={e => {
+                        const term = e.target.value
+                        let endDate = uploadNewLeaseForm.endDate
+                        if (uploadNewLeaseForm.startDate && term !== 'custom') {
+                          const d = new Date(uploadNewLeaseForm.startDate)
+                          d.setMonth(d.getMonth() + parseInt(term))
+                          d.setDate(d.getDate() - 1)
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setUploadNewLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      <option value="6">6 months</option>
+                      <option value="12">12 months (1 year)</option>
+                      <option value="18">18 months</option>
+                      <option value="24">24 months (2 years)</option>
+                      <option value="36">36 months (3 years)</option>
+                      <option value="custom">Custom end date</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    End Date *
+                    {uploadNewLeaseForm.leaseTerm !== 'custom' && uploadNewLeaseForm.endDate && (
+                      <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
+                    )}
+                  </label>
                   <input
                     type="date"
-                    value={uploadNewLeaseForm.startDate}
-                    onChange={e => {
-                      const start = e.target.value
-                      const term = uploadNewLeaseForm.leaseTerm
-                      let endDate = uploadNewLeaseForm.endDate
-                      if (start && term !== 'custom') {
-                        const d = new Date(start)
-                        d.setMonth(d.getMonth() + parseInt(term))
-                        d.setDate(d.getDate() - 1)
-                        endDate = d.toISOString().split('T')[0]
-                      }
-                      setUploadNewLeaseForm(f => ({ ...f, startDate: start, endDate }))
-                    }}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    value={uploadNewLeaseForm.endDate}
+                    readOnly={uploadNewLeaseForm.leaseTerm !== 'custom'}
+                    onChange={e => uploadNewLeaseForm.leaseTerm === 'custom' && setUploadNewLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                    className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${uploadNewLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
-                  <select
-                    value={uploadNewLeaseForm.leaseTerm}
-                    onChange={e => {
-                      const term = e.target.value
-                      let endDate = uploadNewLeaseForm.endDate
-                      if (uploadNewLeaseForm.startDate && term !== 'custom') {
-                        const d = new Date(uploadNewLeaseForm.startDate)
-                        d.setMonth(d.getMonth() + parseInt(term))
-                        d.setDate(d.getDate() - 1)
-                        endDate = d.toISOString().split('T')[0]
-                      }
-                      setUploadNewLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
-                    }}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
-                  >
-                    <option value="6">6 months</option>
-                    <option value="12">12 months (1 year)</option>
-                    <option value="18">18 months</option>
-                    <option value="24">24 months (2 years)</option>
-                    <option value="36">36 months (3 years)</option>
-                    <option value="custom">Custom end date</option>
-                  </select>
-                </div>
               </div>
+
+              {/* Financial Terms */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  End Date *
-                  {uploadNewLeaseForm.leaseTerm !== 'custom' && uploadNewLeaseForm.endDate && (
-                    <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
-                  )}
-                </label>
-                <input
-                  type="date"
-                  value={uploadNewLeaseForm.endDate}
-                  readOnly={uploadNewLeaseForm.leaseTerm !== 'custom'}
-                  onChange={e => uploadNewLeaseForm.leaseTerm === 'custom' && setUploadNewLeaseForm(f => ({ ...f, endDate: e.target.value }))}
-                  className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${uploadNewLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="e.g. 25000"
-                    value={uploadNewLeaseForm.monthlyRent}
-                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="e.g. 50000"
-                    value={uploadNewLeaseForm.securityDeposit}
-                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Financial Terms</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
+                    <input type="number" min="0" step="0.01" placeholder="e.g. 25000"
+                      value={uploadNewLeaseForm.monthlyRent}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
+                    <input type="number" min="0" step="0.01" placeholder="e.g. 50000"
+                      value={uploadNewLeaseForm.securityDeposit}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Annual Rent Escalation (%)</label>
+                    <input type="number" min="0" max="100" step="0.1" placeholder="e.g. 5"
+                      value={uploadNewLeaseForm.rentEscalation}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, rentEscalation: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Notice Period (months)</label>
+                    <input type="number" min="1" step="1" placeholder="1"
+                      value={uploadNewLeaseForm.noticePeriod}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, noticePeriod: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Rent Payment & Late Penalty */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Lease Terms &amp; Conditions *
-                  <span className="ml-1 font-normal text-neutral-400 text-xs">(required for uploaded leases)</span>
-                </label>
-                <textarea
-                  rows={5}
-                  placeholder="Enter the key terms and conditions of the lease — rental obligations, maintenance responsibilities, house rules, notice periods, etc."
-                  value={uploadNewLeaseForm.terms}
-                  onChange={e => setUploadNewLeaseForm(f => ({ ...f, terms: e.target.value }))}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
-                />
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Rent Payment &amp; Late Penalty</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Rent Due Day</label>
+                    <select
+                      value={uploadNewLeaseForm.rentDueDay}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, rentDueDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={d}>{d === 1 ? '1st' : d === 2 ? '2nd' : d === 3 ? '3rd' : `${d}th`} of month</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Grace Period (days)</label>
+                    <input type="number" min="0" step="1" placeholder="5"
+                      value={uploadNewLeaseForm.gracePeriodDays}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, gracePeriodDays: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Late Penalty (KES/day)</label>
+                    <input type="number" min="0" step="1" placeholder="500"
+                      value={uploadNewLeaseForm.latePenaltyPerDay}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, latePenaltyPerDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
+                    <input type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
+                      value={uploadNewLeaseForm.mpesaTill}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Details</label>
+                    <input type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
+                      value={uploadNewLeaseForm.bankDetails}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Policies & Conditions */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Policies &amp; Conditions</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Pet Policy</label>
+                    <input type="text" placeholder="e.g. No pets allowed / Pets permitted with prior written consent"
+                      value={uploadNewLeaseForm.petPolicy}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, petPolicy: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Special Conditions</label>
+                    <textarea rows={3} placeholder="Any additional conditions specific to this tenancy..."
+                      value={uploadNewLeaseForm.specialConditions}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, specialConditions: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      Lease Terms &amp; Conditions *
+                      <span className="ml-1 font-normal text-neutral-400 text-xs">(required)</span>
+                    </label>
+                    <textarea rows={4} placeholder="Enter the key terms and conditions of the lease — rental obligations, maintenance responsibilities, house rules, notice periods, etc."
+                      value={uploadNewLeaseForm.terms}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, terms: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Co-Tenant */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Co-Tenant <span className="font-normal normal-case text-neutral-400">(optional)</span></h4>
+                <p className="text-xs text-neutral-500 mb-3">Add a second occupant named on the lease.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
+                    <input type="text" placeholder="Co-tenant full name"
+                      value={uploadNewLeaseForm.tenant2Name}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2Name: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">ID / Passport Number</label>
+                    <input type="text" placeholder="National ID or Passport No."
+                      value={uploadNewLeaseForm.tenant2IdNumber}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2IdNumber: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
+                    <input type="email" placeholder="co-tenant@email.com"
+                      value={uploadNewLeaseForm.tenant2Email}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2Email: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Phone</label>
+                    <input type="tel" placeholder="+254..."
+                      value={uploadNewLeaseForm.tenant2Phone}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2Phone: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Signed Lease Document *</label>
