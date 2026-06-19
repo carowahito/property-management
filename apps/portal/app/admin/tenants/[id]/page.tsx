@@ -80,6 +80,20 @@ export default function TenantCRMPage({ params }: Props) {
     endDate: '',
     monthlyRent: '',
     securityDeposit: '',
+    rentDueDay: '1',
+    gracePeriodDays: '5',
+    latePenaltyPerDay: '500',
+    noticePeriod: '1',
+    rentEscalation: '',
+    mpesaTill: '',
+    bankDetails: '',
+    petPolicy: '',
+    specialConditions: '',
+    terms: '',
+    tenant2Name: '',
+    tenant2IdNumber: '',
+    tenant2Email: '',
+    tenant2Phone: '',
   })
   const [isGeneratingLease, setIsGeneratingLease] = useState(false)
   const [showUploadLeaseModal, setShowUploadLeaseModal] = useState(false)
@@ -539,6 +553,7 @@ export default function TenantCRMPage({ params }: Props) {
     }
     setIsGeneratingLease(true)
     try {
+      const f = generateLeaseForm
       const res = await fetch('/api/leases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -546,15 +561,29 @@ export default function TenantCRMPage({ params }: Props) {
           tenantId,
           propertyId,
           unitId: unitData?.id || undefined,
-          startDate: generateLeaseForm.startDate,
-          endDate: generateLeaseForm.endDate,
-          monthlyRent: parseFloat(generateLeaseForm.monthlyRent),
-          securityDeposit: parseFloat(generateLeaseForm.securityDeposit),
+          startDate: f.startDate,
+          endDate: f.endDate,
+          monthlyRent: parseFloat(f.monthlyRent),
+          securityDeposit: parseFloat(f.securityDeposit),
+          rentDueDay: parseInt(f.rentDueDay) || 1,
+          gracePeriodDays: parseInt(f.gracePeriodDays) || 5,
+          latePenaltyPerDay: parseFloat(f.latePenaltyPerDay) || 500,
+          noticePeriod: parseInt(f.noticePeriod) || 1,
+          ...(f.rentEscalation ? { rentEscalation: parseFloat(f.rentEscalation) } : {}),
+          ...(f.mpesaTill ? { mpesaTill: f.mpesaTill } : {}),
+          ...(f.bankDetails ? { bankDetails: f.bankDetails } : {}),
+          ...(f.petPolicy ? { petPolicy: f.petPolicy } : {}),
+          ...(f.specialConditions ? { specialConditions: f.specialConditions } : {}),
+          ...(f.terms ? { terms: f.terms } : {}),
+          ...(f.tenant2Name ? { tenant2Name: f.tenant2Name } : {}),
+          ...(f.tenant2IdNumber ? { tenant2IdNumber: f.tenant2IdNumber } : {}),
+          ...(f.tenant2Email ? { tenant2Email: f.tenant2Email } : {}),
+          ...(f.tenant2Phone ? { tenant2Phone: f.tenant2Phone } : {}),
         }),
       })
       if (res.ok) {
         setShowGenerateLeaseModal(false)
-        setGenerateLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '' })
+        setGenerateLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
         window.location.reload()
       } else {
         const data = await res.json()
@@ -2288,102 +2317,267 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Generate Lease Modal */}
       {showGenerateLeaseModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-neutral-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0">
               <h3 className="text-lg font-semibold text-neutral-900">Generate Lease</h3>
               <button onClick={() => setShowGenerateLeaseModal(false)} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="px-4 md:px-6 py-5 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+            <div className="px-6 py-5 space-y-6 overflow-y-auto flex-1">
+
+              {/* Lease Dates */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Lease Period</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+                    <input
+                      type="date"
+                      value={generateLeaseForm.startDate}
+                      onChange={e => {
+                        const start = e.target.value
+                        const term = generateLeaseForm.leaseTerm
+                        let endDate = generateLeaseForm.endDate
+                        if (start && term !== 'custom') {
+                          const d = new Date(start)
+                          d.setMonth(d.getMonth() + parseInt(term))
+                          d.setDate(d.getDate() - 1)
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setGenerateLeaseForm(f => ({ ...f, startDate: start, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
+                    <select
+                      value={generateLeaseForm.leaseTerm}
+                      onChange={e => {
+                        const term = e.target.value
+                        let endDate = generateLeaseForm.endDate
+                        if (generateLeaseForm.startDate && term !== 'custom') {
+                          const d = new Date(generateLeaseForm.startDate)
+                          d.setMonth(d.getMonth() + parseInt(term))
+                          d.setDate(d.getDate() - 1)
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setGenerateLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      <option value="6">6 months</option>
+                      <option value="12">12 months (1 year)</option>
+                      <option value="18">18 months</option>
+                      <option value="24">24 months (2 years)</option>
+                      <option value="36">36 months (3 years)</option>
+                      <option value="custom">Custom end date</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    End Date *
+                    {generateLeaseForm.leaseTerm !== 'custom' && generateLeaseForm.endDate && (
+                      <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
+                    )}
+                  </label>
                   <input
                     type="date"
-                    value={generateLeaseForm.startDate}
-                    onChange={e => {
-                      const start = e.target.value
-                      const term = generateLeaseForm.leaseTerm
-                      let endDate = generateLeaseForm.endDate
-                      if (start && term !== 'custom') {
-                        const d = new Date(start)
-                        d.setMonth(d.getMonth() + parseInt(term))
-                        d.setDate(d.getDate() - 1)
-                        endDate = d.toISOString().split('T')[0]
-                      }
-                      setGenerateLeaseForm(f => ({ ...f, startDate: start, endDate }))
-                    }}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    value={generateLeaseForm.endDate}
+                    readOnly={generateLeaseForm.leaseTerm !== 'custom'}
+                    onChange={e => generateLeaseForm.leaseTerm === 'custom' && setGenerateLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                    className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${generateLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
-                  <select
-                    value={generateLeaseForm.leaseTerm}
-                    onChange={e => {
-                      const term = e.target.value
-                      let endDate = generateLeaseForm.endDate
-                      if (generateLeaseForm.startDate && term !== 'custom') {
-                        const d = new Date(generateLeaseForm.startDate)
-                        d.setMonth(d.getMonth() + parseInt(term))
-                        d.setDate(d.getDate() - 1)
-                        endDate = d.toISOString().split('T')[0]
-                      }
-                      setGenerateLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
-                    }}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
-                  >
-                    <option value="6">6 months</option>
-                    <option value="12">12 months (1 year)</option>
-                    <option value="18">18 months</option>
-                    <option value="24">24 months (2 years)</option>
-                    <option value="36">36 months (3 years)</option>
-                    <option value="custom">Custom end date</option>
-                  </select>
+              </div>
+
+              {/* Financial Terms */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Financial Terms</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
+                    <input
+                      type="number" min="0" step="0.01" placeholder="e.g. 25000"
+                      value={generateLeaseForm.monthlyRent}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
+                    <input
+                      type="number" min="0" step="0.01" placeholder="e.g. 50000"
+                      value={generateLeaseForm.securityDeposit}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Annual Rent Escalation (%)</label>
+                    <input
+                      type="number" min="0" max="100" step="0.1" placeholder="e.g. 5"
+                      value={generateLeaseForm.rentEscalation}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, rentEscalation: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Notice Period (months)</label>
+                    <input
+                      type="number" min="1" step="1" placeholder="1"
+                      value={generateLeaseForm.noticePeriod}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, noticePeriod: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Rent Payment & Late Penalty */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  End Date *
-                  {generateLeaseForm.leaseTerm !== 'custom' && generateLeaseForm.endDate && (
-                    <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
-                  )}
-                </label>
-                <input
-                  type="date"
-                  value={generateLeaseForm.endDate}
-                  readOnly={generateLeaseForm.leaseTerm !== 'custom'}
-                  onChange={e => generateLeaseForm.leaseTerm === 'custom' && setGenerateLeaseForm(f => ({ ...f, endDate: e.target.value }))}
-                  className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${generateLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
-                />
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Rent Payment &amp; Late Penalty</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Rent Due Day</label>
+                    <select
+                      value={generateLeaseForm.rentDueDay}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, rentDueDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={d}>{d === 1 ? '1st' : d === 2 ? '2nd' : d === 3 ? '3rd' : `${d}th`} of month</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Grace Period (days)</label>
+                    <input
+                      type="number" min="0" step="1" placeholder="5"
+                      value={generateLeaseForm.gracePeriodDays}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, gracePeriodDays: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Late Penalty (KES/day)</label>
+                    <input
+                      type="number" min="0" step="1" placeholder="500"
+                      value={generateLeaseForm.latePenaltyPerDay}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, latePenaltyPerDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
               </div>
+
+              {/* Payment Methods */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="e.g. 25000"
-                  value={generateLeaseForm.monthlyRent}
-                  onChange={e => setGenerateLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
+                    <input
+                      type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
+                      value={generateLeaseForm.mpesaTill}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Details</label>
+                    <input
+                      type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
+                      value={generateLeaseForm.bankDetails}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
               </div>
+
+              {/* Policies */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="e.g. 50000"
-                  value={generateLeaseForm.securityDeposit}
-                  onChange={e => setGenerateLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Policies &amp; Conditions</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Pet Policy</label>
+                    <input
+                      type="text" placeholder="e.g. No pets allowed / Pets permitted with prior written consent"
+                      value={generateLeaseForm.petPolicy}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, petPolicy: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Special Conditions</label>
+                    <textarea
+                      rows={3} placeholder="Any additional conditions specific to this tenancy..."
+                      value={generateLeaseForm.specialConditions}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, specialConditions: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Terms &amp; Conditions</label>
+                    <textarea
+                      rows={4} placeholder="Enter the standard lease terms and conditions..."
+                      value={generateLeaseForm.terms}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, terms: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                </div>
               </div>
+
+              {/* Co-Tenant */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Co-Tenant <span className="font-normal normal-case text-neutral-400">(optional)</span></h4>
+                <p className="text-xs text-neutral-500 mb-3">Add a second occupant who will also be named on the lease.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
+                    <input
+                      type="text" placeholder="Co-tenant full name"
+                      value={generateLeaseForm.tenant2Name}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2Name: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">ID / Passport Number</label>
+                    <input
+                      type="text" placeholder="National ID or Passport No."
+                      value={generateLeaseForm.tenant2IdNumber}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2IdNumber: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
+                    <input
+                      type="email" placeholder="co-tenant@email.com"
+                      value={generateLeaseForm.tenant2Email}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2Email: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Phone</label>
+                    <input
+                      type="tel" placeholder="+254..."
+                      value={generateLeaseForm.tenant2Phone}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2Phone: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
             </div>
-            <div className="px-4 md:px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 flex-shrink-0">
               <Button variant="outline" onClick={() => setShowGenerateLeaseModal(false)}>Cancel</Button>
               <Button onClick={handleGenerateLease} disabled={isGeneratingLease}>
                 {isGeneratingLease ? 'Creating...' : 'Create Lease'}
