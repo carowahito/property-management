@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatRefNumber } from '@/lib/utils';
 
 interface MaintenanceRequest {
   id: string
@@ -544,6 +544,9 @@ export default function MaintenancePage() {
                 return (
                   <tr key={request.id} className='hover:bg-neutral-50'>
                     <td className='px-3 md:px-6 py-2 md:py-4'>
+                      {request.refNumber && (
+                        <div className='text-xs font-mono text-neutral-400 mb-0.5'>{formatRefNumber(request.refNumber)}</div>
+                      )}
                       <div className='text-sm font-medium text-neutral-900'>{request.title}</div>
                       <div className='text-sm text-neutral-500'>
                         by {request.tenant ? (

@@ -2,324 +2,361 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { formatDate, formatRefNumber } from '@/lib/utils'
+
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  NEW:                            { label: 'Logged',               color: 'bg-neutral-100 text-neutral-700' },
+  PENDING:                        { label: 'Logged',               color: 'bg-neutral-100 text-neutral-700' },
+  UNDER_REVIEW:                   { label: 'Under Review',         color: 'bg-blue-100 text-blue-800' },
+  RESPONSIBILITY_ASSIGNED:        { label: 'Vendor Sourced',       color: 'bg-indigo-100 text-indigo-800' },
+  QUOTING:                        { label: 'Getting Quotes',       color: 'bg-purple-100 text-purple-800' },
+  AWAITING_APPROVAL:              { label: 'Quote Ready',          color: 'bg-yellow-100 text-yellow-800' },
+  AWAITING_FUNDS:                 { label: 'Payment Required',     color: 'bg-orange-100 text-orange-800' },
+  IN_PROGRESS:                    { label: 'Work In Progress',     color: 'bg-primary-100 text-primary-800' },
+  COMPLETED_PENDING_CONFIRMATION: { label: 'Please Confirm',       color: 'bg-teal-100 text-teal-800' },
+  CLOSED:                         { label: 'Closed',               color: 'bg-success-100 text-success-800' },
+  COMPLETED:                      { label: 'Completed',            color: 'bg-success-100 text-success-800' },
+  DISPUTED:                       { label: 'Disputed',             color: 'bg-red-100 text-red-800' },
+  CANCELLED:                      { label: 'Cancelled',            color: 'bg-neutral-100 text-neutral-500' },
+}
+
+const PRIORITY_COLOR: Record<string, string> = {
+  URGENT: 'text-red-600 font-semibold',
+  HIGH:   'text-orange-600',
+  MEDIUM: 'text-yellow-600',
+  LOW:    'text-neutral-500',
+}
+
+const AUDIT_ICON: Record<string, string> = {
+  system: '⚙️',
+  CANCELLED: '🚫',
+  CLOSED: '✅',
+  COMPLETED: '✅',
+  IN_PROGRESS: '🔧',
+  AWAITING_FUNDS: '💰',
+  AWAITING_APPROVAL: '📋',
+  QUOTING: '📝',
+  RESPONSIBILITY_ASSIGNED: '👷',
+  UNDER_REVIEW: '🔍',
+}
+
+const CANNOT_CANCEL = new Set([
+  'IN_PROGRESS', 'COMPLETED_PENDING_CONFIRMATION', 'COMPLETED', 'CLOSED', 'CANCELLED',
+])
 
 export default function MaintenanceDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const queryClient = useQueryClient()
   const requestId = params.id as string
 
-  // Mock maintenance request data - would be fetched based on requestId
-  const request = {
-    id: requestId,
-    title: 'Leaking Faucet in Kitchen',
-    category: 'Plumbing',
-    priority: 'High',
-    status: 'In Progress',
-    description: 'The kitchen faucet has been leaking for the past two days. Water drips continuously even when fully closed. It\'s wasting a lot of water and the dripping sound is disturbing.',
-    submittedDate: '2025-10-20',
-    updatedDate: '2025-10-21',
-    scheduledDate: '2025-10-23',
-    estimatedCompletion: '2025-10-23',
-    propertyAddress: '123 Main Street, Apt 4B, Nairobi',
-    photos: [
-      'https://via.placeholder.com/400x300?text=Faucet+Photo+1',
-      'https://via.placeholder.com/400x300?text=Faucet+Photo+2',
-    ],
-    vendor: {
-      name: 'Quick Fix Plumbing',
-      phone: '+254 722 000 000',
-      assignedDate: '2025-10-21',
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+
+  const { data: req, isLoading, error } = useQuery({
+    queryKey: ['maintenance-request', requestId],
+    queryFn: () => fetch(`/api/maintenance-requests/${requestId}`).then(r => {
+      if (!r.ok) throw new Error('Failed to load request')
+      return r.json()
+    }),
+    enabled: !!requestId,
+  })
+
+  const cancelMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      const res = await fetch(`/api/maintenance-requests/${requestId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to cancel request')
+      }
+      return res.json()
     },
-    updates: [
-      {
-        date: '2025-10-21 10:30 AM',
-        author: 'Property Manager',
-        message: 'Maintenance request received and assigned to Quick Fix Plumbing.',
-        type: 'status',
-      },
-      {
-        date: '2025-10-21 02:15 PM',
-        author: 'Quick Fix Plumbing',
-        message: 'Vendor has reviewed the request and scheduled a visit for Oct 23.',
-        type: 'vendor',
-      },
-      {
-        date: '2025-10-22 09:00 AM',
-        author: 'Quick Fix Plumbing',
-        message: 'Parts ordered. Will be delivered by Oct 23 morning.',
-        type: 'vendor',
-      },
-    ],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant-service-requests'] })
+      setShowCancelModal(false)
+      setCancelReason('')
+      router.push('/tenant/requests')
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
-  const [newMessage, setNewMessage] = useState('')
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newMessage.trim()) return
-
-    // TODO: Implement message sending
-    alert('Message sent successfully!')
-    setNewMessage('')
+  if (error || !req) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          Could not load this request. <Link href="/tenant/requests" className="underline">Go back</Link>
+        </div>
+      </div>
+    )
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Open':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'In Progress':
-        return 'bg-primary-100 text-primary-800'
-      case 'Completed':
-        return 'bg-success-100 text-success-800'
-      case 'Cancelled':
-        return 'bg-danger-100 text-danger-800'
-      default:
-        return 'bg-neutral-100 text-neutral-800'
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Urgent':
-        return 'text-danger-600'
-      case 'High':
-        return 'text-warning-600'
-      case 'Medium':
-        return 'text-yellow-600'
-      case 'Low':
-        return 'text-success-600'
-      default:
-        return 'text-neutral-600'
-    }
-  }
+  const statusCfg = STATUS_CONFIG[req.status] ?? { label: req.status, color: 'bg-neutral-100 text-neutral-700' }
+  const canCancel = !CANNOT_CANCEL.has(req.status)
+  const auditLogs: any[] = req.auditLogs ?? []
+  const contractor = req.assignedContractor
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
-      <nav className="mb-6 flex" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm">
-          <li>
-            <Link href="/tenant/maintenance" className="text-primary-600 hover:text-primary-800">
-              Maintenance
-            </Link>
-          </li>
-          <li>
-            <span className="mx-2 text-neutral-400">/</span>
-          </li>
-          <li className="text-neutral-500">Request #{requestId}</li>
-        </ol>
+      <nav className="mb-6 flex text-sm">
+        <Link href="/tenant/requests" className="text-primary-600 hover:text-primary-800">
+          ← Service Requests
+        </Link>
       </nav>
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-neutral-900">{request.title}</h1>
-            <p className="mt-2 text-neutral-600">Request #{requestId}</p>
-          </div>
-          <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-              request.status
-            )}`}
-          >
-            {request.status}
-          </span>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          {req.refNumber && (
+            <p className="text-xs font-mono font-medium text-neutral-400 mb-1">{formatRefNumber(req.refNumber)}</p>
+          )}
+          <h1 className="text-2xl font-bold text-neutral-900">{req.title}</h1>
+          <p className="text-xs text-neutral-400 mt-1">Submitted {formatDate(req.createdAt)}</p>
         </div>
+        <span className={`shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusCfg.color}`}>
+          {statusCfg.label}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main Content */}
+        {/* Main */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Request Details */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Request Details</h2>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="text-sm text-neutral-600">Category</p>
-                <p className="font-medium text-neutral-900">{request.category}</p>
-              </div>
-              <div>
-                <p className="text-sm text-neutral-600">Priority</p>
-                <p className={`font-medium ${getPriorityColor(request.priority)}`}>
-                  {request.priority}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-neutral-600">Submitted Date</p>
-                <p className="font-medium text-neutral-900">{request.submittedDate}</p>
-              </div>
-              <div>
-                <p className="text-sm text-neutral-600">Last Updated</p>
-                <p className="font-medium text-neutral-900">{request.updatedDate}</p>
-              </div>
-              {request.scheduledDate && (
+          {/* Details */}
+          <div className="bg-surface shadow rounded-lg p-5">
+            <h2 className="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-4">Request Details</h2>
+            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+              {req.category && (
                 <div>
-                  <p className="text-sm text-neutral-600">Scheduled Date</p>
-                  <p className="font-medium text-neutral-900">{request.scheduledDate}</p>
+                  <p className="text-neutral-500">Category</p>
+                  <p className="font-medium text-neutral-900">{req.category}</p>
                 </div>
               )}
-              {request.estimatedCompletion && (
+              <div>
+                <p className="text-neutral-500">Priority</p>
+                <p className={`font-medium ${PRIORITY_COLOR[req.priority] ?? 'text-neutral-900'}`}>{req.priority}</p>
+              </div>
+              {req.property && (
                 <div>
-                  <p className="text-sm text-neutral-600">Estimated Completion</p>
-                  <p className="font-medium text-neutral-900">{request.estimatedCompletion}</p>
+                  <p className="text-neutral-500">Property</p>
+                  <p className="font-medium text-neutral-900">{req.property.name}</p>
+                </div>
+              )}
+              {req.unit && (
+                <div>
+                  <p className="text-neutral-500">Unit</p>
+                  <p className="font-medium text-neutral-900">{req.unit}</p>
+                </div>
+              )}
+              {req.resolvedAt && (
+                <div>
+                  <p className="text-neutral-500">Resolved</p>
+                  <p className="font-medium text-neutral-900">{formatDate(req.resolvedAt)}</p>
+                </div>
+              )}
+              {req.estimatedCost && (
+                <div>
+                  <p className="text-neutral-500">Estimated Cost</p>
+                  <p className="font-medium text-neutral-900">KSh {Number(req.estimatedCost).toLocaleString()}</p>
                 </div>
               )}
             </div>
-
             <div>
-              <p className="text-sm text-neutral-600 mb-2">Description</p>
-              <p className="text-neutral-900">{request.description}</p>
+              <p className="text-neutral-500 text-sm mb-1">Description</p>
+              <p className="text-neutral-900 text-sm whitespace-pre-line">{req.description}</p>
             </div>
           </div>
 
-          {/* Photos */}
-          {request.photos && request.photos.length > 0 && (
-            <div className="bg-surface shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Photos</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {request.photos.map((photo, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={photo}
-                      alt={`Maintenance photo ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg border border-neutral-200"
-                    />
-                    <button className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
-                      <span className="text-white opacity-0 group-hover:opacity-100 font-medium">
-                        View Full Size
-                      </span>
-                    </button>
+          {/* Quotes */}
+          {req.quotes?.length > 0 && (
+            <div className="bg-surface shadow rounded-lg p-5">
+              <h2 className="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-4">Quotes</h2>
+              <div className="space-y-3">
+                {req.quotes.map((q: any) => (
+                  <div key={q.id} className={`rounded-lg border p-3 text-sm ${q.isSelected ? 'border-primary-400 bg-primary-50' : 'border-neutral-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-neutral-900">KSh {Number(q.amount).toLocaleString()}</span>
+                      {q.isSelected && <span className="text-xs font-medium text-primary-700 bg-primary-100 px-2 py-0.5 rounded-full">Selected</span>}
+                    </div>
+                    <p className="text-neutral-500 mt-0.5">{q.contractor?.name}</p>
+                    {q.notes && <p className="text-neutral-600 mt-1 italic">{q.notes}</p>}
+                    <p className="text-neutral-400 text-xs mt-1">Valid until {formatDate(q.validUntil)}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Activity Timeline */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Activity Timeline</h2>
-            <div className="space-y-4">
-              {request.updates.map((update, index) => (
-                <div key={index} className="flex">
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        update.type === 'status'
-                          ? 'bg-primary-100'
-                          : update.type === 'vendor'
-                          ? 'bg-success-100'
-                          : 'bg-neutral-100'
-                      }`}
-                    >
-                      {update.type === 'status' ? '📋' : update.type === 'vendor' ? '🔧' : '💬'}
+          {/* Audit timeline */}
+          {auditLogs.length > 0 && (
+            <div className="bg-surface shadow rounded-lg p-5">
+              <h2 className="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-4">Activity Timeline</h2>
+              <div className="space-y-4">
+                {auditLogs.map((log: any) => (
+                  <div key={log.id} className="flex gap-3">
+                    <div className="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center text-sm shrink-0 mt-0.5">
+                      {AUDIT_ICON[log.toStatus ?? ''] ?? '📋'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-neutral-900">
+                          {log.actorName && log.actor !== 'system' ? log.actorName : 'System'}
+                        </p>
+                        <p className="text-xs text-neutral-400 shrink-0">{formatDate(log.createdAt)}</p>
+                      </div>
+                      {log.note && <p className="text-sm text-neutral-600 mt-0.5">{log.note}</p>}
+                      {log.toStatus && (
+                        <p className="text-xs text-neutral-400 mt-0.5">
+                          Status → {STATUS_CONFIG[log.toStatus]?.label ?? log.toStatus}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="ml-4 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-neutral-900">{update.author}</p>
-                      <p className="text-xs text-neutral-500">{update.date}</p>
-                    </div>
-                    <p className="mt-1 text-sm text-neutral-600">{update.message}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Add Comment */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Add a Comment</h2>
-            <form onSubmit={handleSendMessage}>
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Add any additional information or questions about this request..."
-              ></textarea>
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
-                >
-                  Send Message
-                </button>
+                ))}
               </div>
-            </form>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Vendor Information */}
-          {request.vendor && (
-            <div className="bg-surface shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Assigned Vendor</h2>
-              <div className="space-y-3">
+        <div className="space-y-5">
+          {/* Contractor */}
+          {contractor && (
+            <div className="bg-surface shadow rounded-lg p-5">
+              <h2 className="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-3">Assigned Vendor</h2>
+              <div className="space-y-2 text-sm">
                 <div>
-                  <p className="text-sm text-neutral-600">Company</p>
-                  <p className="font-medium text-neutral-900">{request.vendor.name}</p>
+                  <p className="text-neutral-500">Name</p>
+                  <p className="font-medium text-neutral-900">{contractor.name}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-neutral-600">Phone</p>
-                  <a
-                    href={`tel:${request.vendor.phone}`}
-                    className="font-medium text-primary-600 hover:text-primary-800"
-                  >
-                    {request.vendor.phone}
-                  </a>
-                </div>
-                <div>
-                  <p className="text-sm text-neutral-600">Assigned Date</p>
-                  <p className="font-medium text-neutral-900">{request.vendor.assignedDate}</p>
-                </div>
+                {contractor.trade && (
+                  <div>
+                    <p className="text-neutral-500">Trade</p>
+                    <p className="font-medium text-neutral-900">{contractor.trade}</p>
+                  </div>
+                )}
+                {contractor.phone && (
+                  <div>
+                    <p className="text-neutral-500">Phone</p>
+                    <a href={`tel:${contractor.phone}`} className="font-medium text-primary-600 hover:text-primary-800">
+                      {contractor.phone}
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Property Information */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Property</h2>
-            <p className="text-sm text-neutral-900">{request.propertyAddress}</p>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
-            <div className="space-y-3">
-              <button className="w-full px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700">
-                Contact Support
-              </button>
-              {request.status !== 'Completed' && request.status !== 'Cancelled' && (
-                <button className="w-full px-4 py-2 bg-surface border border-danger-300 text-danger-600 rounded-md text-sm font-medium hover:bg-danger-50">
-                  Cancel Request
-                </button>
+          {/* Deposit info */}
+          {req.depositRequired && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm">
+              <p className="font-semibold text-orange-900 mb-1">Deposit Required</p>
+              <p className="text-orange-800">KSh {Number(req.depositAmount).toLocaleString()} (50% upfront)</p>
+              {req.depositPaidAt && (
+                <p className="text-green-700 mt-1">✓ Paid {formatDate(req.depositPaidAt)}</p>
               )}
-              {request.status === 'Completed' && (
-                <button className="w-full px-4 py-2 bg-surface border border-neutral-300 text-neutral-700 rounded-md text-sm font-medium hover:bg-neutral-50">
-                  Rate Service
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="bg-surface shadow rounded-lg p-5">
+            <h2 className="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-3">Actions</h2>
+            <div className="space-y-2">
+              {req.status === 'AWAITING_APPROVAL' && (
+                <Link
+                  href="/tenant/quotes"
+                  className="block w-full text-center px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
+                >
+                  Review & Approve Quote
+                </Link>
+              )}
+              {req.status === 'COMPLETED_PENDING_CONFIRMATION' && (
+                <Link
+                  href="/tenant/quotes"
+                  className="block w-full text-center px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700"
+                >
+                  Confirm Work Complete
+                </Link>
+              )}
+              {canCancel && (
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  className="w-full px-4 py-2 bg-white border border-red-300 text-red-600 rounded-md text-sm font-medium hover:bg-red-50"
+                >
+                  Cancel Request
                 </button>
               )}
             </div>
           </div>
 
-          {/* Need Help */}
+          {/* Emergency */}
           <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-primary-900 mb-2">Need Immediate Help?</h3>
-            <p className="text-sm text-primary-800 mb-3">
-              For urgent maintenance issues, call our emergency line:
-            </p>
+            <h3 className="text-sm font-semibold text-primary-900 mb-1">Need Immediate Help?</h3>
+            <p className="text-xs text-primary-800 mb-2">For urgent issues call our emergency line:</p>
             <a
-              href="tel:+254711111111"
-              className="block text-center px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
+              href="tel:+254700000000"
+              className="block text-center px-3 py-2 bg-primary-600 text-white rounded-md text-xs font-medium hover:bg-primary-700"
             >
-              📞 +254 711 111 111
+              📞 +254 700 000 000
             </a>
-            <p className="mt-2 text-xs text-primary-700">Available 24/7 for emergencies</p>
           </div>
         </div>
       </div>
+
+      {/* Cancel Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-neutral-900 mb-1">Cancel Request</h3>
+            <p className="text-sm text-neutral-600 mb-4">
+              Are you sure you want to cancel <strong>"{req.title}"</strong>? Please tell us why so we can improve our service.
+            </p>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">
+              Reason for cancellation <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              rows={3}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="e.g. Issue resolved on its own, no longer needed, found another solution..."
+              className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+            />
+            {cancelMutation.isError && (
+              <p className="mt-2 text-sm text-red-600">{(cancelMutation.error as Error).message}</p>
+            )}
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => { setShowCancelModal(false); setCancelReason('') }}
+                disabled={cancelMutation.isPending}
+                className="flex-1 px-4 py-2 border border-neutral-300 text-neutral-700 rounded-md text-sm font-medium hover:bg-neutral-50"
+              >
+                Keep Request
+              </button>
+              <button
+                onClick={() => cancelMutation.mutate(cancelReason)}
+                disabled={cancelMutation.isPending || !cancelReason.trim()}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cancelMutation.isPending ? 'Cancelling...' : 'Yes, Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

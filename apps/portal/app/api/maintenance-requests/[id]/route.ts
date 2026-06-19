@@ -43,6 +43,24 @@ export async function GET(
             },
           },
         },
+        assignedContractor: {
+          select: { id: true, name: true, phone: true, trade: true },
+        },
+        quotes: {
+          orderBy: { issuedAt: 'asc' as const },
+          select: {
+            id: true, amount: true, isSelected: true, notes: true,
+            issuedAt: true, validUntil: true,
+            contractor: { select: { id: true, name: true } },
+          },
+        },
+        auditLogs: {
+          orderBy: { createdAt: 'asc' as const },
+          select: {
+            id: true, actor: true, actorName: true,
+            fromStatus: true, toStatus: true, note: true, createdAt: true,
+          },
+        },
         workOrders: {
           select: {
             id: true,
@@ -52,11 +70,7 @@ export async function GET(
             estimatedCost: true,
             actualCost: true,
             vendor: {
-              select: {
-                id: true,
-                name: true,
-                phone: true,
-              },
+              select: { id: true, name: true, phone: true },
             },
           },
         },

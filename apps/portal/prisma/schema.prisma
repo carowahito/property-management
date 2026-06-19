@@ -950,9 +950,11 @@ enum DepositStatus {
 // ============================================
 
 model MaintenanceRequest {
-  id          String            @id @default(cuid())
-  tenantId    String
-  propertyId  String
+  id        String @id @default(cuid())
+  refNumber Int    @unique @default(autoincrement())
+
+  tenantId   String
+  propertyId String
   unitId      String?
   unit        String? // kept for backward compat; prefer unitId
   title       String

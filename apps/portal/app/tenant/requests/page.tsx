@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatRefNumber } from '@/lib/utils'
 
 const STATUS_CONFIG: Record<string, { label: string; description: string; color: string; step: number }> = {
   NEW:                            { label: 'Logged',              description: 'Your request has been received and is awaiting review.',         color: 'bg-neutral-100 text-neutral-700',  step: 1 },
@@ -187,6 +187,11 @@ export default function ServiceRequestsPage() {
                       <div className="flex-1 min-w-0">
                         {/* Title row */}
                         <div className="flex items-center gap-2 flex-wrap mb-1">
+                          {req.refNumber && (
+                            <span className="text-xs font-mono font-medium text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded">
+                              {formatRefNumber(req.refNumber)}
+                            </span>
+                          )}
                           <span className="text-sm font-semibold text-neutral-900">{req.title}</span>
                           {req.priority && req.priority !== 'MEDIUM' && (
                             <span className={`text-xs ${PRIORITY_COLOR[req.priority] ?? ''}`}>

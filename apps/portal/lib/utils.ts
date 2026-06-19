@@ -17,6 +17,11 @@ export function formatDate(date: string | Date): string {
   return `${day}/${month}/${year}`
 }
 
+/** Format a maintenance request refNumber as a human-readable ID, e.g. SR-0042 */
+export function formatRefNumber(refNumber: number): string {
+  return `SR-${String(refNumber).padStart(4, '0')}`
+}
+
 /**
  * Format date in US format (MM/DD/YYYY)
  */

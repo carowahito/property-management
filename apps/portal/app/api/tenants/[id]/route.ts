@@ -90,6 +90,7 @@ export async function GET(
         maintenanceRequests: {
           select: {
             id: true,
+            refNumber: true,
             title: true,
             description: true,
             status: true,

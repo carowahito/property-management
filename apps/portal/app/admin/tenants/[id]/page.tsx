@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { StatementMenuButton } from '@/components/ui/statement-menu-button'
 import { getStatementDateRange } from '@/lib/statement-period'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatRefNumber } from '@/lib/utils'
 import { setAssumedTenant } from '@/lib/assumed-tenant'
 import TaskManager from '@/components/crm/TaskManager'
 import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
@@ -1205,6 +1205,9 @@ export default function TenantCRMPage({ params }: Props) {
                     <div key={request.id} className="border border-neutral-200 rounded-lg p-4 hover:bg-neutral-50">
                       <div className="flex justify-between items-start mb-2 gap-3">
                         <div className="flex-1 min-w-0">
+                          {request.refNumber && (
+                            <p className="text-xs font-mono text-neutral-400 mb-0.5">{formatRefNumber(request.refNumber)}</p>
+                          )}
                           <h4 className="font-medium text-neutral-900">{request.title}</h4>
                           {request.description && (
                             <p className="text-sm text-neutral-500 mt-0.5 line-clamp-2">{request.description}</p>
