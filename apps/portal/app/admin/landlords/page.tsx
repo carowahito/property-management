@@ -6,7 +6,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import AddLandlordForm from '@/components/forms/AddLandlordForm'
-import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons';
 
 interface Landlord {
   id: string
@@ -46,7 +45,28 @@ export default function AdminLandlordsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showAddLandlordModal, setShowAddLandlordModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, isArchived }: { id: string; isArchived: boolean }) => {
+      const res = await fetch(`/api/landlords/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: isArchived ? 'INACTIVE' : 'ARCHIVED' }),
+      })
+      if (!res.ok) throw new Error('Action failed')
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['landlords'] }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/landlords/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['landlords'] }),
+  })
 
   const createLandlordMutation = useMutation({
     mutationFn: async (formData: any) => {
@@ -412,31 +432,106 @@ export default function AdminLandlordsPage() {
                       {landlord.status}
                     </span>
                   </td>
-                  <td className='px-3 md:px-6 py-2 md:py-4 text-sm space-x-2'>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedLandlord(landlord)
-                      }}
-                    >
-                      View
-                    </Button>
-                    <Link href={`/admin/landlords/${landlord.id}`}>
-                      <Button variant="outline" size="sm">
-                        Details
-                      </Button>
-                    </Link>
-                    <ArchiveDeleteButtons
-                      entityName="landlord"
-                      entityLabel={landlord.name}
-                      archiveUrl={`/api/landlords/${landlord.id}`}
-                      deleteUrl={`/api/landlords/${landlord.id}`}
-                      isArchived={landlord.status === 'ARCHIVED'}
-                      onSuccess={() => queryClient.invalidateQueries({ queryKey: ['landlords'] })}
-                      size="sm"
-                    />
+                  <td className='px-3 md:px-6 py-2 md:py-4'>
+                    <div className='relative inline-block'>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenDropdown(openDropdown === landlord.id ? null : landlord.id)
+                        }}
+                        className='p-1.5 rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                        title='Actions'
+                      >
+                        <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
+                          <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
+                        </svg>
+                      </button>
+
+                      {openDropdown === landlord.id && (
+                        <>
+                          <div
+                            className='fixed inset-0 z-10'
+                            onClick={() => setOpenDropdown(null)}
+                          />
+                          <div className='absolute right-0 z-20 mt-1 w-44 bg-white rounded-lg shadow-lg border border-neutral-200 py-1'>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedLandlord(landlord)
+                                setOpenDropdown(null)
+                              }}
+                              className='flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50'
+                            >
+                              <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+                              </svg>
+                              Quick View
+                            </button>
+                            <Link
+                              href={`/admin/landlords/${landlord.id}`}
+                              onClick={() => setOpenDropdown(null)}
+                              className='flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50'
+                            >
+                              <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                              </svg>
+                              Full Details
+                            </Link>
+                            <Link
+                              href={`/admin/landlords/${landlord.id}?tab=properties`}
+                              onClick={() => setOpenDropdown(null)}
+                              className='flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50'
+                            >
+                              <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
+                              </svg>
+                              Properties
+                            </Link>
+                            <Link
+                              href={`/admin/landlords/${landlord.id}/statements`}
+                              onClick={() => setOpenDropdown(null)}
+                              className='flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50'
+                            >
+                              <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                              </svg>
+                              Statements
+                            </Link>
+                            <div className='border-t border-neutral-100 mt-1 pt-1'>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  archiveMutation.mutate({ id: landlord.id, isArchived: landlord.status === 'ARCHIVED' })
+                                  setOpenDropdown(null)
+                                }}
+                                className='flex items-center w-full px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50'
+                              >
+                                <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' />
+                                </svg>
+                                {landlord.status === 'ARCHIVED' ? 'Restore' : 'Archive'}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (window.confirm(`Permanently delete ${landlord.name}? This cannot be undone.`)) {
+                                    deleteMutation.mutate(landlord.id)
+                                  }
+                                  setOpenDropdown(null)
+                                }}
+                                className='flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50'
+                              >
+                                <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                                </svg>
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
