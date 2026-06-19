@@ -88,6 +88,7 @@ export default function TenantCRMPage({ params }: Props) {
   const [showUploadNewLeaseModal, setShowUploadNewLeaseModal] = useState(false)
   const [uploadNewLeaseForm, setUploadNewLeaseForm] = useState({
     startDate: '',
+    leaseTerm: '12',
     endDate: '',
     monthlyRent: '',
     securityDeposit: '',
@@ -655,7 +656,7 @@ export default function TenantCRMPage({ params }: Props) {
       })
 
       setShowUploadNewLeaseModal(false)
-      setUploadNewLeaseForm({ startDate: '', endDate: '', monthlyRent: '', securityDeposit: '', terms: '' })
+      setUploadNewLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', terms: '' })
       setUploadNewLeaseFile(null)
       window.location.reload()
     } catch {
@@ -2510,19 +2511,61 @@ export default function TenantCRMPage({ params }: Props) {
                   <input
                     type="date"
                     value={uploadNewLeaseForm.startDate}
-                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, startDate: e.target.value }))}
+                    onChange={e => {
+                      const start = e.target.value
+                      const term = uploadNewLeaseForm.leaseTerm
+                      let endDate = uploadNewLeaseForm.endDate
+                      if (start && term !== 'custom') {
+                        const d = new Date(start)
+                        d.setMonth(d.getMonth() + parseInt(term))
+                        d.setDate(d.getDate() - 1)
+                        endDate = d.toISOString().split('T')[0]
+                      }
+                      setUploadNewLeaseForm(f => ({ ...f, startDate: start, endDate }))
+                    }}
                     className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date *</label>
-                  <input
-                    type="date"
-                    value={uploadNewLeaseForm.endDate}
-                    onChange={e => setUploadNewLeaseForm(f => ({ ...f, endDate: e.target.value }))}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
+                  <select
+                    value={uploadNewLeaseForm.leaseTerm}
+                    onChange={e => {
+                      const term = e.target.value
+                      let endDate = uploadNewLeaseForm.endDate
+                      if (uploadNewLeaseForm.startDate && term !== 'custom') {
+                        const d = new Date(uploadNewLeaseForm.startDate)
+                        d.setMonth(d.getMonth() + parseInt(term))
+                        d.setDate(d.getDate() - 1)
+                        endDate = d.toISOString().split('T')[0]
+                      }
+                      setUploadNewLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
+                    }}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                  >
+                    <option value="6">6 months</option>
+                    <option value="12">12 months (1 year)</option>
+                    <option value="18">18 months</option>
+                    <option value="24">24 months (2 years)</option>
+                    <option value="36">36 months (3 years)</option>
+                    <option value="custom">Custom end date</option>
+                  </select>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  End Date *
+                  {uploadNewLeaseForm.leaseTerm !== 'custom' && uploadNewLeaseForm.endDate && (
+                    <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
+                  )}
+                </label>
+                <input
+                  type="date"
+                  value={uploadNewLeaseForm.endDate}
+                  readOnly={uploadNewLeaseForm.leaseTerm !== 'custom'}
+                  onChange={e => uploadNewLeaseForm.leaseTerm === 'custom' && setUploadNewLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                  className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${uploadNewLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
