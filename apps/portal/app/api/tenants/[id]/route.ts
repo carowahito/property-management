@@ -94,10 +94,15 @@ export async function GET(
             description: true,
             status: true,
             priority: true,
+            category: true,
             createdAt: true,
+            resolvedAt: true,
+            responsibleParty: true,
+            assignedContractor: {
+              select: { id: true, name: true, trade: true },
+            },
           },
           orderBy: { createdAt: 'desc' },
-          take: 5,
         },
         messages: {
           select: {

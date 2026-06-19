@@ -287,7 +287,7 @@ export default function TenantCRMPage({ params }: Props) {
   const tenantMaintenance = (tenantApiData?.maintenanceRequests || []).map((m: any) => ({
     ...m,
     dateSubmitted: m.createdAt ? m.createdAt.split('T')[0] : '',
-    vendorName: '',
+    vendorName: m.assignedContractor?.name || '',
   }))
 
   const allMessages: any[] = tenantApiData?.messages || []
@@ -334,35 +334,15 @@ export default function TenantCRMPage({ params }: Props) {
 
   // Filter maintenance requests
   const filteredMaintenance = tenantMaintenance.filter((request: any) => {
-    // Status filter
-    if (maintenanceFilters.status && request.status !== maintenanceFilters.status) {
-      return false
-    }
-    
-    // Priority filter
-    if (maintenanceFilters.priority && request.priority !== maintenanceFilters.priority) {
-      return false
-    }
-    
-    // Vendor filter (exact match for dropdown)
+    if (maintenanceFilters.status && request.status !== maintenanceFilters.status) return false
+    if (maintenanceFilters.priority && request.priority !== maintenanceFilters.priority) return false
     if (maintenanceFilters.vendor) {
       if (maintenanceFilters.vendor === 'unassigned') {
-        if (request.vendorName && request.vendorName !== '') {
-          return false
-        }
-      } else if (request.vendorName !== maintenanceFilters.vendor) {
-        return false
-      }
+        if (request.vendorName) return false
+      } else if (request.vendorName !== maintenanceFilters.vendor) return false
     }
-    
-    // Date range filter
-    if (maintenanceFilters.startDate && request.dateSubmitted < maintenanceFilters.startDate) {
-      return false
-    }
-    if (maintenanceFilters.endDate && request.dateSubmitted > maintenanceFilters.endDate) {
-      return false
-    }
-    
+    if (maintenanceFilters.startDate && request.dateSubmitted < maintenanceFilters.startDate) return false
+    if (maintenanceFilters.endDate && request.dateSubmitted > maintenanceFilters.endDate) return false
     return true
   })
 
@@ -1103,59 +1083,63 @@ export default function TenantCRMPage({ params }: Props) {
           {/* Maintenance Tab */}
           {activeTab === 'maintenance' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-neutral-900 mb-4">Maintenance Requests</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-neutral-900">Service Requests</h3>
+                <Link
+                  href={`/admin/maintenance?tenantId=${tenantId}`}
+                  className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+                >
+                  View all on Maintenance page →
+                </Link>
+              </div>
 
               {/* Filters */}
               <div className="bg-neutral-50 rounded-lg p-3 md:p-4 border border-neutral-200">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-neutral-900">Filters</h4>
-                  <button
-                    onClick={clearMaintenanceFilters}
-                    className="text-sm text-primary-600 hover:text-primary-800 font-medium"
-                  >
+                  <button onClick={clearMaintenanceFilters} className="text-sm text-primary-600 hover:text-primary-800 font-medium">
                     Clear All
                   </button>
                 </div>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Status
-                    </label>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Status</label>
                     <select
                       value={maintenanceFilters.status}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, status: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">All Statuses</option>
-                      <option value="Pending">Pending</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
+                      <option value="NEW">New</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="UNDER_REVIEW">Under Review</option>
+                      <option value="RESPONSIBILITY_ASSIGNED">Vendor Assigned</option>
+                      <option value="QUOTING">Quoting</option>
+                      <option value="AWAITING_APPROVAL">Awaiting Approval</option>
+                      <option value="AWAITING_FUNDS">Awaiting Funds</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="COMPLETED_PENDING_CONFIRMATION">Pending Confirmation</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CLOSED">Closed</option>
+                      <option value="CANCELLED">Cancelled</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Priority
-                    </label>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Priority</label>
                     <select
                       value={maintenanceFilters.priority}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, priority: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">All Priorities</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                      <option value="Emergency">Emergency</option>
+                      <option value="LOW">Low</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HIGH">High</option>
+                      <option value="URGENT">Urgent</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Vendor
-                    </label>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Vendor</label>
                     <select
                       value={maintenanceFilters.vendor}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, vendor: e.target.value })}
@@ -1168,69 +1152,113 @@ export default function TenantCRMPage({ params }: Props) {
                       <option value="unassigned">Unassigned</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={maintenanceFilters.startDate}
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Start Date</label>
+                    <input type="date" value={maintenanceFilters.startDate}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, startDate: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={maintenanceFilters.endDate}
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">End Date</label>
+                    <input type="date" value={maintenanceFilters.endDate}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, endDate: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
                 </div>
-
-                {/* Filter summary */}
                 <div className="mt-3 text-sm text-neutral-600">
                   Showing {filteredMaintenance.length} of {tenantMaintenance.length} requests
                 </div>
               </div>
 
-              {filteredMaintenance.map((request: any) => (
-                <div key={request.id} className="border border-neutral-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-medium text-neutral-900">{request.issue}</h4>
-                      <p className="text-sm text-neutral-600">Request #{request.id}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      request.status === 'Completed' ? 'bg-success-100 text-green-800' :
-                      request.status === 'In Progress' ? 'bg-primary-100 text-primary-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {request.status}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mt-3">
-                    <div>
-                      <p className="text-neutral-600">Priority</p>
-                      <p className="font-medium">{request.priority}</p>
-                    </div>
-                    <div>
-                      <p className="text-neutral-600">Submitted</p>
-                      <p className="font-medium">{formatDate(request.dateSubmitted)}</p>
-                    </div>
-                    <div>
-                      <p className="text-neutral-600">Vendor</p>
-                      <p className="font-medium">{request.vendorName || 'Not assigned'}</p>
-                    </div>
-                  </div>
+              {filteredMaintenance.length === 0 ? (
+                <div className="text-center py-10 text-neutral-500 border border-dashed border-neutral-300 rounded-lg">
+                  <p className="text-3xl mb-2">🔧</p>
+                  <p className="font-medium">No requests found</p>
                 </div>
-              ))}
+              ) : (
+                filteredMaintenance.map((request: any) => {
+                  const statusColors: Record<string, string> = {
+                    NEW: 'bg-neutral-100 text-neutral-700',
+                    PENDING: 'bg-yellow-100 text-yellow-800',
+                    UNDER_REVIEW: 'bg-blue-100 text-blue-800',
+                    RESPONSIBILITY_ASSIGNED: 'bg-indigo-100 text-indigo-800',
+                    QUOTING: 'bg-purple-100 text-purple-800',
+                    AWAITING_APPROVAL: 'bg-orange-100 text-orange-800',
+                    AWAITING_FUNDS: 'bg-red-100 text-red-800',
+                    IN_PROGRESS: 'bg-primary-100 text-primary-800',
+                    COMPLETED_PENDING_CONFIRMATION: 'bg-teal-100 text-teal-800',
+                    COMPLETED: 'bg-success-100 text-green-800',
+                    CLOSED: 'bg-success-100 text-green-800',
+                    CANCELLED: 'bg-neutral-100 text-neutral-700',
+                    DISPUTED: 'bg-red-100 text-red-800',
+                  }
+                  const statusLabels: Record<string, string> = {
+                    NEW: 'New', PENDING: 'Pending', UNDER_REVIEW: 'Under Review',
+                    RESPONSIBILITY_ASSIGNED: 'Vendor Assigned', QUOTING: 'Quoting',
+                    AWAITING_APPROVAL: 'Awaiting Approval', AWAITING_FUNDS: 'Awaiting Funds',
+                    IN_PROGRESS: 'In Progress', COMPLETED_PENDING_CONFIRMATION: 'Pending Confirmation',
+                    COMPLETED: 'Completed', CLOSED: 'Closed', CANCELLED: 'Cancelled', DISPUTED: 'Disputed',
+                  }
+                  return (
+                    <div key={request.id} className="border border-neutral-200 rounded-lg p-4 hover:bg-neutral-50">
+                      <div className="flex justify-between items-start mb-2 gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-neutral-900">{request.title}</h4>
+                          {request.description && (
+                            <p className="text-sm text-neutral-500 mt-0.5 line-clamp-2">{request.description}</p>
+                          )}
+                        </div>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${statusColors[request.status] ?? 'bg-neutral-100 text-neutral-700'}`}>
+                          {statusLabels[request.status] ?? request.status}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-3">
+                        <div>
+                          <p className="text-xs text-neutral-500">Priority</p>
+                          <p className="font-medium text-neutral-900">{request.priority}</p>
+                        </div>
+                        {request.category && (
+                          <div>
+                            <p className="text-xs text-neutral-500">Category</p>
+                            <p className="font-medium text-neutral-900">{request.category}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs text-neutral-500">Submitted</p>
+                          <p className="font-medium text-neutral-900">{formatDate(request.dateSubmitted)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-500">Vendor</p>
+                          <p className="font-medium text-neutral-900">{request.vendorName || <span className="text-neutral-400">Not assigned</span>}</p>
+                        </div>
+                        {request.responsibleParty && (
+                          <div>
+                            <p className="text-xs text-neutral-500">Responsibility</p>
+                            <p className="font-medium text-neutral-900">{request.responsibleParty}</p>
+                          </div>
+                        )}
+                        {request.resolvedAt && (
+                          <div>
+                            <p className="text-xs text-neutral-500">Resolved</p>
+                            <p className="font-medium text-neutral-900">{formatDate(request.resolvedAt)}</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-neutral-100">
+                        <Link
+                          href={`/admin/maintenance`}
+                          className="text-xs text-primary-600 hover:text-primary-800 font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Manage on Maintenance page →
+                        </Link>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           )}
 
