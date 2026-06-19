@@ -8,6 +8,7 @@ import { appendAudit } from '@/lib/services/repair-workflow'
 const bodySchema = z.object({
   responsibleParty: z.enum(['LANDLORD', 'TENANT', 'SHARED']),
   responsibilityReason: z.string().min(1, 'Reason is required'),
+  assignedContractorId: z.string().optional(),
 })
 
 export async function POST(
@@ -20,7 +21,7 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
-    const { responsibleParty, responsibilityReason } = bodySchema.parse(body)
+    const { responsibleParty, responsibilityReason, assignedContractorId } = bodySchema.parse(body)
 
     const req = await prisma.maintenanceRequest.findUnique({ where: { id } })
     if (!req) return NextResponse.json({ error: 'Maintenance request not found' }, { status: 404 })
@@ -40,6 +41,7 @@ export async function POST(
         responsibilityReason,
         responsibilitySetAt: new Date(),
         responsibilitySetBy: session.user.id,
+        assignedContractorId: assignedContractorId ?? undefined,
       },
     })
 
@@ -49,7 +51,7 @@ export async function POST(
       session.user.name,
       'UNDER_REVIEW',
       'RESPONSIBILITY_ASSIGNED',
-      `Responsibility assigned to ${responsibleParty}. Reason: ${responsibilityReason}`
+      `Responsibility: ${responsibleParty}. Reason: ${responsibilityReason}.${assignedContractorId ? ' Contractor assigned for inspection.' : ''}`
     )
 
     return NextResponse.json(updated)
