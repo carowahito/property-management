@@ -1000,13 +1000,24 @@ export default function TenantCRMPage({ params }: Props) {
                               <span className="text-neutral-600">Security Deposit</span>
                               <span className="font-medium text-neutral-900">KES {Number(lease.securityDeposit).toLocaleString()}</span>
                             </div>
-                            <Button
-                              variant="outline"
-                              className="w-full mt-1"
-                              onClick={() => router.push(`/admin/leases/${lease.id}`)}
-                            >
-                              View Lease Details
-                            </Button>
+                            {lease.documentUrl ? (
+                              <a
+                                href={lease.documentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full mt-1 inline-flex items-center justify-center px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 bg-surface hover:bg-neutral-50"
+                              >
+                                View Document
+                              </a>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                className="w-full mt-1"
+                                onClick={() => router.push(`/admin/leases/${lease.id}`)}
+                              >
+                                View Lease Details
+                              </Button>
+                            )}
                           </div>
                         )
                       })}
