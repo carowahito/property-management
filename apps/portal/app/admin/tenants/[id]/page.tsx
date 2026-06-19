@@ -85,6 +85,7 @@ export default function TenantCRMPage({ params }: Props) {
     latePenaltyPerDay: '500',
     noticePeriod: '1',
     rentEscalation: '',
+    paymentRecipient: 'agent',
     mpesaTill: '',
     bankDetails: '',
     petPolicy: '',
@@ -112,6 +113,7 @@ export default function TenantCRMPage({ params }: Props) {
     latePenaltyPerDay: '500',
     noticePeriod: '1',
     rentEscalation: '',
+    paymentRecipient: 'agent',
     mpesaTill: '',
     bankDetails: '',
     petPolicy: '',
@@ -596,7 +598,7 @@ export default function TenantCRMPage({ params }: Props) {
       })
       if (res.ok) {
         setShowGenerateLeaseModal(false)
-        setGenerateLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
+        setGenerateLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', paymentRecipient: 'agent', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
         window.location.reload()
       } else {
         const data = await res.json()
@@ -712,7 +714,7 @@ export default function TenantCRMPage({ params }: Props) {
       })
 
       setShowUploadNewLeaseModal(false)
-      setUploadNewLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
+      setUploadNewLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', paymentRecipient: 'agent', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
       setUploadNewLeaseFile(null)
       window.location.reload()
     } catch {
@@ -2500,29 +2502,63 @@ export default function TenantCRMPage({ params }: Props) {
               </div>
 
               {/* Payment Methods */}
-              <div>
-                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
-                <div className="space-y-3">
+              {(() => {
+                const ll = tenantApiData?.property?.landlord || tenantApiData?.unitRef?.landlord
+                const llBank = ll?.bankName && ll?.bankAccount ? `${ll.bankName} — A/C ${ll.bankAccount}` : null
+                return (
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
-                    <input
-                      type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
-                      value={generateLeaseForm.mpesaTill}
-                      onChange={e => setGenerateLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
-                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    />
+                    <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
+                    <div className="space-y-3">
+                      {/* Recipient toggle */}
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">Rent paid to</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['agent', 'landlord'] as const).map(opt => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                const nextBank = opt === 'landlord' ? (llBank ?? '') : ''
+                                setGenerateLeaseForm(f => ({ ...f, paymentRecipient: opt, bankDetails: nextBank }))
+                              }}
+                              className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors text-left ${generateLeaseForm.paymentRecipient === opt ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                              {opt === 'agent' ? '🏢 Through agent' : '👤 Directly to landlord'}
+                            </button>
+                          ))}
+                        </div>
+                        {generateLeaseForm.paymentRecipient === 'landlord' && !llBank && (
+                          <p className="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                            No bank details on file for this landlord. Please enter them below or update the landlord profile first.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
+                        <input type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
+                          value={generateLeaseForm.mpesaTill}
+                          onChange={e => setGenerateLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
+                          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">
+                          Bank Details
+                          {generateLeaseForm.paymentRecipient === 'landlord' && llBank && (
+                            <span className="ml-2 font-normal text-xs text-success-600">auto-populated from landlord profile</span>
+                          )}
+                        </label>
+                        <input type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
+                          value={generateLeaseForm.bankDetails}
+                          readOnly={generateLeaseForm.paymentRecipient === 'landlord' && !!llBank}
+                          onChange={e => setGenerateLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
+                          className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${generateLeaseForm.paymentRecipient === 'landlord' && llBank ? 'bg-neutral-50 text-neutral-600 cursor-default' : ''}`}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Details</label>
-                    <input
-                      type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
-                      value={generateLeaseForm.bankDetails}
-                      onChange={e => setGenerateLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
-                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                </div>
-              </div>
+                )
+              })()}
 
               {/* Policies */}
               <div>
@@ -2911,27 +2947,62 @@ export default function TenantCRMPage({ params }: Props) {
               </div>
 
               {/* Payment Methods */}
-              <div>
-                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
-                <div className="space-y-3">
+              {(() => {
+                const ll = tenantApiData?.property?.landlord || tenantApiData?.unitRef?.landlord
+                const llBank = ll?.bankName && ll?.bankAccount ? `${ll.bankName} — A/C ${ll.bankAccount}` : null
+                return (
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
-                    <input type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
-                      value={uploadNewLeaseForm.mpesaTill}
-                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
-                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    />
+                    <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">Rent paid to</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['agent', 'landlord'] as const).map(opt => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                const nextBank = opt === 'landlord' ? (llBank ?? '') : ''
+                                setUploadNewLeaseForm(f => ({ ...f, paymentRecipient: opt, bankDetails: nextBank }))
+                              }}
+                              className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors text-left ${uploadNewLeaseForm.paymentRecipient === opt ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                              {opt === 'agent' ? '🏢 Through agent' : '👤 Directly to landlord'}
+                            </button>
+                          ))}
+                        </div>
+                        {uploadNewLeaseForm.paymentRecipient === 'landlord' && !llBank && (
+                          <p className="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                            No bank details on file for this landlord. Please enter them below or update the landlord profile first.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
+                        <input type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
+                          value={uploadNewLeaseForm.mpesaTill}
+                          onChange={e => setUploadNewLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
+                          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">
+                          Bank Details
+                          {uploadNewLeaseForm.paymentRecipient === 'landlord' && llBank && (
+                            <span className="ml-2 font-normal text-xs text-success-600">auto-populated from landlord profile</span>
+                          )}
+                        </label>
+                        <input type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
+                          value={uploadNewLeaseForm.bankDetails}
+                          readOnly={uploadNewLeaseForm.paymentRecipient === 'landlord' && !!llBank}
+                          onChange={e => setUploadNewLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
+                          className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${uploadNewLeaseForm.paymentRecipient === 'landlord' && llBank ? 'bg-neutral-50 text-neutral-600 cursor-default' : ''}`}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">Bank Details</label>
-                    <input type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
-                      value={uploadNewLeaseForm.bankDetails}
-                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
-                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                </div>
-              </div>
+                )
+              })()}
 
               {/* Policies & Conditions */}
               <div>

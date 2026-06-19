@@ -38,6 +38,8 @@ export async function GET(
                 name: true,
                 email: true,
                 phone: true,
+                bankName: true,
+                bankAccount: true,
               },
             },
           },
