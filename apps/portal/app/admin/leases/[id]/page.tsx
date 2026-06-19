@@ -22,6 +22,8 @@ export default function LeaseDetailPage({ params }: Props) {
   const [isRenewMode, setIsRenewMode] = useState(false)
   const [pendingLease, setPendingLease] = useState<any>(null)
   const [changeLog, setChangeLog] = useState<{label: string; from: string; to: string}[]>([])
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [editForm, setEditForm] = useState({
     monthlyRent: '', securityDeposit: '', status: '', terms: '',
     startDate: '', endDate: '',
@@ -145,6 +147,22 @@ export default function LeaseDetailPage({ params }: Props) {
       case 'PENDING': return 'bg-yellow-50 text-yellow-700'
       default: return 'bg-neutral-100 text-neutral-700'
     }
+  }
+
+  const handleDelete = async () => {
+    if (!leaseId) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/leases/${leaseId}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/admin/leases')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete lease')
+        setShowDeleteModal(false)
+      }
+    } catch { alert('Failed to delete lease') }
+    finally { setIsDeleting(false) }
   }
 
   const handleEditClick = () => {
@@ -394,6 +412,13 @@ export default function LeaseDetailPage({ params }: Props) {
             {lease.status === 'ACTIVE' && !pendingLease && (
               <Button variant="primary" onClick={handleRenewClick}>Renew</Button>
             )}
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteModal(true)}
+              className="text-danger-600 border-danger-300 hover:bg-danger-50"
+            >
+              Delete
+            </Button>
           </div>
         </div>
 
@@ -880,6 +905,39 @@ export default function LeaseDetailPage({ params }: Props) {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="px-6 py-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-danger-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-danger-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-neutral-900">Delete Lease</h3>
+              </div>
+              <p className="text-sm text-neutral-600">
+                Are you sure you want to delete this lease? This action cannot be undone and will remove all associated payment records.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-danger-600 hover:bg-danger-700 text-white border-danger-600"
+              >
+                {isDeleting ? 'Deleting…' : 'Delete Lease'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
