@@ -185,6 +185,24 @@ export async function PATCH(
       },
     })
 
+    // Sync tenant status when lease status changes
+    if (validatedData.status === 'ACTIVE') {
+      await prisma.tenant.update({
+        where: { id: lease.tenant.id },
+        data: { status: 'ACTIVE' },
+      })
+    } else if (validatedData.status === 'EXPIRED' || validatedData.status === 'TERMINATED') {
+      const stillActive = await prisma.lease.count({
+        where: { tenantId: lease.tenant.id, status: 'ACTIVE' },
+      })
+      if (stillActive === 0) {
+        await prisma.tenant.update({
+          where: { id: lease.tenant.id },
+          data: { status: 'INACTIVE' },
+        })
+      }
+    }
+
     return NextResponse.json(lease)
   } catch (error: any) {
     console.error('Error updating lease:', error)
