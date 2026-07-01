@@ -9,7 +9,13 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const adminUser = await prisma.user.findFirst({
-    where: { email: session.user.email!, active: true },
+    where: {
+      active: true,
+      OR: [
+        ...(session.user.id ? [{ id: session.user.id }] : []),
+        ...(session.user.email ? [{ email: session.user.email }] : []),
+      ],
+    },
   })
   if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
 
@@ -61,7 +67,13 @@ export async function POST(req: NextRequest) {
 
   // Get company from the admin's user record
   const adminUser = await prisma.user.findFirst({
-    where: { email: session.user.email!, active: true },
+    where: {
+      active: true,
+      OR: [
+        ...(session.user.id ? [{ id: session.user.id }] : []),
+        ...(session.user.email ? [{ email: session.user.email }] : []),
+      ],
+    },
   })
 
   if (!adminUser) {
@@ -143,7 +155,13 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
   const adminUser = await prisma.user.findFirst({
-    where: { email: session.user.email!, active: true },
+    where: {
+      active: true,
+      OR: [
+        ...(session.user.id ? [{ id: session.user.id }] : []),
+        ...(session.user.email ? [{ email: session.user.email }] : []),
+      ],
+    },
   })
   if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
 
