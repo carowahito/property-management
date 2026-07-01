@@ -218,8 +218,10 @@ export async function PATCH(
     }
 
     if (error.name === 'ZodError') {
+      const first = error.errors?.[0]
+      const field = first?.path?.join('.') || 'field'
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: first ? `${field}: ${first.message}` : 'Validation error', details: error.errors },
         { status: 400 }
       )
     }
