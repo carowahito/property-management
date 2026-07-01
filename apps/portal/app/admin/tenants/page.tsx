@@ -633,11 +633,10 @@ function TenantsPage() {
                             setDropdownOpenId(dropdownOpenId === tenant.id ? null : tenant.id)
                           }}
                           disabled={actionBusy === tenant.id}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50"
+                          className="p-1.5 rounded hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 disabled:opacity-50"
                         >
-                          Actions
-                          <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                           </svg>
                         </button>
 
