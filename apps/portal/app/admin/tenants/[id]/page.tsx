@@ -32,6 +32,7 @@ export default function TenantCRMPage({ params }: Props) {
     unit: '',
     rent: '',
     moveIn: '',
+    moveOut: '',
     status: '',
   })
   const [paymentForm, setPaymentForm] = useState({
@@ -201,6 +202,7 @@ export default function TenantCRMPage({ params }: Props) {
     landlordName: unitData?.landlord?.name || tenantApiData.property?.landlord?.name || '',
     landlordId: unitData?.landlord?.id || tenantApiData.property?.landlord?.id || '',
     moveIn: tenantApiData.moveInDate ? tenantApiData.moveInDate.split('T')[0] : '',
+    moveOut: tenantApiData.moveOutDate ? tenantApiData.moveOutDate.split('T')[0] : '',
   } : null
 
   // Show loading state while params are being unwrapped
@@ -236,6 +238,7 @@ export default function TenantCRMPage({ params }: Props) {
       unit: tenant.unit,
       rent: tenant.rent?.toString() || '',
       moveIn: tenant.moveIn,
+      moveOut: tenant.moveOut,
       status: tenant.status,
     })
     setShowEditModal(true)
@@ -253,6 +256,8 @@ export default function TenantCRMPage({ params }: Props) {
           phone: editForm.phone,
           unit: editForm.unit,
           status: editForm.status,
+          ...(editForm.moveIn ? { moveInDate: editForm.moveIn } : {}),
+          moveOutDate: editForm.moveOut || null,
         }),
       })
       if (!res.ok) {
@@ -809,6 +814,12 @@ export default function TenantCRMPage({ params }: Props) {
                   <p className="text-neutral-600">📅 Move-in Date</p>
                   <p className="font-medium text-neutral-900">{formatDate(tenant.moveIn)}</p>
                 </div>
+                {tenant.moveOut && (
+                  <div>
+                    <p className="text-neutral-600">📦 Move-out Date</p>
+                    <p className="font-medium text-danger-600">{formatDate(tenant.moveOut)}</p>
+                  </div>
+                )}
                 {currentLease?.startDate && (
                   <div>
                     <p className="text-neutral-600">🗓️ Lease Start</p>
@@ -1869,6 +1880,20 @@ export default function TenantCRMPage({ params }: Props) {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       required
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      Move-out Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editForm.moveOut}
+                      min={editForm.moveIn || undefined}
+                      onChange={(e) => setEditForm({ ...editForm, moveOut: e.target.value })}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">Set when the tenant vacates. Leave blank if still occupying.</p>
                   </div>
                 </div>
               </div>
