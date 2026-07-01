@@ -106,7 +106,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     console.log('[POST /api/properties] body:', JSON.stringify(body))
-    const validatedData = createPropertySchema.parse(body)
+    const { units: incomingUnits, ...propertyBody } = body
+    const validatedData = createPropertySchema.parse(propertyBody)
 
     // Check if landlord exists (if provided)
     if (validatedData.landlordId) {
@@ -137,7 +138,49 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(property, { status: 201 })
+    // Create individual units configured on the Add Property form
+    const unitWarnings: string[] = []
+    let unitsCreated = 0
+    if (Array.isArray(incomingUnits) && incomingUnits.length > 0) {
+      const statusMap: Record<string, string> = {
+        vacant: 'VACANT',
+        occupied: 'OCCUPIED',
+        maintenance: 'MAINTENANCE',
+        reserved: 'RESERVED',
+      }
+      for (const u of incomingUnits) {
+        const unitNumber = (u.unitNumber ?? '').toString().trim()
+        if (!unitNumber) {
+          unitWarnings.push('Skipped a unit with no unit number')
+          continue
+        }
+        try {
+          await prisma.unit.create({
+            data: {
+              unitNumber,
+              propertyId: property.id,
+              landlordId: u.landlordId || validatedData.landlordId || null,
+              floor: u.floor ? parseInt(u.floor) : null,
+              bedrooms: u.bedrooms ? parseInt(u.bedrooms) : null,
+              bathrooms: u.bathrooms ? parseFloat(u.bathrooms) : null,
+              sizeSqm: u.squareFootage ? parseFloat(u.squareFootage) : null,
+              monthlyRent: u.monthlyRent ? parseFloat(u.monthlyRent) : null,
+              status: (statusMap[(u.status ?? '').toLowerCase()] ?? 'VACANT') as any,
+              description: u.description?.trim() || null,
+            },
+          })
+          unitsCreated++
+        } catch (e: any) {
+          if (e.code === 'P2002') {
+            unitWarnings.push(`Unit number "${unitNumber}" already exists and was skipped`)
+          } else {
+            unitWarnings.push(`Failed to create unit "${unitNumber}": ${String(e.message || e)}`)
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({ ...property, unitsCreated, unitWarnings }, { status: 201 })
   } catch (error: any) {
     console.error('Error creating property:', error)
 

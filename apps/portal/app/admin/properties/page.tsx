@@ -154,9 +154,14 @@ export default function PropertiesPage() {
       }
       return response.json()
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['properties'] })
-      alert('Property created successfully!')
+      const created = data?.unitsCreated ?? 0
+      const warnings: string[] = data?.unitWarnings ?? []
+      let msg = 'Property created successfully!'
+      if (created > 0) msg += `\n${created} unit${created !== 1 ? 's' : ''} added.`
+      if (warnings.length > 0) msg += `\n\nNote:\n${warnings.join('\n')}`
+      alert(msg)
     },
     onError: (error: any) => {
       alert(`Error creating property: ${error.message}`)
@@ -308,6 +313,8 @@ export default function PropertiesPage() {
       description: newProperty.description,
       yearBuilt: newProperty.yearBuilt ? parseInt(newProperty.yearBuilt) : undefined,
       ...(newProperty.landlordId ? { landlordId: newProperty.landlordId } : {}),
+      // Individual unit configuration (only when multiple units were generated)
+      ...(units.length > 0 ? { units } : {}),
     }
 
     try {
