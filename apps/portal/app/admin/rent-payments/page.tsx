@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatReceiptRef } from '@/lib/utils';
 
 interface Payment {
   id: string;
+  refNumber: number;
   amount: string;
   type: string;
   method: string;
@@ -19,12 +20,16 @@ interface Payment {
     id: string;
     property: { id: string; name: string };
     unitRef?: { id: string; unitNumber: string } | null;
-  };
+  } | null;
+  property?: { id: string; name: string } | null;
+  unit?: { id: string; unitNumber: string } | null;
 }
 
 const EMPTY_FORM = {
   tenantId: '',
   leaseId: '',
+  propertyId: '',
+  unitId: '',
   amount: '',
   type: 'RENT' as const,
   method: 'MPESA' as const,
@@ -70,6 +75,8 @@ export default function RentPaymentsPage() {
   const [tenantsList, setTenantsList] = useState<{ id: string; name: string; email: string }[]>([]);
   const [leasesList, setLeasesList] = useState<{ id: string; startDate: string; endDate: string; monthlyRent: number; property: { name: string }; unit: string | null }[]>([]);
   const [loadingLeases, setLoadingLeases] = useState(false);
+  const [propertiesList, setPropertiesList] = useState<{ id: string; name: string }[]>([]);
+  const [unitsList, setUnitsList] = useState<{ id: string; unitNumber: string }[]>([]);
 
   const refreshPayments = () => {
     setIsLoading(true);
@@ -81,13 +88,25 @@ export default function RentPaymentsPage() {
 
   useEffect(() => { refreshPayments(); }, []);
 
-  // Load tenants when modal opens
+  // Load tenants and properties when modal opens
   useEffect(() => {
     if (!showModal) return;
     fetch('/api/tenants?status=ACTIVE&limit=200')
       .then(r => r.json())
       .then(data => setTenantsList(data.tenants || []));
+    fetch('/api/properties?limit=500')
+      .then(r => r.json())
+      .then(data => setPropertiesList(data.properties || []));
   }, [showModal]);
+
+  // Load units when a property is selected directly (no lease)
+  useEffect(() => {
+    if (!form.propertyId) { setUnitsList([]); return; }
+    fetch(`/api/properties/${form.propertyId}`)
+      .then(r => r.json())
+      .then(data => setUnitsList(data.propertyUnits || []))
+      .catch(() => setUnitsList([]));
+  }, [form.propertyId]);
 
   // Load leases when tenant is selected
   useEffect(() => {
@@ -120,18 +139,20 @@ export default function RentPaymentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.tenantId || !form.leaseId || !form.amount) return;
+    if (!form.tenantId || !form.amount) return;
     setSaving(true);
     try {
       const body: any = {
         tenantId: form.tenantId,
-        leaseId: form.leaseId,
         amount: parseFloat(form.amount),
         type: form.type,
         method: form.method,
         status: form.status,
         dueDate: form.dueDate,
       };
+      if (form.leaseId) body.leaseId = form.leaseId;
+      if (form.propertyId) body.propertyId = form.propertyId;
+      if (form.unitId) body.unitId = form.unitId;
       if (form.status === 'PAID' && form.paidDate) body.paidDate = form.paidDate;
       if (form.reference) body.reference = form.reference;
       if (form.notes) body.notes = form.notes;
@@ -338,14 +359,23 @@ export default function RentPaymentsPage() {
                     </Link>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <div className='text-sm'>
-                      <Link href={`/admin/properties/${payment.lease.property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
-                        {payment.lease.property.name}
-                      </Link>
-                    </div>
-                    {payment.lease.unitRef && (
-                      <div className='text-sm text-neutral-500'>Unit {payment.lease.unitRef.unitNumber}</div>
-                    )}
+                    {(() => {
+                      const property = payment.lease?.property || payment.property;
+                      const unitNumber = payment.lease?.unitRef?.unitNumber || payment.unit?.unitNumber;
+                      if (!property) return <span className='text-sm text-neutral-400'>—</span>;
+                      return (
+                        <>
+                          <div className='text-sm'>
+                            <Link href={`/admin/properties/${property.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
+                              {property.name}
+                            </Link>
+                          </div>
+                          {unitNumber && (
+                            <div className='text-sm text-neutral-500'>Unit {unitNumber}</div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900'>
                     KES {Number(payment.amount).toLocaleString()}
@@ -411,7 +441,7 @@ export default function RentPaymentsPage() {
               <div>
                 <label className={labelCls}>Tenant <span className="text-danger-600">*</span></label>
                 <select required value={form.tenantId}
-                  onChange={e => setForm(f => ({ ...f, tenantId: e.target.value, leaseId: '', amount: '' }))}
+                  onChange={e => setForm(f => ({ ...f, tenantId: e.target.value, leaseId: '', propertyId: '', unitId: '', amount: '' }))}
                   className={inputCls}>
                   <option value="">— Select tenant —</option>
                   {tenantsList.map(t => (
@@ -422,12 +452,12 @@ export default function RentPaymentsPage() {
 
               {/* Lease */}
               <div>
-                <label className={labelCls}>Lease <span className="text-danger-600">*</span></label>
-                <select required value={form.leaseId}
+                <label className={labelCls}>Lease</label>
+                <select value={form.leaseId}
                   onChange={e => handleLeaseChange(e.target.value)}
                   disabled={!form.tenantId || loadingLeases}
                   className={inputCls}>
-                  <option value="">{loadingLeases ? 'Loading leases…' : '— Select lease —'}</option>
+                  <option value="">{loadingLeases ? 'Loading leases…' : '— No lease (e.g. deposit before signing) —'}</option>
                   {leasesList.map(l => (
                     <option key={l.id} value={l.id}>
                       {l.property?.name}{l.unit ? ` · Unit ${l.unit}` : ''} — KES {l.monthlyRent.toLocaleString()}/mo
@@ -435,6 +465,35 @@ export default function RentPaymentsPage() {
                   ))}
                 </select>
               </div>
+
+              {/* Property / Unit — only needed when no lease is selected */}
+              {!form.leaseId && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Property</label>
+                    <select value={form.propertyId}
+                      onChange={e => setForm(f => ({ ...f, propertyId: e.target.value, unitId: '' }))}
+                      className={inputCls}>
+                      <option value="">— Select property —</option>
+                      {propertiesList.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Unit</label>
+                    <select value={form.unitId}
+                      onChange={e => setForm(f => ({ ...f, unitId: e.target.value }))}
+                      disabled={!form.propertyId}
+                      className={inputCls}>
+                      <option value="">— Select unit —</option>
+                      {unitsList.map(u => (
+                        <option key={u.id} value={u.id}>Unit {u.unitNumber}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Amount */}

@@ -1,17 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
 
-export default function TenantPaymentsPage() {
-  const [filter, setFilter] = useState('all')
+function TenantPaymentsPageInner() {
+  const [filter, setFilter] = useState('paid')
+  const router = useRouter()
+  const { tenantId, isTenant } = useTenantContext()
+
+  const apiUrl = tenantId
+    ? `/api/payments?tenantId=${tenantId}`
+    : '/api/payments'
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['tenant-payments'],
-    queryFn: () => fetch('/api/payments').then(r => r.json()),
+    queryKey: ['tenant-payments', tenantId],
+    queryFn: () => fetch(apiUrl).then(r => r.json()),
+    enabled: !!tenantId,
   })
 
   const payments: any[] = data?.payments || []
@@ -31,8 +40,11 @@ export default function TenantPaymentsPage() {
     .filter((p) => p.status === 'PENDING' || p.status === 'OVERDUE')
     .reduce((sum, p) => sum + Number(p.amount), 0)
 
-  // Find next due payment
-  const nextDuePayment = payments.find((p) => p.status === 'PENDING' || p.status === 'OVERDUE')
+  // Next payment due: today if there are arrears, first of next month if clear
+  const now = new Date()
+  const nextPaymentDate = totalPending > 0
+    ? now
+    : new Date(now.getFullYear(), now.getMonth() + 1, 1)
 
   const formatMethod = (method: string) => {
     switch (method) {
@@ -71,12 +83,12 @@ export default function TenantPaymentsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Payment History</h1>
         <div className="flex gap-2">
-          <Link
-            href="/tenant/statements"
+          <button
+            onClick={() => router.push('/tenant/statements')}
             className="inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50"
           >
             View Statement
-          </Link>
+          </button>
           <Link
             href="/tenant/payments/new"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
@@ -108,7 +120,7 @@ export default function TenantPaymentsPage() {
           <div className="p-5">
             <p className="text-sm font-medium text-neutral-500">Next Payment Due</p>
             <p className="mt-1 text-2xl font-semibold text-neutral-900">
-              {nextDuePayment ? formatDate(nextDuePayment.dueDate) : 'N/A'}
+              {formatDate(nextPaymentDate.toISOString())}
             </p>
           </div>
         </div>
@@ -223,12 +235,14 @@ export default function TenantPaymentsPage() {
                           Pay Now
                         </Link>
                       ) : payment.status === 'PAID' ? (
-                        <Link
-                          href={`/tenant/payments/${payment.id}/receipt`}
+                        <a
+                          href={`/api/payments/${payment.id}/receipt`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-primary-600 hover:text-primary-900"
                         >
                           View Receipt
-                        </Link>
+                        </a>
                       ) : (
                         <span className="text-neutral-400">-</span>
                       )}
@@ -241,7 +255,7 @@ export default function TenantPaymentsPage() {
         </div>
       </div>
 
-      {/* Payment Statistics */}
+      {/* Payment Statistics — only meaningful for the scoped tenant */}
       <div className="mt-6 bg-surface shadow rounded-lg p-6">
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">Payment Statistics</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -266,5 +280,13 @@ export default function TenantPaymentsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TenantPaymentsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner size="lg" /></div>}>
+      <TenantPaymentsPageInner />
+    </Suspense>
   )
 }

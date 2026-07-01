@@ -28,7 +28,24 @@ export default function DocumentsPage() {
     queryFn: () => fetch('/api/payments?status=PAID').then(r => r.json()),
   })
 
-  const isLoading = isLoadingLeases || isLoadingPayments
+  const tenantId = leasesData?.leases?.[0]?.tenant?.id as string | undefined
+
+  const { data: tenantDocsData, isLoading: isLoadingDocs } = useQuery({
+    queryKey: ['tenant-inspection-docs', tenantId],
+    enabled: !!tenantId,
+    queryFn: () => fetch(`/api/tenants/${tenantId}/documents`).then(r => r.json()),
+  })
+
+  const { data: myInspectionsData } = useQuery({
+    queryKey: ['tenant-me-inspections'],
+    queryFn: () => fetch('/api/tenants/me/inspections').then(r => r.json()),
+  })
+
+  const pendingSignatureInspections = (myInspectionsData?.inspections || []).filter(
+    (i: any) => !i.tenantSignedAt
+  )
+
+  const isLoading = isLoadingLeases || isLoadingPayments || (!!tenantId && isLoadingDocs)
 
   if (isLoading) {
     return (
@@ -43,6 +60,7 @@ export default function DocumentsPage() {
 
   const leases = leasesData?.leases || []
   const paidPayments = paymentsData?.payments || []
+  const inspectionDocs = (tenantDocsData?.documents || []).filter((d: any) => d.fileType === 'INSPECTION_REPORT')
 
   // Build document list from real data
   const documents: DocumentItem[] = []
@@ -69,14 +87,26 @@ export default function DocumentsPage() {
       type: 'Receipt',
       date: paymentDate,
       status: 'Active',
-      link: `/tenant/payments/${payment.id}/receipt`,
+      link: `/api/payments/${payment.id}/receipt`,
+    })
+  })
+
+  // Add inspection reports
+  inspectionDocs.forEach((doc: any) => {
+    documents.push({
+      id: `inspection-${doc.id}`,
+      name: doc.name,
+      type: 'Inspection',
+      date: doc.uploadedAt,
+      status: 'Active',
+      link: doc.url,
     })
   })
 
   // Sort by date descending
   documents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-  const documentTypes = ['All', 'Lease', 'Receipt']
+  const documentTypes = ['All', 'Lease', 'Receipt', 'Inspection']
 
   const filteredDocuments = activeFilter === 'All'
     ? documents
@@ -101,8 +131,32 @@ export default function DocumentsPage() {
         <h1 className="text-2xl font-bold text-neutral-900">Documents</h1>
       </div>
 
+      {/* Pending Inspection Signatures */}
+      {pendingSignatureInspections.length > 0 && (
+        <div className="mb-6 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4">
+          <p className="text-sm font-medium text-amber-800 mb-2">
+            {pendingSignatureInspections.length} inspection report{pendingSignatureInspections.length > 1 ? 's' : ''} awaiting your signature
+          </p>
+          <ul className="space-y-2">
+            {pendingSignatureInspections.map((insp: any) => (
+              <li key={insp.id} className="flex items-center justify-between bg-surface rounded px-3 py-2">
+                <span className="text-sm text-neutral-700">
+                  {insp.property?.name}{insp.unit ? ` — Unit ${insp.unit.unitNumber}` : ''} — {insp.completedDate ? formatDate(insp.completedDate) : ''}
+                </span>
+                <Link
+                  href={`/tenant/inspections/${insp.id}/sign`}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-900"
+                >
+                  Sign Now
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Document Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-4 mb-6">
         <div className="bg-surface overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <p className="text-sm font-medium text-neutral-500">Total Documents</p>
@@ -122,6 +176,14 @@ export default function DocumentsPage() {
             <p className="text-sm font-medium text-neutral-500">Payment Receipts</p>
             <p className="mt-1 text-2xl font-semibold text-success-600">
               {documents.filter((d) => d.type === 'Receipt').length}
+            </p>
+          </div>
+        </div>
+        <div className="bg-surface overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <p className="text-sm font-medium text-neutral-500">Inspection Reports</p>
+            <p className="mt-1 text-2xl font-semibold text-amber-600">
+              {documents.filter((d) => d.type === 'Inspection').length}
             </p>
           </div>
         </div>
@@ -205,6 +267,8 @@ export default function DocumentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <Link
                         href={doc.link}
+                        target={doc.type === 'Inspection' || doc.type === 'Receipt' ? '_blank' : undefined}
+                        rel={doc.type === 'Inspection' || doc.type === 'Receipt' ? 'noreferrer' : undefined}
                         className="text-primary-600 hover:text-primary-900"
                       >
                         View

@@ -53,7 +53,7 @@ export async function POST(
     const company = lease.property.company
     const companyName = company.name
     const companyEmail = company.email || 'info@tochiproperty.com'
-    const companyPhone = company.phone || ''
+    const companyPhone = company.phone || '+254721998499'
     const companyWebsite = company.website || 'tochiproperty.com'
     const unitNumber = lease.unitRef?.unitNumber || lease.unit || ''
     const rent = parseFloat(lease.monthlyRent.toString())

@@ -1,8 +1,27 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
+import { useQuery } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+
+function useEligible() {
+  const { tenantId } = useTenantContext()
+  const { data, isLoading } = useQuery({
+    queryKey: ['payment-plans-eligibility', tenantId],
+    queryFn: () => fetch(`/api/tenants/${tenantId}`).then(r => r.json()),
+    enabled: !!tenantId,
+  })
+  const moveInDate = data?.moveInDate
+  const twoYearsAgo = new Date()
+  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+  const eligible = moveInDate ? new Date(moveInDate) <= twoYearsAgo : false
+  return { eligible, isLoading: isLoading || !session }
+}
 
 export default function PaymentPlansPage() {
+  const { eligible, isLoading } = useEligible()
   const [showRequestForm, setShowRequestForm] = useState(false)
   const [planType, setPlanType] = useState<'installment' | 'hardship' | 'grace'>('installment')
   const [formData, setFormData] = useState({
@@ -17,6 +36,39 @@ export default function PaymentPlansPage() {
     alert('Payment plan request submitted! Property management will review within 1-2 business days.')
     setShowRequestForm(false)
     setFormData({ totalAmount: '', installments: '3', reason: '', documentUpload: null })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (!eligible) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-neutral-100 mb-6">
+          <svg className="h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-11a7 7 0 110 14 7 7 0 010-14z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-neutral-900 mb-3">Not Yet Eligible</h2>
+        <p className="text-neutral-600 mb-2">
+          Payment Plans are available to tenants who have been in residence for <strong>at least 2 years</strong>.
+        </p>
+        <p className="text-sm text-neutral-500 mb-8">
+          Once you reach the 2-year mark from your move-in date, this feature will become available to you automatically.
+        </p>
+        <Link
+          href="/tenant/payments"
+          className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+        >
+          Back to Payments
+        </Link>
+      </div>
+    )
   }
 
   return (

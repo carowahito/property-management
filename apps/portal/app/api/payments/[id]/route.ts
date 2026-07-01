@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { updatePaymentSchema } from '@/lib/validations/payment'
+import { syncPaymentToLedger } from '@/lib/services/tenant-ledger'
 
 export async function GET(
   request: NextRequest,
@@ -118,6 +119,10 @@ export async function PATCH(
         },
       },
     })
+
+    if (payment.status === 'PAID') {
+      await syncPaymentToLedger(payment.id)
+    }
 
     return NextResponse.json(payment)
   } catch (error: any) {

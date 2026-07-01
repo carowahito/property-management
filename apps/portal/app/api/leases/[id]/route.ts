@@ -127,14 +127,17 @@ export async function PATCH(
     }
 
     // Block manual promotion to ACTIVE on an unsigned lease.
-    // A lease may only become ACTIVE via the signature upload route or
-    // the lease lifecycle service (both of which verify signatures exist).
+    // A lease may only become ACTIVE via the signature upload route, the
+    // lease lifecycle service, or a PATCH that supplies both signed timestamps
+    // in the same request (e.g. hard-copy upload flow).
     if (validatedData.status === 'ACTIVE') {
       const current = await prisma.lease.findUnique({
         where: { id },
         select: { landlordSignedAt: true, tenantSignedAt: true },
       })
-      if (!current?.landlordSignedAt || !current?.tenantSignedAt) {
+      const effectiveLandlord = validatedData.landlordSignedAt || current?.landlordSignedAt
+      const effectiveTenant = validatedData.tenantSignedAt || current?.tenantSignedAt
+      if (!effectiveLandlord || !effectiveTenant) {
         return NextResponse.json(
           { error: 'Cannot set lease to Active — both landlord and tenant signatures are required first.' },
           { status: 400 }
@@ -181,6 +184,24 @@ export async function PATCH(
         },
       },
     })
+
+    // Sync tenant status when lease status changes
+    if (validatedData.status === 'ACTIVE') {
+      await prisma.tenant.update({
+        where: { id: lease.tenant.id },
+        data: { status: 'ACTIVE' },
+      })
+    } else if (validatedData.status === 'EXPIRED' || validatedData.status === 'TERMINATED') {
+      const stillActive = await prisma.lease.count({
+        where: { tenantId: lease.tenant.id, status: 'ACTIVE' },
+      })
+      if (stillActive === 0) {
+        await prisma.tenant.update({
+          where: { id: lease.tenant.id },
+          data: { status: 'INACTIVE' },
+        })
+      }
+    }
 
     return NextResponse.json(lease)
   } catch (error: any) {

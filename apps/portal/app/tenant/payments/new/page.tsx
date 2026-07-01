@@ -2,29 +2,120 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { useQuery } from '@tanstack/react-query'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { formatDate } from '@/lib/utils'
 
 export default function NewPaymentPage() {
+  const { data: session } = useSession()
   const [paymentMethod, setPaymentMethod] = useState('mpesa')
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [customAmount, setCustomAmount] = useState<string>('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
-  const payment = {
-    amount: 45000,
-    lateFee: 0,
-    total: 45000,
-    dueDate: '2025-11-05',
-    propertyAddress: '123 Main Street, Apt 4B',
-  }
+  // Fetch the active lease for this tenant
+  const { data: leasesData, isLoading } = useQuery({
+    queryKey: ['active-lease-payment'],
+    queryFn: () => fetch('/api/leases?status=ACTIVE').then(r => r.json()),
+    enabled: !!session?.user?.id,
+  })
+
+  // Fetch outstanding payments to show total balance
+  const { data: paymentsData } = useQuery({
+    queryKey: ['payments-balance'],
+    queryFn: () => fetch('/api/payments').then(r => r.json()),
+    enabled: !!session?.user?.id,
+  })
+
+  const activeLease = leasesData?.leases?.[0] ?? null
+  const payments: any[] = paymentsData?.payments ?? []
+
+  const monthlyRent = Number(activeLease?.unitRef?.monthlyRent ?? activeLease?.rentAmount ?? 0)
+  const outstandingBalance = payments
+    .filter(p => p.status === 'PENDING' || p.status === 'OVERDUE')
+    .reduce((sum, p) => sum + Number(p.amount), 0)
+
+  const defaultAmount = outstandingBalance > 0 ? outstandingBalance : monthlyRent
+  const amountToPay = customAmount !== '' ? Number(customAmount) : defaultAmount
+
+  // Next due date: first of next month if clear, today if outstanding
+  const now = new Date()
+  const nextDueDate = outstandingBalance > 0
+    ? now
+    : new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+  const propertyName = activeLease?.property?.name ?? '—'
+  const unitNumber = activeLease?.unitRef?.unitNumber ?? activeLease?.unitNumber ?? '—'
+  const propertyRef = unitNumber !== '—' ? `Unit ${unitNumber}, ${propertyName}` : propertyName
+
+  // Generate a payment reference: UNIT-MONYYYY
+  const monthLabel = now.toLocaleString('en-KE', { month: 'short' }).toUpperCase()
+  const payRef = unitNumber !== '—'
+    ? `${unitNumber.replace('-', '')}-${monthLabel}${now.getFullYear()}`
+    : 'PMT-' + now.getFullYear()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
+    // Simulate brief processing delay then show instructions
+    await new Promise(r => setTimeout(r, 800))
+    setIsProcessing(false)
+    setSubmitted(true)
+  }
 
-    // TODO: Implement actual payment processing
-    setTimeout(() => {
-      alert('Payment initiated! Please check your phone for the M-Pesa prompt.')
-      setIsProcessing(false)
-    }, 2000)
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (submitted && paymentMethod === 'mpesa') {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-surface shadow rounded-lg p-8 text-center">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-success-100 mb-4">
+            <svg className="h-8 w-8 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-neutral-900 mb-2">M-Pesa Payment Instructions</h2>
+          <p className="text-neutral-600 mb-6">
+            Send <strong>KES {amountToPay.toLocaleString()}</strong> via M-Pesa using the details below:
+          </p>
+          <div className="bg-neutral-50 rounded-lg p-5 text-left space-y-3 mb-6">
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-500">Paybill Number</span>
+              <span className="font-bold text-neutral-900 text-base">522533</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-500">Account Number</span>
+              <span className="font-bold text-neutral-900">{payRef}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-500">Amount</span>
+              <span className="font-bold text-neutral-900">KES {amountToPay.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral-500">Phone</span>
+              <span className="font-medium text-neutral-900">{phoneNumber}</span>
+            </div>
+          </div>
+          <p className="text-xs text-neutral-500 mb-6">
+            After payment, your property manager will confirm and update your account within 24 hours.
+          </p>
+          <Link
+            href="/tenant/payments"
+            className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+          >
+            Back to Payments
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -40,9 +131,37 @@ export default function NewPaymentPage() {
         {/* Payment Form */}
         <div className="lg:col-span-2">
           <div className="bg-surface shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Payment Method</h2>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Payment Details</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+
+              {/* Amount to Pay */}
+              <div>
+                <label htmlFor="amount" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Amount to Pay (KES)
+                </label>
+                <input
+                  type="number"
+                  id="amount"
+                  min={1}
+                  step={1}
+                  value={customAmount !== '' ? customAmount : defaultAmount}
+                  onChange={e => setCustomAmount(e.target.value)}
+                  className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-neutral-300 rounded-md px-3 py-2 border text-lg font-semibold"
+                  required
+                />
+                {outstandingBalance > 0 && (
+                  <p className="mt-1 text-xs text-danger-600">
+                    Outstanding balance: KES {outstandingBalance.toLocaleString()}
+                  </p>
+                )}
+                {outstandingBalance === 0 && monthlyRent > 0 && (
+                  <p className="mt-1 text-xs text-neutral-500">
+                    Monthly rent: KES {monthlyRent.toLocaleString()}
+                  </p>
+                )}
+              </div>
+
               {/* Payment Method Selection */}
               <div>
                 <label className="text-base font-medium text-neutral-900">
@@ -59,27 +178,8 @@ export default function NewPaymentPage() {
                         onChange={() => setPaymentMethod('mpesa')}
                         className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300"
                       />
-                      <label
-                        htmlFor="mpesa"
-                        className="ml-3 block text-sm font-medium text-neutral-700"
-                      >
+                      <label htmlFor="mpesa" className="ml-3 block text-sm font-medium text-neutral-700">
                         M-Pesa
-                      </label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        id="card"
-                        name="payment-method"
-                        type="radio"
-                        checked={paymentMethod === 'card'}
-                        onChange={() => setPaymentMethod('card')}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300"
-                      />
-                      <label
-                        htmlFor="card"
-                        className="ml-3 block text-sm font-medium text-neutral-700"
-                      >
-                        Credit/Debit Card
                       </label>
                     </div>
                     <div className="flex items-center">
@@ -91,10 +191,7 @@ export default function NewPaymentPage() {
                         onChange={() => setPaymentMethod('bank')}
                         className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300"
                       />
-                      <label
-                        htmlFor="bank"
-                        className="ml-3 block text-sm font-medium text-neutral-700"
-                      >
+                      <label htmlFor="bank" className="ml-3 block text-sm font-medium text-neutral-700">
                         Bank Transfer
                       </label>
                     </div>
@@ -114,59 +211,15 @@ export default function NewPaymentPage() {
                       name="phone"
                       id="phone"
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      onChange={e => setPhoneNumber(e.target.value)}
                       placeholder="254700000000"
                       className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-neutral-300 rounded-md px-3 py-2 border"
                       required
                     />
                   </div>
                   <p className="mt-2 text-sm text-neutral-500">
-                    You will receive an STK push notification on your phone
+                    You will receive payment instructions for Paybill <strong>522533</strong>, Account <strong>{payRef}</strong>
                   </p>
-                </div>
-              )}
-
-              {/* Card Form */}
-              {paymentMethod === 'card' && (
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="card-number" className="block text-sm font-medium text-neutral-700">
-                      Card Number
-                    </label>
-                    <input
-                      type="text"
-                      id="card-number"
-                      placeholder="1234 5678 9012 3456"
-                      className="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-neutral-300 rounded-md px-3 py-2 border"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="expiry" className="block text-sm font-medium text-neutral-700">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="text"
-                        id="expiry"
-                        placeholder="MM/YY"
-                        className="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-neutral-300 rounded-md px-3 py-2 border"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="cvc" className="block text-sm font-medium text-neutral-700">
-                        CVC
-                      </label>
-                      <input
-                        type="text"
-                        id="cvc"
-                        placeholder="123"
-                        className="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-neutral-300 rounded-md px-3 py-2 border"
-                        required
-                      />
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -183,7 +236,7 @@ export default function NewPaymentPage() {
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-neutral-500">Account Name:</dt>
-                      <dd className="text-neutral-900 font-medium">Catalyst Property Management</dd>
+                      <dd className="text-neutral-900 font-medium">Tochi Property</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-neutral-500">Account Number:</dt>
@@ -191,11 +244,11 @@ export default function NewPaymentPage() {
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-neutral-500">Reference:</dt>
-                      <dd className="text-neutral-900 font-medium">APT4B-NOV2025</dd>
+                      <dd className="text-neutral-900 font-medium">{payRef}</dd>
                     </div>
                   </dl>
                   <p className="mt-3 text-xs text-neutral-600">
-                    Please use the reference number above and upload proof of payment after transfer.
+                    Use the reference above. After transfer, share proof of payment with your property manager.
                   </p>
                 </div>
               )}
@@ -203,10 +256,12 @@ export default function NewPaymentPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isProcessing}
+                disabled={isProcessing || amountToPay <= 0}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessing ? 'Processing...' : `Pay KES ${payment.total.toLocaleString()}`}
+                {isProcessing
+                  ? 'Processing...'
+                  : `Pay KES ${amountToPay > 0 ? amountToPay.toLocaleString() : '0'}`}
               </button>
             </form>
           </div>
@@ -220,29 +275,43 @@ export default function NewPaymentPage() {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-600">Property</span>
-                <span className="text-neutral-900">{payment.propertyAddress}</span>
+                <span className="text-neutral-900 text-right text-xs font-medium leading-tight max-w-[140px]">
+                  {propertyRef}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-neutral-600">Due Date</span>
-                <span className="text-neutral-900">{payment.dueDate}</span>
+                <span className="text-neutral-600">Next Due Date</span>
+                <span className="text-neutral-900">{formatDate(nextDueDate.toISOString())}</span>
               </div>
-              <div className="border-t border-neutral-200 pt-3">
+
+              <div className="border-t border-neutral-200 pt-3 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600">Monthly Rent</span>
-                  <span className="text-neutral-900">KES {payment.amount.toLocaleString()}</span>
+                  <span className="text-neutral-900">
+                    KES {monthlyRent > 0 ? monthlyRent.toLocaleString() : '—'}
+                  </span>
                 </div>
-                {payment.lateFee > 0 && (
-                  <div className="flex justify-between text-sm mt-2">
-                    <span className="text-neutral-600">Late Fee</span>
-                    <span className="text-danger-600">KES {payment.lateFee.toLocaleString()}</span>
+                {outstandingBalance > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-600">Outstanding</span>
+                    <span className="text-danger-600 font-medium">
+                      KES {outstandingBalance.toLocaleString()}
+                    </span>
                   </div>
                 )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Paying Now</span>
+                  <span className="text-neutral-900 font-medium">
+                    KES {amountToPay > 0 ? amountToPay.toLocaleString() : '—'}
+                  </span>
+                </div>
               </div>
+
               <div className="border-t border-neutral-200 pt-3">
                 <div className="flex justify-between">
-                  <span className="text-base font-medium text-neutral-900">Total Amount</span>
+                  <span className="text-base font-medium text-neutral-900">Total</span>
                   <span className="text-lg font-bold text-neutral-900">
-                    KES {payment.total.toLocaleString()}
+                    KES {amountToPay > 0 ? amountToPay.toLocaleString() : '0'}
                   </span>
                 </div>
               </div>
@@ -250,7 +319,7 @@ export default function NewPaymentPage() {
 
             <div className="mt-6 bg-primary-50 rounded-md p-3">
               <p className="text-xs text-primary-800">
-                💡 <strong>Tip:</strong> Set up auto-pay to never miss a payment and avoid late fees!
+                <strong>Ref:</strong> {payRef} — use this as your payment reference for all methods.
               </p>
             </div>
           </div>

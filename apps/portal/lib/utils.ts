@@ -17,6 +17,23 @@ export function formatDate(date: string | Date): string {
   return `${day}/${month}/${year}`
 }
 
+/** Format a maintenance request refNumber as a human-readable ID, e.g. SR-0042 */
+export function formatRefNumber(refNumber: number): string {
+  return `SR-${String(refNumber).padStart(4, '0')}`
+}
+
+/** Format a lease refNumber as a human-readable ID, e.g. Lease-0001 */
+export function formatLeaseRef(refNumber: number | null | undefined): string {
+  if (refNumber == null) return '—'
+  return `Lease-${String(refNumber).padStart(4, '0')}`
+}
+
+/** Format a payment refNumber as a receipt ID, e.g. Receipt-0001 */
+export function formatReceiptRef(refNumber: number | null | undefined): string {
+  if (refNumber == null) return '—'
+  return `Receipt-${String(refNumber).padStart(4, '0')}`
+}
+
 /**
  * Format date in US format (MM/DD/YYYY)
  */

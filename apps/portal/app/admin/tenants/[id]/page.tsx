@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { formatDate } from '@/lib/utils'
+import { StatementMenuButton } from '@/components/ui/statement-menu-button'
+import { getStatementDateRange } from '@/lib/statement-period'
+import { formatDate, formatRefNumber, formatLeaseRef, formatReceiptRef } from '@/lib/utils'
+import { setAssumedTenant } from '@/lib/assumed-tenant'
 import TaskManager from '@/components/crm/TaskManager'
 import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons'
 
@@ -73,14 +76,57 @@ export default function TenantCRMPage({ params }: Props) {
   const [showGenerateLeaseModal, setShowGenerateLeaseModal] = useState(false)
   const [generateLeaseForm, setGenerateLeaseForm] = useState({
     startDate: '',
+    leaseTerm: '12',
     endDate: '',
     monthlyRent: '',
     securityDeposit: '',
+    rentDueDay: '1',
+    gracePeriodDays: '5',
+    latePenaltyPerDay: '500',
+    noticePeriod: '1',
+    rentEscalation: '',
+    paymentRecipient: 'agent',
+    mpesaTill: '',
+    bankDetails: '',
+    petPolicy: '',
+    specialConditions: '',
+    terms: '',
+    tenant2Name: '',
+    tenant2IdNumber: '',
+    tenant2Email: '',
+    tenant2Phone: '',
   })
   const [isGeneratingLease, setIsGeneratingLease] = useState(false)
   const [showUploadLeaseModal, setShowUploadLeaseModal] = useState(false)
   const [isUploadingLease, setIsUploadingLease] = useState(false)
   const [leaseUploadFile, setLeaseUploadFile] = useState<File | null>(null)
+  const [showNewLeaseChoiceModal, setShowNewLeaseChoiceModal] = useState(false)
+  const [showUploadNewLeaseModal, setShowUploadNewLeaseModal] = useState(false)
+  const [uploadNewLeaseForm, setUploadNewLeaseForm] = useState({
+    startDate: '',
+    leaseTerm: '12',
+    endDate: '',
+    monthlyRent: '',
+    securityDeposit: '',
+    rentDueDay: '1',
+    gracePeriodDays: '5',
+    latePenaltyPerDay: '500',
+    noticePeriod: '1',
+    rentEscalation: '',
+    paymentRecipient: 'agent',
+    mpesaTill: '',
+    bankDetails: '',
+    petPolicy: '',
+    specialConditions: '',
+    terms: '',
+    tenant2Name: '',
+    tenant2IdNumber: '',
+    tenant2Email: '',
+    tenant2Phone: '',
+  })
+  const [uploadNewLeaseFile, setUploadNewLeaseFile] = useState<File | null>(null)
+  const [isUploadingNewLease, setIsUploadingNewLease] = useState(false)
+  const [uploadNewLeaseError, setUploadNewLeaseError] = useState('')
 
   const [tenantApiData, setTenantApiData] = useState<any>(null)
   const [isLoadingTenant, setIsLoadingTenant] = useState(false)
@@ -284,7 +330,7 @@ export default function TenantCRMPage({ params }: Props) {
   const tenantMaintenance = (tenantApiData?.maintenanceRequests || []).map((m: any) => ({
     ...m,
     dateSubmitted: m.createdAt ? m.createdAt.split('T')[0] : '',
-    vendorName: '',
+    vendorName: m.assignedContractor?.name || '',
   }))
 
   const allMessages: any[] = tenantApiData?.messages || []
@@ -299,7 +345,19 @@ export default function TenantCRMPage({ params }: Props) {
     ...tenantPayments.map((p: any) => ({ id: p.id, type: 'payment', description: `Payment: KES ${Number(p.amount).toLocaleString()} — ${p.month}`, date: p.paidDate, user: '' })),
     ...tenantMaintenance.map((m: any) => ({ id: m.id, type: 'maintenance', description: `${m.title} (${m.status})`, date: m.createdAt, user: '' })),
   ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  const documents = docsList
+  // Merge the uploaded lease PDF into the documents list as a virtual entry
+  const leaseDocEntry = currentLease?.documentUrl
+    ? [{
+        id: `lease-doc-${currentLease.id}`,
+        name: 'Lease Agreement',
+        url: currentLease.documentUrl,
+        fileType: 'application/pdf',
+        fileSize: null,
+        uploadedAt: currentLease.updatedAt || currentLease.createdAt,
+        isLease: true,
+      }]
+    : []
+  const documents = [...leaseDocEntry, ...docsList]
 
   // Filter payments based on filters
   const filteredPayments = tenantPayments.filter((payment: any) => {
@@ -331,35 +389,15 @@ export default function TenantCRMPage({ params }: Props) {
 
   // Filter maintenance requests
   const filteredMaintenance = tenantMaintenance.filter((request: any) => {
-    // Status filter
-    if (maintenanceFilters.status && request.status !== maintenanceFilters.status) {
-      return false
-    }
-    
-    // Priority filter
-    if (maintenanceFilters.priority && request.priority !== maintenanceFilters.priority) {
-      return false
-    }
-    
-    // Vendor filter (exact match for dropdown)
+    if (maintenanceFilters.status && request.status !== maintenanceFilters.status) return false
+    if (maintenanceFilters.priority && request.priority !== maintenanceFilters.priority) return false
     if (maintenanceFilters.vendor) {
       if (maintenanceFilters.vendor === 'unassigned') {
-        if (request.vendorName && request.vendorName !== '') {
-          return false
-        }
-      } else if (request.vendorName !== maintenanceFilters.vendor) {
-        return false
-      }
+        if (request.vendorName) return false
+      } else if (request.vendorName !== maintenanceFilters.vendor) return false
     }
-    
-    // Date range filter
-    if (maintenanceFilters.startDate && request.dateSubmitted < maintenanceFilters.startDate) {
-      return false
-    }
-    if (maintenanceFilters.endDate && request.dateSubmitted > maintenanceFilters.endDate) {
-      return false
-    }
-    
+    if (maintenanceFilters.startDate && request.dateSubmitted < maintenanceFilters.startDate) return false
+    if (maintenanceFilters.endDate && request.dateSubmitted > maintenanceFilters.endDate) return false
     return true
   })
 
@@ -530,6 +568,7 @@ export default function TenantCRMPage({ params }: Props) {
     }
     setIsGeneratingLease(true)
     try {
+      const f = generateLeaseForm
       const res = await fetch('/api/leases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -537,15 +576,29 @@ export default function TenantCRMPage({ params }: Props) {
           tenantId,
           propertyId,
           unitId: unitData?.id || undefined,
-          startDate: generateLeaseForm.startDate,
-          endDate: generateLeaseForm.endDate,
-          monthlyRent: parseFloat(generateLeaseForm.monthlyRent),
-          securityDeposit: parseFloat(generateLeaseForm.securityDeposit),
+          startDate: f.startDate,
+          endDate: f.endDate,
+          monthlyRent: parseFloat(f.monthlyRent),
+          securityDeposit: parseFloat(f.securityDeposit),
+          rentDueDay: parseInt(f.rentDueDay) || 1,
+          gracePeriodDays: parseInt(f.gracePeriodDays) || 5,
+          latePenaltyPerDay: parseFloat(f.latePenaltyPerDay) || 500,
+          noticePeriod: parseInt(f.noticePeriod) || 1,
+          ...(f.rentEscalation ? { rentEscalation: parseFloat(f.rentEscalation) } : {}),
+          ...(f.mpesaTill ? { mpesaTill: f.mpesaTill } : {}),
+          ...(f.bankDetails ? { bankDetails: f.bankDetails } : {}),
+          ...(f.petPolicy ? { petPolicy: f.petPolicy } : {}),
+          ...(f.specialConditions ? { specialConditions: f.specialConditions } : {}),
+          ...(f.terms ? { terms: f.terms } : {}),
+          ...(f.tenant2Name ? { tenant2Name: f.tenant2Name } : {}),
+          ...(f.tenant2IdNumber ? { tenant2IdNumber: f.tenant2IdNumber } : {}),
+          ...(f.tenant2Email ? { tenant2Email: f.tenant2Email } : {}),
+          ...(f.tenant2Phone ? { tenant2Phone: f.tenant2Phone } : {}),
         }),
       })
       if (res.ok) {
         setShowGenerateLeaseModal(false)
-        setGenerateLeaseForm({ startDate: '', endDate: '', monthlyRent: '', securityDeposit: '' })
+        setGenerateLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', paymentRecipient: 'agent', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
         window.location.reload()
       } else {
         const data = await res.json()
@@ -576,6 +629,99 @@ export default function TenantCRMPage({ params }: Props) {
       }
     } catch { alert('Upload failed') }
     finally { setIsUploadingLease(false) }
+  }
+
+  const handleUploadNewLease = async () => {
+    const propertyId = tenantApiData?.property?.id
+    setUploadNewLeaseError('')
+    if (!propertyId) {
+      setUploadNewLeaseError('No property found for this tenant. Please assign the tenant to a unit first.')
+      return
+    }
+    const uf = uploadNewLeaseForm
+    if (!uf.startDate || !uf.endDate || !uf.monthlyRent || !uf.securityDeposit) {
+      setUploadNewLeaseError('Please fill in all date and rent fields.')
+      return
+    }
+    if (!uf.terms.trim()) {
+      setUploadNewLeaseError('Lease terms are required when uploading a signed document.')
+      return
+    }
+    if (!uploadNewLeaseFile) {
+      setUploadNewLeaseError('Please select a lease document to upload.')
+      return
+    }
+    setIsUploadingNewLease(true)
+    try {
+      // Step 1: create the new lease record
+      const createRes = await fetch('/api/leases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          propertyId,
+          unitId: unitData?.id || undefined,
+          startDate: uf.startDate,
+          endDate: uf.endDate,
+          monthlyRent: parseFloat(uf.monthlyRent),
+          securityDeposit: parseFloat(uf.securityDeposit),
+          rentDueDay: parseInt(uf.rentDueDay) || 1,
+          gracePeriodDays: parseInt(uf.gracePeriodDays) || 5,
+          latePenaltyPerDay: parseFloat(uf.latePenaltyPerDay) || 500,
+          noticePeriod: parseInt(uf.noticePeriod) || 1,
+          ...(uf.rentEscalation ? { rentEscalation: parseFloat(uf.rentEscalation) } : {}),
+          ...(uf.mpesaTill ? { mpesaTill: uf.mpesaTill } : {}),
+          ...(uf.bankDetails ? { bankDetails: uf.bankDetails } : {}),
+          ...(uf.petPolicy ? { petPolicy: uf.petPolicy } : {}),
+          ...(uf.specialConditions ? { specialConditions: uf.specialConditions } : {}),
+          terms: uf.terms,
+          ...(uf.tenant2Name ? { tenant2Name: uf.tenant2Name } : {}),
+          ...(uf.tenant2IdNumber ? { tenant2IdNumber: uf.tenant2IdNumber } : {}),
+          ...(uf.tenant2Email ? { tenant2Email: uf.tenant2Email } : {}),
+          ...(uf.tenant2Phone ? { tenant2Phone: uf.tenant2Phone } : {}),
+        }),
+      })
+      if (!createRes.ok) {
+        const err = await createRes.json()
+        setUploadNewLeaseError(err.error || 'Failed to create lease record.')
+        return
+      }
+      const newLease = await createRes.json()
+
+      // Step 2: upload the signed document
+      const fd = new FormData()
+      fd.append('file', uploadNewLeaseFile)
+      fd.append('type', 'document')
+      const uploadRes = await fetch(`/api/leases/${newLease.id}/upload`, { method: 'POST', body: fd })
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json()
+        setUploadNewLeaseError(err.error || 'Lease created but document upload failed.')
+        return
+      }
+
+      // Step 3: mark as hard-copy signed and activate
+      const now = new Date().toISOString()
+      await fetch(`/api/leases/${newLease.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantSignature: 'HARD_COPY',
+          landlordSignature: 'HARD_COPY',
+          tenantSignedAt: now,
+          landlordSignedAt: now,
+          status: 'ACTIVE',
+        }),
+      })
+
+      setShowUploadNewLeaseModal(false)
+      setUploadNewLeaseForm({ startDate: '', leaseTerm: '12', endDate: '', monthlyRent: '', securityDeposit: '', rentDueDay: '1', gracePeriodDays: '5', latePenaltyPerDay: '500', noticePeriod: '1', rentEscalation: '', paymentRecipient: 'agent', mpesaTill: '', bankDetails: '', petPolicy: '', specialConditions: '', terms: '', tenant2Name: '', tenant2IdNumber: '', tenant2Email: '', tenant2Phone: '' })
+      setUploadNewLeaseFile(null)
+      window.location.reload()
+    } catch {
+      setUploadNewLeaseError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsUploadingNewLease(false)
+    }
   }
 
   // Calculate statistics
@@ -625,11 +771,11 @@ export default function TenantCRMPage({ params }: Props) {
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 text-sm">
-                <div>
+                <div className="min-w-0">
                   <p className="text-neutral-600">📧 Email</p>
-                  <p className="font-medium text-neutral-900">{tenant.email}</p>
+                  <p className="font-medium text-neutral-900 break-all">{tenant.email}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-neutral-600">📱 Phone</p>
                   <p className="font-medium text-neutral-900">{tenant.phone}</p>
                 </div>
@@ -714,10 +860,25 @@ export default function TenantCRMPage({ params }: Props) {
             <Button variant="outline" onClick={handleEditClick}>
               ✏️ Edit
             </Button>
-            <Button variant="outline" onClick={() => {
-              window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=2025-07-01&endDate=2026-04-30`, '_blank')
-            }}>
-              📄 Statement
+            <StatementMenuButton
+              label="📄 Statement"
+              onSelect={(period) => {
+                const { startDate, endDate } = getStatementDateRange(period)
+                window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`, '_blank')
+              }}
+            />
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAssumedTenant({
+                  id: tenantId,
+                  name: tenant.name,
+                  unitNumber: tenantApiData?.unitRef?.unitNumber ?? tenant.unit ?? '',
+                })
+                router.push('/tenant/dashboard')
+              }}
+            >
+              Assume Tenant
             </Button>
             <Button variant="outline" onClick={() => setShowInvitePreview(true)}>
               ✉️ Invite
@@ -825,7 +986,10 @@ export default function TenantCRMPage({ params }: Props) {
                             className={`rounded-lg p-4 space-y-2 ${isActive ? 'bg-neutral-50 border border-neutral-200' : 'bg-neutral-50 border border-neutral-100 opacity-80'}`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className={`px-2 py-0.5 rounded text-xs font-bold ${statusColor}`}>{lease.status}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${statusColor}`}>{lease.status}</span>
+                                {lease.refNumber && <span className="text-xs font-mono text-neutral-400">{formatLeaseRef(lease.refNumber)}</span>}
+                              </div>
                               <span className="text-xs text-neutral-500">{formatDate(lease.startDate)} – {formatDate(lease.endDate)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
@@ -836,17 +1000,28 @@ export default function TenantCRMPage({ params }: Props) {
                               <span className="text-neutral-600">Security Deposit</span>
                               <span className="font-medium text-neutral-900">KES {Number(lease.securityDeposit).toLocaleString()}</span>
                             </div>
-                            <Button
-                              variant="outline"
-                              className="w-full mt-1"
-                              onClick={() => router.push(`/admin/leases/${lease.id}`)}
-                            >
-                              View Lease Details
-                            </Button>
+                            {lease.documentUrl ? (
+                              <a
+                                href={lease.documentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full mt-1 inline-flex items-center justify-center px-4 py-2 border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 bg-surface hover:bg-neutral-50"
+                              >
+                                View Document
+                              </a>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                className="w-full mt-1"
+                                onClick={() => router.push(`/admin/leases/${lease.id}`)}
+                              >
+                                View Lease Details
+                              </Button>
+                            )}
                           </div>
                         )
                       })}
-                      {!currentLease?.documentUrl && currentLease && (
+                      {!currentLease?.documentUrl && currentLease && currentLease.status === 'ACTIVE' && (
                         <Button
                           variant="outline"
                           className="w-full"
@@ -855,15 +1030,23 @@ export default function TenantCRMPage({ params }: Props) {
                           Upload Signed Lease
                         </Button>
                       )}
+                      {!tenantLeases.find((l: any) => l.status === 'ACTIVE') && (
+                        <Button
+                          className="w-full"
+                          onClick={() => setShowNewLeaseChoiceModal(true)}
+                        >
+                          + New Lease
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div className="bg-neutral-50 rounded-lg p-4 text-center">
                       <p className="text-neutral-500 mb-3">No lease on record</p>
                       <Button
                         className="w-full"
-                        onClick={() => setShowGenerateLeaseModal(true)}
+                        onClick={() => setShowNewLeaseChoiceModal(true)}
                       >
-                        + Generate Lease
+                        + New Lease
                       </Button>
                     </div>
                   )}
@@ -915,12 +1098,14 @@ export default function TenantCRMPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="font-semibold text-neutral-900">Payment History</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => {
-                    window.open(`/api/tenants/${tenantId}/statement?format=html`, '_blank')
-                  }}>
-                    📄 Download Statement
-                  </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatementMenuButton
+                    label="📄 Download Statement"
+                    onSelect={(period) => {
+                      const { startDate, endDate } = getStatementDateRange(period)
+                      window.open(`/api/tenants/${tenantId}/statement?format=html&startDate=${startDate}&endDate=${endDate}`, '_blank')
+                    }}
+                  />
                   <Button variant="primary" onClick={() => setShowRecordPaymentModal(true)}>+ Record Payment</Button>
                 </div>
               </div>
@@ -1028,7 +1213,7 @@ export default function TenantCRMPage({ params }: Props) {
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Amount</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Date</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Method</th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Reference</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Receipt No.</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
                       <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-neutral-500 uppercase">Receipt</th>
                     </tr>
@@ -1044,7 +1229,12 @@ export default function TenantCRMPage({ params }: Props) {
                           </td>
                           <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-900">{payment.method}</td>
                           <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-neutral-500 font-mono">
-                            {payment.reference || <span className="text-neutral-300">—</span>}
+                            {payment.refNumber ? (
+                              <span>
+                                <span className="text-neutral-700">{formatReceiptRef(payment.refNumber)}</span>
+                                {payment.reference && <span className="block text-xs text-neutral-400">{payment.reference}</span>}
+                              </span>
+                            ) : payment.reference || <span className="text-neutral-300">—</span>}
                           </td>
                           <td className="px-3 md:px-6 py-2 md:py-4">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -1083,59 +1273,63 @@ export default function TenantCRMPage({ params }: Props) {
           {/* Maintenance Tab */}
           {activeTab === 'maintenance' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-neutral-900 mb-4">Maintenance Requests</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-neutral-900">Service Requests</h3>
+                <Link
+                  href={`/admin/maintenance?tenantId=${tenantId}`}
+                  className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+                >
+                  View all on Maintenance page →
+                </Link>
+              </div>
 
               {/* Filters */}
               <div className="bg-neutral-50 rounded-lg p-3 md:p-4 border border-neutral-200">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-neutral-900">Filters</h4>
-                  <button
-                    onClick={clearMaintenanceFilters}
-                    className="text-sm text-primary-600 hover:text-primary-800 font-medium"
-                  >
+                  <button onClick={clearMaintenanceFilters} className="text-sm text-primary-600 hover:text-primary-800 font-medium">
                     Clear All
                   </button>
                 </div>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Status
-                    </label>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Status</label>
                     <select
                       value={maintenanceFilters.status}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, status: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">All Statuses</option>
-                      <option value="Pending">Pending</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
+                      <option value="NEW">New</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="UNDER_REVIEW">Under Review</option>
+                      <option value="RESPONSIBILITY_ASSIGNED">Vendor Assigned</option>
+                      <option value="QUOTING">Quoting</option>
+                      <option value="AWAITING_APPROVAL">Awaiting Approval</option>
+                      <option value="AWAITING_FUNDS">Awaiting Funds</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="COMPLETED_PENDING_CONFIRMATION">Pending Confirmation</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CLOSED">Closed</option>
+                      <option value="CANCELLED">Cancelled</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Priority
-                    </label>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Priority</label>
                     <select
                       value={maintenanceFilters.priority}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, priority: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">All Priorities</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                      <option value="Emergency">Emergency</option>
+                      <option value="LOW">Low</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HIGH">High</option>
+                      <option value="URGENT">Urgent</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Vendor
-                    </label>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Vendor</label>
                     <select
                       value={maintenanceFilters.vendor}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, vendor: e.target.value })}
@@ -1148,69 +1342,116 @@ export default function TenantCRMPage({ params }: Props) {
                       <option value="unassigned">Unassigned</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={maintenanceFilters.startDate}
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">Start Date</label>
+                    <input type="date" value={maintenanceFilters.startDate}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, startDate: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={maintenanceFilters.endDate}
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">End Date</label>
+                    <input type="date" value={maintenanceFilters.endDate}
                       onChange={(e) => setMaintenanceFilters({ ...maintenanceFilters, endDate: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
                 </div>
-
-                {/* Filter summary */}
                 <div className="mt-3 text-sm text-neutral-600">
                   Showing {filteredMaintenance.length} of {tenantMaintenance.length} requests
                 </div>
               </div>
 
-              {filteredMaintenance.map((request: any) => (
-                <div key={request.id} className="border border-neutral-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-medium text-neutral-900">{request.issue}</h4>
-                      <p className="text-sm text-neutral-600">Request #{request.id}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      request.status === 'Completed' ? 'bg-success-100 text-green-800' :
-                      request.status === 'In Progress' ? 'bg-primary-100 text-primary-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {request.status}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mt-3">
-                    <div>
-                      <p className="text-neutral-600">Priority</p>
-                      <p className="font-medium">{request.priority}</p>
-                    </div>
-                    <div>
-                      <p className="text-neutral-600">Submitted</p>
-                      <p className="font-medium">{formatDate(request.dateSubmitted)}</p>
-                    </div>
-                    <div>
-                      <p className="text-neutral-600">Vendor</p>
-                      <p className="font-medium">{request.vendorName || 'Not assigned'}</p>
-                    </div>
-                  </div>
+              {filteredMaintenance.length === 0 ? (
+                <div className="text-center py-10 text-neutral-500 border border-dashed border-neutral-300 rounded-lg">
+                  <p className="text-3xl mb-2">🔧</p>
+                  <p className="font-medium">No requests found</p>
                 </div>
-              ))}
+              ) : (
+                filteredMaintenance.map((request: any) => {
+                  const statusColors: Record<string, string> = {
+                    NEW: 'bg-neutral-100 text-neutral-700',
+                    PENDING: 'bg-yellow-100 text-yellow-800',
+                    UNDER_REVIEW: 'bg-blue-100 text-blue-800',
+                    RESPONSIBILITY_ASSIGNED: 'bg-indigo-100 text-indigo-800',
+                    QUOTING: 'bg-purple-100 text-purple-800',
+                    AWAITING_APPROVAL: 'bg-orange-100 text-orange-800',
+                    AWAITING_FUNDS: 'bg-red-100 text-red-800',
+                    IN_PROGRESS: 'bg-primary-100 text-primary-800',
+                    COMPLETED_PENDING_CONFIRMATION: 'bg-teal-100 text-teal-800',
+                    COMPLETED: 'bg-success-100 text-green-800',
+                    CLOSED: 'bg-success-100 text-green-800',
+                    CANCELLED: 'bg-neutral-100 text-neutral-700',
+                    DISPUTED: 'bg-red-100 text-red-800',
+                  }
+                  const statusLabels: Record<string, string> = {
+                    NEW: 'New', PENDING: 'Pending', UNDER_REVIEW: 'Under Review',
+                    RESPONSIBILITY_ASSIGNED: 'Vendor Assigned', QUOTING: 'Quoting',
+                    AWAITING_APPROVAL: 'Awaiting Approval', AWAITING_FUNDS: 'Awaiting Funds',
+                    IN_PROGRESS: 'In Progress', COMPLETED_PENDING_CONFIRMATION: 'Pending Confirmation',
+                    COMPLETED: 'Completed', CLOSED: 'Closed', CANCELLED: 'Cancelled', DISPUTED: 'Disputed',
+                  }
+                  return (
+                    <div key={request.id} className="border border-neutral-200 rounded-lg p-4 hover:bg-neutral-50">
+                      <div className="flex justify-between items-start mb-2 gap-3">
+                        <div className="flex-1 min-w-0">
+                          {request.refNumber && (
+                            <p className="text-xs font-mono text-neutral-400 mb-0.5">{formatRefNumber(request.refNumber)}</p>
+                          )}
+                          <h4 className="font-medium text-neutral-900">{request.title}</h4>
+                          {request.description && (
+                            <p className="text-sm text-neutral-500 mt-0.5 line-clamp-2">{request.description}</p>
+                          )}
+                        </div>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${statusColors[request.status] ?? 'bg-neutral-100 text-neutral-700'}`}>
+                          {statusLabels[request.status] ?? request.status}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-3">
+                        <div>
+                          <p className="text-xs text-neutral-500">Priority</p>
+                          <p className="font-medium text-neutral-900">{request.priority}</p>
+                        </div>
+                        {request.category && (
+                          <div>
+                            <p className="text-xs text-neutral-500">Category</p>
+                            <p className="font-medium text-neutral-900">{request.category}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs text-neutral-500">Submitted</p>
+                          <p className="font-medium text-neutral-900">{formatDate(request.dateSubmitted)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-500">Vendor</p>
+                          <p className="font-medium text-neutral-900">{request.vendorName || <span className="text-neutral-400">Not assigned</span>}</p>
+                        </div>
+                        {request.responsibleParty && (
+                          <div>
+                            <p className="text-xs text-neutral-500">Responsibility</p>
+                            <p className="font-medium text-neutral-900">{request.responsibleParty}</p>
+                          </div>
+                        )}
+                        {request.resolvedAt && (
+                          <div>
+                            <p className="text-xs text-neutral-500">Resolved</p>
+                            <p className="font-medium text-neutral-900">{formatDate(request.resolvedAt)}</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-neutral-100">
+                        <Link
+                          href={`/admin/maintenance`}
+                          className="text-xs text-primary-600 hover:text-primary-800 font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Manage on Maintenance page →
+                        </Link>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           )}
 
@@ -1250,9 +1491,14 @@ export default function TenantCRMPage({ params }: Props) {
                             {doc.fileType?.includes('pdf') ? '📄' : doc.fileType?.includes('image') ? '🖼️' : '📎'}
                           </div>
                           <div>
-                            <p className="font-medium text-neutral-900">{doc.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-neutral-900">{doc.name}</p>
+                              {doc.isLease && (
+                                <span className="text-xs font-medium bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Lease</span>
+                              )}
+                            </div>
                             <p className="text-xs text-neutral-500">
-                              {doc.fileType} • {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(1)} KB` : ''} • {formatDate(doc.uploadedAt)}
+                              {doc.fileType} • {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(1)} KB` : ''} {doc.uploadedAt ? `• ${formatDate(doc.uploadedAt)}` : ''}
                             </p>
                           </div>
                         </div>
@@ -1262,9 +1508,11 @@ export default function TenantCRMPage({ params }: Props) {
                               <Button variant="outline" size="sm">View</Button>
                             </a>
                           )}
-                          <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)}>
-                            <span className="text-danger-600">Delete</span>
-                          </Button>
+                          {!doc.isLease && (
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)}>
+                              <span className="text-danger-600">Delete</span>
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))
@@ -2116,60 +2364,303 @@ export default function TenantCRMPage({ params }: Props) {
       {/* Generate Lease Modal */}
       {showGenerateLeaseModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-neutral-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0">
               <h3 className="text-lg font-semibold text-neutral-900">Generate Lease</h3>
               <button onClick={() => setShowGenerateLeaseModal(false)} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="px-4 md:px-6 py-5 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
-                  <input
-                    type="date"
-                    value={generateLeaseForm.startDate}
-                    onChange={e => setGenerateLeaseForm(f => ({ ...f, startDate: e.target.value }))}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+            <div className="px-6 py-5 space-y-6 overflow-y-auto flex-1">
+
+              {/* Lease Dates */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Lease Period</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+                    <input
+                      type="date"
+                      value={generateLeaseForm.startDate}
+                      onChange={e => {
+                        const start = e.target.value
+                        const term = generateLeaseForm.leaseTerm
+                        let endDate = generateLeaseForm.endDate
+                        if (start && term !== 'custom') {
+                          const d = new Date(start)
+                          d.setMonth(d.getMonth() + parseInt(term))
+  
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setGenerateLeaseForm(f => ({ ...f, startDate: start, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
+                    <select
+                      value={generateLeaseForm.leaseTerm}
+                      onChange={e => {
+                        const term = e.target.value
+                        let endDate = generateLeaseForm.endDate
+                        if (generateLeaseForm.startDate && term !== 'custom') {
+                          const d = new Date(generateLeaseForm.startDate)
+                          d.setMonth(d.getMonth() + parseInt(term))
+  
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setGenerateLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      <option value="6">6 months</option>
+                      <option value="12">12 months (1 year)</option>
+                      <option value="18">18 months</option>
+                      <option value="24">24 months (2 years)</option>
+                      <option value="36">36 months (3 years)</option>
+                      <option value="custom">Custom end date</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">End Date *</label>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    End Date *
+                    {generateLeaseForm.leaseTerm !== 'custom' && generateLeaseForm.endDate && (
+                      <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
+                    )}
+                  </label>
                   <input
                     type="date"
                     value={generateLeaseForm.endDate}
-                    onChange={e => setGenerateLeaseForm(f => ({ ...f, endDate: e.target.value }))}
-                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    readOnly={generateLeaseForm.leaseTerm !== 'custom'}
+                    onChange={e => generateLeaseForm.leaseTerm === 'custom' && setGenerateLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                    className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${generateLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
                   />
                 </div>
               </div>
+
+              {/* Financial Terms */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="e.g. 25000"
-                  value={generateLeaseForm.monthlyRent}
-                  onChange={e => setGenerateLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Financial Terms</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
+                    <input
+                      type="number" min="0" step="0.01" placeholder="e.g. 25000"
+                      value={generateLeaseForm.monthlyRent}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
+                    <input
+                      type="number" min="0" step="0.01" placeholder="e.g. 50000"
+                      value={generateLeaseForm.securityDeposit}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Annual Rent Escalation (%)</label>
+                    <input
+                      type="number" min="0" max="100" step="0.1" placeholder="e.g. 5"
+                      value={generateLeaseForm.rentEscalation}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, rentEscalation: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">Tenant must receive minimum 60 days notice before any increase</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Move Out Notice Period (months)</label>
+                    <input
+                      type="number" min="1" step="1"
+                      value={generateLeaseForm.noticePeriod}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, noticePeriod: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">Standard is 1 month for either party to terminate</p>
+                  </div>
+                </div>
               </div>
+
+              {/* Rent Payment & Late Penalty */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="e.g. 50000"
-                  value={generateLeaseForm.securityDeposit}
-                  onChange={e => setGenerateLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Rent Payment &amp; Late Penalty</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Rent Due Day</label>
+                    <select
+                      value={generateLeaseForm.rentDueDay}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, rentDueDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={d}>{d === 1 ? '1st' : d === 2 ? '2nd' : d === 3 ? '3rd' : `${d}th`} of month</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Grace Period (days)</label>
+                    <input
+                      type="number" min="0" step="1" placeholder="5"
+                      value={generateLeaseForm.gracePeriodDays}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, gracePeriodDays: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Late Penalty (KES/day)</label>
+                    <input
+                      type="number" min="0" step="1" placeholder="500"
+                      value={generateLeaseForm.latePenaltyPerDay}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, latePenaltyPerDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
               </div>
+
+              {/* Payment Methods */}
+              {(() => {
+                const ll = tenantApiData?.property?.landlord || tenantApiData?.unitRef?.landlord
+                const llBank = ll?.bankName && ll?.bankAccount ? `${ll.bankName} — A/C ${ll.bankAccount}` : null
+                return (
+                  <div>
+                    <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
+                    <div className="space-y-3">
+                      {/* Recipient toggle */}
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">Rent paid to</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['agent', 'landlord'] as const).map(opt => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                const nextBank = opt === 'landlord' ? (llBank ?? '') : ''
+                                setGenerateLeaseForm(f => ({ ...f, paymentRecipient: opt, bankDetails: nextBank }))
+                              }}
+                              className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors text-left ${generateLeaseForm.paymentRecipient === opt ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                              {opt === 'agent' ? '🏢 Through agent' : '👤 Directly to landlord'}
+                            </button>
+                          ))}
+                        </div>
+                        {generateLeaseForm.paymentRecipient === 'landlord' && !llBank && (
+                          <p className="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                            No bank details on file for this landlord. Please enter them below or update the landlord profile first.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
+                        <input type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
+                          value={generateLeaseForm.mpesaTill}
+                          onChange={e => setGenerateLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
+                          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">
+                          Bank Details
+                          {generateLeaseForm.paymentRecipient === 'landlord' && llBank && (
+                            <span className="ml-2 font-normal text-xs text-success-600">auto-populated from landlord profile</span>
+                          )}
+                        </label>
+                        <input type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
+                          value={generateLeaseForm.bankDetails}
+                          readOnly={generateLeaseForm.paymentRecipient === 'landlord' && !!llBank}
+                          onChange={e => setGenerateLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
+                          className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${generateLeaseForm.paymentRecipient === 'landlord' && llBank ? 'bg-neutral-50 text-neutral-600 cursor-default' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Policies */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Policies &amp; Conditions</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Pet Policy</label>
+                    <input
+                      type="text" placeholder="e.g. No pets allowed / Pets permitted with prior written consent"
+                      value={generateLeaseForm.petPolicy}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, petPolicy: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Special Conditions</label>
+                    <textarea
+                      rows={3} placeholder="Any additional conditions specific to this tenancy..."
+                      value={generateLeaseForm.specialConditions}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, specialConditions: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Terms &amp; Conditions</label>
+                    <textarea
+                      rows={4} placeholder="Enter the standard lease terms and conditions..."
+                      value={generateLeaseForm.terms}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, terms: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Co-Tenant */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Co-Tenant <span className="font-normal normal-case text-neutral-400">(optional)</span></h4>
+                <p className="text-xs text-neutral-500 mb-3">Add a second occupant who will also be named on the lease.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
+                    <input
+                      type="text" placeholder="Co-tenant full name"
+                      value={generateLeaseForm.tenant2Name}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2Name: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">ID / Passport Number</label>
+                    <input
+                      type="text" placeholder="National ID or Passport No."
+                      value={generateLeaseForm.tenant2IdNumber}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2IdNumber: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
+                    <input
+                      type="email" placeholder="co-tenant@email.com"
+                      value={generateLeaseForm.tenant2Email}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2Email: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Phone</label>
+                    <input
+                      type="tel" placeholder="+254..."
+                      value={generateLeaseForm.tenant2Phone}
+                      onChange={e => setGenerateLeaseForm(f => ({ ...f, tenant2Phone: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
             </div>
-            <div className="px-4 md:px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 flex-shrink-0">
               <Button variant="outline" onClick={() => setShowGenerateLeaseModal(false)}>Cancel</Button>
               <Button onClick={handleGenerateLease} disabled={isGeneratingLease}>
                 {isGeneratingLease ? 'Creating...' : 'Create Lease'}
@@ -2272,6 +2763,377 @@ export default function TenantCRMPage({ params }: Props) {
               <Button variant="outline" onClick={() => { setShowUploadDocModal(false); setUploadDocFile(null) }}>Cancel</Button>
               <Button onClick={handleUploadDoc} disabled={!uploadDocFile || uploadingDoc}>
                 {uploadingDoc ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* New Lease Choice Modal */}
+      {showNewLeaseChoiceModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+              <h3 className="text-lg font-semibold text-neutral-900">New Lease</h3>
+              <button onClick={() => setShowNewLeaseChoiceModal(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              <p className="text-sm text-neutral-600 mb-4">How would you like to create the new lease?</p>
+              <button
+                className="w-full flex items-center gap-4 p-4 border border-neutral-200 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors text-left"
+                onClick={() => { setShowNewLeaseChoiceModal(false); setShowGenerateLeaseModal(true) }}
+              >
+                <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                </div>
+                <div>
+                  <p className="font-medium text-neutral-900">Generate New Lease</p>
+                  <p className="text-xs text-neutral-500 mt-0.5">Create a lease from a template and send for digital signing</p>
+                </div>
+              </button>
+              <button
+                className="w-full flex items-center gap-4 p-4 border border-neutral-200 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors text-left"
+                onClick={() => { setShowNewLeaseChoiceModal(false); setShowUploadNewLeaseModal(true) }}
+              >
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                </div>
+                <div>
+                  <p className="font-medium text-neutral-900">Upload Signed Lease</p>
+                  <p className="text-xs text-neutral-500 mt-0.5">Upload a hard-copy lease already signed by both parties</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload New Lease Modal */}
+      {showUploadNewLeaseModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0">
+              <h3 className="text-lg font-semibold text-neutral-900">Upload Signed Lease</h3>
+              <button onClick={() => { setShowUploadNewLeaseModal(false); setUploadNewLeaseFile(null); setUploadNewLeaseError('') }} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-6 overflow-y-auto flex-1">
+              {uploadNewLeaseError && (
+                <div className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 text-sm text-danger-700">
+                  {uploadNewLeaseError}
+                </div>
+              )}
+
+              {/* Lease Period */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Lease Period</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date *</label>
+                    <input
+                      type="date"
+                      value={uploadNewLeaseForm.startDate}
+                      onChange={e => {
+                        const start = e.target.value
+                        const term = uploadNewLeaseForm.leaseTerm
+                        let endDate = uploadNewLeaseForm.endDate
+                        if (start && term !== 'custom') {
+                          const d = new Date(start)
+                          d.setMonth(d.getMonth() + parseInt(term))
+  
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setUploadNewLeaseForm(f => ({ ...f, startDate: start, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Lease Term *</label>
+                    <select
+                      value={uploadNewLeaseForm.leaseTerm}
+                      onChange={e => {
+                        const term = e.target.value
+                        let endDate = uploadNewLeaseForm.endDate
+                        if (uploadNewLeaseForm.startDate && term !== 'custom') {
+                          const d = new Date(uploadNewLeaseForm.startDate)
+                          d.setMonth(d.getMonth() + parseInt(term))
+  
+                          endDate = d.toISOString().split('T')[0]
+                        }
+                        setUploadNewLeaseForm(f => ({ ...f, leaseTerm: term, endDate }))
+                      }}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      <option value="6">6 months</option>
+                      <option value="12">12 months (1 year)</option>
+                      <option value="18">18 months</option>
+                      <option value="24">24 months (2 years)</option>
+                      <option value="36">36 months (3 years)</option>
+                      <option value="custom">Custom end date</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    End Date *
+                    {uploadNewLeaseForm.leaseTerm !== 'custom' && uploadNewLeaseForm.endDate && (
+                      <span className="ml-2 font-normal text-xs text-success-600">auto-calculated</span>
+                    )}
+                  </label>
+                  <input
+                    type="date"
+                    value={uploadNewLeaseForm.endDate}
+                    readOnly={uploadNewLeaseForm.leaseTerm !== 'custom'}
+                    onChange={e => uploadNewLeaseForm.leaseTerm === 'custom' && setUploadNewLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                    className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${uploadNewLeaseForm.leaseTerm !== 'custom' ? 'bg-neutral-50 text-neutral-500 cursor-default' : ''}`}
+                  />
+                </div>
+              </div>
+
+              {/* Financial Terms */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Financial Terms</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Monthly Rent (KES) *</label>
+                    <input type="number" min="0" step="0.01" placeholder="e.g. 25000"
+                      value={uploadNewLeaseForm.monthlyRent}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Security Deposit (KES) *</label>
+                    <input type="number" min="0" step="0.01" placeholder="e.g. 50000"
+                      value={uploadNewLeaseForm.securityDeposit}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, securityDeposit: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Annual Rent Escalation (%)</label>
+                    <input type="number" min="0" max="100" step="0.1" placeholder="e.g. 5"
+                      value={uploadNewLeaseForm.rentEscalation}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, rentEscalation: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">Tenant must receive minimum 60 days notice before any increase</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Move Out Notice Period (months)</label>
+                    <input type="number" min="1" step="1"
+                      value={uploadNewLeaseForm.noticePeriod}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, noticePeriod: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">Standard is 1 month for either party to terminate</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rent Payment & Late Penalty */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Rent Payment &amp; Late Penalty</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Rent Due Day</label>
+                    <select
+                      value={uploadNewLeaseForm.rentDueDay}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, rentDueDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    >
+                      {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={d}>{d === 1 ? '1st' : d === 2 ? '2nd' : d === 3 ? '3rd' : `${d}th`} of month</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Grace Period (days)</label>
+                    <input type="number" min="0" step="1" placeholder="5"
+                      value={uploadNewLeaseForm.gracePeriodDays}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, gracePeriodDays: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Late Penalty (KES/day)</label>
+                    <input type="number" min="0" step="1" placeholder="500"
+                      value={uploadNewLeaseForm.latePenaltyPerDay}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, latePenaltyPerDay: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              {(() => {
+                const ll = tenantApiData?.property?.landlord || tenantApiData?.unitRef?.landlord
+                const llBank = ll?.bankName && ll?.bankAccount ? `${ll.bankName} — A/C ${ll.bankAccount}` : null
+                return (
+                  <div>
+                    <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Payment Methods</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">Rent paid to</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['agent', 'landlord'] as const).map(opt => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                const nextBank = opt === 'landlord' ? (llBank ?? '') : ''
+                                setUploadNewLeaseForm(f => ({ ...f, paymentRecipient: opt, bankDetails: nextBank }))
+                              }}
+                              className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors text-left ${uploadNewLeaseForm.paymentRecipient === opt ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                              {opt === 'agent' ? '🏢 Through agent' : '👤 Directly to landlord'}
+                            </button>
+                          ))}
+                        </div>
+                        {uploadNewLeaseForm.paymentRecipient === 'landlord' && !llBank && (
+                          <p className="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                            No bank details on file for this landlord. Please enter them below or update the landlord profile first.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">M-Pesa Till / Paybill</label>
+                        <input type="text" placeholder="e.g. Till No. 1234567 — Tochi Property"
+                          value={uploadNewLeaseForm.mpesaTill}
+                          onChange={e => setUploadNewLeaseForm(f => ({ ...f, mpesaTill: e.target.value }))}
+                          className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">
+                          Bank Details
+                          {uploadNewLeaseForm.paymentRecipient === 'landlord' && llBank && (
+                            <span className="ml-2 font-normal text-xs text-success-600">auto-populated from landlord profile</span>
+                          )}
+                        </label>
+                        <input type="text" placeholder="e.g. Equity Bank, A/C 0140XXXXXX, Branch: Westlands"
+                          value={uploadNewLeaseForm.bankDetails}
+                          readOnly={uploadNewLeaseForm.paymentRecipient === 'landlord' && !!llBank}
+                          onChange={e => setUploadNewLeaseForm(f => ({ ...f, bankDetails: e.target.value }))}
+                          className={`w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${uploadNewLeaseForm.paymentRecipient === 'landlord' && llBank ? 'bg-neutral-50 text-neutral-600 cursor-default' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Policies & Conditions */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Policies &amp; Conditions</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Pet Policy</label>
+                    <input type="text" placeholder="e.g. No pets allowed / Pets permitted with prior written consent"
+                      value={uploadNewLeaseForm.petPolicy}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, petPolicy: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Special Conditions</label>
+                    <textarea rows={3} placeholder="Any additional conditions specific to this tenancy..."
+                      value={uploadNewLeaseForm.specialConditions}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, specialConditions: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      Lease Terms &amp; Conditions *
+                      <span className="ml-1 font-normal text-neutral-400 text-xs">(required)</span>
+                    </label>
+                    <textarea rows={4} placeholder="Enter the key terms and conditions of the lease — rental obligations, maintenance responsibilities, house rules, notice periods, etc."
+                      value={uploadNewLeaseForm.terms}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, terms: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Co-Tenant */}
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Co-Tenant <span className="font-normal normal-case text-neutral-400">(optional)</span></h4>
+                <p className="text-xs text-neutral-500 mb-3">Add a second occupant named on the lease.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
+                    <input type="text" placeholder="Co-tenant full name"
+                      value={uploadNewLeaseForm.tenant2Name}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2Name: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">ID / Passport Number</label>
+                    <input type="text" placeholder="National ID or Passport No."
+                      value={uploadNewLeaseForm.tenant2IdNumber}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2IdNumber: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
+                    <input type="email" placeholder="co-tenant@email.com"
+                      value={uploadNewLeaseForm.tenant2Email}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2Email: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Phone</label>
+                    <input type="tel" placeholder="+254..."
+                      value={uploadNewLeaseForm.tenant2Phone}
+                      onChange={e => setUploadNewLeaseForm(f => ({ ...f, tenant2Phone: e.target.value }))}
+                      className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Signed Lease Document *</label>
+                <div
+                  className="border-2 border-dashed border-neutral-300 rounded-lg p-5 text-center cursor-pointer hover:border-primary-400 transition-colors"
+                  onClick={() => document.getElementById('upload-new-lease-file')?.click()}
+                >
+                  {uploadNewLeaseFile ? (
+                    <div>
+                      <p className="text-sm font-medium text-neutral-800">{uploadNewLeaseFile.name}</p>
+                      <p className="text-xs text-neutral-500 mt-1">{(uploadNewLeaseFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <svg className="w-9 h-9 text-neutral-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                      <p className="text-sm text-neutral-500">Click to select file</p>
+                      <p className="text-xs text-neutral-400 mt-1">PDF up to 10 MB</p>
+                    </div>
+                  )}
+                  <input
+                    id="upload-new-lease-file"
+                    type="file"
+                    accept=".pdf,image/*"
+                    className="hidden"
+                    onChange={e => setUploadNewLeaseFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 flex-shrink-0">
+              <Button variant="outline" onClick={() => { setShowUploadNewLeaseModal(false); setUploadNewLeaseFile(null); setUploadNewLeaseError('') }}>
+                Cancel
+              </Button>
+              <Button onClick={handleUploadNewLease} disabled={isUploadingNewLease}>
+                {isUploadingNewLease ? 'Saving...' : 'Save Lease'}
               </Button>
             </div>
           </div>

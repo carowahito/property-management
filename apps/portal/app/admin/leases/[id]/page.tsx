@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { SignaturePad } from '@/components/ui/SignaturePad'
 import Link from 'next/link'
+import { formatLeaseRef } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -22,6 +23,8 @@ export default function LeaseDetailPage({ params }: Props) {
   const [isRenewMode, setIsRenewMode] = useState(false)
   const [pendingLease, setPendingLease] = useState<any>(null)
   const [changeLog, setChangeLog] = useState<{label: string; from: string; to: string}[]>([])
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [editForm, setEditForm] = useState({
     monthlyRent: '', securityDeposit: '', status: '', terms: '',
     startDate: '', endDate: '',
@@ -145,6 +148,22 @@ export default function LeaseDetailPage({ params }: Props) {
       case 'PENDING': return 'bg-yellow-50 text-yellow-700'
       default: return 'bg-neutral-100 text-neutral-700'
     }
+  }
+
+  const handleDelete = async () => {
+    if (!leaseId) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/leases/${leaseId}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/admin/leases')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete lease')
+        setShowDeleteModal(false)
+      }
+    } catch { alert('Failed to delete lease') }
+    finally { setIsDeleting(false) }
   }
 
   const handleEditClick = () => {
@@ -382,18 +401,26 @@ export default function LeaseDetailPage({ params }: Props) {
               </span>
             </div>
             <p className="text-neutral-500">{lease.property?.name} • {lease.property?.address}</p>
+            {lease.refNumber && <p className="text-sm font-mono text-neutral-400 mt-0.5">{formatLeaseRef(lease.refNumber)}</p>}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleEditClick}>✏️ Edit</Button>
-            <Button variant="outline" onClick={() => window.open(`/api/leases/${leaseId}/generate-pdf`, '_blank')}>
+            <Button variant="outline" onClick={() => window.open(lease.documentUrl ?? `/api/leases/${leaseId}/generate-pdf`, '_blank')}>
               View Document
             </Button>
-            <Button variant="outline" onClick={() => window.open(`/api/leases/${leaseId}/generate-pdf?download=true`, '_blank')}>
+            <Button variant="outline" onClick={() => window.open(lease.documentUrl ?? `/api/leases/${leaseId}/generate-pdf?download=true`, '_blank')}>
               Download Agreement
             </Button>
             {lease.status === 'ACTIVE' && !pendingLease && (
               <Button variant="primary" onClick={handleRenewClick}>Renew</Button>
             )}
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteModal(true)}
+              className="text-danger-600 border-danger-300 hover:bg-danger-50"
+            >
+              Delete
+            </Button>
           </div>
         </div>
 
@@ -451,6 +478,7 @@ export default function LeaseDetailPage({ params }: Props) {
         <div className="bg-surface rounded-lg border border-neutral-200 p-6">
           <h3 className="font-semibold text-neutral-900 mb-4">Lease Details</h3>
           <div className="space-y-3 text-sm">
+            {lease.refNumber && <div className="flex justify-between"><span className="text-neutral-600">Lease Ref</span><span className="font-medium font-mono">{formatLeaseRef(lease.refNumber)}</span></div>}
             <div className="flex justify-between"><span className="text-neutral-600">Start Date</span><span className="font-medium">{formatDate(lease.startDate)}</span></div>
             <div className="flex justify-between"><span className="text-neutral-600">End Date</span><span className="font-medium">{formatDate(lease.endDate)}</span></div>
             <div className="flex justify-between"><span className="text-neutral-600">Unit</span><span className="font-medium">{lease.unitRef?.unitNumber || lease.unit || '-'}</span></div>
@@ -536,7 +564,7 @@ export default function LeaseDetailPage({ params }: Props) {
                     <span className="text-xs text-neutral-400">No document</span>
                   )}
                 </div>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   {lease.documentUrl && (
                     <a href={lease.documentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:underline">View PDF</a>
                   )}
@@ -547,6 +575,31 @@ export default function LeaseDetailPage({ params }: Props) {
                   <button onClick={() => docInputRef.current?.click()} disabled={!!uploading} className="text-xs text-primary-600 hover:underline disabled:opacity-50">
                     {uploading === 'document' ? 'Uploading...' : lease.documentUrl ? 'Replace' : 'Upload PDF'}
                   </button>
+                  {lease.documentUrl && lease.tenantSignature !== 'HARD_COPY' && (
+                    <>
+                      <span className="text-xs text-neutral-300">|</span>
+                      <button
+                        onClick={async () => {
+                          const now = new Date().toISOString()
+                          await fetch(`/api/leases/${leaseId}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              status: 'ACTIVE',
+                              tenantSignature: 'HARD_COPY',
+                              landlordSignature: 'HARD_COPY',
+                              tenantSignedAt: now,
+                              landlordSignedAt: now,
+                            }),
+                          })
+                          refreshLease()
+                        }}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Mark as already signed
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -568,6 +621,12 @@ export default function LeaseDetailPage({ params }: Props) {
                   <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-success-50 border border-success-200 rounded-lg">
                     <svg className="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                     <span className="text-xs font-medium text-success-700">Digitally Signed</span>
+                  </div>
+                )}
+                {lease.landlordSignature === 'HARD_COPY' && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <span className="text-xs font-medium text-blue-700">Signed — Hard Copy</span>
                   </div>
                 )}
                 {showLandlordSigPad ? (
@@ -612,30 +671,45 @@ export default function LeaseDetailPage({ params }: Props) {
                     <span className="text-xs font-medium text-success-700">Digitally Signed</span>
                   </div>
                 )}
-                {!lease.tenantSignedAt && (
+                {lease.tenantSignature === 'HARD_COPY' && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <span className="text-xs font-medium text-blue-700">Signed — Hard Copy</span>
+                  </div>
+                )}
+                {!lease.tenantSignedAt && lease.tenantSignature !== 'HARD_COPY' && (
                   <p className="text-xs text-neutral-400 mt-2">Tenant will sign from their portal after you send for signing.</p>
                 )}
               </div>
 
               {/* Send for Signing */}
-              <div className="pt-3 border-t border-neutral-200">
-                {lease.sentForSigning ? (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600">Sent for Signing</span>
-                    <span className="font-medium text-success-600">✓ Sent {formatDate(lease.sentAt)}</span>
+              {lease.tenantSignature === 'HARD_COPY' || lease.landlordSignature === 'HARD_COPY' ? (
+                <div className="pt-3 border-t border-neutral-200">
+                  <div className="flex items-center gap-2 text-sm text-blue-700">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Lease already signed — hard copy uploaded
                   </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-neutral-700">Send to tenant for signing</p>
-                      <p className="text-xs text-neutral-500">Tenant will be able to view and sign from their portal</p>
+                </div>
+              ) : (
+                <div className="pt-3 border-t border-neutral-200">
+                  {lease.sentForSigning ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-neutral-600">Sent for Signing</span>
+                      <span className="font-medium text-success-600">✓ Sent {formatDate(lease.sentAt)}</span>
                     </div>
-                    <Button variant="primary" onClick={handleSendForSigning} disabled={saving}>
-                      {saving ? 'Sending...' : 'Send for Signing'}
-                    </Button>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-700">Send to tenant for signing</p>
+                        <p className="text-xs text-neutral-500">Tenant will be able to view and sign from their portal</p>
+                      </div>
+                      <Button variant="primary" onClick={handleSendForSigning} disabled={saving}>
+                        {saving ? 'Sending...' : 'Send for Signing'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -834,6 +908,39 @@ export default function LeaseDetailPage({ params }: Props) {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="px-6 py-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-danger-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-danger-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-neutral-900">Delete Lease</h3>
+              </div>
+              <p className="text-sm text-neutral-600">
+                Are you sure you want to delete this lease? This action cannot be undone and will remove all associated payment records.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-danger-600 hover:bg-danger-700 text-white border-danger-600"
+              >
+                {isDeleting ? 'Deleting…' : 'Delete Lease'}
+              </Button>
+            </div>
           </div>
         </div>
       )}

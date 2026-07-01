@@ -89,55 +89,72 @@ async function getCompanyId(): Promise<string> {
 }
 
 async function uploadLandlords(rows: Record<string, string>[], validateOnly = false) {
-  const results = { created: 0, skipped: 0, errors: [] as string[] }
+  const results = { created: 0, updated: 0, skipped: 0, errors: [] as string[] }
+  const rowValidations: RowValidation[] = []
   const companyId = await getCompanyId()
 
-  for (const row of rows) {
+  const validStatuses = ['ACTIVE', 'INACTIVE', 'SUSPENDED']
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 1
+    const ref = row.referenceId || ''
+
     if (!row.name || !row.email || !row.phone) {
-      results.errors.push(`Skipping row: missing required fields (name, email, phone) — ${JSON.stringify(row)}`)
+      const missing = ['name', 'email', 'phone'].filter(f => !row[f]).join(', ')
+      const err = `Missing required fields: ${missing}`
+      results.errors.push(`Row ${rowNum}: ${err}`)
       results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name || '', email: row.email || '', status: 'error', error: err })
       continue
     }
-    try {
-      const existing = await prisma.landlord.findFirst({ where: { companyId, email: row.email } })
-      if (existing) {
-        await prisma.landlord.update({
-          where: { id: existing.id },
-          data: {
-            name: row.name,
-            phone: row.phone,
-            idNumber: row.idNumber || null,
-            address: row.address || null,
-            bankName: row.bankName || null,
-            bankAccount: row.bankAccount || null,
-            taxId: row.taxId || null,
-            status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
-          },
-        })
-      } else {
-        await prisma.landlord.create({
-          data: {
-            companyId,
-            name: row.name,
-            email: row.email,
-            phone: row.phone,
-            idNumber: row.idNumber || null,
-            address: row.address || null,
-            bankName: row.bankName || null,
-            bankAccount: row.bankAccount || null,
-            taxId: row.taxId || null,
-            status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
-          },
-        })
-      }
-      results.created++
-    } catch (e) {
-      results.errors.push(`${row.email}: ${String(e)}`)
+
+    if (row.status && !validStatuses.includes(row.status.toUpperCase())) {
+      const err = `Invalid status "${row.status}". Use: ${validStatuses.join(', ')}`
+      results.errors.push(`Row ${rowNum}: ${err}`)
       results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+
+    const existing = await prisma.landlord.findFirst({ where: { companyId, email: row.email } })
+    const rowStatus = existing ? 'update' as const : 'valid' as const
+
+    if (validateOnly) {
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: rowStatus })
+      if (existing) results.updated++
+      else results.created++
+      continue
+    }
+
+    try {
+      const landlordData = {
+        name: row.name,
+        phone: row.phone,
+        idNumber: row.idNumber || null,
+        address: row.address || null,
+        bankName: row.bankName || null,
+        bankAccount: row.bankAccount || null,
+        taxId: row.taxId || null,
+        status: ((row.status?.toUpperCase() || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'),
+      }
+      if (existing) {
+        await prisma.landlord.update({ where: { id: existing.id }, data: landlordData })
+        results.updated++
+      } else {
+        await prisma.landlord.create({ data: { companyId, email: row.email, ...landlordData } })
+        results.created++
+      }
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: rowStatus })
+    } catch (e) {
+      const err = String(e)
+      results.errors.push(`Row ${rowNum} (${row.email}): ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
     }
   }
 
-  return NextResponse.json({ type: 'landlords', ...results })
+  return NextResponse.json({ type: 'landlords', validateOnly, rows: rowValidations, ...results })
 }
 
 async function uploadProperties(rows: Record<string, string>[], validateOnly = false) {
@@ -349,6 +366,44 @@ async function uploadTenants(rows: Record<string, string>[], validateOnly = fals
       continue
     }
 
+    // Optional lease fields — a lease is created when rent + both lease dates are provided
+    if (row.monthlyRent && isNaN(Number(row.monthlyRent))) {
+      const err = `Invalid monthlyRent: "${row.monthlyRent}"`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+    if (row.securityDeposit && isNaN(Number(row.securityDeposit))) {
+      const err = `Invalid securityDeposit: "${row.securityDeposit}"`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+    if (row.leaseStartDate && isNaN(Date.parse(row.leaseStartDate))) {
+      const err = `Invalid leaseStartDate: "${row.leaseStartDate}"`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+    if (row.leaseEndDate && isNaN(Date.parse(row.leaseEndDate))) {
+      const err = `Invalid leaseEndDate: "${row.leaseEndDate}"`
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+    // If rent is provided, we need both lease dates to build a lease
+    if (row.monthlyRent && (!row.leaseStartDate || !row.leaseEndDate)) {
+      const err = 'monthlyRent provided but leaseStartDate/leaseEndDate missing — a lease needs both dates'
+      results.errors.push(`Row ${rowNum}: ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+
     const existing = await prisma.tenant.findFirst({ where: { companyId, email: row.email } })
     const rowStatus = existing ? 'update' as const : 'valid' as const
 
@@ -373,13 +428,46 @@ async function uploadTenants(rows: Record<string, string>[], validateOnly = fals
         moveOutDate: row.moveOutDate ? new Date(row.moveOutDate) : null,
         status: ((row.status?.toUpperCase() || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'EVICTED'),
       }
+      let tenantId: string
       if (existing) {
         await prisma.tenant.update({ where: { id: existing.id }, data: tenantData })
+        tenantId = existing.id
         results.updated++
       } else {
-        await prisma.tenant.create({ data: { companyId, email: row.email, ...tenantData } })
+        const created = await prisma.tenant.create({ data: { companyId, email: row.email, ...tenantData } })
+        tenantId = created.id
         results.created++
       }
+
+      // Create a lease when rent + both lease dates are supplied
+      if (row.monthlyRent && row.leaseStartDate && row.leaseEndDate) {
+        const startDate = new Date(row.leaseStartDate)
+        const endDate = new Date(row.leaseEndDate)
+        // Avoid duplicating a lease on re-import: skip if one already exists for
+        // this tenant + unit + start date.
+        const dupLease = await prisma.lease.findFirst({
+          where: {
+            tenantId,
+            unitId: unitRecord?.id ?? null,
+            startDate,
+          },
+        })
+        if (!dupLease) {
+          await prisma.lease.create({
+            data: {
+              tenantId,
+              propertyId: property.id,
+              unitId: unitRecord?.id ?? null,
+              startDate,
+              endDate,
+              monthlyRent: Number(row.monthlyRent),
+              securityDeposit: row.securityDeposit ? Number(row.securityDeposit) : 0,
+              status: endDate < new Date() ? 'EXPIRED' : 'ACTIVE',
+            },
+          })
+        }
+      }
+
       rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: rowStatus })
     } catch (e) {
       const err = String(e)

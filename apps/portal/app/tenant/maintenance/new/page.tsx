@@ -2,8 +2,20 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
+import { useTenantContext } from '@/lib/hooks/use-tenant-context'
+
+const PRIORITY_MAP: Record<string, string> = {
+  Low: 'LOW',
+  Medium: 'MEDIUM',
+  High: 'HIGH',
+  Urgent: 'URGENT',
+}
 
 export default function NewMaintenanceRequestPage() {
+  const router = useRouter()
+  const { tenantId } = useTenantContext()
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -14,16 +26,58 @@ export default function NewMaintenanceRequestPage() {
   })
   const [photos, setPhotos] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const { data: leasesData } = useQuery({
+    queryKey: ['tenant-lease-new', tenantId],
+    queryFn: () => fetch(`/api/leases?status=ACTIVE&limit=1${tenantId ? `&tenantId=${tenantId}` : ''}`).then(r => r.json()),
+    enabled: !!tenantId,
+  })
+  const activeLease = leasesData?.leases?.[0] ?? null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!tenantId) {
+      setError('No tenant session found. Please log in again.')
+      return
+    }
+    if (!activeLease) {
+      setError('No active lease found. Please contact your property manager.')
+      return
+    }
     setIsSubmitting(true)
+    setError(null)
 
-    // TODO: Implement actual form submission
-    setTimeout(() => {
-      alert('Maintenance request submitted successfully!')
-      window.location.href = '/tenant/maintenance'
-    }, 1000)
+    const notes = [
+      formData.preferredDate && `Preferred date: ${formData.preferredDate}`,
+      formData.preferredTime && `Preferred time: ${formData.preferredTime}`,
+    ].filter(Boolean).join('. ')
+
+    const payload = {
+      tenantId,                              // always use tenantId from session/impersonation context
+      propertyId: activeLease.property.id,
+      unit: activeLease.unit ?? activeLease.unitNumber ?? undefined,
+      title: formData.title,
+      description: formData.description + (notes ? `\n\n${notes}` : ''),
+      priority: PRIORITY_MAP[formData.priority] ?? 'MEDIUM',
+      category: formData.category || undefined,
+    }
+
+    try {
+      const res = await fetch('/api/maintenance-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || `Request failed (${res.status})`)
+      }
+      router.push('/tenant/requests')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit request. Please try again.')
+      setIsSubmitting(false)
+    }
   }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +102,12 @@ export default function NewMaintenanceRequestPage() {
           Please provide detailed information about the issue you're experiencing.
         </p>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-md bg-danger-50 border border-danger-200 p-4 text-sm text-danger-700">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-surface shadow rounded-lg p-6 space-y-6">

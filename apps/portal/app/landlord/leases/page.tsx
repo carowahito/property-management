@@ -14,6 +14,10 @@ interface Lease {
   endDate: string
   monthlyRent: number
   status: string
+  documentUrl: string | null
+  documentHtml: string | null
+  tenantSignature: string | null
+  landlordSignature: string | null
   tenant: {
     id: string
     name: string
@@ -119,6 +123,7 @@ export default function LandlordLeasesPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">End Date</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Rent</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Document</th>
             </tr>
           </thead>
           <tbody className="bg-surface divide-y divide-neutral-200">
@@ -152,6 +157,29 @@ export default function LandlordLeasesPage() {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(lease.status)}`}>
                       {lease.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {lease.documentUrl ? (
+                      <a
+                        href={lease.documentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:underline font-medium"
+                      >
+                        View PDF
+                      </a>
+                    ) : lease.documentHtml ? (
+                      <a
+                        href={`/api/leases/${lease.id}/generate-pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:underline font-medium"
+                      >
+                        View PDF
+                      </a>
+                    ) : (
+                      <span className="text-neutral-400">—</span>
+                    )}
                   </td>
                 </tr>
               )

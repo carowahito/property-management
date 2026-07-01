@@ -57,6 +57,9 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          unitRef: {
+            select: { unitNumber: true },
+          },
           _count: {
             select: {
               leases: true,

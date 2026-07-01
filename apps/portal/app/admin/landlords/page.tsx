@@ -1,12 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import AddLandlordForm from '@/components/forms/AddLandlordForm'
-import ArchiveDeleteButtons from '@/components/ui/ArchiveDeleteButtons';
+import { Download, Upload, CheckCircle2, XCircle, AlertTriangle, FileSpreadsheet, X } from 'lucide-react'
+
+interface RowValidation {
+  row: number
+  referenceId: string
+  name: string
+  email: string
+  status: 'valid' | 'error' | 'update'
+  error?: string
+}
+
+interface ValidationResult {
+  type: string
+  validateOnly: boolean
+  rows: RowValidation[]
+  created: number
+  updated: number
+  skipped: number
+  errors: string[]
+}
 
 interface Landlord {
   id: string
@@ -46,7 +65,96 @@ export default function AdminLandlordsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showAddLandlordModal, setShowAddLandlordModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvText, setCsvText] = useState<string>('');
+  const [dragOver, setDragOver] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ValidationResult | null>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  const handleCsvFile = useCallback(async (file: File) => {
+    if (!file.name.endsWith('.csv')) return
+    setCsvFile(file)
+    const text = await file.text()
+    setCsvText(text)
+    setValidationResult(null)
+    setImportResult(null)
+
+    setIsValidating(true)
+    try {
+      const res = await fetch('/api/admin/bulk-upload?type=landlords&validate=true', {
+        method: 'POST',
+        body: text,
+      })
+      const data = await res.json()
+      setValidationResult(data)
+    } catch {
+      setValidationResult(null)
+    } finally {
+      setIsValidating(false)
+    }
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleCsvFile(file)
+  }, [handleCsvFile])
+
+  const handleImport = async () => {
+    if (!csvText) return
+    setIsImporting(true)
+    try {
+      const res = await fetch('/api/admin/bulk-upload?type=landlords', {
+        method: 'POST',
+        body: csvText,
+      })
+      const data = await res.json()
+      setImportResult(data)
+      setValidationResult(null)
+      queryClient.invalidateQueries({ queryKey: ['landlords'] })
+    } catch {
+      setImportResult(null)
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
+  const resetBulkImport = () => {
+    setCsvFile(null)
+    setCsvText('')
+    setValidationResult(null)
+    setImportResult(null)
+    setIsValidating(false)
+    setIsImporting(false)
+    if (csvInputRef.current) csvInputRef.current.value = ''
+  }
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, isArchived }: { id: string; isArchived: boolean }) => {
+      const res = await fetch(`/api/landlords/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: isArchived ? 'INACTIVE' : 'ARCHIVED' }),
+      })
+      if (!res.ok) throw new Error('Action failed')
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['landlords'] }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/landlords/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['landlords'] }),
+  })
 
   const createLandlordMutation = useMutation({
     mutationFn: async (formData: any) => {
@@ -290,7 +398,24 @@ export default function AdminLandlordsPage() {
           <h1 className='text-xl md:text-2xl font-bold text-neutral-900'>Landlords CRM</h1>
           <p className='text-neutral-600 mt-1'>Manage landlord relationships and portfolios</p>
         </div>
-        <Button variant="primary" size="lg" onClick={() => setShowAddLandlordModal(true)}>+ Add Landlord</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/templates/landlords-template.csv"
+            download="landlords-template.csv"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 bg-surface hover:bg-neutral-50"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Download Template</span>
+          </a>
+          <button
+            onClick={() => setShowBulkImportModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 bg-surface hover:bg-neutral-50"
+          >
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Bulk Import</span>
+          </button>
+          <Button variant="primary" size="lg" onClick={() => setShowAddLandlordModal(true)}>+ Add Landlord</Button>
+        </div>
       </div>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6'>
@@ -412,31 +537,86 @@ export default function AdminLandlordsPage() {
                       {landlord.status}
                     </span>
                   </td>
-                  <td className='px-3 md:px-6 py-2 md:py-4 text-sm space-x-2'>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedLandlord(landlord)
-                      }}
-                    >
-                      View
-                    </Button>
-                    <Link href={`/admin/landlords/${landlord.id}`}>
-                      <Button variant="outline" size="sm">
-                        Details
-                      </Button>
-                    </Link>
-                    <ArchiveDeleteButtons
-                      entityName="landlord"
-                      entityLabel={landlord.name}
-                      archiveUrl={`/api/landlords/${landlord.id}`}
-                      deleteUrl={`/api/landlords/${landlord.id}`}
-                      isArchived={landlord.status === 'ARCHIVED'}
-                      onSuccess={() => queryClient.invalidateQueries({ queryKey: ['landlords'] })}
-                      size="sm"
-                    />
+                  <td className='px-3 md:px-6 py-2 md:py-4'>
+                    <div className='relative inline-block'>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenDropdown(openDropdown === landlord.id ? null : landlord.id)
+                        }}
+                        className='inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50'
+                      >
+                        Actions
+                        <svg className='w-4 h-4 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                        </svg>
+                      </button>
+
+                      {openDropdown === landlord.id && (
+                        <>
+                          <div
+                            className='fixed inset-0 z-10'
+                            onClick={() => setOpenDropdown(null)}
+                          />
+                          <div className='absolute right-0 z-20 mt-1 w-40 bg-white rounded-lg shadow-lg border border-neutral-200 py-1'>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedLandlord(landlord)
+                                setOpenDropdown(null)
+                              }}
+                              className='flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50'
+                            >
+                              <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+                              </svg>
+                              View
+                            </button>
+                            <Link
+                              href={`/admin/landlords/${landlord.id}`}
+                              onClick={() => setOpenDropdown(null)}
+                              className='flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50'
+                            >
+                              <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                              </svg>
+                              Edit
+                            </Link>
+                            <div className='border-t border-neutral-100 mt-1 pt-1'>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  archiveMutation.mutate({ id: landlord.id, isArchived: landlord.status === 'ARCHIVED' })
+                                  setOpenDropdown(null)
+                                }}
+                                className='flex items-center w-full px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50'
+                              >
+                                <svg className='w-4 h-4 mr-2 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' />
+                                </svg>
+                                {landlord.status === 'ARCHIVED' ? 'Restore' : 'Archive'}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (window.confirm(`Permanently delete ${landlord.name}? This cannot be undone.`)) {
+                                    deleteMutation.mutate(landlord.id)
+                                  }
+                                  setOpenDropdown(null)
+                                }}
+                                className='flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50'
+                              >
+                                <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                                </svg>
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -525,6 +705,208 @@ export default function AdminLandlordsPage() {
           onClose={() => setShowAddLandlordModal(false)}
           onSubmit={handleLandlordSubmit}
         />
+      )}
+
+      {/* Bulk Import Modal */}
+      {showBulkImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-neutral-900">Bulk Import Landlords</h3>
+                  <p className="text-sm text-neutral-500 mt-1">Upload a CSV file to import multiple landlords at once</p>
+                </div>
+                <button
+                  onClick={() => { setShowBulkImportModal(false); resetBulkImport() }}
+                  className="text-neutral-400 hover:text-neutral-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Drop zone */}
+              {!importResult && (
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => csvInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                    dragOver
+                      ? 'border-primary-500 bg-primary-50'
+                      : csvFile
+                        ? 'border-success-300 bg-success-50'
+                        : 'border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    ref={csvInputRef}
+                    accept=".csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleCsvFile(file)
+                    }}
+                  />
+                  {csvFile ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <FileSpreadsheet className="w-8 h-8 text-success-600" />
+                      <div className="text-left">
+                        <p className="font-medium text-neutral-900">{csvFile.name}</p>
+                        <p className="text-sm text-neutral-500">{(csvFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); resetBulkImport() }}
+                        className="ml-4 text-neutral-400 hover:text-neutral-600"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
+                      <p className="text-neutral-700 font-medium">Drop your CSV file here or click to browse</p>
+                      <p className="text-sm text-neutral-500 mt-1">
+                        Need a template? <a href="/templates/landlords-template.csv" download className="text-primary-600 hover:underline" onClick={(e) => e.stopPropagation()}>Download CSV template</a>
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Validating spinner */}
+              {isValidating && (
+                <div className="flex items-center justify-center gap-3 py-6">
+                  <LoadingSpinner size="sm" />
+                  <span className="text-neutral-600">Validating rows...</span>
+                </div>
+              )}
+
+              {/* Validation results */}
+              {validationResult && !importResult && (
+                <div className="mt-6 space-y-4">
+                  {/* Summary */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-success-50 border border-success-200 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-success-700">{validationResult.created}</p>
+                      <p className="text-xs text-success-600">New landlords</p>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-blue-700">{validationResult.updated}</p>
+                      <p className="text-xs text-blue-600">Will be updated</p>
+                    </div>
+                    <div className="bg-danger-50 border border-danger-200 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-danger-700">{validationResult.skipped}</p>
+                      <p className="text-xs text-danger-600">Errors</p>
+                    </div>
+                  </div>
+
+                  {/* Row details table */}
+                  <div className="border border-neutral-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-neutral-50 border-b border-neutral-200">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-700">Row</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-700">Ref</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-700">Name</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-700">Email</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-700">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-200">
+                        {validationResult.rows.map((row) => (
+                          <tr key={row.row} className={row.status === 'error' ? 'bg-danger-50' : ''}>
+                            <td className="px-4 py-2 text-neutral-600">{row.row}</td>
+                            <td className="px-4 py-2 text-neutral-600">{row.referenceId || '-'}</td>
+                            <td className="px-4 py-2 text-neutral-900">{row.name || '-'}</td>
+                            <td className="px-4 py-2 text-neutral-600">{row.email || '-'}</td>
+                            <td className="px-4 py-2">
+                              {row.status === 'valid' && (
+                                <span className="inline-flex items-center gap-1 text-success-700">
+                                  <CheckCircle2 className="w-4 h-4" /> New
+                                </span>
+                              )}
+                              {row.status === 'update' && (
+                                <span className="inline-flex items-center gap-1 text-blue-700">
+                                  <AlertTriangle className="w-4 h-4" /> Update
+                                </span>
+                              )}
+                              {row.status === 'error' && (
+                                <span className="inline-flex items-center gap-1 text-danger-700" title={row.error}>
+                                  <XCircle className="w-4 h-4" /> {row.error}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => { resetBulkImport() }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={handleImport}
+                      disabled={isImporting || (validationResult.created === 0 && validationResult.updated === 0)}
+                      className="flex-1"
+                    >
+                      {isImporting ? (
+                        <span className="flex items-center gap-2"><LoadingSpinner size="sm" /> Importing...</span>
+                      ) : (
+                        `Import ${validationResult.created + validationResult.updated} Landlord${validationResult.created + validationResult.updated !== 1 ? 's' : ''}`
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Import complete */}
+              {importResult && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-success-50 border border-success-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="w-5 h-5 text-success-600" />
+                      <span className="font-semibold text-success-800">Import Complete</span>
+                    </div>
+                    <p className="text-sm text-success-700">
+                      {importResult.created} created, {importResult.updated} updated
+                      {importResult.skipped > 0 && `, ${importResult.skipped} skipped`}
+                    </p>
+                  </div>
+
+                  {importResult.errors.length > 0 && (
+                    <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+                      <p className="font-medium text-danger-800 mb-2">Errors:</p>
+                      <ul className="text-sm text-danger-700 space-y-1">
+                        {importResult.errors.map((err, i) => (
+                          <li key={i}>{err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <Button
+                    variant="primary"
+                    onClick={() => { setShowBulkImportModal(false); resetBulkImport() }}
+                    className="w-full"
+                  >
+                    Done
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

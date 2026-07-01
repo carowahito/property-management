@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatRefNumber } from '@/lib/utils';
 
 interface MaintenanceRequest {
   id: string
@@ -111,15 +111,27 @@ function getTriageCategoryColor(category: string | null): string {
   }
 }
 
+type ActivePanel = { type: 'triage' | 'assign'; id: string } | null
+
 export default function MaintenancePage() {
   const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [triageForm, setTriageForm] = useState<{ category: string; estimatedCost: string }>({
     category: 'ROUTINE',
     estimatedCost: '',
   });
+  const [assignForm, setAssignForm] = useState<{
+    responsibleParty: string;
+    responsibilityReason: string;
+    assignedContractorId: string;
+  }>({ responsibleParty: 'LANDLORD', responsibilityReason: '', assignedContractorId: '' });
+
+  // Keep selectedRequest alias for triage panel compatibility
+  const selectedRequest = activePanel?.type === 'triage' ? activePanel.id : null;
+  const setSelectedRequest = (id: string | null) =>
+    setActivePanel(id ? { type: 'triage', id } : null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['maintenance-requests'],
@@ -146,7 +158,27 @@ export default function MaintenancePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['maintenance-requests'] });
-      setSelectedRequest(null);
+      setActivePanel(null);
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`/api/maintenance-requests/${id}/assign-responsibility`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to assign');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance-requests'] });
+      setActivePanel(null);
+      setAssignForm({ responsibleParty: 'LANDLORD', responsibilityReason: '', assignedContractorId: '' });
     },
   });
 
@@ -195,7 +227,7 @@ export default function MaintenancePage() {
 
   const stats = {
     totalRequests: requests.length,
-    openRequests: requests.filter((r) => r.status.toUpperCase() === 'PENDING').length,
+    openRequests: requests.filter((r) => ['NEW', 'PENDING', 'UNDER_REVIEW', 'RESPONSIBILITY_ASSIGNED'].includes(r.status)).length,
     inProgress: requests.filter((r) => r.status.toUpperCase() === 'IN_PROGRESS').length,
     urgent: requests.filter((r) => r.priority.toUpperCase() === 'URGENT').length,
     slaBreached: requests.filter((r) => r.slaBreached || (r.slaDeadline && new Date(r.slaDeadline) < new Date())).length,
@@ -214,13 +246,21 @@ export default function MaintenancePage() {
   };
 
   const getStatusColor = (status: string) => {
-    const upperStatus = status.toUpperCase();
-    switch (upperStatus) {
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'IN_PROGRESS': return 'bg-primary-100 text-primary-800';
-      case 'COMPLETED': return 'bg-success-100 text-green-800';
-      case 'CANCELLED': return 'bg-neutral-100 text-neutral-800';
-      default: return 'bg-neutral-100 text-neutral-800';
+    switch (status) {
+      case 'NEW':
+      case 'PENDING':                       return 'bg-yellow-100 text-yellow-800';
+      case 'UNDER_REVIEW':                  return 'bg-blue-100 text-blue-800';
+      case 'RESPONSIBILITY_ASSIGNED':       return 'bg-indigo-100 text-indigo-800';
+      case 'QUOTING':                       return 'bg-purple-100 text-purple-800';
+      case 'AWAITING_APPROVAL':             return 'bg-orange-100 text-orange-800';
+      case 'AWAITING_FUNDS':                return 'bg-red-100 text-red-800';
+      case 'IN_PROGRESS':                   return 'bg-primary-100 text-primary-800';
+      case 'COMPLETED_PENDING_CONFIRMATION':return 'bg-teal-100 text-teal-800';
+      case 'COMPLETED':
+      case 'CLOSED':                        return 'bg-success-100 text-green-800';
+      case 'DISPUTED':                      return 'bg-red-100 text-red-800';
+      case 'CANCELLED':                     return 'bg-neutral-100 text-neutral-800';
+      default:                              return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -339,6 +379,90 @@ export default function MaintenancePage() {
         </div>
       )}
 
+      {/* Assign Vendor Panel */}
+      {activePanel?.type === 'assign' && (
+        <div className="bg-surface shadow-lg rounded-lg p-4 md:p-6 border-2 border-indigo-200">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-neutral-900">Assign Vendor for Inspection</h2>
+            <button onClick={() => setActivePanel(null)} className="text-neutral-400 hover:text-neutral-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Who is responsible?</label>
+              <div className="flex gap-2">
+                {(['LANDLORD', 'TENANT', 'SHARED'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setAssignForm({ ...assignForm, responsibleParty: p })}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-full transition ${
+                      assignForm.responsibleParty === p
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Assign Vendor</label>
+              <select
+                value={assignForm.assignedContractorId}
+                onChange={(e) => setAssignForm({ ...assignForm, assignedContractorId: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              >
+                <option value="">— Select vendor —</option>
+                {(contractorsData?.contractors ?? []).map((c: Contractor) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} — {c.trade}{c.isVetted ? ' ✓' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Reason / Notes <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={2}
+                value={assignForm.responsibilityReason}
+                onChange={(e) => setAssignForm({ ...assignForm, responsibilityReason: e.target.value })}
+                placeholder="e.g. Wear and tear — landlord's responsibility. Sending plumber to inspect and quote."
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div className="sm:col-span-2 flex items-center gap-3">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  if (!assignForm.responsibilityReason.trim()) return;
+                  assignMutation.mutate({
+                    id: activePanel.id,
+                    data: {
+                      responsibleParty: assignForm.responsibleParty,
+                      responsibilityReason: assignForm.responsibilityReason,
+                      assignedContractorId: assignForm.assignedContractorId || undefined,
+                    },
+                  });
+                }}
+                disabled={assignMutation.isPending || !assignForm.responsibilityReason.trim()}
+              >
+                {assignMutation.isPending ? 'Saving...' : 'Assign Vendor'}
+              </Button>
+              {assignMutation.isError && (
+                <p className="text-sm text-red-600">{(assignMutation.error as Error).message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className='bg-surface shadow rounded-lg p-4'>
         <div className='flex flex-col sm:flex-row flex-wrap gap-2 md:gap-4'>
@@ -348,9 +472,16 @@ export default function MaintenancePage() {
             className='px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'
           >
             <option value='all'>All Status</option>
-            <option value='PENDING'>Pending</option>
+            <option value='NEW'>New</option>
+            <option value='UNDER_REVIEW'>Under Review</option>
+            <option value='RESPONSIBILITY_ASSIGNED'>Vendor Assigned</option>
+            <option value='QUOTING'>Quoting</option>
+            <option value='AWAITING_APPROVAL'>Awaiting Approval</option>
+            <option value='AWAITING_FUNDS'>Awaiting Funds</option>
             <option value='IN_PROGRESS'>In Progress</option>
+            <option value='COMPLETED_PENDING_CONFIRMATION'>Pending Confirmation</option>
             <option value='COMPLETED'>Completed</option>
+            <option value='CLOSED'>Closed</option>
             <option value='CANCELLED'>Cancelled</option>
           </select>
           <select
@@ -413,6 +544,9 @@ export default function MaintenancePage() {
                 return (
                   <tr key={request.id} className='hover:bg-neutral-50'>
                     <td className='px-3 md:px-6 py-2 md:py-4'>
+                      {request.refNumber && (
+                        <div className='text-xs font-mono text-neutral-400 mb-0.5'>{formatRefNumber(request.refNumber)}</div>
+                      )}
                       <div className='text-sm font-medium text-neutral-900'>{request.title}</div>
                       <div className='text-sm text-neutral-500'>
                         by {request.tenant ? (
@@ -477,22 +611,42 @@ export default function MaintenancePage() {
                         </span>
                       )}
                     </td>
-                    <td className='px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm space-x-2'>
-                      <button
-                        onClick={() => setSelectedRequest(selectedRequest === request.id ? null : request.id)}
-                        className="text-primary-600 hover:text-primary-800"
-                      >
-                        Triage
-                      </button>
-                      {needsApproval && (
-                        <button
-                          onClick={() => approveMutation.mutate(request.id)}
-                          disabled={approveMutation.isPending}
-                          className="text-green-600 hover:text-green-800"
-                        >
-                          Approve
-                        </button>
-                      )}
+                    <td className='px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm'>
+                      <div className="flex flex-col gap-1">
+                        {(request.status === 'NEW' || request.status === 'PENDING') && (
+                          <button
+                            onClick={() => setActivePanel(
+                              activePanel?.type === 'triage' && activePanel.id === request.id
+                                ? null
+                                : { type: 'triage', id: request.id }
+                            )}
+                            className="text-primary-600 hover:text-primary-800 text-left"
+                          >
+                            Triage
+                          </button>
+                        )}
+                        {request.status === 'UNDER_REVIEW' && (
+                          <button
+                            onClick={() => setActivePanel(
+                              activePanel?.type === 'assign' && activePanel.id === request.id
+                                ? null
+                                : { type: 'assign', id: request.id }
+                            )}
+                            className="text-indigo-600 hover:text-indigo-800 font-medium text-left"
+                          >
+                            Assign Vendor
+                          </button>
+                        )}
+                        {needsApproval && (
+                          <button
+                            onClick={() => approveMutation.mutate(request.id)}
+                            disabled={approveMutation.isPending}
+                            className="text-green-600 hover:text-green-800 text-left"
+                          >
+                            Approve
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

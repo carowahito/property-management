@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { formatDate } from '@/lib/utils'
@@ -20,6 +21,7 @@ interface Lease {
     id: string
     name: string
     address: string
+    landlord?: { id: string; name: string } | null
   }
   unitRef?: { id: string; unitNumber: string } | null
 }
@@ -69,7 +71,24 @@ export default function LandlordDocumentsPage() {
     queryFn: fetchStatements,
   })
 
-  if (loadingLeases || loadingStatements) {
+  const landlordId = leasesData?.leases?.[0]?.property?.landlord?.id as string | undefined
+
+  const { data: landlordDocsData, isLoading: loadingDocs } = useQuery({
+    queryKey: ['landlord-inspection-docs', landlordId],
+    enabled: !!landlordId,
+    queryFn: () => fetch(`/api/landlords/${landlordId}/documents`).then(r => r.json()),
+  })
+
+  const { data: myInspectionsData } = useQuery({
+    queryKey: ['landlord-me-inspections'],
+    queryFn: () => fetch('/api/landlords/me/inspections').then(r => r.json()),
+  })
+
+  const pendingSignatureInspections = (myInspectionsData?.inspections || []).filter(
+    (i: any) => !i.landlordSignedAt
+  )
+
+  if (loadingLeases || loadingStatements || (!!landlordId && loadingDocs)) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
@@ -79,12 +98,37 @@ export default function LandlordDocumentsPage() {
 
   const leases = leasesData?.leases || []
   const statements = statementsData?.statements || []
+  const inspectionReports = (landlordDocsData?.documents || []).filter((d: any) => d.fileType === 'INSPECTION_REPORT')
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-neutral-900">Documents</h1>
       </div>
+
+      {/* Pending Inspection Signatures */}
+      {pendingSignatureInspections.length > 0 && (
+        <div className="mb-8 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4">
+          <p className="text-sm font-medium text-amber-800 mb-2">
+            {pendingSignatureInspections.length} inspection report{pendingSignatureInspections.length > 1 ? 's' : ''} awaiting your signature
+          </p>
+          <ul className="space-y-2">
+            {pendingSignatureInspections.map((insp: any) => (
+              <li key={insp.id} className="flex items-center justify-between bg-surface rounded px-3 py-2">
+                <span className="text-sm text-neutral-700">
+                  {insp.property?.name}{insp.unit ? ` — Unit ${insp.unit.unitNumber}` : ''} — {insp.completedDate ? formatDate(insp.completedDate) : ''}
+                </span>
+                <Link
+                  href={`/landlord/inspections/${insp.id}/sign`}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-900"
+                >
+                  Sign Now
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Lease Agreements */}
       <div className="mb-8">
@@ -156,6 +200,39 @@ export default function LandlordDocumentsPage() {
                     {stmt.status}
                   </span>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Inspection Reports */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Inspection Reports</h2>
+        <div className="bg-surface shadow rounded-lg p-6">
+          <div className="space-y-4">
+            {inspectionReports.length === 0 && (
+              <p className="text-sm text-neutral-500">No inspection reports yet</p>
+            )}
+            {inspectionReports.map((doc: any) => (
+              <div key={doc.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:border-amber-500 transition-colors">
+                <div className="flex items-center space-x-4">
+                  <div className="text-4xl">📋</div>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">{doc.name}</p>
+                    <p className="text-xs text-neutral-600">
+                      Completed: {formatDate(doc.uploadedAt)}
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 text-sm text-primary-600 hover:text-primary-900 border border-primary-300 rounded hover:bg-primary-50 transition-colors"
+                >
+                  View Report
+                </a>
               </div>
             ))}
           </div>

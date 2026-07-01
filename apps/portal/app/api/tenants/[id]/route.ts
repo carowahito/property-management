@@ -38,6 +38,8 @@ export async function GET(
                 name: true,
                 email: true,
                 phone: true,
+                bankName: true,
+                bankAccount: true,
               },
             },
           },
@@ -59,6 +61,8 @@ export async function GET(
                 email: true,
                 phone: true,
                 type: true,
+                bankName: true,
+                bankAccount: true,
                 members: { orderBy: { createdAt: 'asc' } },
               },
             },
@@ -67,22 +71,28 @@ export async function GET(
         leases: {
           select: {
             id: true,
+            refNumber: true,
             startDate: true,
             endDate: true,
             monthlyRent: true,
             securityDeposit: true,
             status: true,
+            documentUrl: true,
+            createdAt: true,
+            updatedAt: true,
           },
           orderBy: { startDate: 'desc' },
         },
         payments: {
           select: {
             id: true,
+            refNumber: true,
             amount: true,
             paidDate: true,
             method: true,
             status: true,
             type: true,
+            reference: true,
           },
           orderBy: { paidDate: 'desc' },
           take: 10,
@@ -90,14 +100,20 @@ export async function GET(
         maintenanceRequests: {
           select: {
             id: true,
+            refNumber: true,
             title: true,
             description: true,
             status: true,
             priority: true,
+            category: true,
             createdAt: true,
+            resolvedAt: true,
+            responsibleParty: true,
+            assignedContractor: {
+              select: { id: true, name: true, trade: true },
+            },
           },
           orderBy: { createdAt: 'desc' },
-          take: 5,
         },
         messages: {
           select: {

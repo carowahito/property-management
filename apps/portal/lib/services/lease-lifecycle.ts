@@ -26,7 +26,7 @@ export async function runLeaseLifecycle() {
       status: 'ACTIVE',
       endDate: { lt: now },
     },
-    select: { id: true },
+    select: { id: true, tenantId: true },
   })
   const expiringIds = aboutToExpire.map((l) => l.id)
 
@@ -36,6 +36,20 @@ export async function runLeaseLifecycle() {
       where: { id: { in: expiringIds } },
       data: { status: 'EXPIRED' },
     })
+
+    // For each affected tenant, if they now have no remaining ACTIVE leases → INACTIVE
+    const affectedTenantIds = [...new Set(aboutToExpire.map((l: any) => l.tenantId))]
+    for (const tenantId of affectedTenantIds) {
+      const stillActive = await prisma.lease.count({
+        where: { tenantId, status: 'ACTIVE' },
+      })
+      if (stillActive === 0) {
+        await prisma.tenant.update({
+          where: { id: tenantId },
+          data: { status: 'INACTIVE' },
+        })
+      }
+    }
   }
 
   // ── Step 2: Promote signed PENDING leases ──

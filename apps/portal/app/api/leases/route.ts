@@ -26,8 +26,14 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     if (status && status !== 'all') where.status = status
-    if (tenantId && tenantId !== 'all') where.tenantId = tenantId
-    if (propertyId && propertyId !== 'all') where.propertyId = propertyId
+
+    // Tenants are scoped to their own leases only
+    if (session.user.role === 'TENANT') {
+      where.tenantId = session.user.id
+    } else {
+      if (tenantId && tenantId !== 'all') where.tenantId = tenantId
+      if (propertyId && propertyId !== 'all') where.propertyId = propertyId
+    }
 
     const [leases, total] = await Promise.all([
       prisma.lease.findMany({
@@ -60,6 +66,7 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               unitNumber: true,
+              monthlyRent: true,
               landlord: {
                 select: {
                   id: true,

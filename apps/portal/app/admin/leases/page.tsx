@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatLeaseRef } from '@/lib/utils'
 
 interface Lease {
   id: string
+  refNumber: number
   monthlyRent: number
   securityDeposit: number
   startDate: string
@@ -274,7 +275,7 @@ export default function AdminLeasesPage() {
                   return (
                     <tr key={lease.id} className="hover:bg-neutral-50">
                       <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-medium text-neutral-900 hidden lg:table-cell">
-                        {lease.id.substring(0, 8)}...
+                        {formatLeaseRef(lease.refNumber)}
                       </td>
                       <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm text-neutral-900">
                         <Link href={`/admin/tenants/${lease.tenant.id}`} className="text-primary-600 hover:text-primary-800 hover:underline">
@@ -347,17 +348,12 @@ export default function AdminLeasesPage() {
                         </div>
                       </td>
                       <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex gap-3">
-                          <Link href={`/admin/leases/${lease.id}`} className="text-primary-600 hover:text-primary-900">
-                            View
-                          </Link>
-                          <button
-                            onClick={() => window.open(`/api/leases/${lease.id}/generate-pdf`, '_blank')}
-                            className="text-primary-600 hover:text-primary-900"
-                          >
-                            PDF
-                          </button>
-                        </div>
+                        <Link href={`/admin/leases/${lease.id}`} className="text-primary-600 hover:text-primary-900" title="View lease">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </Link>
                       </td>
                     </tr>
                   )
@@ -390,7 +386,7 @@ export default function AdminLeasesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-neutral-600">Lease ID</p>
-                    <p className="text-lg font-semibold text-neutral-900">{selectedLease.id}</p>
+                    <p className="text-lg font-semibold text-neutral-900">{formatLeaseRef(selectedLease.refNumber)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-neutral-600">Status</p>

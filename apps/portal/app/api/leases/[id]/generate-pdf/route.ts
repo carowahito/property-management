@@ -44,7 +44,7 @@ export async function GET(
     const data: LeaseData = {
       companyName: company.name,
       companyEmail: company.email || 'info@tochiproperty.com',
-      companyPhone: company.phone || '',
+      companyPhone: company.phone || '+254721998499',
       companyWebsite: company.website || 'tochiproperty.com',
 
       propertyName: lease.property.name,

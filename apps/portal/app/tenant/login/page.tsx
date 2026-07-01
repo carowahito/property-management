@@ -1,26 +1,50 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 
-export default function TenantLoginPage() {
+function TenantLoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
-    setTimeout(() => {
-      setError('Tenant portal login is not yet available.')
+    try {
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      })
+
+      if (result?.error) {
+        setError('Invalid email or password')
+        setIsLoading(false)
+        return
+      }
+
+      // Redirect back to where they came from, or to the right dashboard by role
+      if (callbackUrl) {
+        router.push(callbackUrl)
+      } else {
+        // Let middleware sort the dashboard — /api/auth/session has the role
+        router.push('/tenant/dashboard')
+      }
+      router.refresh()
+    } catch {
+      setError('An error occurred. Please try again.')
       setIsLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -141,5 +165,13 @@ export default function TenantLoginPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function TenantLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-neutral-50" />}>
+      <TenantLoginForm />
+    </Suspense>
   )
 }

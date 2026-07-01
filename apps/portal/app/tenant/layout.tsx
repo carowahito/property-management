@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { TenantProvider } from '@/contexts/tenant-context';
 import TenantNavigation from '@/components/tenant-portal/TenantNavigation';
+import { AssumedTenantBanner } from '@/components/tenant-portal/AssumedTenantBanner';
 import '@/lib/amplify-config';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -17,6 +18,7 @@ export default function TenantLayout({ children }: { children: React.ReactNode }
   return (
     <AuthProvider>
       <TenantProvider>
+        <AssumedTenantBanner />
         <TenantNavigation />
         <div className='min-h-screen bg-neutral-50'>
           {/* Page Content */}

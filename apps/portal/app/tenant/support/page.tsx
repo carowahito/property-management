@@ -69,10 +69,10 @@ export default function TenantSupportPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-neutral-900">Email Support</p>
                   <a
-                    href="mailto:support@catalyst-suite.com"
+                    href="mailto:info@tochiproperty.com"
                     className="text-sm text-primary-600 hover:text-primary-800"
                   >
-                    support@catalyst-suite.com
+                    info@tochiproperty.com
                   </a>
                   <p className="text-xs text-neutral-500 mt-1">Response within 24 hours</p>
                 </div>
@@ -85,10 +85,10 @@ export default function TenantSupportPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-neutral-900">Phone Support</p>
                   <a
-                    href="tel:+254700000000"
+                    href="tel:+254721998499"
                     className="text-sm text-primary-600 hover:text-primary-800"
                   >
-                    +254 700 000 000
+                    +254 721 998 499
                   </a>
                   <p className="text-xs text-neutral-500 mt-1">Mon-Fri: 8AM - 6PM</p>
                 </div>

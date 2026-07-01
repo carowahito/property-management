@@ -9,11 +9,81 @@ const tochiIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="145 75 12
 function fmtDate(d: Date | string | null) {
   if (!d) return '—'
   const dd = new Date(d)
-  return `${String(dd.getDate()).padStart(2, '0')} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dd.getMonth()]} ${dd.getFullYear()}`
+  return `${dd.getDate()} ${['January','February','March','April','May','June','July','August','September','October','November','December'][dd.getMonth()]} ${dd.getFullYear()}`
 }
 
 function fmtMoney(n: number | string) {
-  return Number(n).toLocaleString('en-KE')
+  return Number(n).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+  'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+
+function threeDigitsToWords(n: number): string {
+  let str = ''
+  if (n >= 100) {
+    str += `${ONES[Math.floor(n / 100)]} Hundred`
+    n %= 100
+    if (n > 0) str += ' '
+  }
+  if (n >= 20) {
+    str += TENS[Math.floor(n / 10)]
+    if (n % 10 > 0) str += `-${ONES[n % 10]}`
+  } else if (n > 0) {
+    str += ONES[n]
+  }
+  return str
+}
+
+function numberToWords(num: number): string {
+  if (num === 0) return 'Zero'
+  const units = ['', 'Thousand', 'Million', 'Billion']
+  let unitIndex = 0
+  let n = Math.floor(num)
+  const words: string[] = []
+  while (n > 0) {
+    const chunk = n % 1000
+    if (chunk > 0) {
+      words.unshift(`${threeDigitsToWords(chunk)}${units[unitIndex] ? ` ${units[unitIndex]}` : ''}`)
+    }
+    n = Math.floor(n / 1000)
+    unitIndex++
+  }
+  return words.join(' ')
+}
+
+function amountInWords(amount: number): string {
+  const wholePart = Math.floor(amount)
+  const cents = Math.round((amount - wholePart) * 100)
+  let result = `${numberToWords(wholePart)} Kenyan Shillings`
+  if (cents > 0) {
+    result += ` and ${numberToWords(cents)} Cents`
+  }
+  return `${result} Only`
+}
+
+function monthRange(d: Date) {
+  const start = new Date(d.getFullYear(), d.getMonth(), 1)
+  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  return { start, end }
+}
+
+const landlordSelect = {
+  select: {
+    id: true,
+    name: true,
+    type: true,
+    members: { select: { id: true, name: true }, orderBy: { createdAt: 'asc' as const } },
+  },
+}
+
+function formatLandlord(landlord: { name: string; type: string; members: { name: string }[] } | null | undefined): string {
+  if (!landlord) return 'Tochi Property (Managing Agent on behalf of Owner)'
+  if (landlord.type === 'JOINT_OWNERSHIP' && landlord.members?.length) {
+    return `${landlord.name} & ${landlord.members.map(m => m.name).join(' & ')}`
+  }
+  return landlord.name
 }
 
 type PaymentWithRelations = Awaited<ReturnType<typeof fetchPayment>>
@@ -29,17 +99,33 @@ async function fetchPayment(id: string) {
           monthlyRent: true,
           startDate: true,
           endDate: true,
-          property: { select: { id: true, name: true, address: true } },
-          unitRef: { select: { id: true, unitNumber: true } },
+          property: { select: { id: true, name: true, address: true, landlord: landlordSelect } },
+          unitRef: { select: { id: true, unitNumber: true, landlord: landlordSelect } },
         },
       },
+      property: { select: { id: true, name: true, address: true, landlord: landlordSelect } },
+      unit: { select: { id: true, unitNumber: true, landlord: landlordSelect } },
+      landlord: landlordSelect,
+      ledgerEntries: { select: { balance: true } },
     },
   })
 }
 
 function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, receiptNumber: string): string {
-  const propertyName = payment.lease?.property?.name || '—'
-  const unitNumber = payment.lease?.unitRef?.unitNumber || '—'
+  const propertyAddress = payment.lease?.property?.address || payment.property?.address || '—'
+  const propertyName = payment.lease?.property?.name || payment.property?.name || ''
+  const unitNumber = payment.lease?.unitRef?.unitNumber || payment.unit?.unitNumber || ''
+  const unitLine = [unitNumber ? `Unit ${unitNumber}` : '', propertyName, propertyAddress].filter(Boolean).join(', ')
+
+  const landlord = payment.lease?.unitRef?.landlord
+    || payment.lease?.property?.landlord
+    || payment.unit?.landlord
+    || payment.property?.landlord
+    || payment.landlord
+  const landlordDisplay = formatLandlord(landlord as any)
+
+  const leaseRef = payment.lease ? `LSE-${payment.lease.id.slice(-6).toUpperCase()}` : 'Pending Lease Signing'
+
   const methodLabels: Record<string, string> = {
     BANK_TRANSFER: 'Bank Transfer',
     MPESA: 'M-Pesa',
@@ -49,6 +135,25 @@ function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, receiptNum
   }
   const methodLabel = methodLabels[payment.method] || payment.method
   const isPaid = payment.status === 'PAID'
+  const typeLabels: Record<string, string> = {
+    RENT: 'Rent',
+    DEPOSIT: 'Deposit',
+    LATE_FEE: 'Late Fee',
+    UTILITY: 'Utility',
+    MAINTENANCE: 'Maintenance',
+    OTHER: 'Other',
+  }
+  const typeLabel = typeLabels[payment.type] || payment.type
+  const docTitle = `${typeLabel.toUpperCase()} PAYMENT ${isPaid ? 'RECEIPT' : 'INVOICE'}`
+
+  const amount = Number(payment.amount)
+  const { start: periodStart, end: periodEnd } = monthRange(new Date(payment.dueDate))
+  const periodLabel = payment.type === 'RENT' ? 'Rent Period Covered' : 'Billing Period'
+  const periodText = `${fmtDate(periodStart)} – ${fmtDate(periodEnd)}`
+
+  const ledgerEntry = payment.ledgerEntries?.[0]
+  const balanceCarriedForward = ledgerEntry ? Number(ledgerEntry.balance) : null
+  const previousBalance = ledgerEntry ? balanceCarriedForward! + amount : null
 
   return `<!DOCTYPE html>
 <html>
@@ -56,38 +161,38 @@ function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, receiptNum
   <meta charset="UTF-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-  <title>Payment Receipt — ${receiptNumber}</title>
+  <title>${docTitle} — ${receiptNumber}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Open Sans', Arial, sans-serif; color: #1a1a1a; font-size: 13px; background: #f4f6f8; }
-    .page { max-width: 680px; margin: 24px auto; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-    .brand-header { background: #1A3A5C; border-bottom: 4px solid #E8960C; padding: 20px 32px; display: flex; align-items: center; gap: 14px; }
-    .brand-title { font-family: 'Montserrat', Arial, sans-serif; font-weight: 700; font-size: 20px; color: white; letter-spacing: 1px; }
-    .brand-tag { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; font-style: italic; }
-    .receipt-header { padding: 24px 32px 0; display: flex; justify-content: space-between; align-items: flex-start; }
-    .receipt-title { font-family: 'Montserrat', Arial, sans-serif; font-size: 22px; font-weight: 700; color: #1A3A5C; }
-    .receipt-meta { text-align: right; }
-    .receipt-meta .number { font-family: 'Montserrat', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #1A3A5C; }
-    .receipt-meta .date { font-size: 12px; color: #6b7280; margin-top: 4px; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; font-family: 'Montserrat', Arial, sans-serif; letter-spacing: 0.5px; margin-top: 8px; }
+    .page { max-width: 720px; margin: 24px auto; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); padding: 32px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; }
+    .brand-block { display: flex; align-items: center; gap: 10px; }
+    .brand-title { font-family: 'Montserrat', Arial, sans-serif; font-weight: 700; font-size: 22px; color: #1A3A5C; letter-spacing: 0.5px; }
+    .doc-title { font-family: 'Montserrat', Arial, sans-serif; font-weight: 700; font-size: 16px; color: #1A3A5C; text-align: right; }
+    .status-badge { display: block; margin-top: 4px; text-align: right; }
+    .status-badge span { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
     .status-paid { background: #dcfce7; color: #166534; }
     .status-pending { background: #fef9c3; color: #854d0e; }
-    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 20px 32px; }
-    .section { padding: 0 32px 20px; }
-    .section-title { font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .detail-item .label { font-size: 11px; color: #9ca3af; margin-bottom: 3px; }
-    .detail-item .value { font-size: 13px; color: #111827; font-weight: 600; }
-    .amount-box { margin: 0 32px 24px; background: #1A3A5C; border-left: 6px solid #E8960C; padding: 16px 24px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-    .amount-box .label { font-size: 12px; color: rgba(255,255,255,0.7); font-family: 'Montserrat', Arial, sans-serif; }
-    .amount-box .value { font-size: 26px; font-weight: 700; color: #E8960C; font-family: 'Courier New', monospace; }
-    .reference-box { margin: 0 32px 24px; background: #EEF2F7; border-left: 4px solid #E8960C; padding: 12px 20px; border-radius: 4px; }
-    .reference-box .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-    .reference-box .value { font-size: 15px; font-weight: 700; color: #1A3A5C; font-family: 'Courier New', monospace; margin-top: 2px; }
-    .footer { padding: 16px 32px; border-top: 2px solid #E8960C; display: flex; justify-content: space-between; align-items: center; background: #f9fafb; }
-    .footer .left { font-size: 11px; color: #6b7280; }
-    .footer .right { font-size: 10px; color: #8B5A00; font-style: italic; }
-    .print-btn { display: block; margin: 20px auto; padding: 10px 28px; background: #1A3A5C; color: white; border: none; border-radius: 4px; font-size: 13px; font-family: 'Montserrat', Arial, sans-serif; font-weight: 600; cursor: pointer; }
+    .brand-tag { font-size: 11px; color: #6b7280; font-style: italic; margin-top: 4px; }
+    .contact-line { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .brand-divider { border: none; border-top: 3px solid #1A3A5C; margin: 14px 0 18px; }
+    .meta-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: #1A3A5C; margin-bottom: 22px; }
+    .section { margin-bottom: 22px; }
+    .section-title { font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 700; color: #1A3A5C; text-transform: uppercase; letter-spacing: 0.6px; padding-bottom: 6px; border-bottom: 2px solid #1A3A5C; margin-bottom: 10px; }
+    table.kv-table { width: 100%; border-collapse: collapse; border: 1px solid #E5E7EB; }
+    table.kv-table tr:not(:last-child) td { border-bottom: 1px solid #E5E7EB; }
+    table.kv-table td { padding: 9px 14px; font-size: 13px; vertical-align: top; }
+    table.kv-table td.k { width: 34%; background: #F2F4F7; color: #374151; font-weight: 600; }
+    table.kv-table td.v { color: #111827; }
+    table.summary-table { width: 100%; border-collapse: collapse; border: 1px solid #E5E7EB; }
+    table.summary-table thead th { background: #1A3A5C; color: white; text-align: left; padding: 9px 14px; font-size: 12px; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+    table.summary-table thead th:last-child { text-align: right; }
+    table.summary-table tbody td { padding: 9px 14px; font-size: 13px; border-bottom: 1px solid #E5E7EB; }
+    table.summary-table tbody td.amt { text-align: right; font-family: 'Courier New', monospace; }
+    table.summary-table tbody tr:last-child td { border-bottom: none; border-top: 2px solid #1A3A5C; font-weight: 700; }
+    .notes-text { font-size: 12px; color: #4b5563; line-height: 1.6; }
+    .print-btn { display: block; margin: 20px auto 0; padding: 10px 28px; background: #1A3A5C; color: white; border: none; border-radius: 4px; font-size: 13px; font-family: 'Montserrat', Arial, sans-serif; font-weight: 600; cursor: pointer; }
     @media print {
       body { background: white; }
       .page { box-shadow: none; margin: 0; border-radius: 0; }
@@ -97,78 +202,66 @@ function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, receiptNum
 </head>
 <body>
   <div class="page">
-    <div class="brand-header">
-      ${tochiIconSvg}
-      <div>
+    <div class="header-row">
+      <div class="brand-block">
+        ${tochiIconSvg}
         <div class="brand-title">TOCHI PROPERTY</div>
-        <div class="brand-tag">Your Property. Our Pride.</div>
       </div>
-    </div>
-
-    <div class="receipt-header">
       <div>
-        <div class="receipt-title">Payment Receipt</div>
-        <span class="status-badge ${isPaid ? 'status-paid' : 'status-pending'}">${isPaid ? 'PAID' : payment.status}</span>
-      </div>
-      <div class="receipt-meta">
-        <div class="number">${receiptNumber}</div>
-        <div class="date">Issued: ${fmtDate(new Date())}</div>
+        <div class="doc-title">${docTitle}</div>
+        <div class="status-badge"><span class="${isPaid ? 'status-paid' : 'status-pending'}">${isPaid ? 'PAID' : payment.status}</span></div>
       </div>
     </div>
+    <div class="brand-tag">Your Property. Our Pride.</div>
+    <div class="contact-line">info@tochiproperty.com&nbsp;&nbsp;|&nbsp;&nbsp;tochiproperty.com&nbsp;&nbsp;|&nbsp;&nbsp;+254 721 998 499</div>
 
-    <hr class="divider">
+    <hr class="brand-divider">
 
-    <div class="amount-box">
-      <div class="label">AMOUNT ${isPaid ? 'RECEIVED' : 'DUE'}</div>
-      <div class="value">KES ${fmtMoney(Number(payment.amount))}</div>
+    <div class="meta-row">
+      <div>Receipt No.: ${receiptNumber}</div>
+      <div>Date Issued: ${fmtDate(new Date())}</div>
     </div>
-
-    ${payment.reference ? `
-    <div class="reference-box">
-      <div class="label">Transaction Reference</div>
-      <div class="value">${payment.reference}</div>
-    </div>` : ''}
 
     <div class="section">
-      <div class="section-title">Tenant Details</div>
-      <div class="detail-grid">
-        <div class="detail-item"><div class="label">Name</div><div class="value">${payment.tenant.name}</div></div>
-        <div class="detail-item"><div class="label">ID / Passport</div><div class="value">${payment.tenant.idNumber || '—'}</div></div>
-        <div class="detail-item"><div class="label">Email</div><div class="value">${payment.tenant.email || '—'}</div></div>
-        <div class="detail-item"><div class="label">Phone</div><div class="value">${payment.tenant.phone || '—'}</div></div>
-      </div>
+      <div class="section-title">Tenant &amp; Property Details</div>
+      <table class="kv-table">
+        <tr><td class="k">Tenant Name</td><td class="v">${payment.tenant.name}</td></tr>
+        <tr><td class="k">Property Address</td><td class="v">${unitLine || '—'}</td></tr>
+        <tr><td class="k">Landlord / Owner</td><td class="v">${landlordDisplay}</td></tr>
+        <tr><td class="k">Lease Reference No.</td><td class="v">${leaseRef}</td></tr>
+      </table>
     </div>
-
-    <hr class="divider" style="margin-top:0;">
-
-    <div class="section">
-      <div class="section-title">Property Details</div>
-      <div class="detail-grid">
-        <div class="detail-item"><div class="label">Property</div><div class="value">${propertyName}</div></div>
-        <div class="detail-item"><div class="label">Unit</div><div class="value">${unitNumber}</div></div>
-      </div>
-    </div>
-
-    <hr class="divider" style="margin-top:0;">
 
     <div class="section">
       <div class="section-title">Payment Details</div>
-      <div class="detail-grid">
-        <div class="detail-item"><div class="label">Payment Type</div><div class="value">${payment.type}</div></div>
-        <div class="detail-item"><div class="label">Payment Method</div><div class="value">${methodLabel}</div></div>
-        <div class="detail-item"><div class="label">Due Date</div><div class="value">${fmtDate(payment.dueDate)}</div></div>
-        <div class="detail-item"><div class="label">Paid On</div><div class="value">${fmtDate(payment.paidDate)}</div></div>
-        ${payment.notes ? `<div class="detail-item" style="grid-column:span 2;"><div class="label">Notes</div><div class="value">${payment.notes}</div></div>` : ''}
-      </div>
+      <table class="kv-table">
+        <tr><td class="k">Amount ${isPaid ? 'Received' : 'Due'}</td><td class="v">KES ${fmtMoney(amount)}</td></tr>
+        <tr><td class="k">Amount in Words</td><td class="v">${amountInWords(amount)}</td></tr>
+        <tr><td class="k">${periodLabel}</td><td class="v">${periodText}</td></tr>
+        <tr><td class="k">Payment Method</td><td class="v">${methodLabel}</td></tr>
+        <tr><td class="k">Transaction / Reference No.</td><td class="v">${payment.reference || '—'}</td></tr>
+        <tr><td class="k">Date Received</td><td class="v">${fmtDate(payment.paidDate)}</td></tr>
+      </table>
     </div>
 
-    <div class="footer">
-      <div class="left">
-        <strong style="color:#1A3A5C;font-family:'Montserrat',Arial,sans-serif;">Tochi Property</strong><br>
-        Generated ${fmtDate(new Date())} · tochiproperty.com · info@tochiproperty.com
-      </div>
-      <div class="right">Your Property. Our Pride.</div>
+    <div class="section">
+      <div class="section-title">Account Summary</div>
+      <table class="summary-table">
+        <thead><tr><th>Description</th><th>Amount (KES)</th></tr></thead>
+        <tbody>
+          ${payment.lease?.monthlyRent ? `<tr><td>Monthly Rent Due</td><td class="amt">${fmtMoney(Number(payment.lease.monthlyRent))}</td></tr>` : ''}
+          ${previousBalance !== null ? `<tr><td>Outstanding Balance (Previous)</td><td class="amt">${fmtMoney(previousBalance)}</td></tr>` : ''}
+          <tr><td>Amount Paid (This Receipt)</td><td class="amt">${fmtMoney(amount)}</td></tr>
+          ${balanceCarriedForward !== null ? `<tr><td>Balance Carried Forward</td><td class="amt">${fmtMoney(balanceCarriedForward)}</td></tr>` : ''}
+        </tbody>
+      </table>
     </div>
+
+    <div class="section">
+      <div class="section-title">Notes</div>
+      <p class="notes-text">This receipt confirms payment received for the period stated above. Please retain this document for your records. For any discrepancies, contact Tochi Property within 7 days of issue.</p>
+    </div>
+
   </div>
 
   <button class="print-btn" onclick="window.print()">🖨️ Print Receipt</button>
@@ -192,7 +285,7 @@ export async function GET(
     return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
   }
 
-  const receiptNumber = payment.reference || `RCP-${payment.id.slice(-8).toUpperCase()}`
+  const receiptNumber = `RCP-${payment.id.slice(-8).toUpperCase()}`
   const html = buildReceiptHtml(payment, receiptNumber)
 
   return new NextResponse(html, {
@@ -220,7 +313,7 @@ export async function POST(
     return NextResponse.json({ error: 'Tenant has no email address on file' }, { status: 422 })
   }
 
-  const receiptNumber = payment.reference || `RCP-${payment.id.slice(-8).toUpperCase()}`
+  const receiptNumber = `RCP-${payment.id.slice(-8).toUpperCase()}`
   const html = buildReceiptHtml(payment, receiptNumber)
 
   const sent = await sendEmail({
