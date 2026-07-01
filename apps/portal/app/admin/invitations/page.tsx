@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ interface Invitation {
   tenant: { id: string; name: string; unit: string | null } | null
 }
 
-export default function InvitationsPage() {
+function InvitationsPage() {
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
   const [showInviteModal, setShowInviteModal] = useState(false)
@@ -392,5 +392,13 @@ export default function InvitationsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <InvitationsPage />
+    </Suspense>
   )
 }
