@@ -24,8 +24,8 @@ export const updateTenantSchema = z.object({
   emergencyPhone: z.string().optional(),
   propertyId: z.string().optional(),
   unit: z.string().optional(),
-  moveInDate: z.string().optional(),
-  moveOutDate: z.string().optional(),
+  moveInDate: z.string().nullable().optional(),
+  moveOutDate: z.string().nullable().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'PENDING', 'EVICTED', 'ARCHIVED']).optional(),
 })
 
