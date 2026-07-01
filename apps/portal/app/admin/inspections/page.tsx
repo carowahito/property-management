@@ -396,6 +396,22 @@ export default function InspectionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Deep-link: open the schedule modal prefilled when ?schedule=1 is present
+  // (e.g. from a tenant's move-out → "Schedule preliminary inspection" button)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('schedule') !== '1') return
+    setScheduleForm(f => ({
+      ...f,
+      propertyId: p.get('propertyId') || '',
+      unitId: p.get('unitId') || '',
+      tenantId: p.get('tenantId') || '',
+      type: p.get('type') || 'PRE_MOVE_OUT',
+    }))
+    setShowScheduleModal(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     fetch('/api/properties?limit=500').then(r => r.json()).then(d => setProperties(d.properties || [])).catch(() => {})
     fetch('/api/tenants?limit=500').then(r => r.json()).then(d => setTenants(d.tenants || [])).catch(() => {})
