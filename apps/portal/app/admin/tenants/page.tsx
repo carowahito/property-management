@@ -208,13 +208,6 @@ function TenantsPage() {
     leaseApproved: false,
   })
 
-  // Pre-fill form from URL params (e.g. coming from a unit page)
-  useEffect(() => {
-    const handler = () => setDropdownOpenId(null)
-    document.addEventListener('click', handler)
-    return () => document.removeEventListener('click', handler)
-  }, [])
-
   const handleTenantArchive = async (tenant: Tenant) => {
     const isArchived = tenant.status === 'ARCHIVED'
     if (!confirm(`${isArchived ? 'Restore' : 'Archive'} tenant "${tenant.name}"?`)) return
@@ -633,57 +626,74 @@ function TenantsPage() {
                       </span>
                     </td>
                     <td className="px-3 md:px-6 py-2 md:py-4 text-sm">
-                      <div className="relative" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative inline-block">
                         <button
-                          onClick={() => setDropdownOpenId(dropdownOpenId === tenant.id ? null : tenant.id)}
-                          className="p-1.5 rounded hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDropdownOpenId(dropdownOpenId === tenant.id ? null : tenant.id)
+                          }}
                           disabled={actionBusy === tenant.id}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          Actions
+                          <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
+
                         {dropdownOpenId === tenant.id && (
-                          <div className="absolute right-0 z-20 mt-1 w-44 bg-white rounded-lg shadow-lg border border-neutral-200 py-1">
-                            <Link
-                              href={`/admin/tenants/${tenant.id}`}
-                              className="flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              View
-                            </Link>
-                            <Link
-                              href={`/admin/tenants/${tenant.id}?edit=true`}
-                              className="flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Edit
-                            </Link>
-                            <div className="border-t border-neutral-100 my-1" />
-                            <button
-                              onClick={() => handleTenantArchive(tenant)}
-                              className="flex items-center gap-2.5 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 w-full text-left"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                              </svg>
-                              {tenant.status === 'ARCHIVED' ? 'Restore' : 'Archive'}
-                            </button>
-                            <button
-                              onClick={() => handleTenantDelete(tenant)}
-                              className="flex items-center gap-2.5 px-3 py-2 text-sm text-danger-600 hover:bg-danger-50 w-full text-left"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-danger-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Delete
-                            </button>
-                          </div>
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setDropdownOpenId(null)} />
+                            <div className="absolute right-0 z-20 mt-1 w-44 bg-white rounded-lg shadow-lg border border-neutral-200 py-1">
+                              <Link
+                                href={`/admin/tenants/${tenant.id}`}
+                                onClick={() => setDropdownOpenId(null)}
+                                className="flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                              >
+                                <svg className="w-4 h-4 mr-2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                              </Link>
+                              <Link
+                                href={`/admin/tenants/${tenant.id}?edit=true`}
+                                onClick={() => setDropdownOpenId(null)}
+                                className="flex items-center w-full px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                              >
+                                <svg className="w-4 h-4 mr-2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                              </Link>
+                              <div className="border-t border-neutral-100 mt-1 pt-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleTenantArchive(tenant)
+                                  }}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50"
+                                >
+                                  <svg className="w-4 h-4 mr-2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                  </svg>
+                                  {tenant.status === 'ARCHIVED' ? 'Restore' : 'Archive'}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleTenantDelete(tenant)
+                                  }}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                >
+                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </>
                         )}
                       </div>
                     </td>
