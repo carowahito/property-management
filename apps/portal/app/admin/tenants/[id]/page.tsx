@@ -818,6 +818,17 @@ export default function TenantCRMPage({ params }: Props) {
                   <div>
                     <p className="text-neutral-600">📦 Move-out Date</p>
                     <p className="font-medium text-danger-600">{formatDate(tenant.moveOut)}</p>
+                    <button
+                      onClick={() => router.push(
+                        `/admin/inspections?schedule=1&type=PRE_MOVE_OUT` +
+                        `&propertyId=${tenantApiData?.property?.id || ''}` +
+                        `&unitId=${tenantApiData?.unitRef?.id || tenantApiData?.unitId || ''}` +
+                        `&tenantId=${tenantId || ''}`
+                      )}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-700"
+                    >
+                      📋 Schedule Preliminary Inspection
+                    </button>
                   </div>
                 )}
                 {currentLease?.startDate && (
