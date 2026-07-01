@@ -89,55 +89,72 @@ async function getCompanyId(): Promise<string> {
 }
 
 async function uploadLandlords(rows: Record<string, string>[], validateOnly = false) {
-  const results = { created: 0, skipped: 0, errors: [] as string[] }
+  const results = { created: 0, updated: 0, skipped: 0, errors: [] as string[] }
+  const rowValidations: RowValidation[] = []
   const companyId = await getCompanyId()
 
-  for (const row of rows) {
+  const validStatuses = ['ACTIVE', 'INACTIVE', 'SUSPENDED']
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 1
+    const ref = row.referenceId || ''
+
     if (!row.name || !row.email || !row.phone) {
-      results.errors.push(`Skipping row: missing required fields (name, email, phone) — ${JSON.stringify(row)}`)
+      const missing = ['name', 'email', 'phone'].filter(f => !row[f]).join(', ')
+      const err = `Missing required fields: ${missing}`
+      results.errors.push(`Row ${rowNum}: ${err}`)
       results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name || '', email: row.email || '', status: 'error', error: err })
       continue
     }
-    try {
-      const existing = await prisma.landlord.findFirst({ where: { companyId, email: row.email } })
-      if (existing) {
-        await prisma.landlord.update({
-          where: { id: existing.id },
-          data: {
-            name: row.name,
-            phone: row.phone,
-            idNumber: row.idNumber || null,
-            address: row.address || null,
-            bankName: row.bankName || null,
-            bankAccount: row.bankAccount || null,
-            taxId: row.taxId || null,
-            status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
-          },
-        })
-      } else {
-        await prisma.landlord.create({
-          data: {
-            companyId,
-            name: row.name,
-            email: row.email,
-            phone: row.phone,
-            idNumber: row.idNumber || null,
-            address: row.address || null,
-            bankName: row.bankName || null,
-            bankAccount: row.bankAccount || null,
-            taxId: row.taxId || null,
-            status: (row.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') || 'ACTIVE',
-          },
-        })
-      }
-      results.created++
-    } catch (e) {
-      results.errors.push(`${row.email}: ${String(e)}`)
+
+    if (row.status && !validStatuses.includes(row.status.toUpperCase())) {
+      const err = `Invalid status "${row.status}". Use: ${validStatuses.join(', ')}`
+      results.errors.push(`Row ${rowNum}: ${err}`)
       results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
+      continue
+    }
+
+    const existing = await prisma.landlord.findFirst({ where: { companyId, email: row.email } })
+    const rowStatus = existing ? 'update' as const : 'valid' as const
+
+    if (validateOnly) {
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: rowStatus })
+      if (existing) results.updated++
+      else results.created++
+      continue
+    }
+
+    try {
+      const landlordData = {
+        name: row.name,
+        phone: row.phone,
+        idNumber: row.idNumber || null,
+        address: row.address || null,
+        bankName: row.bankName || null,
+        bankAccount: row.bankAccount || null,
+        taxId: row.taxId || null,
+        status: ((row.status?.toUpperCase() || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'),
+      }
+      if (existing) {
+        await prisma.landlord.update({ where: { id: existing.id }, data: landlordData })
+        results.updated++
+      } else {
+        await prisma.landlord.create({ data: { companyId, email: row.email, ...landlordData } })
+        results.created++
+      }
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: rowStatus })
+    } catch (e) {
+      const err = String(e)
+      results.errors.push(`Row ${rowNum} (${row.email}): ${err}`)
+      results.skipped++
+      rowValidations.push({ row: rowNum, referenceId: ref, name: row.name, email: row.email, status: 'error', error: err })
     }
   }
 
-  return NextResponse.json({ type: 'landlords', ...results })
+  return NextResponse.json({ type: 'landlords', validateOnly, rows: rowValidations, ...results })
 }
 
 async function uploadProperties(rows: Record<string, string>[], validateOnly = false) {

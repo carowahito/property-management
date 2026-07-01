@@ -1,2 +1,3 @@
-name,email,phone,idNumber,address,bankName,bankAccount,taxId,status
-Ann Karuga,carowahito@gmail.com,+254721998499,27206034,Nyeri,Family Bank,055000000204,,ACTIVE
+referenceId,name,email,phone,idNumber,address,bankName,bankAccount,taxId,status
+LL-001,Ann Karuga,ann@example.com,+254721998499,27206034,Nyeri,Family Bank,055000000204,,ACTIVE
+LL-002,Peter Kamau,peter@example.com,+254712345678,12345678,Westlands Nairobi,Equity Bank,0140123456789,A012345678X,ACTIVE
