@@ -17,7 +17,7 @@ function useEligible() {
   const twoYearsAgo = new Date()
   twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
   const eligible = moveInDate ? new Date(moveInDate) <= twoYearsAgo : false
-  return { eligible, isLoading: isLoading || !session }
+  return { eligible, isLoading: isLoading || !tenantId }
 }
 
 export default function PaymentPlansPage() {
