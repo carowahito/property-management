@@ -43,6 +43,7 @@ model Company {
   leaseTemplates      LeaseTemplate[]
   gatewayTransactions GatewayTransaction[]
   invitations         Invitation[]
+  agentIncomeEntries  AgentIncomeLedger[]
 
   @@index([slug])
   @@index([status])
@@ -358,6 +359,7 @@ model Tenant {
   inspections         Inspection[]
   renewals            LeaseRenewal[]
   invitations         Invitation[]
+  agentIncomeEntries  AgentIncomeLedger[]
 
   documents TenantDocument[]
 
@@ -570,6 +572,7 @@ model Lease {
   moveInChecklist    MoveInChecklist?
   inspections        Inspection[]
   renewals           LeaseRenewal[]
+  agentIncomeEntries AgentIncomeLedger[]
 
   @@index([tenantId])
   @@index([propertyId])
@@ -608,6 +611,7 @@ model Payment {
   landlord         Landlord?         @relation(fields: [landlordId], references: [id], onDelete: SetNull)
   rentTransactions RentTransaction[]
   ledgerEntries    TenantLedger[]
+  agentIncomeEntries AgentIncomeLedger[]
 
   @@index([tenantId])
   @@index([leaseId])
@@ -756,6 +760,7 @@ model RentTransaction {
   property          Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   payout            Payout?                @relation(fields: [payoutId], references: [id], onDelete: SetNull)
   distributionItems RentDistributionItem[]
+  agentIncomeEntries AgentIncomeLedger[]
 
   @@index([paymentId])
   @@index([tenantId])
@@ -801,6 +806,50 @@ model RentDistributionItem {
   @@index([type])
   @@index([recipientType])
   @@map("rent_distribution_items")
+}
+
+// Agent (Tochi) income ledger — SOP 004 / BR-2.
+// Late-payment penalties are AGENT income and are segregated here at the ledger
+// level (not merely filtered out of reports). Entries in this table must NEVER
+// be referenced by any landlord-facing statement, disbursement, or communication.
+model AgentIncomeLedger {
+  id       String            @id @default(cuid())
+  companyId String
+  source   AgentIncomeSource
+  amount   Decimal           @db.Decimal(10, 2)
+  currency String            @default("KES") // multi-currency-ready
+  period   String? // YYYY-MM the income relates to
+  description String?
+
+  // Optional links to originating records — agent-side only.
+  leaseId           String?
+  tenantId          String?
+  paymentId         String?
+  rentTransactionId String?
+
+  createdAt DateTime @default(now())
+
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lease           Lease?           @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  payment         Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  rentTransaction RentTransaction? @relation(fields: [rentTransactionId], references: [id], onDelete: SetNull)
+
+  // Idempotency: at most one entry per originating payment/transaction per source.
+  // (NULLs are distinct in Postgres, so entries lacking a link don't collide.)
+  @@unique([paymentId, source])
+  @@unique([rentTransactionId, source])
+  @@index([companyId])
+  @@index([source])
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([period])
+  @@map("agent_income_ledger")
+}
+
+enum AgentIncomeSource {
+  PENALTY // Late-payment penalty — never disbursed/shown to landlord (BR-2)
+  MANAGEMENT_FEE // Management commission earned by the agent
 }
 
 model LandlordStatement {

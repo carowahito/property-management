@@ -8,6 +8,7 @@
  */
 
 import { PrismaClient, FeeType, PaymentType, PayoutStatus, PaymentMethod, Prisma } from '@prisma/client';
+import { recordAgentIncome } from '@/lib/services/agent-income';
 
 const prisma = new PrismaClient();
 
@@ -202,6 +203,21 @@ export class RentProcessor {
 
         return rt;
       });
+
+      // BR-2: management fee is agent income — record it in the segregated
+      // agent-income ledger. Best-effort; never fails the rent processing.
+      if (managementFee > 0) {
+        await recordAgentIncome({
+          source: 'MANAGEMENT_FEE',
+          amount: managementFee,
+          companyId: payment.tenant.companyId,
+          tenantId: payment.tenantId,
+          leaseId: lease.id,
+          rentTransactionId: rentTransaction.id,
+          period: payment.dueDate,
+          description: 'Management fee',
+        });
+      }
 
       return {
         rentTransactionId: rentTransaction.id,
