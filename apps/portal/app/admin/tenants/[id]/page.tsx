@@ -1829,9 +1829,11 @@ export default function TenantCRMPage({ params }: Props) {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       required
                     >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                      <option value="Late">Late</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="EVICTED">Evicted</option>
+                      <option value="ARCHIVED">Archived</option>
                     </select>
                   </div>
                 </div>
