@@ -8,45 +8,53 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const adminUser = await prisma.user.findFirst({
-    where: {
-      active: true,
-      OR: [
-        ...(session.user.id ? [{ id: session.user.id }] : []),
-        ...(session.user.email ? [{ email: session.user.email }] : []),
-      ],
-    },
-  })
-  if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
-
-  const { searchParams } = new URL(req.url)
-  const role   = searchParams.get('role')?.toUpperCase()
-  const status = searchParams.get('status')?.toUpperCase()
-
-  const where: any = { companyId: adminUser.companyId }
-  if (role   && ['TENANT', 'LANDLORD', 'VENDOR'].includes(role))             where.role   = role
-  if (status && ['PENDING', 'ACCEPTED', 'EXPIRED'].includes(status)) where.status = status
-
-  // Auto-expire invitations whose expiresAt has passed
-  await prisma.invitation.updateMany({
-    where: { companyId: adminUser.companyId, status: 'PENDING', expiresAt: { lt: new Date() } },
-    data: { status: 'EXPIRED' },
-  })
-
-  const [invitations, pendingTenantCount] = await Promise.all([
-    prisma.invitation.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        tenant: { select: { id: true, name: true, unit: true } },
+  try {
+    const adminUser = await prisma.user.findFirst({
+      where: {
+        active: true,
+        OR: [
+          ...(session.user.id ? [{ id: session.user.id }] : []),
+          ...(session.user.email ? [{ email: session.user.email }] : []),
+        ],
       },
-    }),
-    prisma.invitation.count({
-      where: { companyId: adminUser.companyId, role: 'TENANT', status: 'PENDING' },
-    }),
-  ])
+    })
+    if (!adminUser) return NextResponse.json({ error: 'Admin user not found' }, { status: 403 })
 
-  return NextResponse.json({ invitations, pendingTenantCount })
+    const { searchParams } = new URL(req.url)
+    const role   = searchParams.get('role')?.toUpperCase()
+    const status = searchParams.get('status')?.toUpperCase()
+
+    const where: any = { companyId: adminUser.companyId }
+    if (role   && ['TENANT', 'LANDLORD', 'VENDOR'].includes(role))             where.role   = role
+    if (status && ['PENDING', 'ACCEPTED', 'EXPIRED'].includes(status)) where.status = status
+
+    // Auto-expire invitations whose expiresAt has passed
+    await prisma.invitation.updateMany({
+      where: { companyId: adminUser.companyId, status: 'PENDING', expiresAt: { lt: new Date() } },
+      data: { status: 'EXPIRED' },
+    })
+
+    const [invitations, pendingTenantCount] = await Promise.all([
+      prisma.invitation.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          tenant: { select: { id: true, name: true, unit: true } },
+        },
+      }),
+      prisma.invitation.count({
+        where: { companyId: adminUser.companyId, role: 'TENANT', status: 'PENDING' },
+      }),
+    ])
+
+    return NextResponse.json({ invitations, pendingTenantCount })
+  } catch (err) {
+    console.error('[GET /api/invitations] DB error:', err)
+    return NextResponse.json(
+      { error: 'Database temporarily unavailable, please retry' },
+      { status: 503 }
+    )
+  }
 }
 
 export async function POST(req: NextRequest) {
