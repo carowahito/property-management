@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createPaymentSchema } from '@/lib/validations/payment'
 import { syncPaymentToLedger } from '@/lib/services/tenant-ledger'
+import { generateAndSendReceipt } from '@/lib/services/receipt'
 
 export async function GET(request: NextRequest) {
   try {
@@ -177,6 +178,9 @@ export async function POST(request: NextRequest) {
 
     if (payment.status === 'PAID') {
       await syncPaymentToLedger(payment.id)
+      // BR-9: every allocated payment auto-generates a receipt (all methods).
+      // Best-effort delivery — must not fail the payment if comms are down.
+      await generateAndSendReceipt(payment.id)
     }
 
     return NextResponse.json(payment, { status: 201 })

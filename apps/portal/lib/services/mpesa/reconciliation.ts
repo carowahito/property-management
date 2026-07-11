@@ -13,6 +13,7 @@
  */
 
 import { prisma } from '@/lib/db';
+import { generateAndSendReceipt } from '@/lib/services/receipt';
 // Note: This module handles reconciliation for ALL payment gateways (M-Pesa, Card, Bank),
 // not just M-Pesa. The "mpesa" directory name is historical.
 
@@ -408,6 +409,10 @@ async function createTenantLedgerEntry(
       paymentId: payment.id,
     },
   });
+
+  // BR-9: auto-generate + send the tenant receipt on allocation (< 1 min target).
+  // Best-effort — never blocks or fails reconciliation if comms are unavailable.
+  await generateAndSendReceipt(payment.id);
 
   return ledgerEntry;
 }
