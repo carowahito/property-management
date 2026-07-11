@@ -67,6 +67,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // Role-based route guard: non-admin roles must not access /admin pages
+  if (path.startsWith('/admin') && token) {
+    const role = token.role as string | undefined
+    if (role === 'TENANT' || role === 'LANDLORD' || role === 'VENDOR') {
+      return NextResponse.redirect(new URL(getDashboardForRole(role), request.url))
+    }
+  }
+
   // Redirect to dashboard if accessing login route while authenticated
   if (isPublicRoute && token) {
     const dashboard = getDashboardForRole(token.role as string)
