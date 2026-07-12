@@ -43,6 +43,9 @@ model Company {
   leaseTemplates      LeaseTemplate[]
   gatewayTransactions GatewayTransaction[]
   invitations         Invitation[]
+  agentIncomeEntries  AgentIncomeLedger[]
+  legalCases          LegalCase[]
+  rentInvoices        RentInvoice[]
 
   @@index([slug])
   @@index([status])
@@ -187,6 +190,8 @@ model Property {
   arrearsEscalations  ArrearsEscalation[]
   moveInChecklists    MoveInChecklist[]
   renewals            LeaseRenewal[]
+  legalCases          LegalCase[]
+  rentInvoices        RentInvoice[]
 
   @@index([companyId])
   @@index([landlordId])
@@ -358,6 +363,9 @@ model Tenant {
   inspections         Inspection[]
   renewals            LeaseRenewal[]
   invitations         Invitation[]
+  agentIncomeEntries  AgentIncomeLedger[]
+  legalCases          LegalCase[]
+  rentInvoices        RentInvoice[]
 
   documents TenantDocument[]
 
@@ -532,6 +540,7 @@ model Lease {
   rentDueDay        Int      @default(1) // day of month rent is due
   gracePeriodDays   Int      @default(5) // days before overdue (SOP 004)
   latePenaltyPerDay Decimal  @default(500) @db.Decimal(10, 2) // KES/day after grace (agent income)
+  penaltyCapMonths  Decimal? @db.Decimal(4, 2) // OQ-4: cap late penalty at N months' rent (null = uncapped)
   petPolicy         String?
   specialConditions String?  @db.Text
 
@@ -570,6 +579,9 @@ model Lease {
   moveInChecklist    MoveInChecklist?
   inspections        Inspection[]
   renewals           LeaseRenewal[]
+  agentIncomeEntries AgentIncomeLedger[]
+  legalCases         LegalCase[]
+  rentInvoices       RentInvoice[]
 
   @@index([tenantId])
   @@index([propertyId])
@@ -608,6 +620,8 @@ model Payment {
   landlord         Landlord?         @relation(fields: [landlordId], references: [id], onDelete: SetNull)
   rentTransactions RentTransaction[]
   ledgerEntries    TenantLedger[]
+  agentIncomeEntries AgentIncomeLedger[]
+  allocations      PaymentAllocation[]
 
   @@index([tenantId])
   @@index([leaseId])
@@ -756,6 +770,7 @@ model RentTransaction {
   property          Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   payout            Payout?                @relation(fields: [payoutId], references: [id], onDelete: SetNull)
   distributionItems RentDistributionItem[]
+  agentIncomeEntries AgentIncomeLedger[]
 
   @@index([paymentId])
   @@index([tenantId])
@@ -801,6 +816,124 @@ model RentDistributionItem {
   @@index([type])
   @@index([recipientType])
   @@map("rent_distribution_items")
+}
+
+// Agent (Tochi) income ledger — SOP 004 / BR-2.
+// Late-payment penalties are AGENT income and are segregated here at the ledger
+// level (not merely filtered out of reports). Entries in this table must NEVER
+// be referenced by any landlord-facing statement, disbursement, or communication.
+model AgentIncomeLedger {
+  id       String            @id @default(cuid())
+  companyId String
+  source   AgentIncomeSource
+  amount   Decimal           @db.Decimal(10, 2)
+  currency String            @default("KES") // multi-currency-ready
+  period   String? // YYYY-MM the income relates to
+  description String?
+
+  // Optional links to originating records — agent-side only.
+  leaseId           String?
+  tenantId          String?
+  paymentId         String?
+  rentTransactionId String?
+
+  createdAt DateTime @default(now())
+
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lease           Lease?           @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  payment         Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  rentTransaction RentTransaction? @relation(fields: [rentTransactionId], references: [id], onDelete: SetNull)
+
+  // Idempotency: at most one entry per originating payment/transaction per source.
+  // (NULLs are distinct in Postgres, so entries lacking a link don't collide.)
+  @@unique([paymentId, source])
+  @@unique([rentTransactionId, source])
+  @@index([companyId])
+  @@index([source])
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([period])
+  @@map("agent_income_ledger")
+}
+
+enum AgentIncomeSource {
+  PENALTY // Late-payment penalty — never disbursed/shown to landlord (BR-2)
+  MANAGEMENT_FEE // Management commission earned by the agent
+}
+
+// SOP 004 — Rent invoice (the billing document). One per lease per period.
+// The financial record always exists (generated for every active lease);
+// sending is conditional (BR-1a). rentAmount and grace are snapshots taken at
+// generation time — never a live reference to the lease (§4.2).
+model RentInvoice {
+  id              String            @id @default(cuid())
+  invoiceNumber   Int               @unique @default(autoincrement())
+  companyId       String
+  leaseId         String
+  tenantId        String
+  propertyId      String
+  unitId          String?
+  period          String // YYYY-MM
+  dueDate         DateTime
+  rentAmount      Decimal           @db.Decimal(10, 2) // snapshot at generation
+  gracePeriodDays Int               @default(5) // snapshot at generation
+  status          RentInvoiceStatus @default(DRAFT)
+  issuedAt        DateTime?
+  lastSentAt      DateTime? // last time the invoice document was sent (BR-1a/1d)
+  events          Json? // send/suppress audit trail: [{at, type, channels, reason}] (BR-1a)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  company     Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lease       Lease               @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property    Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  allocations PaymentAllocation[]
+
+  @@unique([leaseId, period]) // one invoice per lease per period
+  @@index([companyId])
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([period])
+  @@map("rent_invoices")
+}
+
+enum RentInvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  IN_ARREARS
+  WRITTEN_OFF
+  LEGAL_REFERRAL
+}
+
+// SOP 004 §4.4 — explicit allocation of a payment to invoice(s) and/or the
+// penalty balance, with amount and order. Allocation order is a business rule
+// (OQ-1: oldest rent first, penalties last by default).
+model PaymentAllocation {
+  id              String           @id @default(cuid())
+  paymentId       String
+  invoiceId       String?
+  target          AllocationTarget @default(RENT)
+  amount          Decimal          @db.Decimal(10, 2)
+  allocationOrder Int              @default(0)
+  createdAt       DateTime         @default(now())
+
+  payment Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice RentInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([paymentId])
+  @@index([invoiceId])
+  @@map("payment_allocations")
+}
+
+enum AllocationTarget {
+  RENT
+  PENALTY
 }
 
 model LandlordStatement {
@@ -1910,6 +2043,7 @@ model ArrearsEscalation {
   // Penalty tracking (SOP 004 — agent income, never on landlord statements)
   penaltyPerDay  Decimal? @db.Decimal(10, 2) // captured from lease.latePenaltyPerDay at creation
   penaltyAccrued Decimal  @default(0) @db.Decimal(10, 2) // running total
+  penaltyCap     Decimal? @db.Decimal(10, 2) // OQ-4 snapshot: absolute cap (penaltyCapMonths × rent); null = uncapped
 
   // Escalation steps
   currentStep            ArrearsStep @default(REMINDER_SENT)
@@ -1937,24 +2071,74 @@ model ArrearsEscalation {
   suspectedAbandonment Boolean   @default(false)
   abandonmentFlaggedAt DateTime?
 
+  // Day-21 Notice to Remedy human gate (SOP 004 / BR-6)
+  consultationConfirmed Boolean   @default(false) // landlord + legal advisor consulted
+  directorApprovedBy    String? // user id of the approving Director (ADMIN)
+  directorApprovedAt    DateTime?
+  recordedDeliveryRef   String? // recorded-delivery reference — required to complete Day-21
+
   // Resolution
   resolvedAt DateTime?
-  resolution String? // PAID / PAYMENT_PLAN / EVICTION / VACATED
+  resolution String? // PAID / PAYMENT_PLAN / EVICTION / VACATED / LEGAL_REFERRAL
   notes      String?   @db.Text
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lease    Lease    @relation(fields: [leaseId], references: [id])
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
-  property Property @relation(fields: [propertyId], references: [id])
+  lease     Lease      @relation(fields: [leaseId], references: [id])
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  property  Property   @relation(fields: [propertyId], references: [id])
+  legalCase LegalCase? // opened on legal referral (BR-7)
 
   @@index([leaseId])
   @@index([tenantId])
   @@index([isActive])
   @@index([currentStep])
   @@map("arrears_escalations")
+}
+
+// SOP 004 / BR-7 — Legal/Dispute record opened when an arrears case is referred
+// to legal (Day 35+). Carries the full document bundle so the handoff to the
+// Legal/Dispute track (SOP 014) is self-contained.
+model LegalCase {
+  id                  String  @id @default(cuid())
+  companyId           String
+  leaseId             String
+  tenantId            String
+  propertyId          String
+  arrearsEscalationId String? @unique
+
+  status         LegalCaseStatus @default(OPEN)
+  amountClaimed  Decimal         @db.Decimal(10, 2) // rent outstanding referred
+  penaltyClaimed Decimal         @default(0) @db.Decimal(10, 2) // agent's claim (BR-2), never the landlord's
+  documentBundle Json? // snapshot: notices, comms log, payment history, statement of account
+  openedBy       String? // user id (Director/ADMIN)
+  openedAt       DateTime        @default(now())
+  notes          String?         @db.Text
+  resolvedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lease             Lease              @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property          Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  arrearsEscalation ArrearsEscalation? @relation(fields: [arrearsEscalationId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("legal_cases")
+}
+
+enum LegalCaseStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }
 
 // ============================================

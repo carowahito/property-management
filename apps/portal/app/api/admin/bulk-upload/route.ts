@@ -553,7 +553,14 @@ async function uploadTransactions(rows: Record<string, string>[], validateOnly =
     }
 
     const txDate = new Date(row.transactionDate)
-    const method = (row.paymentMethod as 'CASH' | 'BANK_TRANSFER' | 'MPESA' | 'CARD' | 'CHEQUE') || 'BANK_TRANSFER'
+    // SOP 004 / BR-12: no cash. Reject any imported cash receipt outright.
+    const rawMethod = (row.paymentMethod || '').trim().toUpperCase()
+    if (rawMethod === 'CASH') {
+      results.errors.push(`Transaction ${row.receiptNo || '(no ref)'}: cash payments are not permitted (SOP 004 BR-12)`)
+      results.skipped++
+      continue
+    }
+    const method = (rawMethod as 'BANK_TRANSFER' | 'MPESA' | 'CARD' | 'CHEQUE') || 'BANK_TRANSFER'
     const unit = row.unitNumber.trim()
 
     // Find the unit record then lease linked to it

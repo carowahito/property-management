@@ -1999,7 +1999,6 @@ export default function TenantCRMPage({ params }: Props) {
                   >
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="M-Pesa">M-Pesa</option>
-                    <option value="Cash">Cash</option>
                     <option value="Cheque">Cheque</option>
                     <option value="Card">Card</option>
                   </select>

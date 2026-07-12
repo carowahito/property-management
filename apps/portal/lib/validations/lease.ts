@@ -20,6 +20,7 @@ export const createLeaseSchema = z.object({
   rentDueDay: z.number().int().min(1).max(31).default(1),
   gracePeriodDays: z.number().int().min(0).default(5),
   latePenaltyPerDay: z.number().min(0).default(500),
+  penaltyCapMonths: z.number().min(0).optional(), // OQ-4: cap penalty at N months' rent (omit = uncapped)
   petPolicy: z.string().optional(),
   specialConditions: z.string().optional(),
   unitId: z.string().optional(),
@@ -50,6 +51,7 @@ export const updateLeaseSchema = z.object({
   rentDueDay: z.number().int().min(1).max(31).optional(),
   gracePeriodDays: z.number().int().min(0).optional(),
   latePenaltyPerDay: z.number().min(0).optional(),
+  penaltyCapMonths: z.number().min(0).optional(), // OQ-4
   petPolicy: z.string().optional(),
   specialConditions: z.string().optional(),
   unitId: z.string().optional(),

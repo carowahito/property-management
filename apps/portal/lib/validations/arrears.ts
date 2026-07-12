@@ -33,6 +33,9 @@ export const updateArrearsSchema = z.object({
 
 export const escalateArrearsSchema = z.object({
   notes: z.string().optional(),
+  // Day-21 Notice to Remedy human gate (BR-6)
+  consultationConfirmed: z.boolean().optional(),
+  recordedDeliveryRef: z.string().optional(),
 })
 
 export const resolveArrearsSchema = z.object({
