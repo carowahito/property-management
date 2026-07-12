@@ -74,8 +74,9 @@ export async function allocatePaymentToInvoices(paymentId: string): Promise<Allo
       await refreshInvoiceStatusFor(inv.id)
     }
 
-    // `remaining` is overpayment / prepayment — held as unallocated for now
-    // (OQ-3 tenant-credit handling is a separate concern).
+    // OQ-3: `remaining` is overpayment / prepayment. It stays as an unallocated
+    // remainder on the payment and is held as tenant credit — auto-applied to
+    // the next invoice at generation time (see tenant-credit.applyCreditToInvoice).
     return { allocated: allocatedTotal, leftover: remaining, invoicesTouched }
   } catch (err) {
     console.error(`[allocation] failed for payment ${paymentId}:`, err)

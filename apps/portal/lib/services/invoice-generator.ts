@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { applyCreditToInvoice } from '@/lib/services/tenant-credit'
 
 // ============================================================================
 // Rent invoice generation & lifecycle (SOP 004 / BR-1)
@@ -117,7 +118,7 @@ export async function generateInvoicesForPeriod(period?: string): Promise<Genera
       continue
     }
 
-    await prisma.rentInvoice.create({
+    const createdInvoice = await prisma.rentInvoice.create({
       data: {
         companyId: lease.property.companyId,
         leaseId: lease.id,
@@ -132,6 +133,8 @@ export async function generateInvoicesForPeriod(period?: string): Promise<Genera
         issuedAt: new Date(),
       },
     })
+    // OQ-3: auto-apply any held tenant credit (prepayment) to the new invoice.
+    await applyCreditToInvoice(createdInvoice.id)
     created++
   }
 

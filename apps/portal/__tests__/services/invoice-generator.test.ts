@@ -13,6 +13,8 @@ jest.mock('@/lib/db', () => ({
     paymentAllocation: { aggregate: jest.fn() },
   },
 }))
+// Credit auto-apply is tested separately; stub it here so generation stays isolated.
+jest.mock('@/lib/services/tenant-credit', () => ({ applyCreditToInvoice: jest.fn().mockResolvedValue(0) }))
 
 import { prisma } from '@/lib/db'
 import {
