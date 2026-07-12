@@ -11,6 +11,13 @@ jest.mock('@/lib/db', () => ({
 }))
 jest.mock('@/lib/services/email', () => ({ sendEmail: jest.fn().mockResolvedValue(true) }))
 jest.mock('@/lib/services/whatsapp', () => ({ sendWhatsApp: jest.fn().mockResolvedValue(true) }))
+// sendInvoice consults the arrears snapshot — stub it as "no arrears" so these
+// BR-1a tests exercise the plain-invoice path (BR-1b is tested separately).
+jest.mock('@/lib/services/arrears-snapshot', () => ({
+  computeArrearsSnapshot: jest.fn().mockResolvedValue({
+    currentRent: 0, broughtForward: [], broughtForwardTotal: 0, penaltyAccrued: 0, totalDue: 0, hasArrears: false,
+  }),
+}))
 
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/services/email'

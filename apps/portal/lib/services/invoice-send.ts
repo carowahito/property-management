@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/services/email'
 import { sendWhatsApp } from '@/lib/services/whatsapp'
 import { buildInvoiceHtml } from '@/lib/services/invoice-document'
+import { computeArrearsSnapshot } from '@/lib/services/arrears-snapshot'
 
 // ============================================================================
 // Invoice sending (SOP 004 / BR-1a)
@@ -30,7 +31,14 @@ async function appendEvent(invoiceId: string, current: unknown, event: InvoiceEv
   await prisma.rentInvoice.update({ where: { id: invoiceId }, data: { events: events as any, ...extra } })
 }
 
-export async function sendInvoice(invoiceId: string): Promise<InvoiceSendOutcome> {
+export interface SendInvoiceOptions {
+  /** BR-1d / OQ-6: restrict daily re-issue to email (WhatsApp reserved). */
+  emailOnly?: boolean
+  /** Label the audit event (e.g. 'reissue') instead of the default 'sent'. */
+  reason?: string
+}
+
+export async function sendInvoice(invoiceId: string, opts: SendInvoiceOptions = {}): Promise<InvoiceSendOutcome> {
   const inv = await prisma.rentInvoice.findUnique({
     where: { id: invoiceId },
     include: {
@@ -51,6 +59,10 @@ export async function sendInvoice(invoiceId: string): Promise<InvoiceSendOutcome
     return { status: 'suppressed', reason: 'prepaid' }
   }
 
+  // BR-1b: present the full live arrears position when the tenant is behind.
+  const arrears = await computeArrearsSnapshot(inv.leaseId, invoiceId)
+  const displayedDue = arrears.hasArrears ? arrears.totalDue : balanceDue
+
   const html = buildInvoiceHtml(
     {
       invoiceNumber: inv.invoiceNumber,
@@ -62,7 +74,8 @@ export async function sendInvoice(invoiceId: string): Promise<InvoiceSendOutcome
       unitNumber: inv.lease?.unitRef?.unitNumber ?? null,
       lease: inv.lease,
     },
-    balanceDue
+    balanceDue,
+    arrears
   )
 
   const channels: string[] = []
@@ -78,11 +91,11 @@ export async function sendInvoice(invoiceId: string): Promise<InvoiceSendOutcome
       console.error(`[invoice-send] email failed for ${invoiceId}:`, err)
     }
   }
-  if (inv.tenant.phone) {
+  if (inv.tenant.phone && !opts.emailOnly) {
     try {
       const ok = await sendWhatsApp({
         to: inv.tenant.phone,
-        message: `🏠 *Rent Invoice — ${inv.period}*\n\nHi ${inv.tenant.name}, your rent invoice (INV-${inv.invoiceNumber}) is ready.\n\n💰 Amount due: KES ${Number(balanceDue).toLocaleString()}\n📅 Due: ${new Date(inv.dueDate).toLocaleDateString()}\n\nPlease pay by the due date to avoid penalties.`,
+        message: `🏠 *Rent Invoice — ${inv.period}*\n\nHi ${inv.tenant.name}, your rent invoice (INV-${inv.invoiceNumber}) is ready.\n\n💰 Amount due: KES ${Number(displayedDue).toLocaleString()}\n📅 Due: ${new Date(inv.dueDate).toLocaleDateString()}\n\nPlease pay by the due date to avoid penalties.`,
       })
       if (ok) channels.push('whatsapp')
     } catch (err) {
@@ -93,7 +106,7 @@ export async function sendInvoice(invoiceId: string): Promise<InvoiceSendOutcome
   await appendEvent(
     invoiceId,
     inv.events,
-    { at: new Date().toISOString(), type: 'sent', channels },
+    { at: new Date().toISOString(), type: 'sent', channels, reason: opts.reason },
     { lastSentAt: new Date() }
   )
 
@@ -120,4 +133,64 @@ export async function sendInvoicesForPeriod(period: string): Promise<SendInvoice
     else skipped++
   }
   return { period, sent, suppressed, skipped }
+}
+
+export interface ReissueResult {
+  reissued: number
+  stopped: number
+}
+
+/**
+ * BR-1d: while an invoice is in arrears (from Day 6), re-issue it daily with the
+ * updated arrears snapshot. Email-only per OQ-6 (WhatsApp reserved for the Day-1
+ * invoice, penalty-activation notice and formal notices). Daily sends STOP when:
+ * the balance clears, an active promise-to-pay hold is set, or a Notice to
+ * Remedy has been issued (Day 21+, comms then controlled by the legal track).
+ */
+export async function reissueOverdueInvoices(today = new Date()): Promise<ReissueResult> {
+  const invoices = await prisma.rentInvoice.findMany({
+    where: { status: { in: ['OVERDUE', 'IN_ARREARS'] } },
+    select: {
+      id: true,
+      leaseId: true,
+      rentAmount: true,
+      allocations: { where: { target: 'RENT' }, select: { amount: true } },
+    },
+  })
+
+  let reissued = 0
+  let stopped = 0
+  for (const inv of invoices) {
+    const balance = Number(inv.rentAmount) - inv.allocations.reduce((s, a) => s + Number(a.amount), 0)
+    if (balance <= 0) {
+      stopped++
+      continue
+    }
+
+    const activeCase = await prisma.arrearsEscalation.findFirst({
+      where: { leaseId: inv.leaseId, isActive: true },
+      select: { currentStep: true, paymentPromisedDate: true },
+    })
+    if (activeCase) {
+      if (activeCase.currentStep === 'FORMAL_NOTICE' || activeCase.currentStep === 'LEGAL_REFERRAL') {
+        stopped++
+        continue
+      }
+      if (activeCase.paymentPromisedDate && new Date(activeCase.paymentPromisedDate) >= startOfToday(today)) {
+        stopped++
+        continue
+      }
+    }
+
+    const outcome = await sendInvoice(inv.id, { emailOnly: true, reason: 'reissue' })
+    if (outcome.status === 'sent') reissued++
+    else stopped++
+  }
+  return { reissued, stopped }
+}
+
+function startOfToday(d: Date): Date {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x
 }

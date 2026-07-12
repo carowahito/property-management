@@ -25,12 +25,41 @@ export interface InvoiceForDocument {
   lease?: { mpesaTill?: string | null; bankDetails?: string | null } | null
 }
 
-export function buildInvoiceHtml(inv: InvoiceForDocument, balanceDue: number): string {
+// BR-1b: optional live arrears position rendered on the invoice.
+export interface InvoiceArrears {
+  currentRent: number
+  broughtForward: { period: string; amount: number }[]
+  penaltyAccrued: number
+  totalDue: number
+  hasArrears: boolean
+}
+
+export function buildInvoiceHtml(inv: InvoiceForDocument, balanceDue: number, arrears?: InvoiceArrears): string {
   const rent = Number(inv.rentAmount)
   const unitLine = [inv.unitNumber ? `Unit ${inv.unitNumber}` : '', inv.property?.name, inv.property?.address].filter(Boolean).join(', ')
   const accountRef = inv.unitNumber || '—'
   const mpesa = inv.lease?.mpesaTill
   const bank = inv.lease?.bankDetails
+
+  // BR-1b: when the tenant is in arrears, present the full position — current
+  // rent, unpaid rent brought forward (by month), penalties, and total due.
+  const amountRows = arrears?.hasArrears
+    ? [
+        `<tr><td class="k">Current Month Rent (${inv.period})</td><td>KES ${fmtMoney(arrears.currentRent)}</td></tr>`,
+        ...arrears.broughtForward.map(
+          (b) => `<tr><td class="k">Brought Forward — ${b.period}</td><td>KES ${fmtMoney(b.amount)}</td></tr>`
+        ),
+        arrears.penaltyAccrued > 0
+          ? `<tr><td class="k">Late Payment Penalties</td><td>KES ${fmtMoney(arrears.penaltyAccrued)}</td></tr>`
+          : '',
+        `<tr><td class="k">Total Amount Due</td><td class="due">KES ${fmtMoney(arrears.totalDue)}</td></tr>`,
+      ]
+        .filter(Boolean)
+        .join('')
+    : [
+        `<tr><td class="k">Monthly Rent</td><td>KES ${fmtMoney(rent)}</td></tr>`,
+        `<tr><td class="k">Amount Due</td><td class="due">KES ${fmtMoney(balanceDue)}</td></tr>`,
+      ].join('')
 
   const payLines = [
     mpesa ? `<tr><td class="k">M-Pesa</td><td class="v">${mpesa}</td></tr>` : '',
@@ -69,10 +98,7 @@ export function buildInvoiceHtml(inv: InvoiceForDocument, balanceDue: number): s
     <tr><td class="k">Due Date</td><td>${fmtDate(inv.dueDate)}</td></tr>
   </table>
   <div class="sec-title">Amount</div>
-  <table>
-    <tr><td class="k">Monthly Rent</td><td>KES ${fmtMoney(rent)}</td></tr>
-    <tr><td class="k">Amount Due</td><td class="due">KES ${fmtMoney(balanceDue)}</td></tr>
-  </table>
+  <table>${amountRows}</table>
   <div class="sec-title">How to Pay</div>
   <table>${payLines}</table>
   <p style="font-size:12px;color:#4b5563;line-height:1.6">Please pay by the due date to avoid late-payment penalties. Quote your account reference with every payment. Contact Tochi Property with any queries.</p>
