@@ -45,6 +45,7 @@ model Company {
   invitations         Invitation[]
   agentIncomeEntries  AgentIncomeLedger[]
   legalCases          LegalCase[]
+  rentInvoices        RentInvoice[]
 
   @@index([slug])
   @@index([status])
@@ -190,6 +191,7 @@ model Property {
   moveInChecklists    MoveInChecklist[]
   renewals            LeaseRenewal[]
   legalCases          LegalCase[]
+  rentInvoices        RentInvoice[]
 
   @@index([companyId])
   @@index([landlordId])
@@ -363,6 +365,7 @@ model Tenant {
   invitations         Invitation[]
   agentIncomeEntries  AgentIncomeLedger[]
   legalCases          LegalCase[]
+  rentInvoices        RentInvoice[]
 
   documents TenantDocument[]
 
@@ -577,6 +580,7 @@ model Lease {
   renewals           LeaseRenewal[]
   agentIncomeEntries AgentIncomeLedger[]
   legalCases         LegalCase[]
+  rentInvoices       RentInvoice[]
 
   @@index([tenantId])
   @@index([propertyId])
@@ -616,6 +620,7 @@ model Payment {
   rentTransactions RentTransaction[]
   ledgerEntries    TenantLedger[]
   agentIncomeEntries AgentIncomeLedger[]
+  allocations      PaymentAllocation[]
 
   @@index([tenantId])
   @@index([leaseId])
@@ -854,6 +859,79 @@ model AgentIncomeLedger {
 enum AgentIncomeSource {
   PENALTY // Late-payment penalty — never disbursed/shown to landlord (BR-2)
   MANAGEMENT_FEE // Management commission earned by the agent
+}
+
+// SOP 004 — Rent invoice (the billing document). One per lease per period.
+// The financial record always exists (generated for every active lease);
+// sending is conditional (BR-1a). rentAmount and grace are snapshots taken at
+// generation time — never a live reference to the lease (§4.2).
+model RentInvoice {
+  id              String            @id @default(cuid())
+  invoiceNumber   Int               @unique @default(autoincrement())
+  companyId       String
+  leaseId         String
+  tenantId        String
+  propertyId      String
+  unitId          String?
+  period          String // YYYY-MM
+  dueDate         DateTime
+  rentAmount      Decimal           @db.Decimal(10, 2) // snapshot at generation
+  gracePeriodDays Int               @default(5) // snapshot at generation
+  status          RentInvoiceStatus @default(DRAFT)
+  issuedAt        DateTime?
+  lastSentAt      DateTime? // last time the invoice document was sent (BR-1a/1d)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  company     Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lease       Lease               @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property    Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  allocations PaymentAllocation[]
+
+  @@unique([leaseId, period]) // one invoice per lease per period
+  @@index([companyId])
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([period])
+  @@map("rent_invoices")
+}
+
+enum RentInvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  IN_ARREARS
+  WRITTEN_OFF
+  LEGAL_REFERRAL
+}
+
+// SOP 004 §4.4 — explicit allocation of a payment to invoice(s) and/or the
+// penalty balance, with amount and order. Allocation order is a business rule
+// (OQ-1: oldest rent first, penalties last by default).
+model PaymentAllocation {
+  id              String           @id @default(cuid())
+  paymentId       String
+  invoiceId       String?
+  target          AllocationTarget @default(RENT)
+  amount          Decimal          @db.Decimal(10, 2)
+  allocationOrder Int              @default(0)
+  createdAt       DateTime         @default(now())
+
+  payment Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice RentInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([paymentId])
+  @@index([invoiceId])
+  @@map("payment_allocations")
+}
+
+enum AllocationTarget {
+  RENT
+  PENALTY
 }
 
 model LandlordStatement {

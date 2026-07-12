@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runArrearsScan } from '@/lib/services/arrears-scan'
+import { refreshInvoiceStatuses } from '@/lib/services/invoice-generator'
 
 // SOP 004 / BR-5 — scheduled arrears scan.
 // Runs daily via Vercel Cron (see vercel.json). Vercel sends the request with
@@ -21,8 +22,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // BR-1: refresh invoice statuses first (flip to OVERDUE once grace lapses),
+    // then scan arrears off the refreshed positions.
+    const invoices = await refreshInvoiceStatuses()
     const result = await runArrearsScan()
-    return NextResponse.json({ ok: true, ...result })
+    return NextResponse.json({ ok: true, invoices, ...result })
   } catch (error) {
     console.error('[cron] arrears scan failed:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
