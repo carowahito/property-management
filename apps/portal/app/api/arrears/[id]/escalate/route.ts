@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { escalateArrearsSchema } from '@/lib/validations/arrears'
 import { openLegalCaseForArrears } from '@/lib/services/legal-case'
+import { penaltyAccruedFor } from '@/lib/services/arrears-scan'
 
 const STEP_ORDER = [
   'REMINDER_SENT',
@@ -153,9 +154,13 @@ export async function POST(
       updateData.landlordNotifiedAt = new Date()
     }
 
-    // Recalculate accrued penalty on every escalation
+    // Recalculate accrued penalty on every escalation (OQ-4: capped).
     const penaltyPerDay = Number(existing.penaltyPerDay ?? 500)
-    updateData.penaltyAccrued = existing.daysOverdue * penaltyPerDay
+    updateData.penaltyAccrued = penaltyAccruedFor(
+      existing.daysOverdue,
+      penaltyPerDay,
+      existing.penaltyCap != null ? Number(existing.penaltyCap) : null
+    )
 
     // BR-7: legal referral closes the arrears case (the legal record takes over).
     if (nextStep === 'LEGAL_REFERRAL') {

@@ -23,6 +23,20 @@ interface OverdueComputation {
   daysOverdue: number
   penaltyPerDay: number
   penaltyAccrued: number
+  penaltyCap: number | null
+}
+
+// OQ-4: penalty accrues daily but never exceeds the cap (if one is configured).
+export function penaltyAccruedFor(daysOverdue: number, penaltyPerDay: number, cap?: number | null): number {
+  const raw = Math.max(0, daysOverdue) * penaltyPerDay
+  return cap != null && cap > 0 ? Math.min(raw, cap) : raw
+}
+
+// OQ-4: absolute cap for a lease = penaltyCapMonths × monthly rent (null = uncapped).
+function penaltyCapFor(lease: any): number | null {
+  const months = lease.penaltyCapMonths == null ? null : Number(lease.penaltyCapMonths)
+  if (months == null || months <= 0) return null
+  return months * Number(lease.monthlyRent ?? 0)
 }
 
 // OQ-2 (resolved): escalation timers run on CALENDAR days. Days overdue is a
@@ -34,6 +48,7 @@ function computeOverdue(lease: any, today: Date): OverdueComputation {
   const dueDay = lease.rentDueDay ?? 1
   const graceDays = lease.gracePeriodDays ?? 5
   const penaltyPerDay = Number(lease.latePenaltyPerDay ?? 500)
+  const penaltyCap = penaltyCapFor(lease)
 
   const dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay)
   let effectiveDueDate = dueDate
@@ -45,7 +60,7 @@ function computeOverdue(lease: any, today: Date): OverdueComputation {
   overdueThreshold.setDate(overdueThreshold.getDate() + graceDays)
 
   if (today <= overdueThreshold || lease.startDate > effectiveDueDate) {
-    return { overdue: false, daysOverdue: 0, penaltyPerDay, penaltyAccrued: 0 }
+    return { overdue: false, daysOverdue: 0, penaltyPerDay, penaltyAccrued: 0, penaltyCap }
   }
 
   const daysOverdue = Math.floor((today.getTime() - overdueThreshold.getTime()) / 86400000)
@@ -53,7 +68,8 @@ function computeOverdue(lease: any, today: Date): OverdueComputation {
     overdue: true,
     daysOverdue,
     penaltyPerDay,
-    penaltyAccrued: Math.max(0, daysOverdue) * penaltyPerDay,
+    penaltyAccrued: penaltyAccruedFor(daysOverdue, penaltyPerDay, penaltyCap),
+    penaltyCap,
     effectiveDueDate,
     dueDay,
   } as OverdueComputation & { effectiveDueDate: Date; dueDay: number }
@@ -129,6 +145,7 @@ export async function runArrearsScan(): Promise<ArrearsScanResult> {
         daysOverdue: comp.daysOverdue,
         penaltyPerDay: comp.penaltyPerDay,
         penaltyAccrued: comp.penaltyAccrued,
+        penaltyCap: comp.penaltyCap, // OQ-4 snapshot
         reminderSentAt: new Date(),
         currentStep: stepForDays(comp.daysOverdue) as any,
       },

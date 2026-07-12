@@ -540,6 +540,7 @@ model Lease {
   rentDueDay        Int      @default(1) // day of month rent is due
   gracePeriodDays   Int      @default(5) // days before overdue (SOP 004)
   latePenaltyPerDay Decimal  @default(500) @db.Decimal(10, 2) // KES/day after grace (agent income)
+  penaltyCapMonths  Decimal? @db.Decimal(4, 2) // OQ-4: cap late penalty at N months' rent (null = uncapped)
   petPolicy         String?
   specialConditions String?  @db.Text
 
@@ -2042,6 +2043,7 @@ model ArrearsEscalation {
   // Penalty tracking (SOP 004 — agent income, never on landlord statements)
   penaltyPerDay  Decimal? @db.Decimal(10, 2) // captured from lease.latePenaltyPerDay at creation
   penaltyAccrued Decimal  @default(0) @db.Decimal(10, 2) // running total
+  penaltyCap     Decimal? @db.Decimal(10, 2) // OQ-4 snapshot: absolute cap (penaltyCapMonths × rent); null = uncapped
 
   // Escalation steps
   currentStep            ArrearsStep @default(REMINDER_SENT)
