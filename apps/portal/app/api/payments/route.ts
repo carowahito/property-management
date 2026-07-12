@@ -6,6 +6,7 @@ import { createPaymentSchema } from '@/lib/validations/payment'
 import { syncPaymentToLedger } from '@/lib/services/tenant-ledger'
 import { generateAndSendReceipt } from '@/lib/services/receipt'
 import { recordAgentIncome } from '@/lib/services/agent-income'
+import { allocatePaymentToInvoices } from '@/lib/services/payment-allocation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -194,6 +195,10 @@ export async function POST(request: NextRequest) {
           period: payment.dueDate,
           description: 'Late payment penalty',
         })
+      }
+      // §4.4: allocate a rent payment across unpaid invoices (oldest first).
+      if (payment.type === 'RENT') {
+        await allocatePaymentToInvoices(payment.id)
       }
     }
 

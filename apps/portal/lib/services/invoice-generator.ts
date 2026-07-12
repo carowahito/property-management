@@ -139,6 +139,40 @@ export async function generateInvoicesForPeriod(period?: string): Promise<Genera
 }
 
 /**
+ * Recompute and persist a single invoice's status from its current rent
+ * allocations. Used after an allocation lands. Returns the resulting status.
+ */
+export async function refreshInvoiceStatusFor(invoiceId: string, today = new Date()): Promise<string | null> {
+  const inv = await prisma.rentInvoice.findUnique({
+    where: { id: invoiceId },
+    select: {
+      rentAmount: true,
+      gracePeriodDays: true,
+      dueDate: true,
+      status: true,
+      allocations: { where: { target: 'RENT' }, select: { amount: true } },
+    },
+  })
+  if (!inv) return null
+
+  const allocatedRent = inv.allocations.reduce((s, a) => s + Number(a.amount), 0)
+  const next = deriveInvoiceStatus(
+    {
+      rentAmount: Number(inv.rentAmount),
+      gracePeriodDays: inv.gracePeriodDays,
+      dueDate: inv.dueDate,
+      currentStatus: inv.status,
+    },
+    allocatedRent,
+    today
+  )
+  if (next !== inv.status) {
+    await prisma.rentInvoice.update({ where: { id: invoiceId }, data: { status: next as any } })
+  }
+  return next
+}
+
+/**
  * BR-1: refresh the status of live invoices (e.g. flip ISSUED → OVERDUE once
  * the grace period lapses, or → PARTIALLY_PAID/PAID as allocations land).
  * Runs daily via the cron. Skips frozen statuses. Returns the number changed.
