@@ -25,6 +25,11 @@ interface OverdueComputation {
   penaltyAccrued: number
 }
 
+// OQ-2 (resolved): escalation timers run on CALENDAR days. Days overdue is a
+// plain calendar-day count from (due date + grace); weekends and public
+// holidays are NOT skipped or adjusted. If Day 6 lands on a holiday, the
+// invoice still flips to overdue that day. All day math here is intentionally
+// calendar-based (setDate(+n) / ms division), matching SOP 004.
 function computeOverdue(lease: any, today: Date): OverdueComputation {
   const dueDay = lease.rentDueDay ?? 1
   const graceDays = lease.gracePeriodDays ?? 5
