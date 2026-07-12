@@ -880,6 +880,7 @@ model RentInvoice {
   status          RentInvoiceStatus @default(DRAFT)
   issuedAt        DateTime?
   lastSentAt      DateTime? // last time the invoice document was sent (BR-1a/1d)
+  events          Json? // send/suppress audit trail: [{at, type, channels, reason}] (BR-1a)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 

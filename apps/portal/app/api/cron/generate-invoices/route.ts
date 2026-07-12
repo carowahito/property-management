@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateInvoicesForPeriod } from '@/lib/services/invoice-generator'
+import { sendInvoicesForPeriod } from '@/lib/services/invoice-send'
 
 // SOP 004 / BR-1 — scheduled monthly invoice generation (Day 1).
 // Runs via Vercel Cron (see vercel.json), authed by CRON_SECRET.
@@ -17,8 +18,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // BR-1: generate the financial record for every active lease, then
+    // BR-1a: auto-send each (suppressing any already settled by prepayment).
     const result = await generateInvoicesForPeriod()
-    return NextResponse.json({ ok: true, ...result })
+    const sends = await sendInvoicesForPeriod(result.period)
+    return NextResponse.json({ ok: true, ...result, sends })
   } catch (error) {
     console.error('[cron] invoice generation failed:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
