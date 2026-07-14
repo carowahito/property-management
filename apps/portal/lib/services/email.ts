@@ -1,6 +1,13 @@
-/**
- * Email Service using SendGrid
- */
+import { Resend } from 'resend'
+
+const FROM = 'Tochi Property <noreply@tochiproperty.com>'
+
+let _resend: Resend | null = null
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
 
 interface EmailOptions {
   to: string | string[]
@@ -16,43 +23,23 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     return false
   }
 
-  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY.startsWith('your-')) {
-    console.warn('SendGrid API key not configured. Email not sent.')
+  const resend = getResend()
+  if (!resend) {
+    console.warn('RESEND_API_KEY not configured. Email not sent.')
     return false
   }
 
   try {
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
-      },
-      body: JSON.stringify({
-        personalizations: [
-          {
-            to: Array.isArray(options.to)
-              ? options.to.map((email) => ({ email }))
-              : [{ email: options.to }],
-          },
-        ],
-        from: {
-          email: options.from || process.env.SENDGRID_FROM_EMAIL || 'info@tochiproperty.com',
-          name: 'Tochi Property',
-        },
-        subject: options.subject,
-        content: [
-          {
-            type: options.html ? 'text/html' : 'text/plain',
-            value: options.html || options.text || '',
-          },
-        ],
-      }),
+    const { error } = await resend.emails.send({
+      from: options.from || FROM,
+      to: Array.isArray(options.to) ? options.to : [options.to],
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
     })
 
-    if (!response.ok) {
-      const error = await response.text()
-      console.error('SendGrid error:', error)
+    if (error) {
+      console.error('Resend error:', error)
       return false
     }
 
@@ -255,4 +242,42 @@ export async function sendLandlordPayout(params: {
     subject,
     html,
   })
+}
+
+export async function sendInvitation(params: {
+  name: string
+  email: string
+  role: 'TENANT' | 'LANDLORD' | 'VENDOR'
+  inviteUrl: string
+  expiresAt: Date
+}) {
+  const roleLabel = params.role === 'TENANT' ? 'Tenant' : params.role === 'LANDLORD' ? 'Owner' : 'Vendor'
+  const subject = `You've been invited to Tochi Property — ${roleLabel} Portal`
+  const expiry = params.expiresAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0; padding:0; background:#f4f6f8; font-family:'Open Sans',Arial,sans-serif;">
+  <div style="max-width:600px; margin:24px auto; background:white; border-radius:6px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+    ${emailHeader(`You're invited — ${roleLabel} Portal`)}
+    ${bodyText(`Dear ${params.name},`)}
+    ${bodyText(`Tochi Property has invited you to set up your <strong>${roleLabel} account</strong>. Click the button below to accept the invitation and create your password.`)}
+    <div style="padding:20px 32px;">
+      <a href="${params.inviteUrl}" style="display:inline-block; background:#E8960C; color:white; font-family:'Montserrat',Arial,sans-serif; font-weight:700; font-size:14px; letter-spacing:0.5px; text-decoration:none; padding:14px 28px; border-radius:4px;">
+        Accept Invitation →
+      </a>
+    </div>
+    ${infoBox(`<p style="margin:0; font-size:13px; color:#6b7280;">This link expires on <strong style="color:#1A3A5C;">${expiry}</strong>. If you did not expect this invitation, you can ignore this email.</p>`)}
+    ${bodyText('If the button above doesn\'t work, copy and paste this link into your browser:')}
+    <p style="padding:0 32px; font-size:12px; color:#6b7280; word-break:break-all;">${params.inviteUrl}</p>
+    ${emailFooter}
+  </div>
+</body>
+</html>`
+
+  return sendEmail({ to: params.email, subject, html })
 }

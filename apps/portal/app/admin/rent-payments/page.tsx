@@ -524,7 +524,6 @@ export default function RentPaymentsPage() {
                   <select required value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value as any }))} className={inputCls}>
                     <option value="MPESA">M-PESA</option>
                     <option value="BANK_TRANSFER">Bank Transfer</option>
-                    <option value="CASH">Cash</option>
                     <option value="CHEQUE">Cheque</option>
                     <option value="CARD">Card</option>
                   </select>

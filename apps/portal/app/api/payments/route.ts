@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { createPaymentSchema } from '@/lib/validations/payment'
 import { syncPaymentToLedger } from '@/lib/services/tenant-ledger'
+import { generateAndSendReceipt } from '@/lib/services/receipt'
+import { recordAgentIncome } from '@/lib/services/agent-income'
+import { allocatePaymentToInvoices } from '@/lib/services/payment-allocation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -177,6 +180,26 @@ export async function POST(request: NextRequest) {
 
     if (payment.status === 'PAID') {
       await syncPaymentToLedger(payment.id)
+      // BR-9: every allocated payment auto-generates a receipt (all methods).
+      // Best-effort delivery — must not fail the payment if comms are down.
+      await generateAndSendReceipt(payment.id)
+      // BR-2: a late-payment penalty is agent income — record it in the
+      // segregated agent-income ledger, never on landlord-facing artifacts.
+      if (payment.type === 'LATE_FEE') {
+        await recordAgentIncome({
+          source: 'PENALTY',
+          amount: Number(payment.amount),
+          tenantId: payment.tenantId,
+          leaseId: payment.leaseId ?? undefined,
+          paymentId: payment.id,
+          period: payment.dueDate,
+          description: 'Late payment penalty',
+        })
+      }
+      // §4.4: allocate a rent payment across unpaid invoices (oldest first).
+      if (payment.type === 'RENT') {
+        await allocatePaymentToInvoices(payment.id)
+      }
     }
 
     return NextResponse.json(payment, { status: 201 })

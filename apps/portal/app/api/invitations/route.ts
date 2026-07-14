@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
+import { sendInvitation } from '@/lib/services/email'
 import crypto from 'crypto'
 
 export async function GET(req: NextRequest) {
@@ -140,8 +141,14 @@ export async function POST(req: NextRequest) {
 
   const inviteUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/invite?token=${token}`
 
-  // TODO: Send email with inviteUrl via SendGrid/Resend
-  // For now, return the URL so the admin can share it manually
+  await sendInvitation({
+    name,
+    email,
+    role: role as 'TENANT' | 'LANDLORD' | 'VENDOR',
+    inviteUrl,
+    expiresAt: invitation.expiresAt,
+  })
+
   return NextResponse.json({
     message: 'Invitation created',
     invitation: {
