@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/services/email'
 import { sendPaymentConfirmationWhatsApp } from '@/lib/services/whatsapp'
+import { brandHeaderTable } from '@/lib/services/brand'
 
 // ============================================================================
 // Receipt service (SOP 004 / BR-9)
@@ -9,10 +10,9 @@ import { sendPaymentConfirmationWhatsApp } from '@/lib/services/whatsapp'
 // No payment reaches an allocated/paid state without a receipt being generated.
 // ============================================================================
 
-const tochiIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="145 75 1210 1350" style="height:44px;width:auto;display:block;flex-shrink:0;"><path fill="#e8960c" d="M 1253.820312 663.828125 C 1209.265625 708.382812 1154.863281 739.253906 1095.15625 754.324219 L 1095.15625 1080.085938 C 1095.15625 1172.246094 1059.222656 1258.882812 994.050781 1324.027344 C 928.875 1389.203125 842.210938 1425.082031 750.054688 1425.082031 C 657.894531 1425.082031 571.261719 1389.203125 506.085938 1324.027344 C 440.910156 1258.855469 405.007812 1172.246094 405.007812 1080.085938 L 405.007812 359.390625 L 1034.199219 359.390625 C 1067.820312 359.390625 1095.074219 386.425781 1095.074219 420.046875 C 1095.074219 453.667969 1067.820312 480.707031 1034.199219 480.707031 L 527.304688 480.707031 L 527.304688 1080.085938 C 527.304688 1203.390625 627.320312 1303.65625 750.707031 1303.328125 C 874.09375 1302.976562 972.859375 1201.324219 972.859375 1077.9375 L 972.859375 765.152344 L 810.742188 765.152344 L 810.742188 1100.378906 C 810.742188 1134 783.703125 1161.257812 750.082031 1161.257812 C 716.460938 1161.257812 689.421875 1134 689.421875 1100.378906 L 689.421875 642.855469 L 1009.855469 642.855469 C 1133.15625 642.855469 1233.421875 542.34375 1233.09375 418.960938 C 1232.742188 295.574219 1131.089844 196.34375 1007.703125 196.34375 L 490.335938 196.34375 C 367.058594 196.34375 267.558594 296.582031 267.558594 419.859375 L 267.558594 682.894531 C 259.96875 676.828125 253.304688 670.492188 246.613281 663.828125 C 181.4375 598.679688 145.316406 512.042969 145.316406 419.886719 C 145.316406 327.726562 181.195312 241.117188 246.367188 175.972656 C 311.515625 110.824219 398.152344 75 490.308594 75 L 1009.828125 75 C 1101.984375 75 1188.621094 110.824219 1253.769531 175.972656 C 1318.941406 241.144531 1354.820312 327.699219 1354.820312 419.859375 C 1354.820312 512.015625 1318.96875 598.652344 1253.820312 663.828125 Z"/></svg>`
 
 function fmtDate(d: Date | string | null) {
-  if (!d) return '—'
+  if (!d) return '-'
   const dd = new Date(d)
   return `${dd.getDate()} ${['January','February','March','April','May','June','July','August','September','October','November','December'][dd.getMonth()]} ${dd.getFullYear()}`
 }
@@ -121,7 +121,7 @@ export function receiptNumberFor(payment: { id: string }): string {
 }
 
 export function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, receiptNumber: string): string {
-  const propertyAddress = payment.lease?.property?.address || payment.property?.address || '—'
+  const propertyAddress = payment.lease?.property?.address || payment.property?.address || '-'
   const propertyName = payment.lease?.property?.name || payment.property?.name || ''
   const unitNumber = payment.lease?.unitRef?.unitNumber || payment.unit?.unitNumber || ''
   const unitLine = [unitNumber ? `Unit ${unitNumber}` : '', propertyName, propertyAddress].filter(Boolean).join(', ')
@@ -158,7 +158,7 @@ export function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, rec
   const amount = Number(payment.amount)
   const { start: periodStart, end: periodEnd } = monthRange(new Date(payment.dueDate))
   const periodLabel = payment.type === 'RENT' ? 'Rent Period Covered' : 'Billing Period'
-  const periodText = `${fmtDate(periodStart)} – ${fmtDate(periodEnd)}`
+  const periodText = `${fmtDate(periodStart)} to ${fmtDate(periodEnd)}`
 
   const ledgerEntry = payment.ledgerEntries?.[0]
   const balanceCarriedForward = ledgerEntry ? Number(ledgerEntry.balance) : null
@@ -170,7 +170,7 @@ export function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, rec
   <meta charset="UTF-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-  <title>${docTitle} — ${receiptNumber}</title>
+  <title>${docTitle} - ${receiptNumber}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Open Sans', Arial, sans-serif; color: #1a1a1a; font-size: 13px; background: #f4f6f8; }
@@ -211,31 +211,19 @@ export function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, rec
 </head>
 <body>
   <div class="page">
-    <div class="header-row">
-      <div class="brand-block">
-        ${tochiIconSvg}
-        <div class="brand-title">TOCHI PROPERTY</div>
-      </div>
-      <div>
-        <div class="doc-title">${docTitle}</div>
-        <div class="status-badge"><span class="${isPaid ? 'status-paid' : 'status-pending'}">${isPaid ? 'PAID' : payment.status}</span></div>
-      </div>
-    </div>
-    <div class="brand-tag">Your Property. Our Pride.</div>
-    <div class="contact-line">info@tochiproperty.com&nbsp;&nbsp;|&nbsp;&nbsp;tochiproperty.com</div>
-
-    <hr class="brand-divider">
-
-    <div class="meta-row">
-      <div>Receipt No.: ${receiptNumber}</div>
-      <div>Date Issued: ${fmtDate(new Date())}</div>
-    </div>
+    ${brandHeaderTable(`<div style="font-family:'Montserrat',Arial,sans-serif;font-weight:700;font-size:16px;color:#1A3A5C;">${docTitle}</div><div style="margin-top:4px;"><span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:0.5px;background:${isPaid ? '#dcfce7' : '#fef9c3'};color:${isPaid ? '#166534' : '#854d0e'};">${isPaid ? 'PAID' : payment.status}</span></div>`)}
+    <table role="presentation" width="100%" style="border-collapse:collapse;margin-bottom:22px;">
+      <tr>
+        <td style="font-size:13px;font-weight:600;color:#1A3A5C;">Receipt No.: ${receiptNumber}</td>
+        <td style="font-size:13px;font-weight:600;color:#1A3A5C;text-align:right;">Date Issued: ${fmtDate(new Date())}</td>
+      </tr>
+    </table>
 
     <div class="section">
       <div class="section-title">Tenant &amp; Property Details</div>
       <table class="kv-table">
         <tr><td class="k">Tenant Name</td><td class="v">${payment.tenant.name}</td></tr>
-        <tr><td class="k">Property Address</td><td class="v">${unitLine || '—'}</td></tr>
+        <tr><td class="k">Property Address</td><td class="v">${unitLine || '-'}</td></tr>
         <tr><td class="k">Landlord / Owner</td><td class="v">${landlordDisplay}</td></tr>
         <tr><td class="k">Lease Reference No.</td><td class="v">${leaseRef}</td></tr>
       </table>
@@ -248,7 +236,7 @@ export function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, rec
         <tr><td class="k">Amount in Words</td><td class="v">${amountInWords(amount)}</td></tr>
         <tr><td class="k">${periodLabel}</td><td class="v">${periodText}</td></tr>
         <tr><td class="k">Payment Method</td><td class="v">${methodLabel}</td></tr>
-        <tr><td class="k">Transaction / Reference No.</td><td class="v">${payment.reference || '—'}</td></tr>
+        <tr><td class="k">Transaction / Reference No.</td><td class="v">${payment.reference || '-'}</td></tr>
         <tr><td class="k">Date Received</td><td class="v">${fmtDate(payment.paidDate)}</td></tr>
       </table>
     </div>
@@ -305,7 +293,7 @@ export async function generateAndSendReceipt(paymentId: string): Promise<Receipt
     try {
       result.emailed = await sendEmail({
         to: payment.tenant.email,
-        subject: `Payment Receipt — ${receiptNumber}`,
+        subject: `Payment Receipt - ${receiptNumber}`,
         html,
       })
     } catch (err) {

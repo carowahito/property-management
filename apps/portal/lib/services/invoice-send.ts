@@ -83,7 +83,7 @@ export async function sendInvoice(invoiceId: string, opts: SendInvoiceOptions = 
     try {
       const ok = await sendEmail({
         to: inv.tenant.email,
-        subject: `Rent Invoice — ${inv.period} (INV-${inv.invoiceNumber})`,
+        subject: `Rent Invoice - ${inv.period} (INV-${inv.invoiceNumber})`,
         html,
       })
       if (ok) channels.push('email')
@@ -95,7 +95,7 @@ export async function sendInvoice(invoiceId: string, opts: SendInvoiceOptions = 
     try {
       const ok = await sendWhatsApp({
         to: inv.tenant.phone,
-        message: `🏠 *Rent Invoice — ${inv.period}*\n\nHi ${inv.tenant.name}, your rent invoice (INV-${inv.invoiceNumber}) is ready.\n\n💰 Amount due: KES ${Number(displayedDue).toLocaleString()}\n📅 Due: ${new Date(inv.dueDate).toLocaleDateString()}\n\nPlease pay by the due date to avoid penalties.`,
+        message: `🏠 *Rent Invoice - ${inv.period}*\n\nHi ${inv.tenant.name}, your rent invoice (INV-${inv.invoiceNumber}) is ready.\n\n💰 Amount due: KES ${Number(displayedDue).toLocaleString()}\n📅 Due: ${new Date(inv.dueDate).toLocaleDateString()}\n\nPlease pay by the due date to avoid penalties.`,
       })
       if (ok) channels.push('whatsapp')
     } catch (err) {

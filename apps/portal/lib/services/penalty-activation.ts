@@ -59,7 +59,7 @@ export async function sendPenaltyActivationNotices(today = new Date()): Promise<
       try {
         const ok = await sendEmail({
           to: inv.tenant.email,
-          subject: `Payment Reminder — penalties begin tomorrow (${inv.period})`,
+          subject: `Payment Reminder - penalties begin tomorrow (${inv.period})`,
           html: brandedNoticeHtml(
             'Payment Reminder',
             `<p>Hi ${inv.tenant.name},</p>
@@ -77,7 +77,7 @@ export async function sendPenaltyActivationNotices(today = new Date()): Promise<
       try {
         const ok = await sendWhatsApp({
           to: inv.tenant.phone,
-          message: `⚠️ *Payment Reminder — ${inv.period}*\n\nHi ${inv.tenant.name}, your outstanding balance is KES ${balance.toLocaleString()}. A late-payment penalty of ${terms} begins tomorrow and accrues daily until cleared. Please pay today to avoid penalties.${payInstr ? `\n\n${payInstr}` : ''}`,
+          message: `⚠️ *Payment Reminder - ${inv.period}*\n\nHi ${inv.tenant.name}, your outstanding balance is KES ${balance.toLocaleString()}. A late-payment penalty of ${terms} begins tomorrow and accrues daily until cleared. Please pay today to avoid penalties.${payInstr ? `\n\n${payInstr}` : ''}`,
         })
         if (ok) channels.push('whatsapp')
       } catch (err) {
