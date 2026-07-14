@@ -52,6 +52,7 @@ export interface TenantStatementSummary {
   totalCharged: number;
   totalPaid: number;
   closingBalance: number; // positive = owes, negative = credit
+  accruedPenalty: number; // live late-payment penalty accrued on the active arrears case
 
   // Ledger entries (raw)
   entries: TenantStatementEntry[];
@@ -158,6 +159,13 @@ export class TenantStatementGenerator {
       orderBy: { startDate: 'asc' },
       select: { startDate: true },
     });
+
+    // Live late-payment penalty accrued on the active arrears case (if any).
+    const activeArrears = await prisma.arrearsEscalation.findFirst({
+      where: { tenantId, isActive: true },
+      select: { penaltyAccrued: true },
+    });
+    const accruedPenalty = activeArrears ? Number(activeArrears.penaltyAccrued) : 0;
 
     const monthlyRent = Number(tenant.unitRef?.monthlyRent ?? 0);
     const leaseStartDate = lease?.startDate ?? null;
@@ -269,6 +277,7 @@ export class TenantStatementGenerator {
       totalCharged,
       totalPaid: totalDirectPaid,
       closingBalance,
+      accruedPenalty,
       entries,
       directPayments,
     };
@@ -294,9 +303,12 @@ export class TenantStatementGenerator {
     // ── Build monthly summary from Payment records (source of truth) ─────
     // Group by dueDate month — i.e. which month's rent was paid
     const creditsByMonth = new Map<string, number>();
-    const lateFeeTotal = stmt.entries
+    const postedLateFees = stmt.entries
       .filter(e => e.type === 'LATE_FEE' && e.debit > 0)
       .reduce((s, e) => s + e.debit, 0);
+    // Show the live accrued penalty from the active arrears case, or posted
+    // late-fee charges, whichever is greater (avoids double-counting the two).
+    const lateFeeTotal = Math.max(postedLateFees, Number(stmt.accruedPenalty || 0));
 
     // Use directPayments (PAID Payment records) — more accurate than ledger entries
     // since not all payments may have been synced to the ledger
