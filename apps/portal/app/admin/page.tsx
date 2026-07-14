@@ -53,6 +53,22 @@ async function fetchMaintenanceRequests(): Promise<MaintenanceResponse> {
   return response.json()
 }
 
+// Only the total count is needed here, so request a single record and read the
+// paginated total (avoids transferring the full list).
+async function fetchTenantCount(): Promise<number> {
+  const response = await fetch('/api/tenants?limit=1')
+  if (!response.ok) throw new Error('Failed to fetch tenants')
+  const data = await response.json()
+  return data?.pagination?.total ?? (data?.tenants?.length ?? 0)
+}
+
+async function fetchLandlordCount(): Promise<number> {
+  const response = await fetch('/api/landlords?limit=1')
+  if (!response.ok) throw new Error('Failed to fetch landlords')
+  const data = await response.json()
+  return data?.pagination?.total ?? (data?.landlords?.length ?? 0)
+}
+
 export default function AdminDashboard() {
   const { data: propertiesData, isLoading: isLoadingProperties, error: propertiesError } = useQuery({
     queryKey: ['properties'],
@@ -69,8 +85,18 @@ export default function AdminDashboard() {
     queryFn: fetchMaintenanceRequests,
   })
 
-  const isLoading = isLoadingProperties || isLoadingLeases || isLoadingMaintenance
-  const hasError = propertiesError || leasesError || maintenanceError
+  const { data: tenantCount, isLoading: isLoadingTenants, error: tenantsError } = useQuery({
+    queryKey: ['tenant-count'],
+    queryFn: fetchTenantCount,
+  })
+
+  const { data: landlordCount, isLoading: isLoadingLandlords, error: landlordsError } = useQuery({
+    queryKey: ['landlord-count'],
+    queryFn: fetchLandlordCount,
+  })
+
+  const isLoading = isLoadingProperties || isLoadingLeases || isLoadingMaintenance || isLoadingTenants || isLoadingLandlords
+  const hasError = propertiesError || leasesError || maintenanceError || tenantsError || landlordsError
 
   if (isLoading) {
     return (
@@ -113,6 +139,8 @@ export default function AdminDashboard() {
     pendingLeases: pendingLeases.length,
     maintenanceRequests: pendingMaintenance.length,
     urgentMaintenance: urgentMaintenance.length,
+    totalTenants: tenantCount ?? 0,
+    totalLandlords: landlordCount ?? 0,
   };
 
   const cardClass = 'bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer block'
@@ -171,6 +199,18 @@ export default function AdminDashboard() {
           <p className='text-sm text-neutral-600'>Maintenance Requests</p>
           <p className='text-3xl font-bold text-warning-600'>{stats.maintenanceRequests}</p>
           <p className='text-sm text-neutral-600 mt-2'>{stats.urgentMaintenance} urgent</p>
+        </Link>
+
+        <Link href="/admin/tenants" className={cardClass}>
+          <p className='text-sm text-neutral-600'>Total Tenants</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalTenants}</p>
+          <p className='text-sm text-neutral-600 mt-2'>Registered tenants</p>
+        </Link>
+
+        <Link href="/admin/landlords" className={cardClass}>
+          <p className='text-sm text-neutral-600'>Total Landlords</p>
+          <p className='text-3xl font-bold text-neutral-900'>{stats.totalLandlords}</p>
+          <p className='text-sm text-neutral-600 mt-2'>Property owners</p>
         </Link>
       </div>
 
