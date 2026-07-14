@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SignaturePad } from '@/components/ui/SignaturePad'
+import { MoveOutQuotePanel } from '@/components/move-out/MoveOutQuotePanel'
+import { ClearancePanel } from '@/components/move-out/ClearancePanel'
 import {
   type ChecklistData,
   type ChecklistItem,
@@ -323,6 +325,9 @@ export default function InspectionsPage() {
   const [inspectorSigData, setInspectorSigData] = useState<string | null>(null)
   const [showInspectorSigPad, setShowInspectorSigPad] = useState(false)
   const [resumeLinkLoading, setResumeLinkLoading] = useState(false)
+  const [quotePanelOpen, setQuotePanelOpen] = useState(false)
+  const [moveOutQuoteReady, setMoveOutQuoteReady] = useState(false)
+  const [clearancePanelOpen, setClearancePanelOpen] = useState(false)
 
   // Editable inspection details (date / type / agent)
   const [editScheduledDate, setEditScheduledDate] = useState('')
@@ -1006,9 +1011,16 @@ export default function InspectionsPage() {
         alert(err.error || 'Failed to complete inspection')
         return
       }
-      setShowDetailModal(false)
+      const completed = await res.json().catch(() => ({}))
       setShowCompleteConfirm(false)
       fetchInspections()
+      // Move-out inspections auto-draft a Statement of Repair Costs — prompt the
+      // agent to review and send it to the tenant.
+      if (completed?.moveOutQuoteId) {
+        setMoveOutQuoteReady(true)
+      } else {
+        setShowDetailModal(false)
+      }
     } catch { alert('Network error') }
     finally { setCompleteLoading(false) }
   }
@@ -2027,6 +2039,18 @@ export default function InspectionsPage() {
                   )}
                 </div>
               )}
+              {isCompleted && (selectedInspection.type === 'MOVE_OUT' || selectedInspection.type === 'PRE_MOVE_OUT') && (
+                <>
+                  <Button variant="primary" size="sm" onClick={() => setQuotePanelOpen(true)}>
+                    Repairs Quote
+                  </Button>
+                  {selectedInspection.leaseId && (
+                    <Button variant="outline" size="sm" onClick={() => setClearancePanelOpen(true)}>
+                      Clearance to Vacate
+                    </Button>
+                  )}
+                </>
+              )}
               {!isCompleted && !isCancelled && (
                 <>
                   <Button variant="outline" onClick={saveProgress}>Save Progress</Button>
@@ -2061,6 +2085,42 @@ export default function InspectionsPage() {
             </ModalFooter>
           </>
         )}
+      </Modal>
+
+      {/* ── Move-Out Repairs Quote (Statement of Repair Costs) ─────────────── */}
+      {selectedInspection && (
+        <MoveOutQuotePanel
+          inspectionId={selectedInspection.id}
+          open={quotePanelOpen}
+          onClose={() => setQuotePanelOpen(false)}
+        />
+      )}
+      {selectedInspection?.leaseId && (
+        <ClearancePanel
+          leaseId={selectedInspection.leaseId}
+          open={clearancePanelOpen}
+          onClose={() => setClearancePanelOpen(false)}
+        />
+      )}
+
+      {/* ── "Quote ready — send to tenant" prompt after move-out completion ── */}
+      <Modal open={moveOutQuoteReady} onClose={() => setMoveOutQuoteReady(false)} className="max-w-md">
+        <ModalHeader>
+          <h2 className="text-lg font-semibold">Inspection completed</h2>
+          <button onClick={() => setMoveOutQuoteReady(false)} className="text-neutral-400 hover:text-neutral-600">✕</button>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600">
+            A draft <strong>Statement of Repair Costs</strong> has been prepared from the inspection findings.
+            Review the costs and send it to the tenant for approval.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => { setMoveOutQuoteReady(false); setShowDetailModal(false) }}>Later</Button>
+          <Button variant="primary" onClick={() => { setMoveOutQuoteReady(false); setQuotePanelOpen(true) }}>
+            Review &amp; Send
+          </Button>
+        </ModalFooter>
       </Modal>
 
       {/* ── Inspector Signature Modal ──────────────────────────────────────── */}

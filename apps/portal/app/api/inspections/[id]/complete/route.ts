@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/db'
 import { completeInspectionSchema } from '@/lib/validations/inspection'
+import { generateMoveOutQuote } from '@/lib/services/move-out-quote'
 
 const INSPECTION_TYPE_LABELS: Record<string, string> = {
   MOVE_IN: 'Move-In',
@@ -158,7 +159,19 @@ export async function POST(
       }
     }
 
-    return NextResponse.json(inspection)
+    // Auto-draft the Statement of Repair Costs for move-out inspections (lease
+    // clause 8.3). Never block completion on this — mirror the report pattern.
+    let moveOutQuoteId: string | null = null
+    if (inspection.type === 'MOVE_OUT' || inspection.type === 'PRE_MOVE_OUT') {
+      try {
+        const quote = await generateMoveOutQuote(id)
+        moveOutQuoteId = quote?.id ?? null
+      } catch (quoteError) {
+        console.error('Failed to auto-draft move-out repairs quote:', quoteError)
+      }
+    }
+
+    return NextResponse.json({ ...inspection, moveOutQuoteId })
   } catch (error: any) {
     console.error('Error completing inspection:', error)
 

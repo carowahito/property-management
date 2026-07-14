@@ -27,6 +27,12 @@ export default function TenantDashboardPage() {
     enabled: !!tenantId,
   })
 
+  const { data: moveOutQuoteData } = useQuery({
+    queryKey: ['tenant-move-out-quote', tenantId],
+    queryFn: () => fetch('/api/tenants/me/move-out-quote').then(r => r.json()),
+    enabled: !!tenantId,
+  })
+
   if (sessionStatus === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -107,6 +113,22 @@ export default function TenantDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {moveOutQuoteData?.quote && (
+        <Link
+          href={`/tenant/move-out/${moveOutQuoteData.quote.id}`}
+          className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100 transition-colors"
+        >
+          <div>
+            <p className="font-semibold text-amber-900">Action required: approve your Statement of Repair Costs</p>
+            <p className="text-sm text-amber-800 mt-0.5">
+              Following your move-out inspection{moveOutQuoteData.quote.inspection?.property?.name ? ` at ${moveOutQuoteData.quote.inspection.property.name}` : ''}.
+              Please review and approve before your move-out is cleared.
+            </p>
+          </div>
+          <span className="text-amber-900 font-medium whitespace-nowrap">Review →</span>
+        </Link>
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-neutral-900">
           Welcome back, {tenantName}!

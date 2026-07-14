@@ -366,6 +366,7 @@ model Tenant {
   agentIncomeEntries  AgentIncomeLedger[]
   legalCases          LegalCase[]
   rentInvoices        RentInvoice[]
+  moveOutQuotes       MoveOutQuote[]
 
   documents TenantDocument[]
 
@@ -582,6 +583,8 @@ model Lease {
   agentIncomeEntries AgentIncomeLedger[]
   legalCases         LegalCase[]
   rentInvoices       RentInvoice[]
+  moveOutQuotes      MoveOutQuote[]
+  clearanceToVacate  ClearanceToVacate?
 
   @@index([tenantId])
   @@index([propertyId])
@@ -1063,6 +1066,8 @@ model Deposit {
   unit     Unit?     @relation(fields: [unitId], references: [id])
   landlord Landlord? @relation(fields: [landlordId], references: [id])
 
+  moveOutQuotes MoveOutQuote[]
+
   @@index([tenantId])
   @@index([leaseId])
   @@index([propertyId])
@@ -1259,6 +1264,7 @@ model Contractor {
   workOrders        WorkOrder[]
   maintenanceQuotes MaintenanceQuote[]
   assignedRequests  MaintenanceRequest[] @relation("AssignedContractor")
+  moveOutQuoteLines MoveOutQuoteLine[]
 
   @@index([companyId])
   @@index([trade])
@@ -1319,6 +1325,9 @@ model Inspection {
   rootInspection Inspection?  @relation("InspectionLineage", fields: [rootInspectionId], references: [id])
   reassessments  Inspection[] @relation("InspectionLineage")
 
+  moveOutQuote      MoveOutQuote?
+  clearanceToVacate ClearanceToVacate?
+
   @@index([propertyId])
   @@index([tenantId])
   @@index([type])
@@ -1326,6 +1335,156 @@ model Inspection {
   @@index([scheduledDate])
   @@index([rootInspectionId])
   @@map("inspections")
+}
+
+// ============================================
+// Move-Out Settlement (lease clauses 8.2 - 8.4)
+// ============================================
+
+// "Statement of Repair Costs" (clause 8.3). Auto-drafted when a MOVE_OUT /
+// PRE_MOVE_OUT inspection is completed, costed on-site by the agent, and
+// approved by the tenant before vacating. Feeds deposit reconciliation and the
+// Clearance to Vacate gate.
+model MoveOutQuote {
+  id           String @id @default(cuid())
+  inspectionId String @unique
+  leaseId      String
+  tenantId     String
+  depositId    String?
+
+  status MoveOutQuoteStatus @default(DRAFT)
+
+  // Deposit context snapshot (at generation time)
+  depositHeld Decimal @db.Decimal(10, 2) @default(0)
+
+  // Money (recomputed on any line change)
+  totalTenantCharge Decimal @db.Decimal(10, 2) @default(0)
+  totalLandlordCost Decimal @db.Decimal(10, 2) @default(0)
+  balanceDue        Decimal @db.Decimal(10, 2) @default(0) // tenant owes over deposit
+  refundDue         Decimal @db.Decimal(10, 2) @default(0) // returned to tenant
+
+  // Validity — quote is an estimate valid for a limited window (clause: 3 days)
+  issuedAt   DateTime @default(now())
+  validUntil DateTime
+
+  agentNotes String? @db.Text
+
+  // Sign-off
+  agentSignature  String?
+  agentSignedAt   DateTime?
+  tenantSignature String?
+  tenantApprovedAt  DateTime?
+  tenantApprovalVia String? // IN_PERSON | IN_APP | EMAIL
+  sentToTenantAt    DateTime?
+  disputeReason     String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inspection Inspection         @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  lease      Lease              @relation(fields: [leaseId], references: [id])
+  tenant     Tenant             @relation(fields: [tenantId], references: [id])
+  deposit    Deposit?           @relation(fields: [depositId], references: [id], onDelete: SetNull)
+  lines      MoveOutQuoteLine[]
+
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("move_out_quotes")
+}
+
+// One costed remedial item on a Statement of Repair Costs. Contractor details are
+// free text (on-site contractors are not portal users); contractorId is an
+// optional link when they already exist as a vetted Contractor.
+model MoveOutQuoteLine {
+  id      String @id @default(cuid())
+  quoteId String
+
+  sourceRef   String? // traces back to inspection item, e.g. "checklist:3.3/Cooker" or "defect:2"
+  description String
+  room        String?
+  action         MoveOutLineAction     @default(REPAIR)
+  responsibility MoveOutResponsibility @default(TENANT)
+
+  // Costing (agent-entered)
+  contractorId      String?
+  contractorName    String?
+  contractorContact String?
+  unitCost     Decimal @db.Decimal(10, 2) @default(0)
+  quantity     Decimal @db.Decimal(10, 2) @default(1)
+  lineTotal    Decimal @db.Decimal(10, 2) @default(0)
+  tenantCharge Decimal @db.Decimal(10, 2) @default(0) // portion charged to tenant
+
+  evidenceUrl String? // photo carried from the inspection item
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quote      MoveOutQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  contractor Contractor?  @relation(fields: [contractorId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([contractorId])
+  @@map("move_out_quote_lines")
+}
+
+// Clearance to Vacate (clause 8.4). Issued to the estate management office only
+// once every gate condition is satisfied.
+model ClearanceToVacate {
+  id           String @id @default(cuid())
+  leaseId      String @unique
+  inspectionId String @unique
+  quoteId      String
+
+  status ClearanceStatus @default(BLOCKED)
+
+  // Clause 8.4 conditions (derived where possible, else agent-confirmed)
+  keysReturned      Boolean  @default(false)
+  metersRecorded    Boolean  @default(false)
+  statementSigned   Boolean  @default(false)
+  balanceSettled    Boolean  @default(false)
+  rentCleared       Boolean  @default(false)
+  rentArrearsAmount Decimal  @db.Decimal(10, 2) @default(0) // auto-filled from tenant statement
+
+  issuedAt         DateTime?
+  issuedToOfficeAt DateTime?
+  officeEmail      String?
+  documentUrl      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lease      Lease      @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("clearances_to_vacate")
+}
+
+enum MoveOutQuoteStatus {
+  DRAFT
+  AGREED
+  DISPUTED
+  SETTLED
+}
+
+enum MoveOutLineAction {
+  REPAIR
+  REPLACE
+  CLEAN
+}
+
+enum MoveOutResponsibility {
+  TENANT
+  LANDLORD
+  SHARED
+}
+
+enum ClearanceStatus {
+  BLOCKED
+  READY
+  ISSUED
 }
 
 model Viewing {
