@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { applyCreditToInvoice } from '@/lib/services/tenant-credit'
+import { movedOutBeforePeriodMonth } from '@/lib/services/move-out'
 
 // ============================================================================
 // Rent invoice generation & lifecycle (SOP 004 / BR-1)
@@ -95,6 +96,7 @@ export async function generateInvoicesForPeriod(period?: string): Promise<Genera
       gracePeriodDays: true,
       startDate: true,
       property: { select: { companyId: true } },
+      tenant: { select: { moveOutDate: true } },
     },
   })
 
@@ -108,6 +110,10 @@ export async function generateInvoicesForPeriod(period?: string): Promise<Genera
     // Don't invoice a period that ends before the lease even started.
     const periodEnd = new Date(year, month, 0)
     if (lease.startDate > periodEnd) continue
+
+    // Don't invoice a tenant for a period after they moved out (the move-out
+    // month itself is still billable).
+    if (movedOutBeforePeriodMonth(lease.tenant?.moveOutDate, year, month)) continue
 
     const existingInvoice = await prisma.rentInvoice.findUnique({
       where: { leaseId_period: { leaseId: lease.id, period: targetPeriod } },
