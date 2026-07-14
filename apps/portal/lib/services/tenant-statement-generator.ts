@@ -81,6 +81,17 @@ export class TenantStatementGenerator {
 
     if (!tenant) throw new Error('Tenant not found');
 
+    // Bound the statement to the actual tenancy: never earlier than the move-in
+    // date, and never later than the move-out date. A "Full Statement" (which
+    // requests a very wide range) therefore runs from move-in to move-out, or
+    // to today if the tenant is still in place.
+    if (tenant.moveInDate && new Date(tenant.moveInDate) > startDate) {
+      startDate = new Date(tenant.moveInDate);
+    }
+    if (tenant.moveOutDate && new Date(tenant.moveOutDate) < endDate) {
+      endDate = new Date(tenant.moveOutDate);
+    }
+
     const where: Record<string, unknown> = {
       tenantId,
       date: { gte: startDate, lte: endDate },
