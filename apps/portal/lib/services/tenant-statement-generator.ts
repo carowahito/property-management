@@ -43,6 +43,10 @@ export interface TenantStatementSummary {
   periodStart: Date;
   periodEnd: Date;
   leaseStartDate: Date | null;
+  moveOutDate: Date | null;
+  // Last month rent is charged for (inclusive): the move-out month, capped by
+  // the period end. No rent is charged after the tenant has moved out.
+  chargeEndDate: Date;
 
   // Totals
   totalCharged: number;
@@ -148,6 +152,10 @@ export class TenantStatementGenerator {
     const leaseStartDate = lease?.startDate ?? null;
     const effectiveStart = leaseStartDate && leaseStartDate > startDate ? leaseStartDate : startDate;
 
+    // Stop charging rent once the tenant has moved out. Charging ends at the
+    // move-out month (inclusive), bounded by the statement period end.
+    const moveOutDate = tenant.moveOutDate ? new Date(tenant.moveOutDate) : null;
+
     // Build credit map by dueDate month for totals calculation
     const creditsByMonth = new Map<string, number>();
     for (const p of directPayments) {
@@ -160,9 +168,18 @@ export class TenantStatementGenerator {
     cur.setDate(1);
     const endM = new Date(endDate);
     endM.setDate(1);
+    // Cap the charging window at the move-out month (inclusive). Build the
+    // month boundary the same way as cur/endM (setDate(1)) so the comparison
+    // is timezone-consistent.
+    const chargeEndM = new Date(endM);
+    if (moveOutDate) {
+      const moM = new Date(moveOutDate);
+      moM.setDate(1);
+      if (moM < chargeEndM) chargeEndM.setTime(moM.getTime());
+    }
     let totalCharged = 0;
     let runningBalance = 0;
-    while (cur <= endM) {
+    while (cur <= chargeEndM) {
       const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
       totalCharged += monthlyRent;
       runningBalance += monthlyRent - (creditsByMonth.get(key) || 0);
@@ -187,9 +204,7 @@ export class TenantStatementGenerator {
         paymentsByMonth.get(key)!.push(p);
       }
 
-      const endMonth = new Date(endDate);
-      endMonth.setDate(1);
-      while (chargeDate <= endMonth) {
+      while (chargeDate <= chargeEndM) {
         const key = `${chargeDate.getFullYear()}-${String(chargeDate.getMonth() + 1).padStart(2, '0')}`;
         const monthLabel = chargeDate.toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
 
@@ -238,6 +253,8 @@ export class TenantStatementGenerator {
       periodStart: startDate,
       periodEnd: endDate,
       leaseStartDate,
+      moveOutDate,
+      chargeEndDate: chargeEndM,
       totalCharged,
       totalPaid: totalDirectPaid,
       closingBalance,
@@ -288,9 +305,10 @@ export class TenantStatementGenerator {
       : stmt.periodStart;
     const cur = new Date(effectiveStart);
     cur.setDate(1);
-    const endM = new Date(stmt.periodEnd);
+    // Charging stops at the move-out month (chargeEndDate), not the period end.
+    const endM = new Date(stmt.chargeEndDate);
     endM.setDate(1);
-    let running = 0; // opening balance — starts at 0 (full tenancy history)
+    let running = 0; // opening balance starts at 0 (full tenancy history)
 
     while (cur <= endM) {
       const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;

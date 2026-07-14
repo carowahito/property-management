@@ -71,6 +71,7 @@ describe('generateInvoicesForPeriod (idempotency)', () => {
     id: 'lease-1', tenantId: 'ten-1', propertyId: 'prop-1', unitId: 'unit-1',
     monthlyRent: 50000, rentDueDay: 1, gracePeriodDays: 5,
     startDate: new Date('2025-01-01'), property: { companyId: 'co-1' },
+    tenant: { moveOutDate: null },
   }
 
   beforeEach(() => {
@@ -101,6 +102,22 @@ describe('generateInvoicesForPeriod (idempotency)', () => {
     const res = await generateInvoicesForPeriod('2026-02')
     expect(res.created).toBe(0)
     expect(p.rentInvoice.create).not.toHaveBeenCalled()
+  })
+
+  it('does not invoice a tenant for a period after they moved out', async () => {
+    // Moved out 31 May 2026; generating July should skip.
+    p.lease.findMany.mockResolvedValue([{ ...lease, tenant: { moveOutDate: new Date('2026-05-31') } }])
+    p.rentInvoice.findUnique.mockResolvedValue(null)
+    const res = await generateInvoicesForPeriod('2026-07')
+    expect(res.created).toBe(0)
+    expect(p.rentInvoice.create).not.toHaveBeenCalled()
+  })
+
+  it('still invoices the move-out month itself', async () => {
+    p.lease.findMany.mockResolvedValue([{ ...lease, tenant: { moveOutDate: new Date('2026-05-31') } }])
+    p.rentInvoice.findUnique.mockResolvedValue(null)
+    const res = await generateInvoicesForPeriod('2026-05')
+    expect(res.created).toBe(1)
   })
 })
 

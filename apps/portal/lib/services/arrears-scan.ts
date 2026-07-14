@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { hasMovedOutBy } from '@/lib/services/move-out'
 
 // ============================================================================
 // Arrears scan (SOP 004 / BR-5)
@@ -92,6 +93,7 @@ export async function runArrearsScan(): Promise<ArrearsScanResult> {
     where: { status: 'ACTIVE' },
     include: {
       arrearsEscalations: { where: { isActive: true }, select: { id: true } },
+      tenant: { select: { moveOutDate: true } },
     },
   })
 
@@ -100,6 +102,13 @@ export async function runArrearsScan(): Promise<ArrearsScanResult> {
   let skipped = 0
 
   for (const lease of activeLeases) {
+    // Do not chase a tenant who has moved out. Their remaining balance is
+    // handled by move-out settlement, not the ongoing rent-arrears cron.
+    if (hasMovedOutBy(lease.tenant?.moveOutDate, today)) {
+      skipped++
+      continue
+    }
+
     const comp = computeOverdue(lease, today) as OverdueComputation & { effectiveDueDate?: Date; dueDay?: number }
     const hasActiveCase = lease.arrearsEscalations.length > 0
 
