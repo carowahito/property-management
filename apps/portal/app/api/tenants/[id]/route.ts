@@ -202,6 +202,18 @@ export async function PATCH(
       },
     })
 
+    // Root move-out handling: recording a move-out date terminates the tenant's
+    // active lease(s), with endDate set to the move-out (early termination).
+    // This makes every "active lease" query (invoicing, arrears scan, etc.)
+    // exclude the former tenant automatically. Idempotent (no-op if already
+    // terminated). Clearing the move-out date does not auto-reactivate a lease.
+    if (validatedData.moveOutDate) {
+      await prisma.lease.updateMany({
+        where: { tenantId: id, status: 'ACTIVE' },
+        data: { status: 'TERMINATED', endDate: new Date(validatedData.moveOutDate) },
+      })
+    }
+
     return NextResponse.json(tenant)
   } catch (error: any) {
     console.error('Error updating tenant:', error)
