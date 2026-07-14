@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatReceiptRef } from '@/lib/utils';
@@ -77,6 +77,70 @@ export default function RentPaymentsPage() {
   const [loadingLeases, setLoadingLeases] = useState(false);
   const [propertiesList, setPropertiesList] = useState<{ id: string; name: string }[]>([]);
   const [unitsList, setUnitsList] = useState<{ id: string; unitNumber: string }[]>([]);
+
+  // Bulk upload
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ created: number; skipped: number; total: number; errors: string[] } | null>(null);
+
+  function downloadTemplate() {
+    const headers = ['unitNumber', 'amount', 'paidDate', 'method', 'reference', 'notes'];
+    const examples = [
+      ['A1', '45000', '2026-07-03', 'MPESA', 'SGH7X2K9PL', 'July 2026 rent'],
+      ['B4', '30000', '2026-07-05', 'BANK_TRANSFER', 'TRX-102', 'July 2026 rent'],
+    ];
+    const csv = [headers.join(','), ...examples.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'rent-payments-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function parseCsv(text: string): Record<string, string>[] {
+    const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+      const cells = line.split(',');
+      const row: Record<string, string> = {};
+      headers.forEach((h, i) => { row[h] = (cells[i] ?? '').trim(); });
+      return row;
+    });
+  }
+
+  async function handleBulkFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBulkUploading(true);
+    setBulkResult(null);
+    try {
+      const rows = parseCsv(await file.text());
+      if (rows.length === 0) {
+        setBulkResult({ created: 0, skipped: 0, total: 0, errors: ['No data rows found in the file.'] });
+        return;
+      }
+      const res = await fetch('/api/payments/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setBulkResult({ created: 0, skipped: rows.length, total: rows.length, errors: [data.error || 'Upload failed'] });
+      } else {
+        setBulkResult(data);
+        fetch('/api/payments?type=RENT&limit=200').then(r => r.json()).then(d => setPayments(d.payments || []));
+      }
+    } catch (err: any) {
+      setBulkResult({ created: 0, skipped: 0, total: 0, errors: [err?.message || 'Failed to read file'] });
+    } finally {
+      setBulkUploading(false);
+      e.target.value = '';
+    }
+  }
 
   const refreshPayments = () => {
     setIsLoading(true);
@@ -258,7 +322,10 @@ export default function RentPaymentsPage() {
           <h1 className='text-3xl font-bold text-neutral-900'>Rent Payments</h1>
           <p className='text-neutral-600 mt-1'>Track and manage rent payment transactions</p>
         </div>
-        <Button variant="primary" size="lg" onClick={() => setShowModal(true)}>+ Record Payment</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="lg" onClick={() => { setBulkResult(null); setShowBulk(true); }}>⬆ Bulk Upload</Button>
+          <Button variant="primary" size="lg" onClick={() => setShowModal(true)}>+ Record Payment</Button>
+        </div>
       </div>
 
       {/* Stats Cards — clickable to filter */}
@@ -422,6 +489,40 @@ export default function RentPaymentsPage() {
           </table>
         )}
       </div>
+
+      {/* Bulk Upload Modal */}
+      {showBulk && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-900">Bulk Upload Rent Payments</h2>
+              <button onClick={() => setShowBulk(false)} className="text-neutral-400 hover:text-neutral-600 text-2xl leading-none">&times;</button>
+            </div>
+            <p className="text-sm text-neutral-600">
+              Download the template, fill in one row per payment, then upload the CSV. Rows are matched to units by <strong>unitNumber</strong> and recorded as PAID rent against the unit&apos;s active lease. Valid methods: MPESA, BANK_TRANSFER, CHEQUE, CARD (no cash).
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" onClick={downloadTemplate}>⬇ Download Template</Button>
+              <input type="file" accept=".csv,text/csv" onChange={handleBulkFile} className="hidden" id="bulk-file" />
+              <Button variant="primary" onClick={() => document.getElementById('bulk-file')?.click()} disabled={bulkUploading}>
+                {bulkUploading ? 'Uploading…' : '⬆ Upload CSV'}
+              </Button>
+            </div>
+            {bulkResult && (
+              <div className="text-sm border-t border-neutral-200 pt-3 space-y-2">
+                <p className="font-medium text-neutral-900">
+                  {bulkResult.created} created, {bulkResult.skipped} skipped (of {bulkResult.total}).
+                </p>
+                {bulkResult.errors.length > 0 && (
+                  <div className="max-h-40 overflow-auto bg-danger-50 border border-danger-200 rounded p-2 text-danger-800 text-xs space-y-1">
+                    {bulkResult.errors.map((e, i) => <div key={i}>{e}</div>)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Record Payment Modal */}
       {showModal && (
