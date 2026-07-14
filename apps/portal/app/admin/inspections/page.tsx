@@ -543,7 +543,16 @@ export default function InspectionsPage() {
   }
 
   function updateMeta(field: string, value: any) {
-    setChecklistData(prev => prev ? { ...prev, [field]: value } : prev)
+    setChecklistData(prev => {
+      if (!prev) return prev
+      const next = { ...prev, [field]: value }
+      // When the property is unfurnished, there is nothing to inspect in
+      // 3.9 Furnishings & Inventory — auto-set every item's condition to NA.
+      if (field === 'furnished' && value === 'Unfurnished') {
+        next.items = prev.items.map(it => it.section === '3.9' ? { ...it, condition: 'NA' } : it)
+      }
+      return next
+    })
   }
 
   function updateMeter(i: number, field: string, value: string) {
