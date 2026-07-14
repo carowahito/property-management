@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/services/email'
 import { sendWhatsApp } from '@/lib/services/whatsapp'
+import { brandedNoticeHtml } from '@/lib/services/brand'
 
 // ============================================================================
 // End-of-Day-5 Penalty Activation Notice (SOP 004 / BR-1c)
@@ -59,11 +60,13 @@ export async function sendPenaltyActivationNotices(today = new Date()): Promise<
         const ok = await sendEmail({
           to: inv.tenant.email,
           subject: `Payment Reminder — penalties begin tomorrow (${inv.period})`,
-          html: `<p>Hi ${inv.tenant.name},</p>
+          html: brandedNoticeHtml(
+            'Payment Reminder',
+            `<p>Hi ${inv.tenant.name},</p>
 <p>Your rent for <strong>${inv.period}</strong> shows an outstanding balance of <strong>KES ${balance.toLocaleString()}</strong>.</p>
 <p>Please note that a late-payment penalty of <strong>${terms}</strong> will take effect from tomorrow and will continue to accrue daily until the full balance is cleared.</p>
-<p>To avoid penalties, please pay today.${payInstr ? `<br>${payInstr}` : ''}</p>
-<p>— Tochi Property</p>`,
+<p>To avoid penalties, please pay today.${payInstr ? `<br>${payInstr}` : ''}</p>`
+          ),
         })
         if (ok) channels.push('email')
       } catch (err) {
