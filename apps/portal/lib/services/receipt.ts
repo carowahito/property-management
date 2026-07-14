@@ -222,7 +222,7 @@ export function buildReceiptHtml(payment: NonNullable<PaymentWithRelations>, rec
       </div>
     </div>
     <div class="brand-tag">Your Property. Our Pride.</div>
-    <div class="contact-line">info@tochiproperty.com&nbsp;&nbsp;|&nbsp;&nbsp;tochiproperty.com&nbsp;&nbsp;|&nbsp;&nbsp;+254 721 998 499</div>
+    <div class="contact-line">info@tochiproperty.com&nbsp;&nbsp;|&nbsp;&nbsp;tochiproperty.com</div>
 
     <hr class="brand-divider">
 
